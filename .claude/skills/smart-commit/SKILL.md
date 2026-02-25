@@ -36,20 +36,18 @@ disable-model-invocation: true
 - 설정 변경과 그 설정을 사용하는 코드
 
 ### 3단계: 커밋 계획 수립 및 사용자 확인
-그룹핑 결과를 아래 형식으로 사용자에게 보여주고 승인을 받는다.
+그룹핑 결과를 아래 형식의 표로 사용자에게 보여주고 승인을 받는다.
 ```
 📋 커밋 계획 (총 N개)
-1. feat(product): 상품 CRUD 엔드포인트 추가
-   - src/main/java/gift/product/Product.java
-   - src/main/java/gift/product/ProductController.java
-   - src/main/java/gift/product/ProductRepository.java
-2. feat(product): 상품명 검증 로직 추가
-   - src/main/java/gift/product/ProductNameValidator.java
-3. chore(build): Gradle 빌드 설정
-   - build.gradle.kts
-   ...
+
+| # | 커밋 메시지 | 파일 |
+|---|------------|------|
+| 1 | ✨ feat(product): 상품 CRUD 엔드포인트 추가 | Product.java, ProductController.java, ProductRepository.java |
+| 2 | ✨ feat(product): 상품명 검증 로직 추가 | ProductNameValidator.java |
+| 3 | 📦 build: Gradle 빌드 설정 | build.gradle.kts |
 ```
-**반드시 사용자 승인을 받은 후에만 커밋을 실행한다.**
+- 파일 컬럼에는 파일명만 표시한다. (경로가 길면 파일명만, 동명 파일이 있으면 구분 가능한 최소 경로 포함)
+- **반드시 사용자 승인을 받은 후에만 커밋을 실행한다.**
 
 ### 4단계: 순차 커밋 실행
 승인받은 계획에 따라 순서대로 커밋한다:
@@ -71,19 +69,21 @@ Pre-commit 훅이 실패한 경우:
 - body는 작성하지 않는다. subject만으로 변경 내용을 충분히 전달한다.
 
 ### type
-| type | 용도 |
-|------|------|
-| feat | 새로운 기능 |
-| fix | 버그 수정 |
-| docs | 문서 변경 |
-| style | 포맷팅, 세미콜론 누락 등 (로직 변경 없음) |
-| refactor | 리팩토링 (기능 변경 없음) |
-| perf | 성능 개선 |
-| test | 테스트 추가/수정 |
-| build | 빌드 시스템, 의존성 변경 |
-| ci | CI 설정 변경 |
-| chore | 그 외 유지보수 |
-| revert | 이전 커밋 되돌리기 |
+| type | 이모지 | 용도 |
+|------|--------|------|
+| feat | ✨ | 새로운 기능 |
+| fix | 🐛 | 버그 수정 |
+| docs | 📝 | 문서 변경 |
+| style | 🎨 | 포맷팅, 세미콜론 누락 등 (로직 변경 없음) |
+| refactor | ♻️ | 리팩토링 (기능 변경 없음) |
+| perf | ⚡️ | 성능 개선 |
+| test | ✅ | 테스트 추가/수정 |
+| build | 📦 | 빌드 시스템, 의존성 변경 |
+| ci | 👷 | CI 설정 변경 |
+| chore | 🔧 | 그 외 유지보수 |
+| revert | ⏪ | 이전 커밋 되돌리기 |
+
+이모지는 커밋 메시지에 절대 포함하지 않는다. 사용자에게 커밋 계획을 보여줄 때 표의 커밋 메시지 앞에만 붙인다.
 
 ### scope
 변경이 발생한 위치를 명시한다. 이 프로젝트에서는 주로:
