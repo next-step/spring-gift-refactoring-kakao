@@ -23,14 +23,17 @@ public class Order {
     @ManyToOne
     @JoinColumn(name = "option_id")
     private Option option;
+
     // primitive FK
     private Long memberId;
+
     private int quantity;
+
     private String message;
+
     private LocalDateTime orderDateTime;
 
-    protected Order() {
-    }
+    protected Order() { }
 
     public Order(Option option, Long memberId, int quantity, String message) {
         this.option = option;
@@ -39,5 +42,4 @@ public class Order {
         this.message = message;
         this.orderDateTime = LocalDateTime.now();
     }
-
 }

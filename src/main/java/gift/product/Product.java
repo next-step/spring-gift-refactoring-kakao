@@ -22,8 +22,11 @@ public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String name;
+
     private int price;
+
     private String imageUrl;
 
     @ManyToOne
@@ -33,8 +36,7 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Option> options = new ArrayList<>();
 
-    protected Product() {
-    }
+    protected Product() { }
 
     public Product(String name, int price, String imageUrl, Category category) {
         this.name = name;
@@ -49,5 +51,4 @@ public class Product {
         this.imageUrl = imageUrl;
         this.category = category;
     }
-
 }

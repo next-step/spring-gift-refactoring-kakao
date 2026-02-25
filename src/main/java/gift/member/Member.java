@@ -6,12 +6,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.Getter;
 
-/**
- * Represents a registered member.
- *
- * @author brian.kim
- * @since 1.0
- */
 @Entity
 @Getter
 public class Member {
@@ -27,8 +21,7 @@ public class Member {
 
     private int point;
 
-    protected Member() {
-    }
+    protected Member() { }
 
     public Member(String email, String password) {
         this.email = email;
@@ -65,5 +58,4 @@ public class Member {
         }
         this.point -= amount;
     }
-
 }

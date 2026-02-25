@@ -5,12 +5,6 @@ import gift.member.MemberRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-/**
- * Resolves the authenticated member from an Authorization header.
- *
- * @author brian.kim
- * @since 1.0
- */
 @Component
 public class AuthenticationResolver {
     private final JwtProvider jwtProvider;

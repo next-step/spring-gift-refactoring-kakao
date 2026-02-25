@@ -12,13 +12,16 @@ public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String name;
+
     private String color;
+
     private String imageUrl;
+
     private String description;
 
-    protected Category() {
-    }
+    protected Category() { }
 
     public Category(String name, String color, String imageUrl, String description) {
         this.name = name;
@@ -33,5 +36,4 @@ public class Category {
         this.imageUrl = imageUrl;
         this.description = description;
     }
-
 }
