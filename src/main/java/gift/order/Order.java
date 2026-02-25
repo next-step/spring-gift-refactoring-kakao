@@ -8,11 +8,13 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "orders")
+@Getter
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,27 +40,4 @@ public class Order {
         this.orderDateTime = LocalDateTime.now();
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public Option getOption() {
-        return option;
-    }
-
-    public Long getMemberId() {
-        return memberId;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public LocalDateTime getOrderDateTime() {
-        return orderDateTime;
-    }
 }
