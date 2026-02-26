@@ -9,7 +9,7 @@
 - [x] 불필요한 `@Autowired` 제거 (생성자 1개일 때 불필요)
 - [ ] 블록 주석(`/* */`) → 한 줄 주석(`//`)으로 통일 (or 반대 — 프로젝트 다수파 기준)
 - [x] Entity 필드 사이 빈 줄 패턴 통일
-- [ ] `Collectors.toList()` → `.toList()` 통일 (Java 16+)
+- [x] `Collectors.toList()` → `.toList()` 통일 (Java 16+)
 
 #### 2. 불필요한 코드 제거
 - [ ] `OrderController.wishRepository` — 주입만 되고 사용되지 않는 필드 제거
