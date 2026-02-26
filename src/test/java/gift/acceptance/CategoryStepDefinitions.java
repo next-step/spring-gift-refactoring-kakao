@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 
 import java.util.List;
 import java.util.Map;
@@ -24,16 +26,15 @@ public class CategoryStepDefinitions {
     @Autowired
     private AcceptanceTestContext context;
 
-    private final Map<String, Long> categoryIds = new java.util.HashMap<>();
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Given("카테고리 {string}, 색상 {string}, 이미지 {string}가 등록되어 있고")
     public void 카테고리가_등록되어_있고(String name, String color, String imageUrl) {
-        var response = restTemplate.postForEntity(
-            "/api/categories",
-            Map.of("name", name, "color", color, "imageUrl", imageUrl, "description", ""),
-            String.class
-        );
-        categoryIds.put(name, extractId(response.getBody()));
+        new SimpleJdbcInsert(jdbcTemplate)
+            .withTableName("category")
+            .usingGeneratedKeyColumns("id")
+            .execute(Map.of("name", name, "color", color, "image_url", imageUrl, "description", ""));
     }
 
     @When("카테고리 {string}, 색상 {string}, 이미지 {string}로 생성을 요청하면")
@@ -54,8 +55,9 @@ public class CategoryStepDefinitions {
 
     @When("카테고리 {string}의 이름을 {string}로 수정을 요청하면")
     public void 카테고리_수정을_요청하면(String name, String newName) {
+        Long id = jdbcTemplate.queryForObject("SELECT id FROM category WHERE name = ?", Long.class, name);
         var response = restTemplate.exchange(
-            "/api/categories/" + categoryIds.get(name),
+            "/api/categories/" + id,
             HttpMethod.PUT,
             new HttpEntity<>(Map.of("name", newName, "color", "#FF6347", "imageUrl", "https://img.com/fa.jpg", "description", "")),
             String.class
@@ -65,8 +67,9 @@ public class CategoryStepDefinitions {
 
     @When("카테고리 {string}의 삭제를 요청하면")
     public void 카테고리_삭제를_요청하면(String name) {
+        Long id = jdbcTemplate.queryForObject("SELECT id FROM category WHERE name = ?", Long.class, name);
         var response = restTemplate.exchange(
-            "/api/categories/" + categoryIds.get(name),
+            "/api/categories/" + id,
             HttpMethod.DELETE,
             null,
             String.class
@@ -96,14 +99,5 @@ public class CategoryStepDefinitions {
             context.getResponse().getBody(), new TypeReference<>() {}
         );
         assertThat(body).noneMatch(c -> expectedName.equals(c.get("name")));
-    }
-
-    private Long extractId(String body) {
-        try {
-            Map<String, Object> map = objectMapper.readValue(body, new TypeReference<>() {});
-            return ((Number) map.get("id")).longValue();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 }

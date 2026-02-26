@@ -7,11 +7,13 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import gift.auth.JwtProvider;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -26,25 +28,25 @@ public class WishStepDefinitions {
     @Autowired
     private AcceptanceTestContext context;
 
-    private final Map<String, Long> wishIds = new HashMap<>();
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
-
+    @Autowired
+    private JwtProvider jwtProvider;
 
     @Given("상품 {string}이 위시리스트에 등록되어 있고")
     public void 위시리스트에_등록되어_있고(String productName) {
-        Long productId = getProductId(productName);
-        var response = restTemplate.exchange(
-            "/api/wishes",
-            HttpMethod.POST,
-            new HttpEntity<>(Map.of("productId", productId), authHeaders()),
-            String.class
-        );
-        wishIds.put(productName, extractIdFromBody(response.getBody()));
+        Long memberId = getMemberIdFromToken();
+        Long productId = jdbcTemplate.queryForObject("SELECT id FROM product WHERE name = ?", Long.class, productName);
+        new SimpleJdbcInsert(jdbcTemplate)
+            .withTableName("wish")
+            .usingGeneratedKeyColumns("id")
+            .execute(Map.of("member_id", memberId, "product_id", productId));
     }
 
     @When("상품 {string}을 위시리스트에 추가를 요청하면")
     public void 위시리스트에_추가를_요청하면(String productName) {
-        Long productId = getProductId(productName);
+        Long productId = jdbcTemplate.queryForObject("SELECT id FROM product WHERE name = ?", Long.class, productName);
         var response = restTemplate.exchange(
             "/api/wishes",
             HttpMethod.POST,
@@ -52,7 +54,6 @@ public class WishStepDefinitions {
             String.class
         );
         context.setResponse(response);
-        wishIds.put(productName, extractIdFromBody(response.getBody()));
     }
 
     @When("위시리스트를 조회하면")
@@ -68,7 +69,10 @@ public class WishStepDefinitions {
 
     @When("위시리스트에서 {string}의 삭제를 요청하면")
     public void 위시리스트에서_삭제를_요청하면(String productName) {
-        Long wishId = wishIds.get(productName);
+        Long productId = jdbcTemplate.queryForObject("SELECT id FROM product WHERE name = ?", Long.class, productName);
+        Long wishId = jdbcTemplate.queryForObject(
+            "SELECT id FROM wish WHERE member_id = ? AND product_id = ?", Long.class, getMemberIdFromToken(), productId
+        );
         var response = restTemplate.exchange(
             "/api/wishes/" + wishId,
             HttpMethod.DELETE,
@@ -110,30 +114,8 @@ public class WishStepDefinitions {
         return headers;
     }
 
-    private Long getProductId(String productName) {
-        try {
-            var response = restTemplate.getForEntity("/api/products", String.class);
-            Map<String, Object> page = objectMapper.readValue(
-                response.getBody(), new TypeReference<>() {}
-            );
-            List<Map<String, Object>> content = (List<Map<String, Object>>) page.get("content");
-            for (Map<String, Object> p : content) {
-                if (productName.equals(p.get("name"))) {
-                    return ((Number) p.get("id")).longValue();
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        throw new IllegalStateException("상품을 찾을 수 없습니다: " + productName);
-    }
-
-    private Long extractIdFromBody(String body) {
-        try {
-            Map<String, Object> map = objectMapper.readValue(body, new TypeReference<>() {});
-            return ((Number) map.get("id")).longValue();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+    private Long getMemberIdFromToken() {
+        String email = jwtProvider.getEmail(context.getToken());
+        return jdbcTemplate.queryForObject("SELECT id FROM member WHERE email = ?", Long.class, email);
     }
 }

@@ -9,8 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,23 +26,21 @@ public class ProductStepDefinitions {
     @Autowired
     private AcceptanceTestContext context;
 
-    private final Map<String, Long> productIds = new HashMap<>();
-    private final Map<String, Long> categoryIdsByName = new HashMap<>();
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Given("상품 {string}, 가격 {int}, 이미지 {string}, 카테고리 {string}가 등록되어 있고")
     public void 상품이_등록되어_있고(String name, int price, String imageUrl, String categoryName) {
-        Long categoryId = getCategoryId(categoryName);
-        var response = restTemplate.postForEntity(
-            "/api/products",
-            Map.of("name", name, "price", price, "imageUrl", imageUrl, "categoryId", categoryId),
-            String.class
-        );
-        productIds.put(name, extractId(response.getBody()));
+        Long categoryId = jdbcTemplate.queryForObject("SELECT id FROM category WHERE name = ?", Long.class, categoryName);
+        new SimpleJdbcInsert(jdbcTemplate)
+            .withTableName("product")
+            .usingGeneratedKeyColumns("id")
+            .execute(Map.of("name", name, "price", price, "image_url", imageUrl, "category_id", categoryId));
     }
 
     @When("상품 {string}, 가격 {int}, 이미지 {string}, 카테고리 {string}로 생성을 요청하면")
     public void 상품_생성을_요청하면(String name, int price, String imageUrl, String categoryName) {
-        Long categoryId = getCategoryId(categoryName);
+        Long categoryId = jdbcTemplate.queryForObject("SELECT id FROM category WHERE name = ?", Long.class, categoryName);
         var response = restTemplate.postForEntity(
             "/api/products",
             Map.of("name", name, "price", price, "imageUrl", imageUrl, "categoryId", categoryId),
@@ -52,10 +51,8 @@ public class ProductStepDefinitions {
 
     @When("상품 {string}를 조회하면")
     public void 상품_단건_조회(String name) {
-        var response = restTemplate.getForEntity(
-            "/api/products/" + productIds.get(name),
-            String.class
-        );
+        Long id = jdbcTemplate.queryForObject("SELECT id FROM product WHERE name = ?", Long.class, name);
+        var response = restTemplate.getForEntity("/api/products/" + id, String.class);
         context.setResponse(response);
     }
 
@@ -67,8 +64,8 @@ public class ProductStepDefinitions {
 
     @When("상품 {string}의 이름을 {string}으로 수정을 요청하면")
     public void 상품_수정을_요청하면(String name, String newName) {
-        Long productId = productIds.get(name);
-        Long categoryId = getCategoryId("전자기기");
+        Long productId = jdbcTemplate.queryForObject("SELECT id FROM product WHERE name = ?", Long.class, name);
+        Long categoryId = jdbcTemplate.queryForObject("SELECT category_id FROM product WHERE name = ?", Long.class, name);
         var response = restTemplate.exchange(
             "/api/products/" + productId,
             HttpMethod.PUT,
@@ -80,8 +77,9 @@ public class ProductStepDefinitions {
 
     @When("상품 {string}의 삭제를 요청하면")
     public void 상품_삭제를_요청하면(String name) {
+        Long id = jdbcTemplate.queryForObject("SELECT id FROM product WHERE name = ?", Long.class, name);
         var response = restTemplate.exchange(
-            "/api/products/" + productIds.get(name),
+            "/api/products/" + id,
             HttpMethod.DELETE,
             null,
             String.class
@@ -113,37 +111,5 @@ public class ProductStepDefinitions {
         );
         List<Map<String, Object>> content = (List<Map<String, Object>>) page.get("content");
         assertThat(content).noneMatch(p -> expectedName.equals(p.get("name")));
-    }
-
-    private Long getCategoryId(String categoryName) {
-        Long cached = categoryIdsByName.get(categoryName);
-        if (cached != null) {
-            return cached;
-        }
-        try {
-            var response = restTemplate.getForEntity("/api/categories", String.class);
-            List<Map<String, Object>> categories = objectMapper.readValue(
-                response.getBody(), new TypeReference<>() {}
-            );
-            for (Map<String, Object> c : categories) {
-                if (categoryName.equals(c.get("name"))) {
-                    Long id = ((Number) c.get("id")).longValue();
-                    categoryIdsByName.put(categoryName, id);
-                    return id;
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        throw new IllegalStateException("카테고리를 찾을 수 없습니다: " + categoryName);
-    }
-
-    private Long extractId(String body) {
-        try {
-            Map<String, Object> map = objectMapper.readValue(body, new TypeReference<>() {});
-            return ((Number) map.get("id")).longValue();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 }

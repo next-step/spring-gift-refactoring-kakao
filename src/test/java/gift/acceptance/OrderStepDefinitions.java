@@ -2,6 +2,7 @@ package gift.acceptance;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import gift.auth.JwtProvider;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
@@ -11,7 +12,10 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -29,6 +33,9 @@ public class OrderStepDefinitions {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private JwtProvider jwtProvider;
+
     @Given("{string} 회원의 포인트가 {int}원이고")
     public void 포인트_설정(String email, int point) {
         jdbcTemplate.update("UPDATE member SET point = ? WHERE email = ?", point, email);
@@ -36,13 +43,19 @@ public class OrderStepDefinitions {
 
     @Given("옵션 {string}를 {int}개 주문이 등록되어 있고")
     public void 주문이_등록되어_있고(String optionName, int quantity) {
-        Long optionId = getOptionId(optionName);
-        restTemplate.exchange(
-            "/api/orders",
-            HttpMethod.POST,
-            new HttpEntity<>(Map.of("optionId", optionId, "quantity", quantity, "message", ""), authHeaders()),
-            String.class
-        );
+        Long optionId = jdbcTemplate.queryForObject("SELECT id FROM options WHERE name = ?", Long.class, optionName);
+        String email = jwtProvider.getEmail(context.getToken());
+        Long memberId = jdbcTemplate.queryForObject("SELECT id FROM member WHERE email = ?", Long.class, email);
+        Map<String, Object> params = new HashMap<>();
+        params.put("option_id", optionId);
+        params.put("member_id", memberId);
+        params.put("quantity", quantity);
+        params.put("message", "");
+        params.put("order_date_time", LocalDateTime.now());
+        new SimpleJdbcInsert(jdbcTemplate)
+            .withTableName("orders")
+            .usingGeneratedKeyColumns("id")
+            .execute(params);
     }
 
     @When("옵션 {string}를 {int}개, 메시지 {string}로 주문을 요청하면")
@@ -100,29 +113,6 @@ public class OrderStepDefinitions {
     }
 
     private Long getOptionId(String optionName) {
-        try {
-            var productsResponse = restTemplate.getForEntity("/api/products", String.class);
-            Map<String, Object> page = objectMapper.readValue(
-                productsResponse.getBody(), new TypeReference<>() {}
-            );
-            List<Map<String, Object>> products = (List<Map<String, Object>>) page.get("content");
-            for (Map<String, Object> product : products) {
-                Long productId = ((Number) product.get("id")).longValue();
-                var optionsResponse = restTemplate.getForEntity(
-                    "/api/products/" + productId + "/options", String.class
-                );
-                List<Map<String, Object>> options = objectMapper.readValue(
-                    optionsResponse.getBody(), new TypeReference<>() {}
-                );
-                for (Map<String, Object> option : options) {
-                    if (optionName.equals(option.get("name"))) {
-                        return ((Number) option.get("id")).longValue();
-                    }
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        throw new IllegalStateException("옵션을 찾을 수 없습니다: " + optionName);
+        return jdbcTemplate.queryForObject("SELECT id FROM options WHERE name = ?", Long.class, optionName);
     }
 }
