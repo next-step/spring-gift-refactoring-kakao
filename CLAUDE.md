@@ -27,9 +27,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 모든 프롬프트는 `docs/PROMPT.md` 파일 하나에 시간순으로 누적 기록한다.
 - 매번 새 문서를 생성하지 않고, 기존 파일에 append 한다.
 
+## 프로젝트 구조 관리
+
+- `docs/INITIAL_PROJECT_STRUCTURE.md` — 초기 프로젝트 구조. **절대 수정하지 않는다.**
+- `docs/CURRENT_PROJECT_STRUCTURE.md` — 현재 프로젝트 구조. 리팩터링으로 패키지/클래스/파일이 추가·수정·삭제되면 자동으로 반영한다.
+- 코드 변경 시 프로젝트 구조에 영향이 있으면(파일 생성/삭제/이동, 패키지 변경, 엔드포인트 변경 등) `docs/CURRENT_PROJECT_STRUCTURE.md`를 함께 업데이트한다.
+
 ## 참조 목록
 
 ```
 docs/
-├── 
+├── CURRENT_PROJECT_STRUCTURE.md
+├── INITIAL_PROJECT_STRUCTURE.md
+├── PROMPT.md
+├── TEST_PLAN.md
+└── TEST_STRATEGY.md
 ```
