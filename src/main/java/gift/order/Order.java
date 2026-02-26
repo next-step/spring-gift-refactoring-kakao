@@ -8,7 +8,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -21,14 +20,13 @@ public class Order {
     @ManyToOne
     @JoinColumn(name = "option_id")
     private Option option;
-    // primitive FK
+    // 엔티티 참조 없이 FK만 저장
     private Long memberId;
     private int quantity;
     private String message;
     private LocalDateTime orderDateTime;
 
-    protected Order() {
-    }
+    protected Order() {}
 
     public Order(Option option, Long memberId, int quantity, String message) {
         this.option = option;
