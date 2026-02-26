@@ -12,6 +12,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.simple.SimpleJdbcInsert;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class ProductStepDefinitions {
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private final Map<String, Long> productIds = new HashMap<>();
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -32,10 +34,11 @@ public class ProductStepDefinitions {
     @Given("상품 {string}, 가격 {int}, 이미지 {string}, 카테고리 {string}가 등록되어 있고")
     public void 상품이_등록되어_있고(String name, int price, String imageUrl, String categoryName) {
         Long categoryId = jdbcTemplate.queryForObject("SELECT id FROM category WHERE name = ?", Long.class, categoryName);
-        new SimpleJdbcInsert(jdbcTemplate)
+        Number id = new SimpleJdbcInsert(jdbcTemplate)
             .withTableName("product")
             .usingGeneratedKeyColumns("id")
-            .execute(Map.of("name", name, "price", price, "image_url", imageUrl, "category_id", categoryId));
+            .executeAndReturnKey(Map.of("name", name, "price", price, "image_url", imageUrl, "category_id", categoryId));
+        productIds.put(name, id.longValue());
     }
 
     @When("상품 {string}, 가격 {int}, 이미지 {string}, 카테고리 {string}로 생성을 요청하면")
@@ -51,7 +54,9 @@ public class ProductStepDefinitions {
 
     @When("상품 {string}를 조회하면")
     public void 상품_단건_조회(String name) {
-        Long id = jdbcTemplate.queryForObject("SELECT id FROM product WHERE name = ?", Long.class, name);
+        Long id = productIds.containsKey(name)
+            ? productIds.get(name)
+            : jdbcTemplate.queryForObject("SELECT id FROM product WHERE name = ?", Long.class, name);
         var response = restTemplate.getForEntity("/api/products/" + id, String.class);
         context.setResponse(response);
     }

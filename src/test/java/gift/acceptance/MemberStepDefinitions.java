@@ -58,7 +58,9 @@ public class MemberStepDefinitions {
             String.class
         );
         context.setResponse(response);
-        context.setToken(extractToken(response.getBody()));
+        if (response.getStatusCode().is2xxSuccessful()) {
+            context.setToken(extractToken(response.getBody()));
+        }
     }
 
     private String extractToken(String body) {

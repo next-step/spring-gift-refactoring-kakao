@@ -38,3 +38,25 @@ Feature: 상품 API
     Then 응답 코드는 204이다
     When 상품 목록을 조회하면
     Then 응답의 상품 목록에 "삭제용상품"이 포함되어 있지 않다
+
+  Scenario: 카카오가 포함된 상품명으로 생성
+    Given 카테고리 "전자기기", 색상 "#1E90FF", 이미지 "https://img.com/e.jpg"가 등록되어 있고
+    When 상품 "카카오프렌즈", 가격 15000, 이미지 "https://img.com/k.jpg", 카테고리 "전자기기"로 생성을 요청하면
+    Then 응답 코드는 400이다
+
+  Scenario: 15자 초과 상품명으로 생성
+    Given 카테고리 "전자기기", 색상 "#1E90FF", 이미지 "https://img.com/e.jpg"가 등록되어 있고
+    When 상품 "일이삼사오육칠팔구십일이삼사오육", 가격 1000, 이미지 "https://img.com/l.jpg", 카테고리 "전자기기"로 생성을 요청하면
+    Then 응답 코드는 400이다
+
+  Scenario: 허용되지 않는 특수문자가 포함된 상품명으로 생성
+    Given 카테고리 "전자기기", 색상 "#1E90FF", 이미지 "https://img.com/e.jpg"가 등록되어 있고
+    When 상품 "아이폰!@#", 가격 1000, 이미지 "https://img.com/s.jpg", 카테고리 "전자기기"로 생성을 요청하면
+    Then 응답 코드는 400이다
+
+  Scenario: 삭제한 상품 조회
+    Given 카테고리 "전자기기", 색상 "#1E90FF", 이미지 "https://img.com/e.jpg"가 등록되어 있고
+    And 상품 "삭제용상품2", 가격 10000, 이미지 "https://img.com/del2.jpg", 카테고리 "전자기기"가 등록되어 있고
+    When 상품 "삭제용상품2"의 삭제를 요청하면
+    And 상품 "삭제용상품2"를 조회하면
+    Then 응답 코드는 404이다
