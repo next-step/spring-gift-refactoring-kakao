@@ -1,0 +1,39 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: gift-refactoring-mysql
+    ports:
+      - "13306:3306"
+    environment:
+      MYSQL_DATABASE: gift
+      MYSQL_USER: gift
+      MYSQL_PASSWORD: gift
+      MYSQL_ROOT_PASSWORD: gift
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "gift", "-pgift"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gift-refactoring-app
+    ports:
+      - "28080:8080"
+    env_file: .env
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/gift
+      DB_USERNAME: gift
+      DB_PASSWORD: gift
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
