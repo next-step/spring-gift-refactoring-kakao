@@ -81,9 +81,9 @@ public class ProductStepDefinitions {
         assertThat(context.getStatusCode()).isGreaterThanOrEqualTo(400);
     }
 
-    @조건("상품이 등록되어 있다")
-    public void 상품이_등록되어_있다() {
-        Long productId = initializer.saveProduct(ProductFixture.기본상품(), context.getCategoryId());
+    @조건("{string} {int}원 상품이 해당 카테고리에 등록되어 있다")
+    public void 상품이_해당_카테고리에_등록되어_있다(String name, int price) {
+        Long productId = initializer.saveProduct(ProductFixture.상품(name, price), context.getCategoryId());
         context.setProductId(productId);
     }
 

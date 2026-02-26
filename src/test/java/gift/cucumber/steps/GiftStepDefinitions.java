@@ -10,7 +10,6 @@ import java.util.List;
 import gift.cucumber.ScenarioContext;
 import gift.fixture.MemberFixture;
 import gift.fixture.OptionFixture;
-import gift.fixture.ProductFixture;
 import gift.support.TestDataInitializer;
 import io.cucumber.java.ko.그러면;
 import io.cucumber.java.ko.그리고;
@@ -30,9 +29,9 @@ public class GiftStepDefinitions {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    @조건("회원이 등록되어 있다")
-    public void 회원이_등록되어_있다() {
-        var member = MemberFixture.주문회원();
+    @조건("포인트 {int}인 회원이 등록되어 있다")
+    public void 포인트_n인_회원이_등록되어_있다(int point) {
+        var member = MemberFixture.회원(point);
         Long memberId = initializer.saveMember(member);
         context.setMemberId(memberId);
 
@@ -55,13 +54,9 @@ public class GiftStepDefinitions {
         context.setToken(token);
     }
 
-    @조건("재고 {int}개인 옵션을 가진 상품이 등록되어 있다")
-    public void 재고_n개인_옵션을_가진_상품이_등록되어_있다(int quantity) {
-        Long productId = initializer.saveProduct(ProductFixture.기본상품(), context.getCategoryId());
-        context.setProductId(productId);
-
-        var option = OptionFixture.기본옵션(quantity);
-        Long optionId = initializer.saveOption(option, productId);
+    @조건("해당 상품에 {string} 옵션이 재고 {int}개로 등록되어 있다")
+    public void 해당_상품에_옵션이_재고_개로_등록되어_있다(String name, int quantity) {
+        Long optionId = initializer.saveOption(OptionFixture.옵션(name, quantity), context.getProductId());
         context.setOptionId(optionId);
     }
 

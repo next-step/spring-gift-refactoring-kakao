@@ -24,9 +24,9 @@ public class CategoryStepDefinitions {
     @Autowired
     private TestDataInitializer initializer;
 
-    @조건("카테고리가 등록되어 있다")
-    public void 카테고리가_등록되어_있다() {
-        Long categoryId = initializer.saveCategory(CategoryFixture.기본카테고리());
+    @조건("{string} 카테고리가 등록되어 있다")
+    public void 카테고리가_등록되어_있다(String name) {
+        Long categoryId = initializer.saveCategory(CategoryFixture.카테고리(name));
         context.setCategoryId(categoryId);
     }
 
