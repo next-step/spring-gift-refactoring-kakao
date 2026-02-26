@@ -24,34 +24,41 @@ public class ProductService {
     }
 
     public Optional<ProductResponse> getProduct(Long id) {
-        return productRepository.findById(id)
-            .map(ProductResponse::from);
+        Product product = productRepository.findById(id).orElse(null);
+        if (product == null) {
+            return Optional.empty();
+        }
+        return Optional.of(ProductResponse.from(product));
     }
 
     public Optional<ProductResponse> createProduct(ProductRequest request) {
         validateName(request.name());
 
-        return categoryRepository.findById(request.categoryId())
-            .map(category -> {
-                Product saved = productRepository.save(request.toEntity(category));
-                return ProductResponse.from(saved);
-            });
+        Category category = categoryRepository.findById(request.categoryId()).orElse(null);
+        if (category == null) {
+            return Optional.empty();
+        }
+
+        Product saved = productRepository.save(request.toEntity(category));
+        return Optional.of(ProductResponse.from(saved));
     }
 
     public Optional<ProductResponse> updateProduct(Long id, ProductRequest request) {
         validateName(request.name());
 
-        Optional<Category> categoryOpt = categoryRepository.findById(request.categoryId());
-        if (categoryOpt.isEmpty()) {
+        Category category = categoryRepository.findById(request.categoryId()).orElse(null);
+        if (category == null) {
             return Optional.empty();
         }
 
-        return productRepository.findById(id)
-            .map(product -> {
-                product.update(request.name(), request.price(), request.imageUrl(), categoryOpt.get());
-                Product saved = productRepository.save(product);
-                return ProductResponse.from(saved);
-            });
+        Product product = productRepository.findById(id).orElse(null);
+        if (product == null) {
+            return Optional.empty();
+        }
+
+        product.update(request.name(), request.price(), request.imageUrl(), category);
+        Product saved = productRepository.save(product);
+        return Optional.of(ProductResponse.from(saved));
     }
 
     public void deleteProduct(Long id) {
