@@ -25,19 +25,19 @@ public class KakaoLoginClient {
         params.add("client_secret", properties.clientSecret());
 
         return restClient.post()
-            .uri("https://kauth.kakao.com/oauth/token")
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .body(params)
-            .retrieve()
-            .body(KakaoTokenResponse.class);
+                .uri("https://kauth.kakao.com/oauth/token")
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .body(params)
+                .retrieve()
+                .body(KakaoTokenResponse.class);
     }
 
     public KakaoUserResponse requestUserInfo(String accessToken) {
         return restClient.get()
-            .uri("https://kapi.kakao.com/v2/user/me")
-            .header("Authorization", "Bearer " + accessToken)
-            .retrieve()
-            .body(KakaoUserResponse.class);
+                .uri("https://kapi.kakao.com/v2/user/me")
+                .header("Authorization", "Bearer " + accessToken)
+                .retrieve()
+                .body(KakaoUserResponse.class);
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)

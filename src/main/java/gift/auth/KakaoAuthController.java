@@ -32,16 +32,16 @@ public class KakaoAuthController {
     @GetMapping(path = "/login")
     public ResponseEntity<Void> login() {
         String kakaoAuthUrl = UriComponentsBuilder.fromUriString("https://kauth.kakao.com/oauth/authorize")
-            .queryParam("response_type", "code")
-            .queryParam("client_id", properties.clientId())
-            .queryParam("redirect_uri", properties.redirectUri())
-            .queryParam("scope", "account_email,talk_message")
-            .build()
-            .toUriString();
+                .queryParam("response_type", "code")
+                .queryParam("client_id", properties.clientId())
+                .queryParam("redirect_uri", properties.redirectUri())
+                .queryParam("scope", "account_email,talk_message")
+                .build()
+                .toUriString();
 
         return ResponseEntity.status(HttpStatus.FOUND)
-            .header(HttpHeaders.LOCATION, kakaoAuthUrl)
-            .build();
+                .header(HttpHeaders.LOCATION, kakaoAuthUrl)
+                .build();
     }
 
     @GetMapping(path = "/callback")
@@ -51,7 +51,7 @@ public class KakaoAuthController {
         String email = kakaoUser.email();
 
         Member member = memberRepository.findByEmail(email)
-            .orElseGet(() -> new Member(email));
+                .orElseGet(() -> new Member(email));
         member.updateKakaoAccessToken(kakaoToken.accessToken());
         memberRepository.save(member);
 

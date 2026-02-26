@@ -20,32 +20,32 @@ public class KakaoMessageClient {
         params.add("template_object", templateObject);
 
         restClient.post()
-            .uri("https://kapi.kakao.com/v2/api/talk/memo/default/send")
-            .header("Authorization", "Bearer " + accessToken)
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .body(params)
-            .retrieve()
-            .toBodilessEntity();
+                .uri("https://kapi.kakao.com/v2/api/talk/memo/default/send")
+                .header("Authorization", "Bearer " + accessToken)
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .body(params)
+                .retrieve()
+                .toBodilessEntity();
     }
 
     private String buildTemplate(Order order, Product product) {
         String totalPrice = String.format("%,d", product.getPrice() * order.getQuantity());
         String message = order.getMessage() != null && !order.getMessage().isBlank()
-            ? "\\n\\n💌 " + order.getMessage()
-            : "";
+                ? "\\n\\n💌 " + order.getMessage()
+                : "";
         return """
-            {
-                "object_type": "text",
-                "text": "🎁 선물이 도착했어요!\\n\\n%s (%s)\\n수량: %d개\\n금액: %s원%s",
-                "link": {},
-                "button_title": "선물 확인하기"
-            }
-            """.formatted(
-            product.getName(),
-            order.getOption().getName(),
-            order.getQuantity(),
-            totalPrice,
-            message
+                {
+                    "object_type": "text",
+                    "text": "🎁 선물이 도착했어요!\\n\\n%s (%s)\\n수량: %d개\\n금액: %s원%s",
+                    "link": {},
+                    "button_title": "선물 확인하기"
+                }
+                """.formatted(
+                product.getName(),
+                order.getOption().getName(),
+                order.getQuantity(),
+                totalPrice,
+                message
         );
     }
 }

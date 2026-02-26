@@ -11,12 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 
@@ -32,8 +27,8 @@ public class OrderController {
 
     @GetMapping
     public ResponseEntity<Page<OrderResponse>> getOrders(
-        @RequestHeader("Authorization") String authorization,
-        Pageable pageable
+            @RequestHeader("Authorization") String authorization,
+            Pageable pageable
     ) {
         // auth check
         Member member = authenticationResolver.extractMember(authorization);
@@ -50,8 +45,8 @@ public class OrderController {
      */
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(
-        @RequestHeader("Authorization") String authorization,
-        @Valid @RequestBody OrderRequest request
+            @RequestHeader("Authorization") String authorization,
+            @Valid @RequestBody OrderRequest request
     ) {
         // auth check
         Member member = authenticationResolver.extractMember(authorization);
@@ -82,7 +77,7 @@ public class OrderController {
         // best-effort kakao notification
         sendKakaoMessageIfPossible(member, saved, option);
         return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
-            .body(OrderResponse.from(saved));
+                .body(OrderResponse.from(saved));
     }
 
     private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {

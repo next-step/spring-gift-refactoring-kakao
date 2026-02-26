@@ -5,14 +5,7 @@ import gift.product.ProductRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
@@ -36,15 +29,15 @@ public class OptionController {
             return ResponseEntity.notFound().build();
         }
         List<OptionResponse> options = optionRepository.findByProductId(productId).stream()
-            .map(OptionResponse::from)
-            .collect(Collectors.toList());
+                .map(OptionResponse::from)
+                .collect(Collectors.toList());
         return ResponseEntity.ok(options);
     }
 
     @PostMapping
     public ResponseEntity<OptionResponse> createOption(
-        @PathVariable Long productId,
-        @Valid @RequestBody OptionRequest request
+            @PathVariable Long productId,
+            @Valid @RequestBody OptionRequest request
     ) {
         validateName(request.name());
 
@@ -60,13 +53,13 @@ public class OptionController {
         Option saved = optionRepository.save(new Option(product, request.name(), request.quantity()));
         URI location = URI.create("/api/products/" + productId + "/options/" + saved.getId());
         return ResponseEntity.created(location)
-            .body(OptionResponse.from(saved));
+                .body(OptionResponse.from(saved));
     }
 
     @DeleteMapping(path = "/{optionId}")
     public ResponseEntity<Void> deleteOption(
-        @PathVariable Long productId,
-        @PathVariable Long optionId
+            @PathVariable Long productId,
+            @PathVariable Long optionId
     ) {
         Product product = productRepository.findById(productId).orElse(null);
         if (product == null) {

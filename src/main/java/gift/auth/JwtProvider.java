@@ -14,8 +14,8 @@ public class JwtProvider {
     private final long expiration;
 
     public JwtProvider(
-        @Value("${jwt.secret}") String secret,
-        @Value("${jwt.expiration}") long expiration
+            @Value("${jwt.secret}") String secret,
+            @Value("${jwt.expiration}") long expiration
     ) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
         this.expiration = expiration;
@@ -29,11 +29,11 @@ public class JwtProvider {
      */
     public String getEmail(String token) {
         return Jwts.parser()
-            .verifyWith(key)
-            .build()
-            .parseSignedClaims(token)
-            .getPayload()
-            .getSubject();
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
     }
 
     /**
@@ -47,10 +47,10 @@ public class JwtProvider {
         Date expiryDate = new Date(now.getTime() + expiration);
 
         return Jwts.builder()
-            .subject(email)
-            .issuedAt(now)
-            .expiration(expiryDate)
-            .signWith(key)
-            .compact();
+                .subject(email)
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(key)
+                .compact();
     }
 }
