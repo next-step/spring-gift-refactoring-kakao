@@ -23,7 +23,7 @@
 - [x] `WishController` → `WishService` 추출
 - [x] `ProductController` → `ProductService` 추출
 - [x] `AdminProductController` → `ProductService` 재사용
-- [ ] `AdminMemberController` → `MemberService` 재사용 또는 별도 추출
+- [x] `AdminMemberController` → `MemberService` 재사용
 - [ ] `CategoryController` → `CategoryService` 추출 (단순 CRUD지만 일관성을 위해)
 
 ### 구현 전략
