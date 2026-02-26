@@ -77,7 +77,7 @@ public class WishController {
             .map(result -> switch (result) {
                 case SUCCESS -> ResponseEntity.noContent().<Void>build();
                 case NOT_FOUND -> ResponseEntity.notFound().<Void>build();
-                case FORBIDDEN -> ResponseEntity.status(403).<Void>build();
+                case FORBIDDEN -> ResponseEntity.status(HttpStatus.FORBIDDEN).<Void>build();
             })
             .orElse(ResponseEntity.notFound().build());
     }
