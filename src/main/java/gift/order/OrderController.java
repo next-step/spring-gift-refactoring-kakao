@@ -7,6 +7,7 @@ import gift.option.Option;
 import gift.option.OptionRepository;
 import gift.wish.WishRepository;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
@@ -28,22 +30,6 @@ public class OrderController {
     private final MemberRepository memberRepository;
     private final AuthenticationResolver authenticationResolver;
     private final KakaoMessageClient kakaoMessageClient;
-
-    public OrderController(
-        OrderRepository orderRepository,
-        OptionRepository optionRepository,
-        WishRepository wishRepository,
-        MemberRepository memberRepository,
-        AuthenticationResolver authenticationResolver,
-        KakaoMessageClient kakaoMessageClient
-    ) {
-        this.orderRepository = orderRepository;
-        this.optionRepository = optionRepository;
-        this.wishRepository = wishRepository;
-        this.memberRepository = memberRepository;
-        this.authenticationResolver = authenticationResolver;
-        this.kakaoMessageClient = kakaoMessageClient;
-    }
 
     @GetMapping
     public ResponseEntity<Page<OrderResponse>> getOrders(

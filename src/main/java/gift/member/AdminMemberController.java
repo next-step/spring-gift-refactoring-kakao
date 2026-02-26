@@ -1,6 +1,6 @@
 package gift.member;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,15 +15,11 @@ import org.springframework.web.bind.annotation.RequestParam;
  * @author brian.kim
  * @since 1.0
  */
+@RequiredArgsConstructor
 @Controller
 @RequestMapping("/admin/members")
 public class AdminMemberController {
     private final MemberRepository memberRepository;
-
-    @Autowired
-    public AdminMemberController(MemberRepository memberRepository) {
-        this.memberRepository = memberRepository;
-    }
 
     @GetMapping
     public String list(Model model) {

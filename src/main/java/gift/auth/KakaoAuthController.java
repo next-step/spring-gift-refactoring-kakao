@@ -2,6 +2,7 @@ package gift.auth;
 
 import gift.member.Member;
 import gift.member.MemberRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  * 2. /callback receives the authorization code, exchanges it for an access token,
  *    retrieves user info, auto-registers the member if new, and issues a service JWT
  */
+@RequiredArgsConstructor
 @RestController
 @RequestMapping(path = "/api/auth/kakao")
 public class KakaoAuthController {
@@ -24,18 +26,6 @@ public class KakaoAuthController {
     private final KakaoLoginClient kakaoLoginClient;
     private final MemberRepository memberRepository;
     private final JwtProvider jwtProvider;
-
-    public KakaoAuthController(
-        KakaoLoginProperties properties,
-        KakaoLoginClient kakaoLoginClient,
-        MemberRepository memberRepository,
-        JwtProvider jwtProvider
-    ) {
-        this.properties = properties;
-        this.kakaoLoginClient = kakaoLoginClient;
-        this.memberRepository = memberRepository;
-        this.jwtProvider = jwtProvider;
-    }
 
     @GetMapping(path = "/login")
     public ResponseEntity<Void> login() {

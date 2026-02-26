@@ -3,6 +3,7 @@ package gift.wish;
 import gift.auth.AuthenticationResolver;
 import gift.product.ProductRepository;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -17,22 +18,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/wishes")
 public class WishController {
     private final WishRepository wishRepository;
     private final ProductRepository productRepository;
     private final AuthenticationResolver authenticationResolver;
-
-    public WishController(
-        WishRepository wishRepository,
-        ProductRepository productRepository,
-        AuthenticationResolver authenticationResolver
-    ) {
-        this.wishRepository = wishRepository;
-        this.productRepository = productRepository;
-        this.authenticationResolver = authenticationResolver;
-    }
 
     @GetMapping
     public ResponseEntity<Page<WishResponse>> getWishes(

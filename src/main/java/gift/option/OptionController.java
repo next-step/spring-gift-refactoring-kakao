@@ -3,6 +3,7 @@ package gift.option;
 import gift.product.Product;
 import gift.product.ProductRepository;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -21,16 +22,12 @@ import java.util.stream.Collectors;
  * Each product must have at least one option at all times.
  * Option names are validated against allowed characters and length constraints.
  */
+@RequiredArgsConstructor
 @RestController
 @RequestMapping(path = "/api/products/{productId}/options")
 public class OptionController {
     private final OptionRepository optionRepository;
     private final ProductRepository productRepository;
-
-    public OptionController(OptionRepository optionRepository, ProductRepository productRepository) {
-        this.optionRepository = optionRepository;
-        this.productRepository = productRepository;
-    }
 
     @GetMapping
     public ResponseEntity<List<OptionResponse>> getOptions(@PathVariable Long productId) {

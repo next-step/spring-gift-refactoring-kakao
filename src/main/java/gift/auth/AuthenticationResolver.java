@@ -2,7 +2,7 @@ package gift.auth;
 
 import gift.member.Member;
 import gift.member.MemberRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
@@ -11,16 +11,11 @@ import org.springframework.stereotype.Component;
  * @author brian.kim
  * @since 1.0
  */
+@RequiredArgsConstructor
 @Component
 public class AuthenticationResolver {
     private final JwtProvider jwtProvider;
     private final MemberRepository memberRepository;
-
-    @Autowired
-    public AuthenticationResolver(JwtProvider jwtProvider, MemberRepository memberRepository) {
-        this.jwtProvider = jwtProvider;
-        this.memberRepository = memberRepository;
-    }
 
     public Member extractMember(String authorization) {
         try {
