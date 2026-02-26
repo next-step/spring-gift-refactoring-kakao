@@ -57,20 +57,20 @@ Controller에 있는 비즈니스 로직을 Service 계층으로 이동합니다
 
 #### Anti-pattern 수정 (`anti-pattern.md`)
 - [x] `orElse(null)` 후 null 체크 → Optional chain으로 변경
-- [ ] Exception Swallowing → 최소 로깅 추가
-- [ ] `ResponseEntity<?>` 와일드카드 → 구체 타입으로 변경
+- [x] Exception Swallowing → 최소 로깅 추가
+- [x] `ResponseEntity<?>` 와일드카드 → 서비스 계층 추출 시 해결됨
 - [x] 매직 넘버 HTTP 상태 코드 → `HttpStatus` 상수 사용
 
 #### 스타일 통일 (`style.md`)
 - [x] 에러 메시지 한국어 통일
 - [x] `@Autowired` 생략
-- [ ] `var` → 명시적 타입 선언
-- [ ] `.collect(Collectors.toList())` → `.toList()`
-- [ ] `path=` 속성 생략
+- [x] `var` → 명시적 타입 선언
+- [x] `.collect(Collectors.toList())` → 해당 패턴 없음
+- [x] `path=` 속성 생략
 
 #### 기타 코드 스멜 (`etc.md`)
-- [ ] 가변 컬렉션 노출 → 불변 뷰 반환
-- [ ] 과도한 접근 범위 → package-private 검토
+- [x] 가변 컬렉션 노출 → `Product.getOptions()` 삭제로 해결됨
+- [ ] 과도한 접근 범위 → package-private 검토 (낮은 우선순위)
 
 #### 미참조 코드 삭제 (`unreferenced.md`)
 - [x] `Order.getMemberId()` 삭제
@@ -114,9 +114,13 @@ Controller에 있는 비즈니스 로직을 Service 계층으로 이동합니다
   - 불필요한 `@Autowired` 제거 (Spring 4.3+ 단일 생성자 자동 주입)
   - 에러 메시지 한국어로 통일
   - 미참조 getter 메서드 삭제 (`Order.getMemberId()`, `Product.getOptions()`)
+  - Exception Swallowing에 최소 로깅 추가 (debug/warn 레벨)
+  - `var` → 명시적 타입 선언으로 변경
+  - `path=` 속성 생략으로 스타일 통일
 - **학습 내용**:
   - 에러 메시지 변경 시 해당 메시지를 검증하는 테스트도 함께 수정 필요
   - Optional chain 패턴은 orElse(null) + null 체크보다 의도가 명확함
+  - 코드 스멜 수정 시 일부 항목은 이전 단계에서 이미 해결된 경우가 있음
 
 ---
 
