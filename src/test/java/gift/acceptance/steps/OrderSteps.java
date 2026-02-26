@@ -1,7 +1,6 @@
 package gift.acceptance.steps;
 
 import gift.acceptance.ScenarioContext;
-import gift.member.MemberRepository;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.When;
 import io.restassured.RestAssured;
