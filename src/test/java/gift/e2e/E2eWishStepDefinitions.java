@@ -1,5 +1,7 @@
 package gift.e2e;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import gift.auth.JwtProvider;
 import gift.member.Member;
 import gift.member.MemberRepository;
@@ -8,11 +10,8 @@ import io.cucumber.java.ko.만일;
 import io.cucumber.java.ko.먼저;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class E2eWishStepDefinitions {
 
@@ -94,11 +93,7 @@ public class E2eWishStepDefinitions {
 
     @만일("인증 없이 위시리스트를 조회하면")
     public void 인증_없이_위시리스트를_조회하면() {
-        var response = RestAssured.given()
-                .when()
-                .get("/api/wishes")
-                .then()
-                .extract();
+        var response = RestAssured.given().when().get("/api/wishes").then().extract();
         context.setResponse(response);
     }
 

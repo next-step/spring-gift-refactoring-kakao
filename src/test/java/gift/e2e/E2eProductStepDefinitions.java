@@ -1,15 +1,14 @@
 package gift.e2e;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.cucumber.java.ko.그러면;
 import io.cucumber.java.ko.만일;
 import io.cucumber.java.ko.먼저;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class E2eProductStepDefinitions {
 
@@ -21,11 +20,14 @@ public class E2eProductStepDefinitions {
         var response = RestAssured.given()
                 .contentType(ContentType.JSON)
                 .body(Map.of(
-                        "name", productName,
-                        "price", price,
-                        "imageUrl", "http://example.com/image.jpg",
-                        "categoryId", context.getCategoryId(categoryName)
-                ))
+                        "name",
+                        productName,
+                        "price",
+                        price,
+                        "imageUrl",
+                        "http://example.com/image.jpg",
+                        "categoryId",
+                        context.getCategoryId(categoryName)))
                 .when()
                 .post("/api/products")
                 .then()
@@ -39,11 +41,14 @@ public class E2eProductStepDefinitions {
         var response = RestAssured.given()
                 .contentType(ContentType.JSON)
                 .body(Map.of(
-                        "name", productName,
-                        "price", 4500,
-                        "imageUrl", "http://example.com/image.jpg",
-                        "categoryId", context.getCategoryId(categoryName)
-                ))
+                        "name",
+                        productName,
+                        "price",
+                        4500,
+                        "imageUrl",
+                        "http://example.com/image.jpg",
+                        "categoryId",
+                        context.getCategoryId(categoryName)))
                 .when()
                 .post("/api/products")
                 .then()
@@ -57,11 +62,14 @@ public class E2eProductStepDefinitions {
         var response = RestAssured.given()
                 .contentType(ContentType.JSON)
                 .body(Map.of(
-                        "name", productName,
-                        "price", price,
-                        "imageUrl", "http://example.com/image.jpg",
-                        "categoryId", context.getCategoryId(categoryName)
-                ))
+                        "name",
+                        productName,
+                        "price",
+                        price,
+                        "imageUrl",
+                        "http://example.com/image.jpg",
+                        "categoryId",
+                        context.getCategoryId(categoryName)))
                 .when()
                 .post("/api/products")
                 .then()
@@ -74,11 +82,14 @@ public class E2eProductStepDefinitions {
         var response = RestAssured.given()
                 .contentType(ContentType.JSON)
                 .body(Map.of(
-                        "name", "아메리카노",
-                        "price", 4500,
-                        "imageUrl", "http://example.com/image.jpg",
-                        "categoryId", Long.MAX_VALUE
-                ))
+                        "name",
+                        "아메리카노",
+                        "price",
+                        4500,
+                        "imageUrl",
+                        "http://example.com/image.jpg",
+                        "categoryId",
+                        Long.MAX_VALUE))
                 .when()
                 .post("/api/products")
                 .then()
@@ -88,11 +99,7 @@ public class E2eProductStepDefinitions {
 
     @만일("상품 목록을 조회하면")
     public void 상품_목록을_조회하면() {
-        var response = RestAssured.given()
-                .when()
-                .get("/api/products")
-                .then()
-                .extract();
+        var response = RestAssured.given().when().get("/api/products").then().extract();
         context.setResponse(response);
     }
 
@@ -123,13 +130,16 @@ public class E2eProductStepDefinitions {
         var response = RestAssured.given()
                 .contentType(ContentType.JSON)
                 .body(Map.of(
-                        "name", newName,
-                        "price", price,
-                        "imageUrl", "http://example.com/updated.jpg",
-                        "categoryId", context.getResponse() != null
+                        "name",
+                        newName,
+                        "price",
+                        price,
+                        "imageUrl",
+                        "http://example.com/updated.jpg",
+                        "categoryId",
+                        context.getResponse() != null
                                 ? context.getResponse().jsonPath().getLong("categoryId")
-                                : context.getCategoryId("음료")
-                ))
+                                : context.getCategoryId("음료")))
                 .when()
                 .put("/api/products/" + productId)
                 .then()
@@ -174,8 +184,7 @@ public class E2eProductStepDefinitions {
         var response = context.getResponse();
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.jsonPath().getList("content.id")).doesNotContainNull();
-        assertThat(response.jsonPath().getList("content.name"))
-                .containsExactlyInAnyOrder(name1, name2);
+        assertThat(response.jsonPath().getList("content.name")).containsExactlyInAnyOrder(name1, name2);
     }
 
     @그러면("각 상품에 가격, 이미지, 카테고리 정보가 포함되어 있다")

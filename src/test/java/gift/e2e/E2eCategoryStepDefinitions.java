@@ -1,15 +1,14 @@
 package gift.e2e;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.cucumber.java.ko.그러면;
 import io.cucumber.java.ko.만일;
 import io.cucumber.java.ko.먼저;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class E2eCategoryStepDefinitions {
 
@@ -23,8 +22,7 @@ public class E2eCategoryStepDefinitions {
                 .body(Map.of(
                         "name", name,
                         "color", "#000000",
-                        "imageUrl", "http://example.com/category.jpg"
-                ))
+                        "imageUrl", "http://example.com/category.jpg"))
                 .when()
                 .post("/api/categories")
                 .then()
@@ -40,8 +38,7 @@ public class E2eCategoryStepDefinitions {
                 .body(Map.of(
                         "name", name,
                         "color", "#000000",
-                        "imageUrl", "http://example.com/category.jpg"
-                ))
+                        "imageUrl", "http://example.com/category.jpg"))
                 .when()
                 .post("/api/categories")
                 .then()
@@ -51,11 +48,7 @@ public class E2eCategoryStepDefinitions {
 
     @만일("카테고리 목록을 조회하면")
     public void 카테고리_목록을_조회하면() {
-        var response = RestAssured.given()
-                .when()
-                .get("/api/categories")
-                .then()
-                .extract();
+        var response = RestAssured.given().when().get("/api/categories").then().extract();
         context.setResponse(response);
     }
 
@@ -67,8 +60,7 @@ public class E2eCategoryStepDefinitions {
                 .body(Map.of(
                         "name", newName,
                         "color", "#FF0000",
-                        "imageUrl", "http://example.com/updated.jpg"
-                ))
+                        "imageUrl", "http://example.com/updated.jpg"))
                 .when()
                 .put("/api/categories/" + categoryId)
                 .then()
@@ -83,8 +75,7 @@ public class E2eCategoryStepDefinitions {
                 .body(Map.of(
                         "name", "수정카테고리",
                         "color", "#FF0000",
-                        "imageUrl", "http://example.com/updated.jpg"
-                ))
+                        "imageUrl", "http://example.com/updated.jpg"))
                 .when()
                 .put("/api/categories/" + Long.MAX_VALUE)
                 .then()
@@ -119,8 +110,7 @@ public class E2eCategoryStepDefinitions {
         var response = context.getResponse();
         assertThat(response.statusCode()).isEqualTo(200);
         assertThat(response.jsonPath().getList("id")).doesNotContainNull();
-        assertThat(response.jsonPath().getList("name"))
-                .containsExactlyInAnyOrder(name1, name2);
+        assertThat(response.jsonPath().getList("name")).containsExactlyInAnyOrder(name1, name2);
     }
 
     @그러면("카테고리가 조회되지 않는다")

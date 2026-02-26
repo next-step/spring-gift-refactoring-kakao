@@ -1,15 +1,14 @@
 package gift.e2e;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import io.cucumber.java.ko.그러면;
 import io.cucumber.java.ko.만일;
 import io.cucumber.java.ko.먼저;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class E2eMemberStepDefinitions {
 

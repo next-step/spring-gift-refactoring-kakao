@@ -7,5 +7,4 @@ import org.springframework.test.context.ActiveProfiles;
 @CucumberContextConfiguration
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @ActiveProfiles("e2e")
-public class E2eSpringConfiguration {
-}
+public class E2eSpringConfiguration {}

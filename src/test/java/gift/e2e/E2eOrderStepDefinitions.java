@@ -1,5 +1,7 @@
 package gift.e2e;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import gift.auth.JwtProvider;
 import gift.member.Member;
 import gift.member.MemberRepository;
@@ -11,11 +13,8 @@ import io.cucumber.java.ko.만일;
 import io.cucumber.java.ko.먼저;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class E2eOrderStepDefinitions {
 
@@ -58,8 +57,7 @@ public class E2eOrderStepDefinitions {
                 .body(Map.of(
                         "name", "음료",
                         "color", "#000000",
-                        "imageUrl", "http://example.com/category.jpg"
-                ))
+                        "imageUrl", "http://example.com/category.jpg"))
                 .when()
                 .post("/api/categories")
                 .then()
@@ -69,25 +67,31 @@ public class E2eOrderStepDefinitions {
         var productResponse = RestAssured.given()
                 .contentType(ContentType.JSON)
                 .body(Map.of(
-                        "name", "아메리카노",
-                        "price", 4500,
-                        "imageUrl", "http://example.com/image.jpg",
-                        "categoryId", categoryResponse.jsonPath().getLong("id")
-                ))
+                        "name",
+                        "아메리카노",
+                        "price",
+                        4500,
+                        "imageUrl",
+                        "http://example.com/image.jpg",
+                        "categoryId",
+                        categoryResponse.jsonPath().getLong("id")))
                 .when()
                 .post("/api/products")
                 .then()
                 .extract();
         assertThat(productResponse.statusCode()).isEqualTo(201);
 
-        var product = productRepository.findById(productResponse.jsonPath().getLong("id")).get();
+        var product = productRepository
+                .findById(productResponse.jsonPath().getLong("id"))
+                .get();
         var option = optionRepository.save(new Option(product, "ICE", quantity));
         context.setOptionId(option.getId());
     }
 
     @먼저("{string} 상품에 재고가 {int}개인 {string} 옵션이 존재한다")
     public void 상품에_옵션이_존재한다(String productName, int quantity, String optionName) {
-        var product = productRepository.findById(context.getProductId(productName)).get();
+        var product =
+                productRepository.findById(context.getProductId(productName)).get();
         var option = optionRepository.save(new Option(product, optionName, quantity));
         context.setOptionId(option.getId());
     }
@@ -97,11 +101,7 @@ public class E2eOrderStepDefinitions {
         var response = RestAssured.given()
                 .contentType(ContentType.JSON)
                 .header("Authorization", "Bearer " + context.getToken())
-                .body(Map.of(
-                        "optionId", context.getOptionId(),
-                        "quantity", quantity,
-                        "message", "주문합니다"
-                ))
+                .body(Map.of("optionId", context.getOptionId(), "quantity", quantity, "message", "주문합니다"))
                 .when()
                 .post("/api/orders")
                 .then()
@@ -114,11 +114,7 @@ public class E2eOrderStepDefinitions {
         var response = RestAssured.given()
                 .contentType(ContentType.JSON)
                 .header("Authorization", "Bearer " + context.getToken())
-                .body(Map.of(
-                        "optionId", context.getOptionId(),
-                        "quantity", quantity,
-                        "message", "주문합니다"
-                ))
+                .body(Map.of("optionId", context.getOptionId(), "quantity", quantity, "message", "주문합니다"))
                 .when()
                 .post("/api/orders")
                 .then()
@@ -131,11 +127,7 @@ public class E2eOrderStepDefinitions {
         var response = RestAssured.given()
                 .contentType(ContentType.JSON)
                 .header("Authorization", "Bearer " + context.getToken())
-                .body(Map.of(
-                        "optionId", Long.MAX_VALUE,
-                        "quantity", 1,
-                        "message", "주문합니다"
-                ))
+                .body(Map.of("optionId", Long.MAX_VALUE, "quantity", 1, "message", "주문합니다"))
                 .when()
                 .post("/api/orders")
                 .then()
@@ -147,11 +139,7 @@ public class E2eOrderStepDefinitions {
     public void 인증_없이_주문하면() {
         var response = RestAssured.given()
                 .contentType(ContentType.JSON)
-                .body(Map.of(
-                        "optionId", context.getOptionId(),
-                        "quantity", 1,
-                        "message", "주문합니다"
-                ))
+                .body(Map.of("optionId", context.getOptionId(), "quantity", 1, "message", "주문합니다"))
                 .when()
                 .post("/api/orders")
                 .then()
@@ -175,11 +163,7 @@ public class E2eOrderStepDefinitions {
         var response = RestAssured.given()
                 .contentType(ContentType.JSON)
                 .header("Authorization", "Bearer " + context.getOtherToken())
-                .body(Map.of(
-                        "optionId", context.getOptionId(),
-                        "quantity", quantity,
-                        "message", "주문합니다"
-                ))
+                .body(Map.of("optionId", context.getOptionId(), "quantity", quantity, "message", "주문합니다"))
                 .when()
                 .post("/api/orders")
                 .then()

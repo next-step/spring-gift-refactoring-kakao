@@ -3,6 +3,7 @@ package gift.wish;
 import gift.auth.AuthenticationResolver;
 import gift.product.ProductRepository;
 import jakarta.validation.Valid;
+import java.net.URI;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -15,8 +16,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.net.URI;
-
 @RestController
 @RequestMapping("/api/wishes")
 public class WishController {
@@ -25,10 +24,9 @@ public class WishController {
     private final AuthenticationResolver authenticationResolver;
 
     public WishController(
-        WishRepository wishRepository,
-        ProductRepository productRepository,
-        AuthenticationResolver authenticationResolver
-    ) {
+            WishRepository wishRepository,
+            ProductRepository productRepository,
+            AuthenticationResolver authenticationResolver) {
         this.wishRepository = wishRepository;
         this.productRepository = productRepository;
         this.authenticationResolver = authenticationResolver;
@@ -36,9 +34,7 @@ public class WishController {
 
     @GetMapping
     public ResponseEntity<Page<WishResponse>> getWishes(
-        @RequestHeader("Authorization") String authorization,
-        Pageable pageable
-    ) {
+            @RequestHeader("Authorization") String authorization, Pageable pageable) {
         // check auth
         var member = authenticationResolver.extractMember(authorization);
         if (member == null) {
@@ -50,9 +46,7 @@ public class WishController {
 
     @PostMapping
     public ResponseEntity<WishResponse> addWish(
-        @RequestHeader("Authorization") String authorization,
-        @Valid @RequestBody WishRequest request
-    ) {
+            @RequestHeader("Authorization") String authorization, @Valid @RequestBody WishRequest request) {
         // check auth
         var member = authenticationResolver.extractMember(authorization);
         if (member == null) {
@@ -66,21 +60,21 @@ public class WishController {
         }
 
         // check duplicate
-        var existing = wishRepository.findByMemberIdAndProductId(member.getId(), product.getId()).orElse(null);
+        var existing = wishRepository
+                .findByMemberIdAndProductId(member.getId(), product.getId())
+                .orElse(null);
         if (existing != null) {
             return ResponseEntity.ok(WishResponse.from(existing));
         }
 
         var saved = wishRepository.save(new Wish(member.getId(), product));
         return ResponseEntity.created(URI.create("/api/wishes/" + saved.getId()))
-            .body(WishResponse.from(saved));
+                .body(WishResponse.from(saved));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> removeWish(
-        @RequestHeader("Authorization") String authorization,
-        @PathVariable Long id
-    ) {
+            @RequestHeader("Authorization") String authorization, @PathVariable Long id) {
         // check auth
         var member = authenticationResolver.extractMember(authorization);
         if (member == null) {
