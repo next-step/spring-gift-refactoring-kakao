@@ -86,9 +86,9 @@ wildcard 는 사용하지 않는다. `ResponseEntity<Void>`, `ResponseEntity<Som
 
 ## 불필요한 코드를 제거한다.
 
-lombok getter
-
 ### 불필요한 목록과 그 근거를 정리한다.
+
+- entity 
 
 ### 차례로 없앤다.
 
