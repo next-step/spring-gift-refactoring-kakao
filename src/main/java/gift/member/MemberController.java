@@ -29,4 +29,9 @@ public class MemberController {
         TokenResponse response = memberService.login(request);
         return ResponseEntity.ok(response);
     }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
 }
