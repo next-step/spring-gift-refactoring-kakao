@@ -11,23 +11,27 @@ import gift.member.Member;
 import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
+import gift.wish.WishRepository;
 
 @Transactional
 @Service
 public class OrderService {
     private final OrderRepository orderRepository;
     private final OptionRepository optionRepository;
+	private final WishRepository wishRepository;
     private final MemberRepository memberRepository;
     private final KakaoMessageClient kakaoMessageClient;
 
     public OrderService(
         OrderRepository orderRepository,
         OptionRepository optionRepository,
+		WishRepository wishRepository,
         MemberRepository memberRepository,
         KakaoMessageClient kakaoMessageClient
     ) {
         this.orderRepository = orderRepository;
         this.optionRepository = optionRepository;
+		this.wishRepository = wishRepository;
         this.memberRepository = memberRepository;
         this.kakaoMessageClient = kakaoMessageClient;
     }
