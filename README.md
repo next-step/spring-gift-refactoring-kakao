@@ -16,7 +16,7 @@
 - [x] `OptionController`의 `import java.util.stream.Collectors` — `.toList()` 전환 후 제거 (1-4에서 완료)
 
 #### 3. 서비스 계층 추출 (컨트롤러별, 작동 변경 없음)
-- [ ] `OrderController` → `OrderService` 추출
+- [x] `OrderController` → `OrderService` 추출
 - [ ] `MemberController` → `MemberService` 추출
 - [ ] `KakaoAuthController` → `KakaoAuthService` 추출
 - [ ] `OptionController` → `OptionService` 추출

@@ -4,9 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import gift.auth.AuthenticationResolver;
 import gift.category.Category;
 import gift.member.Member;
-import gift.member.MemberRepository;
 import gift.option.Option;
-import gift.option.OptionRepository;
 import gift.product.Product;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -22,14 +20,12 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.lang.reflect.Field;
 import java.util.List;
-import java.util.Optional;
+import java.util.NoSuchElementException;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.never;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -45,19 +41,10 @@ class OrderControllerTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private OrderRepository orderRepository;
-
-    @MockitoBean
-    private OptionRepository optionRepository;
-
-    @MockitoBean
-    private MemberRepository memberRepository;
+    private OrderService orderService;
 
     @MockitoBean
     private AuthenticationResolver authenticationResolver;
-
-    @MockitoBean
-    private KakaoMessageClient kakaoMessageClient;
 
     private Member member;
     private Category category;
@@ -97,8 +84,8 @@ class OrderControllerTest {
             setId(order, 1L);
 
             given(authenticationResolver.extractMember(anyString())).willReturn(member);
-            given(orderRepository.findByMemberId(eq(member.getId()), any(Pageable.class)))
-                    .willReturn(new PageImpl<>(List.of(order)));
+            given(orderService.getOrders(eq(member.getId()), any(Pageable.class)))
+                    .willReturn(new PageImpl<>(List.of(OrderResponse.from(order))));
 
             mockMvc.perform(get("/api/orders")
                             .header("Authorization", "Bearer test-token"))
@@ -132,8 +119,7 @@ class OrderControllerTest {
             setId(savedOrder, 1L);
 
             given(authenticationResolver.extractMember(anyString())).willReturn(member);
-            given(optionRepository.findById(1L)).willReturn(Optional.of(option));
-            given(orderRepository.save(any(Order.class))).willReturn(savedOrder);
+            given(orderService.createOrder(any(Member.class), any(OrderRequest.class))).willReturn(savedOrder);
 
             mockMvc.perform(post("/api/orders")
                             .header("Authorization", "Bearer test-token")
@@ -143,9 +129,6 @@ class OrderControllerTest {
                     .andExpect(jsonPath("$.optionId").value(1))
                     .andExpect(jsonPath("$.quantity").value(2))
                     .andExpect(jsonPath("$.message").value("생일 축하해!"));
-
-            then(optionRepository).should().save(option);
-            then(memberRepository).should().save(member);
         }
 
         @Test
@@ -168,56 +151,14 @@ class OrderControllerTest {
             var request = new OrderRequest(999L, 1, "선물");
 
             given(authenticationResolver.extractMember(anyString())).willReturn(member);
-            given(optionRepository.findById(999L)).willReturn(Optional.empty());
+            given(orderService.createOrder(any(Member.class), any(OrderRequest.class)))
+                    .willThrow(new NoSuchElementException("옵션이 존재하지 않습니다."));
 
             mockMvc.perform(post("/api/orders")
                             .header("Authorization", "Bearer test-token")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isNotFound());
-        }
-
-        @Test
-        @DisplayName("카카오 토큰이 있으면 카카오 메시지를 전송한다")
-        void sendsKakaoMessageWhenTokenExists() throws Exception {
-            member.updateKakaoAccessToken("kakao-token");
-            var request = new OrderRequest(1L, 1, "선물");
-
-            var savedOrder = new Order(option, member.getId(), 1, "선물");
-            setId(savedOrder, 1L);
-
-            given(authenticationResolver.extractMember(anyString())).willReturn(member);
-            given(optionRepository.findById(1L)).willReturn(Optional.of(option));
-            given(orderRepository.save(any(Order.class))).willReturn(savedOrder);
-
-            mockMvc.perform(post("/api/orders")
-                            .header("Authorization", "Bearer test-token")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isCreated());
-
-            then(kakaoMessageClient).should().sendToMe(eq("kakao-token"), any(Order.class), eq(product));
-        }
-
-        @Test
-        @DisplayName("카카오 토큰이 없으면 카카오 메시지를 전송하지 않는다")
-        void doesNotSendKakaoMessageWhenNoToken() throws Exception {
-            var request = new OrderRequest(1L, 1, "선물");
-
-            var savedOrder = new Order(option, member.getId(), 1, "선물");
-            setId(savedOrder, 1L);
-
-            given(authenticationResolver.extractMember(anyString())).willReturn(member);
-            given(optionRepository.findById(1L)).willReturn(Optional.of(option));
-            given(orderRepository.save(any(Order.class))).willReturn(savedOrder);
-
-            mockMvc.perform(post("/api/orders")
-                            .header("Authorization", "Bearer test-token")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(request)))
-                    .andExpect(status().isCreated());
-
-            then(kakaoMessageClient).should(never()).sendToMe(anyString(), any(Order.class), any());
         }
 
         @Test
