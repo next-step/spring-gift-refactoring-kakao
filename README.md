@@ -36,10 +36,6 @@
 
 **총 75개 인수 테스트 통과**
 
----
-
-## 진행 예정 작업
-
 ### 3단계: 서비스 계층 추출
 
 Controller에 있는 비즈니스 로직을 Service 계층으로 이동합니다. 작동 변경 없이 순수하게 코드를 이동하는 구조 변경입니다.
@@ -70,11 +66,13 @@ Controller에 있는 비즈니스 로직을 Service 계층으로 이동합니다
 
 #### 기타 코드 스멜 (`etc.md`)
 - [x] 가변 컬렉션 노출 → `Product.getOptions()` 삭제로 해결됨
-- [ ] 과도한 접근 범위 → package-private 검토 (낮은 우선순위)
+- [x] 과도한 접근 범위 → package-private으로 변경
 
 #### 미참조 코드 삭제 (`unreferenced.md`)
 - [x] `Order.getMemberId()` 삭제
 - [x] `Product.getOptions()` 삭제
+
+**리팩토링 완료! 모든 75개 테스트 통과**
 
 ---
 
@@ -117,6 +115,7 @@ Controller에 있는 비즈니스 로직을 Service 계층으로 이동합니다
   - Exception Swallowing에 최소 로깅 추가 (debug/warn 레벨)
   - `var` → 명시적 타입 선언으로 변경
   - `path=` 속성 생략으로 스타일 통일
+  - 패키지 내부 클래스를 package-private으로 변경 (캡슐화 강화)
 - **학습 내용**:
   - 에러 메시지 변경 시 해당 메시지를 검증하는 테스트도 함께 수정 필요
   - Optional chain 패턴은 orElse(null) + null 체크보다 의도가 명확함
