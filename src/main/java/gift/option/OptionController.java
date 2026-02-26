@@ -17,8 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /*
- * Each product must have at least one option at all times.
- * Option names are validated against allowed characters and length constraints.
+ * 각 상품은 항상 최소 1개의 옵션을 가져야 한다.
+ * 옵션 이름은 허용 문자 및 길이 제약 조건에 따라 검증된다.
  */
 @RestController
 @RequestMapping("/api/products/{productId}/options")
