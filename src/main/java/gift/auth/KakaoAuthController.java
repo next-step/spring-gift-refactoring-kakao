@@ -9,9 +9,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import gift.member.Member;
-import gift.member.MemberRepository;
-
 /*
  * Handles the Kakao OAuth2 login flow.
  * 1. /login redirects the user to Kakao's authorization page
@@ -22,20 +19,14 @@ import gift.member.MemberRepository;
 @RequestMapping(path = "/api/auth/kakao")
 public class KakaoAuthController {
     private final KakaoLoginProperties properties;
-    private final KakaoLoginClient kakaoLoginClient;
-    private final MemberRepository memberRepository;
-    private final JwtProvider jwtProvider;
+    private final KakaoAuthService kakaoAuthService;
 
     public KakaoAuthController(
         KakaoLoginProperties properties,
-        KakaoLoginClient kakaoLoginClient,
-        MemberRepository memberRepository,
-        JwtProvider jwtProvider
+        KakaoAuthService kakaoAuthService
     ) {
         this.properties = properties;
-        this.kakaoLoginClient = kakaoLoginClient;
-        this.memberRepository = memberRepository;
-        this.jwtProvider = jwtProvider;
+        this.kakaoAuthService = kakaoAuthService;
     }
 
     @GetMapping(path = "/login")
@@ -55,16 +46,7 @@ public class KakaoAuthController {
 
     @GetMapping(path = "/callback")
     public ResponseEntity<TokenResponse> callback(@RequestParam("code") String code) {
-        KakaoLoginClient.KakaoTokenResponse kakaoToken = kakaoLoginClient.requestAccessToken(code);
-        KakaoLoginClient.KakaoUserResponse kakaoUser = kakaoLoginClient.requestUserInfo(kakaoToken.accessToken());
-        String email = kakaoUser.email();
-
-        Member member = memberRepository.findByEmail(email)
-            .orElseGet(() -> new Member(email));
-        member.updateKakaoAccessToken(kakaoToken.accessToken());
-        memberRepository.save(member);
-
-        String token = jwtProvider.createToken(member.getEmail());
-        return ResponseEntity.ok(new TokenResponse(token));
+        TokenResponse token = kakaoAuthService.processCallback(code);
+        return ResponseEntity.ok(token);
     }
 }
