@@ -18,7 +18,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  *    retrieves user info, auto-registers the member if new, and issues a service JWT
  */
 @RestController
-@RequestMapping(path = "/api/auth/kakao")
+@RequestMapping("/api/auth/kakao")
 public class KakaoAuthController {
     private final KakaoLoginProperties properties;
     private final KakaoLoginClient kakaoLoginClient;
@@ -36,7 +36,7 @@ public class KakaoAuthController {
         this.jwtProvider = jwtProvider;
     }
 
-    @GetMapping(path = "/login")
+    @GetMapping("/login")
     public ResponseEntity<Void> login() {
         final String kakaoAuthUrl = UriComponentsBuilder.fromUriString("https://kauth.kakao.com/oauth/authorize")
                 .queryParam("response_type", "code")
@@ -51,7 +51,7 @@ public class KakaoAuthController {
                 .build();
     }
 
-    @GetMapping(path = "/callback")
+    @GetMapping("/callback")
     public ResponseEntity<TokenResponse> callback(@RequestParam("code") String code) {
         final KakaoLoginClient.KakaoTokenResponse kakaoToken = kakaoLoginClient.requestAccessToken(code);
         final KakaoLoginClient.KakaoUserResponse kakaoUser = kakaoLoginClient.requestUserInfo(kakaoToken.accessToken());
