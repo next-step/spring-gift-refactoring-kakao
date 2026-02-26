@@ -1,7 +1,6 @@
 package gift.auth;
 
-import gift.member.Member;
-import gift.member.MemberRepository;
+import gift.member.MemberService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,18 +21,13 @@ import org.springframework.web.util.UriComponentsBuilder;
 public class KakaoAuthController {
     private final KakaoLoginProperties properties;
     private final KakaoLoginClient kakaoLoginClient;
-    private final MemberRepository memberRepository;
-    private final JwtProvider jwtProvider;
+    private final MemberService memberService;
 
     public KakaoAuthController(
-            KakaoLoginProperties properties,
-            KakaoLoginClient kakaoLoginClient,
-            MemberRepository memberRepository,
-            JwtProvider jwtProvider) {
+            KakaoLoginProperties properties, KakaoLoginClient kakaoLoginClient, MemberService memberService) {
         this.properties = properties;
         this.kakaoLoginClient = kakaoLoginClient;
-        this.memberRepository = memberRepository;
-        this.jwtProvider = jwtProvider;
+        this.memberService = memberService;
     }
 
     @GetMapping(path = "/login")
@@ -55,13 +49,8 @@ public class KakaoAuthController {
     public ResponseEntity<TokenResponse> callback(@RequestParam("code") String code) {
         KakaoLoginClient.KakaoTokenResponse kakaoToken = kakaoLoginClient.requestAccessToken(code);
         KakaoLoginClient.KakaoUserResponse kakaoUser = kakaoLoginClient.requestUserInfo(kakaoToken.accessToken());
-        String email = kakaoUser.email();
 
-        Member member = memberRepository.findByEmail(email).orElseGet(() -> new Member(email));
-        member.updateKakaoAccessToken(kakaoToken.accessToken());
-        memberRepository.save(member);
-
-        String token = jwtProvider.createToken(member.getEmail());
+        String token = memberService.loginWithKakao(kakaoUser.email(), kakaoToken.accessToken());
         return ResponseEntity.ok(new TokenResponse(token));
     }
 }
