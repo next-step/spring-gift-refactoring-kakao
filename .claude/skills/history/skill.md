@@ -6,7 +6,7 @@ allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 
 프로젝트의 중요한 변경사항을 `./history/` 디렉토리에 마크다운 파일로 기록하고, `History.md`를 인덱스로 관리한다.
 
-## Activation
+## 활성화 조건
 
 사용자가 다음과 같은 요청을 할 때 이 스킬을 실행:
 - "히스토리 기록해줘" / "변경사항 기록해줘"
@@ -14,7 +14,7 @@ allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 - "작업 내용 정리해줘" / "오늘 작업 기록"
 - 큰 작업 단위가 완료된 후 "기록 남겨줘"
 
-## Instructions
+## 수행 방법
 
 ### 핵심 원칙
 
@@ -73,11 +73,11 @@ allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 프로젝트 루트에 `History.md` 파일을 관리한다. 이 파일은 전체 프로젝트 개선 히스토리의 개요이자, 개별 히스토리 파일로의 바로가기 모음이다.
 
 ```markdown
-# Project History
+# 프로젝트 히스토리
 
 프로젝트 변경 히스토리 인덱스.
 
-## Timeline
+## 타임라인
 
 ### yyyy-mm-dd
 

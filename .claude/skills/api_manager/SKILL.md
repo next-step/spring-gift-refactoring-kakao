@@ -1,11 +1,11 @@
-# API Manager Skill
+# API 관리자 스킬
 
-## Description
+## 설명
 
 프로젝트의 컨트롤러, DTO, 엔티티 파일들을 분석하여 `./api_receipt/` 디렉토리에 멋진 HTML API 명세서를 자동 생성하고 업데이트하는 스킬.
 SWAGGER나 Spring REST Docs 같은 외부 라이브러리 없이, 프로젝트 구조와 어노테이션을 직접 분석하여 명세서를 생성합니다. 생성된 명세서는 한국어로 작성되고, 다크 모드 기반의 모던한 디자인으로 제공됩니다.
 
-## Activation
+## 활성화 조건
 
 사용자가 다음과 같은 요청을 할 때 이 스킬을 실행:
 - "API 명세서 생성해줘" / "API 문서 만들어줘"
@@ -13,7 +13,7 @@ SWAGGER나 Spring REST Docs 같은 외부 라이브러리 없이, 프로젝트 �
 - "api_receipt 업데이트" / "API spec 생성"
 - 컨트롤러나 DTO를 수정한 후 "명세서 반영해줘"
 
-## Instructions
+## 수행 방법
 
 ### 분석 대상 파일
 

@@ -1,70 +1,69 @@
 ---
 name: commit
-description: Generate commit messages following AngularJS Commit Conventions
+description: AngularJS 커밋 컨벤션에 따라 커밋 메시지를 생성
 allowed-tools: Bash, Read, Grep, Glob
 ---
 
-Analyze the staged changes (`git diff --staged`) and generate a commit message following the AngularJS Commit Conventions below. Then create the commit.
+스테이징된 변경사항(`git diff --staged`)을 분석하여 아래 AngularJS 커밋 컨벤션에 맞는 커밋 메시지를 생성하고, 커밋을 수행한다.
 
-## Steps
+## 절차
 
-1. Run `git diff --staged` to see what changes are staged.
-2. If nothing is staged, inform the user and stop.
-3. Analyze the changes and generate a commit message following the format rules below.
-4. Show the generated commit message to the user and ask for confirmation before committing.
-5. Once confirmed, create the commit with the message.
+1. `git diff --staged`를 실행하여 스테이징된 변경사항을 확인한다.
+2. 스테이징된 내용이 없으면 사용자에게 알리고 중단한다.
+3. 변경사항을 분석하여 아래 형식 규칙에 따른 커밋 메시지를 생성한다.
+4. 생성된 커밋 메시지를 사용자에게 보여주고, 확인을 받은 후 커밋한다.
 
-## Commit Message Format
+## 커밋 메시지 형식
 
 ```
 <type>(<scope>): <subject>
-<BLANK LINE>
+<빈 줄>
 <body>
-<BLANK LINE>
+<빈 줄>
 <footer>
 ```
 
-- Any line cannot be longer than 100 characters.
-- Body and footer are optional. Only include them when they add meaningful context.
+- 모든 줄은 100자를 초과할 수 없다.
+- body와 footer는 선택사항이다. 의미 있는 맥락을 추가할 때만 포함한다.
 
-### Subject Line
+### 제목 줄
 
-#### Allowed `<type>`
-- **feat**: new feature
-- **fix**: bug fix
-- **docs**: documentation only
-- **style**: formatting, missing semi colons, etc. (no logic change)
-- **refactor**: code restructuring without feature or bug fix
-- **test**: adding or correcting tests
-- **chore**: maintenance tasks (build, CI, dependencies, etc.)
+#### 허용되는 `<type>`
+- **feat**: 새로운 기능
+- **fix**: 버그 수정
+- **docs**: 문서 변경만
+- **style**: 코드 포맷팅, 세미콜론 누락 등 (로직 변경 없음)
+- **refactor**: 기능 추가나 버그 수정 없이 코드 구조 변경
+- **test**: 테스트 추가 또는 수정
+- **chore**: 유지보수 작업 (빌드, CI, 의존성 등)
 
 #### `<scope>`
-- Specifies the place of the change (e.g. module, class, package name).
-- Use lowercase.
-- Examples: `product`, `order`, `auth`, `wishlist`, `build`
+- 변경이 일어난 위치를 나타낸다 (예: 모듈, 클래스, 패키지명).
+- 소문자를 사용한다.
+- 예시: `product`, `order`, `auth`, `wishlist`, `build`
 
-#### `<subject>` text
-- Use imperative, present tense: "change" not "changed" nor "changes"
-- Don't capitalize first letter
-- No dot (.) at the end
+#### `<subject>` 텍스트
+- 명령형, 현재 시제를 사용한다: "changed"나 "changes"가 아닌 "change"
+- 첫 글자를 대문자로 쓰지 않는다
+- 끝에 마침표(.)를 붙이지 않는다
 
-### Message Body (optional)
-- Use imperative, present tense.
-- Include motivation for the change and contrast with previous behavior.
-- Only include when the subject line alone is not sufficient to explain the change.
+### 메시지 본문 (선택사항)
+- 명령형, 현재 시제를 사용한다.
+- 변경 동기와 이전 동작과의 차이를 포함한다.
+- 제목 줄만으로 변경사항을 설명하기 충분하지 않을 때만 포함한다.
 
-### Message Footer (optional)
+### 메시지 푸터 (선택사항)
 
-#### Breaking changes
-Prefix with `BREAKING CHANGE:` and describe the change, justification, and migration notes.
+#### 호환성을 깨뜨리는 변경
+`BREAKING CHANGE:` 접두사를 붙이고, 변경 내용, 사유, 마이그레이션 방법을 기술한다.
 
-#### Referencing issues
-Use `Closes #<issue>` (e.g. `Closes #234` or `Closes #123, #245`).
+#### 이슈 참조
+`Closes #<이슈번호>` 형식을 사용한다 (예: `Closes #234` 또는 `Closes #123, #245`).
 
-## Rules
+## 규칙
 
-- Write the subject in **English**.
-- Keep the message concise and meaningful.
-- Do NOT include a body or footer if the change is straightforward and the subject alone is clear enough.
-- Choose the most accurate `<type>` based on the actual diff content.
-- Choose a `<scope>` that best represents the area of the codebase being changed.
+- 제목(subject)은 **영어**로 작성한다.
+- 메시지는 간결하고 의미 있게 작성한다.
+- 변경이 단순하고 제목만으로 충분히 설명되면 body나 footer를 포함하지 않는다.
+- 실제 diff 내용에 따라 가장 정확한 `<type>`을 선택한다.
+- 변경된 코드베이스 영역을 가장 잘 나타내는 `<scope>`를 선택한다.
