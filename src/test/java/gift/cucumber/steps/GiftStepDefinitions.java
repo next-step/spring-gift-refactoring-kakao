@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.util.List;
+
 import gift.cucumber.ScenarioContext;
 import gift.fixture.MemberFixture;
 import gift.fixture.OptionFixture;
@@ -136,6 +138,24 @@ public class GiftStepDefinitions {
     @그러면("주문이 실패한다")
     public void 주문이_실패한다() {
         assertThat(context.getStatusCode()).isGreaterThanOrEqualTo(400);
+    }
+
+    @조건("회원의 포인트가 {int}이다")
+    public void 회원의_포인트가_n이다(int point) {
+        jdbcTemplate.update("UPDATE member SET point = ? WHERE id = ?", point, context.getMemberId());
+    }
+
+    @그리고("주문 목록에 해당 주문이 포함되어 있다")
+    public void 주문_목록에_해당_주문이_포함되어_있다() {
+        var response = RestAssured.given().log().all()
+                .header("Authorization", "Bearer " + context.getToken())
+                .when()
+                .get("/api/orders")
+                .then().log().all()
+                .extract();
+
+        List<Long> optionIds = response.jsonPath().getList("content.optionId", Long.class);
+        assertThat(optionIds).contains(context.getOptionId());
     }
 
     @그리고("옵션 재고가 {int}개로 차감되어 있다")
