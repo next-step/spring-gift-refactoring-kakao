@@ -95,7 +95,7 @@ class MemberAcceptanceTest {
                 .post("/api/members/register")
                 .then()
                 .statusCode(400)
-                .body(equalTo("Email is already registered."));
+                .body(equalTo("이미 등록된 이메일입니다."));
         }
 
         @Test
@@ -191,7 +191,7 @@ class MemberAcceptanceTest {
                 .post("/api/members/login")
                 .then()
                 .statusCode(400)
-                .body(equalTo("Invalid email or password."));
+                .body(equalTo("이메일 또는 비밀번호가 올바르지 않습니다."));
         }
 
         @Test
@@ -213,7 +213,7 @@ class MemberAcceptanceTest {
                 .post("/api/members/login")
                 .then()
                 .statusCode(400)
-                .body(equalTo("Invalid email or password."));
+                .body(equalTo("이메일 또는 비밀번호가 올바르지 않습니다."));
         }
     }
 }
