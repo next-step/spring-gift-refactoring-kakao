@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spring Gift API 명세서</title>
+<style>
+  :root {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-tertiary: #21262d;
+    --bg-card: #1c2128;
+    --border: #30363d;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-muted: #6e7681;
+    --accent: #58a6ff;
+    --accent-hover: #79c0ff;
+    --get: #3fb950;
+    --get-bg: rgba(63,185,80,0.12);
+    --post: #58a6ff;
+    --post-bg: rgba(88,166,255,0.12);
+    --put: #d29922;
+    --put-bg: rgba(210,153,34,0.12);
+    --delete: #f85149;
+    --delete-bg: rgba(248,81,73,0.12);
+    --auth-badge: #bc8cff;
+    --auth-bg: rgba(188,140,255,0.12);
+    --sidebar-w: 280px;
+    --radius: 8px;
+    --transition: 0.2s ease;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', Helvetica, Arial, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    position: fixed; top: 0; left: 0;
+    width: var(--sidebar-w); height: 100vh;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    overflow-y: auto; z-index: 100;
+    display: flex; flex-direction: column;
+  }
+  .sidebar-header { padding: 24px 20px 16px; border-bottom: 1px solid var(--border); }
+  .sidebar-header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+  .sidebar-header .subtitle { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+  .sidebar-nav { flex: 1; padding: 12px 0; }
+  .nav-group { margin-bottom: 4px; }
+  .nav-group-title {
+    padding: 8px 20px 4px; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted);
+  }
+  .nav-link {
+    display: flex; align-items: center; gap: 8px; padding: 6px 20px;
+    font-size: 13px; color: var(--text-secondary); text-decoration: none;
+    cursor: pointer; transition: all var(--transition); border-left: 2px solid transparent;
+  }
+  .nav-link:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+  .nav-link.active { color: var(--accent); border-left-color: var(--accent); background: rgba(88,166,255,0.06); }
+  .nav-method {
+    font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 3px;
+    min-width: 36px; text-align: center; flex-shrink: 0;
+  }
+  .nav-method.get    { color: var(--get);    background: var(--get-bg); }
+  .nav-method.post   { color: var(--post);   background: var(--post-bg); }
+  .nav-method.put    { color: var(--put);    background: var(--put-bg); }
+  .nav-method.delete { color: var(--delete); background: var(--delete-bg); }
+  .nav-path { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sidebar-footer {
+    padding: 12px 20px; border-top: 1px solid var(--border);
+    font-size: 11px; color: var(--text-muted);
+  }
+
+  /* ── Main ── */
+  .main { margin-left: var(--sidebar-w); min-height: 100vh; }
+
+  /* ── Top Bar ── */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(13,17,23,0.85); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 32px; display: flex; align-items: center; gap: 12px;
+  }
+  .search-box { flex: 1; max-width: 360px; position: relative; }
+  .search-box input {
+    width: 100%; padding: 8px 12px 8px 36px;
+    background: var(--bg-tertiary); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--text-primary); font-size: 14px;
+    outline: none; transition: border var(--transition);
+  }
+  .search-box input::placeholder { color: var(--text-muted); }
+  .search-box input:focus { border-color: var(--accent); }
+  .search-box svg {
+    position: absolute; left: 10px; top: 50%;
+    transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-muted);
+  }
+
+  /* ── Base URL & Auth ── */
+  .global-controls {
+    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  }
+  .base-url-input, .global-token-input {
+    padding: 6px 10px; font-size: 12px;
+    font-family: 'SF Mono','Fira Code',Consolas,monospace;
+    background: var(--bg-tertiary); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--accent); outline: none;
+    transition: border var(--transition);
+  }
+  .base-url-input { width: 210px; }
+  .global-token-input { width: 180px; }
+  .base-url-input:focus, .global-token-input:focus { border-color: var(--accent); }
+  .global-label {
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--text-muted); white-space: nowrap;
+  }
+
+  .stat-pills { display: flex; gap: 8px; flex-shrink: 0; margin-left: auto; }
+  .stat-pill {
+    font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;
+    background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border);
+  }
+  .stat-pill .count { color: var(--text-primary); }
+
+  /* ── Content ── */
+  .content { padding: 32px; max-width: 960px; }
+
+  /* ── Section ── */
+  .section { margin-bottom: 48px; }
+  .section-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border);
+  }
+  .section-icon {
+    width: 32px; height: 32px; border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; background: var(--bg-tertiary);
+  }
+  .section-title { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+  .section-desc { font-size: 13px; color: var(--text-secondary); margin-left: auto; }
+
+  /* ── API Card ── */
+  .api-card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 12px;
+    overflow: hidden; transition: border-color var(--transition);
+  }
+  .api-card:hover { border-color: #484f58; }
+  .api-card.get    .card-header { border-left: 3px solid var(--get); }
+  .api-card.post   .card-header { border-left: 3px solid var(--post); }
+  .api-card.put    .card-header { border-left: 3px solid var(--put); }
+  .api-card.delete .card-header { border-left: 3px solid var(--delete); }
+  .card-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px; cursor: pointer; user-select: none;
+    transition: background var(--transition);
+  }
+  .card-header:hover { background: rgba(255,255,255,0.02); }
+  .method-badge {
+    font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 4px;
+    min-width: 56px; text-align: center; letter-spacing: 0.5px; flex-shrink: 0;
+  }
+  .method-badge.get    { color: var(--get);    background: var(--get-bg); }
+  .method-badge.post   { color: var(--post);   background: var(--post-bg); }
+  .method-badge.put    { color: var(--put);    background: var(--put-bg); }
+  .method-badge.delete { color: var(--delete); background: var(--delete-bg); }
+  .card-path {
+    font-size: 14px; font-weight: 600;
+    font-family: 'SF Mono','Fira Code','Cascadia Code',Consolas,monospace;
+  }
+  .card-desc { font-size: 13px; color: var(--text-secondary); margin-left: auto; white-space: nowrap; }
+  .auth-tag {
+    font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px;
+    color: var(--auth-badge); background: var(--auth-bg); white-space: nowrap; flex-shrink: 0;
+  }
+  .chevron {
+    width: 16px; height: 16px; color: var(--text-muted);
+    transition: transform var(--transition); flex-shrink: 0;
+  }
+  .api-card.open .chevron { transform: rotate(90deg); }
+  .card-body {
+    display: none; padding: 0 16px 16px; border-top: 1px solid var(--border);
+  }
+  .api-card.open .card-body { display: block; }
+
+  .detail-group { margin-top: 16px; }
+  .detail-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px;
+  }
+  .status-badge {
+    display: inline-block; font-size: 12px; font-weight: 600;
+    padding: 2px 8px; border-radius: 4px; margin-right: 6px; margin-bottom: 4px;
+  }
+  .status-2xx { color: var(--get); background: var(--get-bg); }
+  .status-3xx { color: var(--put); background: var(--put-bg); }
+  .status-4xx { color: var(--delete); background: var(--delete-bg); }
+
+  /* ── Schema Table ── */
+  .schema-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .schema-table th {
+    text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--text-muted); padding: 6px 12px;
+    background: var(--bg-tertiary); border-bottom: 1px solid var(--border);
+  }
+  .schema-table th:first-child { border-radius: 6px 0 0 0; }
+  .schema-table th:last-child  { border-radius: 0 6px 0 0; }
+  .schema-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .schema-table tr:last-child td { border-bottom: none; }
+  .field-name {
+    font-family: 'SF Mono','Fira Code',Consolas,monospace;
+    font-weight: 600; color: var(--accent); font-size: 12px;
+  }
+  .field-type {
+    font-family: 'SF Mono','Fira Code',Consolas,monospace;
+    color: var(--put); font-size: 12px;
+  }
+  .field-required {
+    font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 3px;
+    color: var(--delete); background: var(--delete-bg);
+  }
+  .field-optional {
+    font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 3px;
+    color: var(--text-muted); background: var(--bg-tertiary);
+  }
+  .field-constraint { font-size: 11px; color: var(--text-secondary); }
+
+  /* ── Param pills ── */
+  .param-pill {
+    display: inline-block; font-size: 12px; padding: 3px 10px; border-radius: 4px;
+    margin-right: 6px; margin-bottom: 4px;
+    font-family: 'SF Mono','Fira Code',Consolas,monospace;
+    background: var(--bg-tertiary); color: var(--text-secondary); border: 1px solid var(--border);
+  }
+  .param-pill .param-key { color: var(--accent); font-weight: 600; }
+  .param-pill .param-type { color: var(--text-muted); }
+
+  /* ── Try It Out ── */
+  .try-section {
+    margin-top: 20px; padding: 16px;
+    background: var(--bg-primary); border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .try-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+  }
+  .try-title {
+    font-size: 13px; font-weight: 700; color: var(--accent);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .try-btn {
+    padding: 6px 16px; font-size: 12px; font-weight: 700; border: none;
+    border-radius: var(--radius); cursor: pointer; transition: all var(--transition);
+  }
+  .try-btn-execute {
+    background: var(--accent); color: var(--bg-primary);
+  }
+  .try-btn-execute:hover { background: var(--accent-hover); }
+  .try-btn-execute:disabled {
+    opacity: 0.5; cursor: not-allowed;
+  }
+  .try-btn-clear {
+    background: var(--bg-tertiary); color: var(--text-secondary);
+    border: 1px solid var(--border); margin-left: 8px;
+  }
+  .try-btn-clear:hover { color: var(--text-primary); border-color: #484f58; }
+
+  .try-form { display: flex; flex-direction: column; gap: 12px; }
+  .try-field { display: flex; flex-direction: column; gap: 4px; }
+  .try-field-row { display: flex; align-items: center; gap: 8px; }
+  .try-field-label {
+    font-size: 11px; font-weight: 700; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .try-field-label .req {
+    color: var(--delete); font-size: 10px;
+  }
+  .try-input {
+    padding: 7px 10px; font-size: 13px;
+    font-family: 'SF Mono','Fira Code',Consolas,monospace;
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text-primary); outline: none;
+    transition: border var(--transition); width: 100%;
+  }
+  .try-input:focus { border-color: var(--accent); }
+  .try-input::placeholder { color: var(--text-muted); }
+  .try-textarea {
+    padding: 10px; font-size: 13px; min-height: 120px; resize: vertical;
+    font-family: 'SF Mono','Fira Code',Consolas,monospace;
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text-primary); outline: none;
+    transition: border var(--transition); width: 100%; line-height: 1.5;
+    tab-size: 2;
+  }
+  .try-textarea:focus { border-color: var(--accent); }
+
+  .try-url-preview {
+    font-size: 12px; padding: 8px 10px;
+    font-family: 'SF Mono','Fira Code',Consolas,monospace;
+    background: var(--bg-tertiary); border-radius: 6px;
+    color: var(--text-secondary); word-break: break-all;
+    border: 1px solid var(--border);
+  }
+  .try-url-preview .method-label { font-weight: 800; margin-right: 8px; }
+  .try-url-preview .method-label.get { color: var(--get); }
+  .try-url-preview .method-label.post { color: var(--post); }
+  .try-url-preview .method-label.put { color: var(--put); }
+  .try-url-preview .method-label.delete { color: var(--delete); }
+
+  /* ── Response Viewer ── */
+  .response-viewer {
+    margin-top: 16px; display: none;
+  }
+  .response-viewer.visible { display: block; }
+  .response-header {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
+  }
+  .response-status {
+    font-size: 13px; font-weight: 800; padding: 3px 10px;
+    border-radius: 4px;
+    font-family: 'SF Mono','Fira Code',Consolas,monospace;
+  }
+  .response-status.s2xx { color: var(--get); background: var(--get-bg); }
+  .response-status.s3xx { color: var(--put); background: var(--put-bg); }
+  .response-status.s4xx { color: var(--delete); background: var(--delete-bg); }
+  .response-status.s5xx { color: #f0883e; background: rgba(240,136,62,0.12); }
+  .response-status.error { color: var(--delete); background: var(--delete-bg); }
+  .response-time {
+    font-size: 11px; color: var(--text-muted);
+    font-family: 'SF Mono','Fira Code',Consolas,monospace;
+  }
+
+  .response-tabs {
+    display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 0;
+  }
+  .response-tab {
+    padding: 6px 14px; font-size: 12px; font-weight: 600;
+    color: var(--text-muted); cursor: pointer; border-bottom: 2px solid transparent;
+    transition: all var(--transition); background: none; border-top: none;
+    border-left: none; border-right: none;
+  }
+  .response-tab:hover { color: var(--text-secondary); }
+  .response-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .response-tab-content { display: none; }
+  .response-tab-content.visible { display: block; }
+
+  .response-body {
+    padding: 12px; font-size: 12px; line-height: 1.6;
+    font-family: 'SF Mono','Fira Code',Consolas,monospace;
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    border-radius: 0 0 6px 6px; color: var(--text-primary);
+    white-space: pre-wrap; word-break: break-word;
+    max-height: 400px; overflow-y: auto;
+  }
+  .response-headers-list {
+    padding: 12px; font-size: 12px; line-height: 1.8;
+    font-family: 'SF Mono','Fira Code',Consolas,monospace;
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    border-radius: 0 0 6px 6px; max-height: 300px; overflow-y: auto;
+  }
+  .response-headers-list .hdr-key { color: var(--accent); font-weight: 600; }
+  .response-headers-list .hdr-val { color: var(--text-secondary); }
+
+  /* JSON Syntax */
+  .json-key { color: var(--accent); }
+  .json-str { color: var(--get); }
+  .json-num { color: var(--put); }
+  .json-bool { color: var(--auth-badge); }
+  .json-null { color: var(--text-muted); }
+
+  /* ── Loading Spinner ── */
+  .spinner {
+    display: inline-block; width: 14px; height: 14px;
+    border: 2px solid var(--border); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin 0.6s linear infinite;
+    vertical-align: middle; margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── No Results ── */
+  .no-results {
+    text-align: center; padding: 64px 0;
+    color: var(--text-muted); font-size: 15px; display: none;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); transition: transform 0.3s ease; }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-left: 0; }
+    .topbar { padding: 12px 16px; flex-wrap: wrap; }
+    .content { padding: 20px 16px; }
+    .menu-toggle { display: flex; }
+    .card-desc { display: none; }
+    .stat-pills { display: none; }
+    .global-controls { display: none; }
+  }
+  @media (min-width: 769px) { .menu-toggle { display: none; } }
+
+  .menu-toggle {
+    width: 36px; height: 36px; background: var(--bg-tertiary);
+    border: 1px solid var(--border); border-radius: var(--radius);
+    color: var(--text-primary); cursor: pointer;
+    align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5); z-index: 99;
+  }
+  .overlay.show { display: block; }
+
+  .scroll-top {
+    position: fixed; bottom: 24px; right: 24px;
+    width: 40px; height: 40px; background: var(--accent);
+    color: var(--bg-primary); border: none; border-radius: 50%;
+    cursor: pointer; display: none; align-items: center; justify-content: center;
+    z-index: 50; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .scroll-top.visible { display: flex; }
+</style>
+</head>
+<body>
+
+<div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <h1>Spring Gift API</h1>
+    <div class="subtitle">REST API 명세서 v1.0</div>
+  </div>
+  <nav class="sidebar-nav" id="sidebarNav"></nav>
+  <div class="sidebar-footer">
+    마지막 업데이트: 2026-02-26<br>
+    총 <strong id="totalCount">0</strong>개의 엔드포인트
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <button class="menu-toggle" onclick="toggleSidebar()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+    </button>
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="searchInput" placeholder="엔드포인트 검색..." oninput="filterAPIs()">
+    </div>
+    <div class="global-controls">
+      <span class="global-label">Base URL</span>
+      <input type="text" class="base-url-input" id="baseUrl" value="http://localhost:8080" placeholder="http://localhost:8080">
+      <span class="global-label">Token</span>
+      <input type="text" class="global-token-input" id="globalToken" placeholder="JWT 토큰 입력...">
+    </div>
+    <div class="stat-pills">
+      <div class="stat-pill"><span class="count" style="color:var(--get)">GET</span> <span id="getCount">0</span></div>
+      <div class="stat-pill"><span class="count" style="color:var(--post)">POST</span> <span id="postCount">0</span></div>
+      <div class="stat-pill"><span class="count" style="color:var(--put)">PUT</span> <span id="putCount">0</span></div>
+      <div class="stat-pill"><span class="count" style="color:var(--delete)">DEL</span> <span id="deleteCount">0</span></div>
+    </div>
+  </div>
+  <div class="content" id="content"></div>
+  <div class="no-results" id="noResults">검색 결과가 없습니다.</div>
+</div>
+
+<button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m18 15-6-6-6 6"/></svg>
+</button>
+
+<script>
+// ══════════════════════════════════════════════
+// API DATA
+// ══════════════════════════════════════════════
+const API_DATA = [
+  {
+    group: "인증 (Auth)", icon: "🔐", desc: "카카오 OAuth2 및 JWT 인증", id: "auth", isAdmin: false,
+    endpoints: [
+      {
+        method: "GET", path: "/api/auth/kakao/login",
+        desc: "카카오 로그인 페이지로 리다이렉트", auth: false,
+        statuses: ["302 Found"], params: [], request: null, response: null,
+        notes: "카카오 OAuth2 인증 페이지로 302 리다이렉트. scope: account_email, talk_message"
+      },
+      {
+        method: "GET", path: "/api/auth/kakao/callback",
+        desc: "카카오 OAuth2 콜백 처리", auth: false,
+        statuses: ["200 OK"],
+        params: [{ name: "code", type: "String", in: "query", required: true, desc: "카카오 인증 코드" }],
+        request: null,
+        response: { name: "TokenResponse", fields: [
+          { name: "token", type: "String", required: true, constraint: "JWT 액세스 토큰" }
+        ]},
+        notes: "인증 코드 → 카카오 토큰 발급 → 사용자 정보 조회 → 자동 회원가입 → 서비스 JWT 발급"
+      }
+    ]
+  },
+  {
+    group: "회원 (Member)", icon: "👤", desc: "회원 가입, 로그인", id: "member", isAdmin: false,
+    endpoints: [
+      {
+        method: "POST", path: "/api/members/register",
+        desc: "회원 가입", auth: false,
+        statuses: ["201 Created", "400 Bad Request"], params: [],
+        request: { name: "MemberRequest", fields: [
+          { name: "email", type: "String", required: true, constraint: "@NotBlank @Email" },
+          { name: "password", type: "String", required: true, constraint: "@NotBlank" }
+        ]},
+        response: { name: "TokenResponse", fields: [
+          { name: "token", type: "String", required: true, constraint: "JWT 액세스 토큰" }
+        ]},
+        notes: "이미 등록된 이메일이면 400 반환"
+      },
+      {
+        method: "POST", path: "/api/members/login",
+        desc: "로그인", auth: false,
+        statuses: ["200 OK", "400 Bad Request"], params: [],
+        request: { name: "MemberRequest", fields: [
+          { name: "email", type: "String", required: true, constraint: "@NotBlank @Email" },
+          { name: "password", type: "String", required: true, constraint: "@NotBlank" }
+        ]},
+        response: { name: "TokenResponse", fields: [
+          { name: "token", type: "String", required: true, constraint: "JWT 액세스 토큰" }
+        ]},
+        notes: "이메일 또는 비밀번호 불일치 시 400 반환"
+      }
+    ]
+  },
+  {
+    group: "카테고리 (Category)", icon: "📂", desc: "카테고리 CRUD", id: "category", isAdmin: false,
+    endpoints: [
+      {
+        method: "GET", path: "/api/categories", desc: "전체 카테고리 조회", auth: false,
+        statuses: ["200 OK"], params: [], request: null,
+        response: { name: "List<CategoryResponse>", fields: [
+          { name: "id", type: "Long", required: true, constraint: "" },
+          { name: "name", type: "String", required: true, constraint: "" },
+          { name: "color", type: "String", required: true, constraint: "" },
+          { name: "imageUrl", type: "String", required: true, constraint: "" },
+          { name: "description", type: "String", required: false, constraint: "" }
+        ]}, notes: null
+      },
+      {
+        method: "POST", path: "/api/categories", desc: "카테고리 생성", auth: false,
+        statuses: ["201 Created"], params: [],
+        request: { name: "CategoryRequest", fields: [
+          { name: "name", type: "String", required: true, constraint: "@NotBlank" },
+          { name: "color", type: "String", required: true, constraint: "@NotBlank" },
+          { name: "imageUrl", type: "String", required: true, constraint: "@NotBlank" },
+          { name: "description", type: "String", required: false, constraint: "선택 사항" }
+        ]},
+        response: { name: "CategoryResponse", fields: [
+          { name: "id", type: "Long", required: true, constraint: "" },
+          { name: "name", type: "String", required: true, constraint: "" },
+          { name: "color", type: "String", required: true, constraint: "" },
+          { name: "imageUrl", type: "String", required: true, constraint: "" },
+          { name: "description", type: "String", required: false, constraint: "" }
+        ]}, notes: null
+      },
+      {
+        method: "PUT", path: "/api/categories/{id}", desc: "카테고리 수정", auth: false,
+        statuses: ["200 OK", "404 Not Found"],
+        params: [{ name: "id", type: "Long", in: "path", required: true, desc: "카테고리 ID" }],
+        request: { name: "CategoryRequest", fields: [
+          { name: "name", type: "String", required: true, constraint: "@NotBlank" },
+          { name: "color", type: "String", required: true, constraint: "@NotBlank" },
+          { name: "imageUrl", type: "String", required: true, constraint: "@NotBlank" },
+          { name: "description", type: "String", required: false, constraint: "선택 사항" }
+        ]},
+        response: { name: "CategoryResponse", fields: [
+          { name: "id", type: "Long", required: true, constraint: "" },
+          { name: "name", type: "String", required: true, constraint: "" },
+          { name: "color", type: "String", required: true, constraint: "" },
+          { name: "imageUrl", type: "String", required: true, constraint: "" },
+          { name: "description", type: "String", required: false, constraint: "" }
+        ]}, notes: null
+      },
+      {
+        method: "DELETE", path: "/api/categories/{id}", desc: "카테고리 삭제", auth: false,
+        statuses: ["204 No Content"],
+        params: [{ name: "id", type: "Long", in: "path", required: true, desc: "카테고리 ID" }],
+        request: null, response: null, notes: null
+      }
+    ]
+  },
+  {
+    group: "상품 (Product)", icon: "🎁", desc: "상품 CRUD (페이지네이션 지원)", id: "product", isAdmin: false,
+    endpoints: [
+      {
+        method: "GET", path: "/api/products", desc: "전체 상품 조회 (페이지네이션)", auth: false,
+        statuses: ["200 OK"],
+        params: [
+          { name: "page", type: "int", in: "query", required: false, desc: "페이지 번호 (0부터)" },
+          { name: "size", type: "int", in: "query", required: false, desc: "페이지 크기 (기본 20)" },
+          { name: "sort", type: "String", in: "query", required: false, desc: "정렬 (예: name,asc)" }
+        ],
+        request: null,
+        response: { name: "Page<ProductResponse>", fields: [
+          { name: "id", type: "Long", required: true, constraint: "" },
+          { name: "name", type: "String", required: true, constraint: "" },
+          { name: "price", type: "int", required: true, constraint: "" },
+          { name: "imageUrl", type: "String", required: true, constraint: "" },
+          { name: "categoryId", type: "Long", required: true, constraint: "" }
+        ]}, notes: "Spring Data Pageable 기반 페이지네이션"
+      },
+      {
+        method: "GET", path: "/api/products/{id}", desc: "상품 단건 조회", auth: false,
+        statuses: ["200 OK", "404 Not Found"],
+        params: [{ name: "id", type: "Long", in: "path", required: true, desc: "상품 ID" }],
+        request: null,
+        response: { name: "ProductResponse", fields: [
+          { name: "id", type: "Long", required: true, constraint: "" },
+          { name: "name", type: "String", required: true, constraint: "" },
+          { name: "price", type: "int", required: true, constraint: "" },
+          { name: "imageUrl", type: "String", required: true, constraint: "" },
+          { name: "categoryId", type: "Long", required: true, constraint: "" }
+        ]}, notes: null
+      },
+      {
+        method: "POST", path: "/api/products", desc: "상품 생성", auth: false,
+        statuses: ["201 Created", "400 Bad Request", "404 Not Found"], params: [],
+        request: { name: "ProductRequest", fields: [
+          { name: "name", type: "String", required: true, constraint: "@NotBlank, 이름 규칙 검증" },
+          { name: "price", type: "int", required: true, constraint: "@Positive (양수)" },
+          { name: "imageUrl", type: "String", required: true, constraint: "@NotBlank" },
+          { name: "categoryId", type: "Long", required: true, constraint: "@NotNull" }
+        ]},
+        response: { name: "ProductResponse", fields: [
+          { name: "id", type: "Long", required: true, constraint: "" },
+          { name: "name", type: "String", required: true, constraint: "" },
+          { name: "price", type: "int", required: true, constraint: "" },
+          { name: "imageUrl", type: "String", required: true, constraint: "" },
+          { name: "categoryId", type: "Long", required: true, constraint: "" }
+        ]}, notes: "상품명 별도 유효성 검증 (ProductNameValidator)"
+      },
+      {
+        method: "PUT", path: "/api/products/{id}", desc: "상품 수정", auth: false,
+        statuses: ["200 OK", "400 Bad Request", "404 Not Found"],
+        params: [{ name: "id", type: "Long", in: "path", required: true, desc: "상품 ID" }],
+        request: { name: "ProductRequest", fields: [
+          { name: "name", type: "String", required: true, constraint: "@NotBlank, 이름 규칙 검증" },
+          { name: "price", type: "int", required: true, constraint: "@Positive (양수)" },
+          { name: "imageUrl", type: "String", required: true, constraint: "@NotBlank" },
+          { name: "categoryId", type: "Long", required: true, constraint: "@NotNull" }
+        ]},
+        response: { name: "ProductResponse", fields: [
+          { name: "id", type: "Long", required: true, constraint: "" },
+          { name: "name", type: "String", required: true, constraint: "" },
+          { name: "price", type: "int", required: true, constraint: "" },
+          { name: "imageUrl", type: "String", required: true, constraint: "" },
+          { name: "categoryId", type: "Long", required: true, constraint: "" }
+        ]}, notes: null
+      },
+      {
+        method: "DELETE", path: "/api/products/{id}", desc: "상품 삭제", auth: false,
+        statuses: ["204 No Content"],
+        params: [{ name: "id", type: "Long", in: "path", required: true, desc: "상품 ID" }],
+        request: null, response: null, notes: null
+      }
+    ]
+  },
+  {
+    group: "옵션 (Option)", icon: "⚙️", desc: "상품별 옵션 관리", id: "option", isAdmin: false,
+    endpoints: [
+      {
+        method: "GET", path: "/api/products/{productId}/options", desc: "상품 옵션 목록 조회", auth: false,
+        statuses: ["200 OK", "404 Not Found"],
+        params: [{ name: "productId", type: "Long", in: "path", required: true, desc: "상품 ID" }],
+        request: null,
+        response: { name: "List<OptionResponse>", fields: [
+          { name: "id", type: "Long", required: true, constraint: "" },
+          { name: "name", type: "String", required: true, constraint: "" },
+          { name: "quantity", type: "int", required: true, constraint: "" }
+        ]}, notes: null
+      },
+      {
+        method: "POST", path: "/api/products/{productId}/options", desc: "옵션 추가", auth: false,
+        statuses: ["201 Created", "400 Bad Request", "404 Not Found"],
+        params: [{ name: "productId", type: "Long", in: "path", required: true, desc: "상품 ID" }],
+        request: { name: "OptionRequest", fields: [
+          { name: "name", type: "String", required: true, constraint: "@NotBlank, 최대 50자, 중복 불가" },
+          { name: "quantity", type: "int", required: true, constraint: "@Min(1) @Max(99,999,999)" }
+        ]},
+        response: { name: "OptionResponse", fields: [
+          { name: "id", type: "Long", required: true, constraint: "" },
+          { name: "name", type: "String", required: true, constraint: "" },
+          { name: "quantity", type: "int", required: true, constraint: "" }
+        ]}, notes: "같은 상품에 동일한 옵션명 중복 불가"
+      },
+      {
+        method: "DELETE", path: "/api/products/{productId}/options/{optionId}", desc: "옵션 삭제", auth: false,
+        statuses: ["204 No Content", "400 Bad Request", "404 Not Found"],
+        params: [
+          { name: "productId", type: "Long", in: "path", required: true, desc: "상품 ID" },
+          { name: "optionId", type: "Long", in: "path", required: true, desc: "옵션 ID" }
+        ],
+        request: null, response: null,
+        notes: "상품에 옵션이 1개만 남으면 삭제 불가 (400)"
+      }
+    ]
+  },
+  {
+    group: "주문 (Order)", icon: "🛒", desc: "주문 생성 및 조회 (인증 필요)", id: "order", isAdmin: false,
+    endpoints: [
+      {
+        method: "GET", path: "/api/orders", desc: "내 주문 목록 조회 (페이지네이션)", auth: true,
+        statuses: ["200 OK", "401 Unauthorized"],
+        params: [
+          { name: "page", type: "int", in: "query", required: false, desc: "페이지 번호" },
+          { name: "size", type: "int", in: "query", required: false, desc: "페이지 크기" },
+          { name: "sort", type: "String", in: "query", required: false, desc: "정렬 기준" }
+        ],
+        request: null,
+        response: { name: "Page<OrderResponse>", fields: [
+          { name: "id", type: "Long", required: true, constraint: "" },
+          { name: "optionId", type: "Long", required: true, constraint: "" },
+          { name: "quantity", type: "int", required: true, constraint: "" },
+          { name: "orderDateTime", type: "LocalDateTime", required: true, constraint: "ISO 8601" },
+          { name: "message", type: "String", required: false, constraint: "" }
+        ]}, notes: "Authorization: Bearer {JWT} 헤더 필수"
+      },
+      {
+        method: "POST", path: "/api/orders", desc: "주문 생성 (상품 구매)", auth: true,
+        statuses: ["201 Created", "401 Unauthorized", "404 Not Found"], params: [],
+        request: { name: "OrderRequest", fields: [
+          { name: "optionId", type: "Long", required: true, constraint: "@NotNull" },
+          { name: "quantity", type: "int", required: true, constraint: "@Min(1)" },
+          { name: "message", type: "String", required: false, constraint: "선택 사항" }
+        ]},
+        response: { name: "OrderResponse", fields: [
+          { name: "id", type: "Long", required: true, constraint: "" },
+          { name: "optionId", type: "Long", required: true, constraint: "" },
+          { name: "quantity", type: "int", required: true, constraint: "" },
+          { name: "orderDateTime", type: "LocalDateTime", required: true, constraint: "ISO 8601" },
+          { name: "message", type: "String", required: false, constraint: "" }
+        ]}, notes: "플로우: 인증 → 옵션 검증 → 재고 차감 → 포인트 차감 → 저장 → 위시 정리 → 카카오 알림"
+      }
+    ]
+  },
+  {
+    group: "위시리스트 (Wish)", icon: "💝", desc: "위시리스트 관리 (인증 필요)", id: "wish", isAdmin: false,
+    endpoints: [
+      {
+        method: "GET", path: "/api/wishes", desc: "내 위시리스트 조회 (페이지네이션)", auth: true,
+        statuses: ["200 OK", "401 Unauthorized"],
+        params: [
+          { name: "page", type: "int", in: "query", required: false, desc: "페이지 번호" },
+          { name: "size", type: "int", in: "query", required: false, desc: "페이지 크기" },
+          { name: "sort", type: "String", in: "query", required: false, desc: "정렬 기준" }
+        ],
+        request: null,
+        response: { name: "Page<WishResponse>", fields: [
+          { name: "id", type: "Long", required: true, constraint: "" },
+          { name: "productId", type: "Long", required: true, constraint: "" },
+          { name: "name", type: "String", required: true, constraint: "상품명" },
+          { name: "price", type: "int", required: true, constraint: "상품 가격" },
+          { name: "imageUrl", type: "String", required: true, constraint: "상품 이미지" }
+        ]}, notes: "Authorization: Bearer {JWT} 헤더 필수"
+      },
+      {
+        method: "POST", path: "/api/wishes", desc: "위시리스트에 상품 추가", auth: true,
+        statuses: ["201 Created", "200 OK", "401 Unauthorized", "404 Not Found"], params: [],
+        request: { name: "WishRequest", fields: [
+          { name: "productId", type: "Long", required: true, constraint: "@NotNull" }
+        ]},
+        response: { name: "WishResponse", fields: [
+          { name: "id", type: "Long", required: true, constraint: "" },
+          { name: "productId", type: "Long", required: true, constraint: "" },
+          { name: "name", type: "String", required: true, constraint: "" },
+          { name: "price", type: "int", required: true, constraint: "" },
+          { name: "imageUrl", type: "String", required: true, constraint: "" }
+        ]}, notes: "이미 추가된 상품이면 기존 위시 반환 (200), 새로 추가하면 201"
+      },
+      {
+        method: "DELETE", path: "/api/wishes/{id}", desc: "위시리스트에서 제거", auth: true,
+        statuses: ["204 No Content", "401 Unauthorized", "403 Forbidden", "404 Not Found"],
+        params: [{ name: "id", type: "Long", in: "path", required: true, desc: "위시 ID" }],
+        request: null, response: null,
+        notes: "본인의 위시만 삭제 가능 (타인의 위시 삭제 시 403)"
+      }
+    ]
+  },
+  {
+    group: "관리자 - 회원 (Admin)", icon: "🛠️", desc: "HTML 뷰 기반 회원 관리", id: "admin-member", isAdmin: true,
+    endpoints: [
+      { method: "GET", path: "/admin/members", desc: "회원 목록 페이지", auth: false, statuses: ["200 OK"], params: [], request: null, response: { name: "HTML", fields: [] }, notes: "Thymeleaf 템플릿: member/list" },
+      { method: "GET", path: "/admin/members/new", desc: "회원 생성 폼", auth: false, statuses: ["200 OK"], params: [], request: null, response: { name: "HTML", fields: [] }, notes: "Thymeleaf 템플릿: member/new" },
+      { method: "POST", path: "/admin/members", desc: "회원 생성", auth: false, statuses: ["302 Found"],
+        params: [{ name: "email", type: "String", in: "form", required: true, desc: "이메일" }, { name: "password", type: "String", in: "form", required: true, desc: "비밀번호" }],
+        request: null, response: null, notes: "성공 시 /admin/members로 리다이렉트" },
+      { method: "GET", path: "/admin/members/{id}/edit", desc: "회원 수정 폼", auth: false, statuses: ["200 OK"],
+        params: [{ name: "id", type: "Long", in: "path", required: true, desc: "회원 ID" }],
+        request: null, response: { name: "HTML", fields: [] }, notes: "Thymeleaf 템플릿: member/edit" },
+      { method: "POST", path: "/admin/members/{id}/edit", desc: "회원 정보 수정", auth: false, statuses: ["302 Found"],
+        params: [{ name: "id", type: "Long", in: "path", required: true, desc: "회원 ID" }, { name: "email", type: "String", in: "form", required: true, desc: "이메일" }, { name: "password", type: "String", in: "form", required: true, desc: "비밀번호" }],
+        request: null, response: null, notes: "성공 시 /admin/members로 리다이렉트" },
+      { method: "POST", path: "/admin/members/{id}/charge-point", desc: "포인트 충전", auth: false, statuses: ["302 Found"],
+        params: [{ name: "id", type: "Long", in: "path", required: true, desc: "회원 ID" }, { name: "amount", type: "int", in: "query", required: true, desc: "충전 금액" }],
+        request: null, response: null, notes: "성공 시 /admin/members로 리다이렉트" },
+      { method: "POST", path: "/admin/members/{id}/delete", desc: "회원 삭제", auth: false, statuses: ["302 Found"],
+        params: [{ name: "id", type: "Long", in: "path", required: true, desc: "회원 ID" }],
+        request: null, response: null, notes: "성공 시 /admin/members로 리다이렉트" }
+    ]
+  },
+  {
+    group: "관리자 - 상품 (Admin)", icon: "🛠️", desc: "HTML 뷰 기반 상품 관리", id: "admin-product", isAdmin: true,
+    endpoints: [
+      { method: "GET", path: "/admin/products", desc: "상품 목록 페이지", auth: false, statuses: ["200 OK"], params: [], request: null, response: { name: "HTML", fields: [] }, notes: "Thymeleaf 템플릿: product/list" },
+      { method: "GET", path: "/admin/products/new", desc: "상품 생성 폼", auth: false, statuses: ["200 OK"], params: [], request: null, response: { name: "HTML", fields: [] }, notes: "Thymeleaf 템플릿: product/new" },
+      { method: "POST", path: "/admin/products", desc: "상품 생성", auth: false, statuses: ["302 Found"],
+        params: [{ name: "name", type: "String", in: "form", required: true, desc: "상품명" }, { name: "price", type: "int", in: "form", required: true, desc: "가격" }, { name: "imageUrl", type: "String", in: "form", required: true, desc: "이미지 URL" }, { name: "categoryId", type: "Long", in: "form", required: true, desc: "카테고리 ID" }],
+        request: null, response: null, notes: "성공 시 /admin/products로 리다이렉트" },
+      { method: "GET", path: "/admin/products/{id}/edit", desc: "상품 수정 폼", auth: false, statuses: ["200 OK"],
+        params: [{ name: "id", type: "Long", in: "path", required: true, desc: "상품 ID" }],
+        request: null, response: { name: "HTML", fields: [] }, notes: "Thymeleaf 템플릿: product/edit" },
+      { method: "POST", path: "/admin/products/{id}/edit", desc: "상품 수정", auth: false, statuses: ["302 Found"],
+        params: [{ name: "id", type: "Long", in: "path", required: true, desc: "상품 ID" }, { name: "name", type: "String", in: "form", required: true, desc: "상품명" }, { name: "price", type: "int", in: "form", required: true, desc: "가격" }, { name: "imageUrl", type: "String", in: "form", required: true, desc: "이미지 URL" }, { name: "categoryId", type: "Long", in: "form", required: true, desc: "카테고리 ID" }],
+        request: null, response: null, notes: "성공 시 /admin/products로 리다이렉트" },
+      { method: "POST", path: "/admin/products/{id}/delete", desc: "상품 삭제", auth: false, statuses: ["302 Found"],
+        params: [{ name: "id", type: "Long", in: "path", required: true, desc: "상품 ID" }],
+        request: null, response: null, notes: "성공 시 /admin/products로 리다이렉트" }
+    ]
+  }
+];
+
+// ══════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════
+function mc(m) { return m.toLowerCase(); }
+
+function renderSchemaTable(schema) {
+  if (!schema || !schema.fields || schema.fields.length === 0) {
+    if (schema && schema.name === 'HTML')
+      return '<div style="padding:8px 0;color:var(--text-secondary);font-size:13px;">Thymeleaf HTML 뷰 반환</div>';
+    return '';
+  }
+  let h = `<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;font-weight:600;">${schema.name}</div>`;
+  h += '<table class="schema-table"><thead><tr><th>필드</th><th>타입</th><th>필수</th><th>제약조건</th></tr></thead><tbody>';
+  for (const f of schema.fields) {
+    h += `<tr><td><span class="field-name">${f.name}</span></td><td><span class="field-type">${f.type}</span></td>
+      <td>${f.required ? '<span class="field-required">필수</span>' : '<span class="field-optional">선택</span>'}</td>
+      <td><span class="field-constraint">${f.constraint || '-'}</span></td></tr>`;
+  }
+  return h + '</tbody></table>';
+}
+
+function renderParams(params) {
+  let h = '';
+  for (const p of params)
+    h += `<span class="param-pill"><span class="param-key">${p.name}</span> <span class="param-type">${p.type}</span> <span style="color:var(--text-muted);font-size:10px;">[${p.in}]</span></span>`;
+  return h;
+}
+
+function renderStatuses(statuses) {
+  let h = '';
+  for (const s of statuses) {
+    const c = parseInt(s);
+    const cls = c >= 500 ? 'status-4xx' : c >= 400 ? 'status-4xx' : c >= 300 ? 'status-3xx' : 'status-2xx';
+    h += `<span class="status-badge ${cls}">${s}</span>`;
+  }
+  return h;
+}
+
+function defaultValue(type) {
+  if (type === 'String') return '""';
+  if (type === 'Long') return '0';
+  if (type === 'int') return '0';
+  if (type === 'LocalDateTime') return '"2026-01-01T00:00:00"';
+  return 'null';
+}
+
+function buildSampleJson(fields) {
+  const obj = {};
+  for (const f of fields) {
+    if (f.type === 'String') obj[f.name] = '';
+    else if (f.type === 'Long' || f.type === 'int') obj[f.name] = 0;
+    else obj[f.name] = null;
+  }
+  return JSON.stringify(obj, null, 2);
+}
+
+function syntaxHighlight(json) {
+  if (typeof json !== 'string') json = JSON.stringify(json, null, 2);
+  json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return json.replace(
+    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+    function (match) {
+      let cls = 'json-num';
+      if (/^"/.test(match)) {
+        cls = /:$/.test(match) ? 'json-key' : 'json-str';
+      } else if (/true|false/.test(match)) {
+        cls = 'json-bool';
+      } else if (/null/.test(match)) {
+        cls = 'json-null';
+      }
+      return '<span class="' + cls + '">' + match + '</span>';
+    }
+  );
+}
+
+// ══════════════════════════════════════════════
+// TRY IT OUT - build form
+// ══════════════════════════════════════════════
+function buildTrySection(ep, id, isAdmin) {
+  if (isAdmin) return '';
+
+  const pathParams = (ep.params || []).filter(p => p.in === 'path');
+  const queryParams = (ep.params || []).filter(p => p.in === 'query');
+  const hasBody = ep.request && ep.request.fields && ep.request.fields.length > 0;
+  const sampleJson = hasBody ? buildSampleJson(ep.request.fields) : '';
+
+  let formHtml = '';
+
+  // Path params
+  for (const p of pathParams) {
+    formHtml += `<div class="try-field">
+      <label class="try-field-label">${p.name} <span class="req">*</span> <span style="font-weight:400;text-transform:none;color:var(--text-muted)">— ${p.desc}</span></label>
+      <input class="try-input" data-try-path="${p.name}" placeholder="${p.type}" />
+    </div>`;
+  }
+
+  // Query params
+  for (const p of queryParams) {
+    formHtml += `<div class="try-field">
+      <label class="try-field-label">${p.name} ${p.required ? '<span class="req">*</span>' : ''} <span style="font-weight:400;text-transform:none;color:var(--text-muted)">— ${p.desc}</span></label>
+      <input class="try-input" data-try-query="${p.name}" placeholder="${p.type}${p.required ? '' : ' (선택)'}" />
+    </div>`;
+  }
+
+  // Auth override
+  if (ep.auth) {
+    formHtml += `<div class="try-field">
+      <label class="try-field-label">Authorization <span class="req">*</span> <span style="font-weight:400;text-transform:none;color:var(--text-muted)">— 비워두면 상단 글로벌 토큰 사용</span></label>
+      <input class="try-input" data-try-auth="1" placeholder="Bearer eyJhbG..." />
+    </div>`;
+  }
+
+  // Request body
+  if (hasBody) {
+    formHtml += `<div class="try-field">
+      <label class="try-field-label">Request Body (JSON)</label>
+      <textarea class="try-textarea" data-try-body="1">${sampleJson}</textarea>
+    </div>`;
+  }
+
+  return `<div class="try-section" id="try-${id}">
+    <div class="try-header">
+      <div class="try-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Try It Out
+      </div>
+      <div>
+        <button class="try-btn try-btn-execute" onclick="executeRequest('${id}')">실행</button>
+        <button class="try-btn try-btn-clear" onclick="clearResponse('${id}')">초기화</button>
+      </div>
+    </div>
+    <div class="try-form">${formHtml}</div>
+    <div class="try-url-preview" id="url-preview-${id}" style="margin-top:12px;">
+      <span class="method-label ${mc(ep.method)}">${ep.method}</span>
+      <span id="url-text-${id}">${ep.path}</span>
+    </div>
+    <div class="response-viewer" id="resp-${id}">
+      <div class="response-header">
+        <span class="response-status" id="resp-status-${id}"></span>
+        <span class="response-time" id="resp-time-${id}"></span>
+      </div>
+      <div class="response-tabs" id="resp-tabs-${id}">
+        <button class="response-tab active" onclick="switchTab('${id}','body')">응답 본문</button>
+        <button class="response-tab" onclick="switchTab('${id}','headers')">헤더</button>
+      </div>
+      <div class="response-tab-content visible" id="resp-body-tab-${id}">
+        <div class="response-body" id="resp-body-${id}"></div>
+      </div>
+      <div class="response-tab-content" id="resp-headers-tab-${id}">
+        <div class="response-headers-list" id="resp-headers-${id}"></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════
+// EXECUTE REQUEST
+// ══════════════════════════════════════════════
+const epRegistry = {};
+
+async function executeRequest(id) {
+  const ep = epRegistry[id];
+  if (!ep) return;
+
+  const tryEl = document.getElementById('try-' + id);
+  const btn = tryEl.querySelector('.try-btn-execute');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>요청 중...';
+
+  const baseUrl = document.getElementById('baseUrl').value.replace(/\/+$/, '');
+  let path = ep.path;
+
+  // Replace path params
+  tryEl.querySelectorAll('[data-try-path]').forEach(input => {
+    const name = input.dataset.tryPath;
+    const val = input.value.trim();
+    if (val) path = path.replace('{' + name + '}', encodeURIComponent(val));
+  });
+
+  // Query params
+  const qp = new URLSearchParams();
+  tryEl.querySelectorAll('[data-try-query]').forEach(input => {
+    const val = input.value.trim();
+    if (val) qp.set(input.dataset.tryQuery, val);
+  });
+  const qs = qp.toString();
+  const fullUrl = baseUrl + path + (qs ? '?' + qs : '');
+
+  // Update preview
+  document.getElementById('url-text-' + id).textContent = fullUrl.replace(baseUrl, '');
+
+  // Headers
+  const headers = {};
+  if (ep.method !== 'GET' && ep.method !== 'DELETE') {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  // Auth
+  if (ep.auth) {
+    const localAuth = tryEl.querySelector('[data-try-auth]');
+    const authVal = localAuth && localAuth.value.trim() ? localAuth.value.trim() : '';
+    const globalToken = document.getElementById('globalToken').value.trim();
+    const token = authVal || globalToken;
+    if (token) {
+      headers['Authorization'] = token.startsWith('Bearer ') ? token : 'Bearer ' + token;
+    }
+  }
+
+  // Body
+  let body = undefined;
+  const bodyEl = tryEl.querySelector('[data-try-body]');
+  if (bodyEl && bodyEl.value.trim()) {
+    body = bodyEl.value.trim();
+  }
+
+  const respViewer = document.getElementById('resp-' + id);
+  const respStatus = document.getElementById('resp-status-' + id);
+  const respTime = document.getElementById('resp-time-' + id);
+  const respBody = document.getElementById('resp-body-' + id);
+  const respHeaders = document.getElementById('resp-headers-' + id);
+
+  const start = performance.now();
+
+  try {
+    const resp = await fetch(fullUrl, {
+      method: ep.method,
+      headers: headers,
+      body: (ep.method !== 'GET' && ep.method !== 'DELETE') ? body : undefined,
+    });
+
+    const elapsed = Math.round(performance.now() - start);
+    const statusCls = resp.status >= 500 ? 's5xx' : resp.status >= 400 ? 's4xx' : resp.status >= 300 ? 's3xx' : 's2xx';
+
+    respStatus.className = 'response-status ' + statusCls;
+    respStatus.textContent = resp.status + ' ' + resp.statusText;
+    respTime.textContent = elapsed + 'ms';
+
+    // Headers
+    let headersHtml = '';
+    resp.headers.forEach((val, key) => {
+      headersHtml += `<div><span class="hdr-key">${key}:</span> <span class="hdr-val">${val}</span></div>`;
+    });
+    respHeaders.innerHTML = headersHtml || '<div style="color:var(--text-muted)">헤더 없음</div>';
+
+    // Body
+    const contentType = resp.headers.get('content-type') || '';
+    let text = await resp.text();
+    if (contentType.includes('json') && text) {
+      try {
+        const parsed = JSON.parse(text);
+        text = JSON.stringify(parsed, null, 2);
+        respBody.innerHTML = syntaxHighlight(text);
+      } catch {
+        respBody.textContent = text;
+      }
+    } else if (text) {
+      respBody.textContent = text;
+    } else {
+      respBody.innerHTML = '<span style="color:var(--text-muted)">(빈 응답)</span>';
+    }
+
+    respViewer.classList.add('visible');
+    switchTab(id, 'body');
+
+  } catch (err) {
+    const elapsed = Math.round(performance.now() - start);
+    respStatus.className = 'response-status error';
+    respStatus.textContent = 'ERROR';
+    respTime.textContent = elapsed + 'ms';
+    respBody.innerHTML = `<span style="color:var(--delete)">${err.message}</span>\n\n<span style="color:var(--text-muted)">서버가 실행 중인지, CORS 설정이 되어있는지 확인하세요.\nBase URL: ${baseUrl}</span>`;
+    respHeaders.innerHTML = '';
+    respViewer.classList.add('visible');
+    switchTab(id, 'body');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '실행';
+}
+
+function clearResponse(id) {
+  const respViewer = document.getElementById('resp-' + id);
+  respViewer.classList.remove('visible');
+  document.getElementById('resp-body-' + id).innerHTML = '';
+  document.getElementById('resp-headers-' + id).innerHTML = '';
+}
+
+function switchTab(id, tab) {
+  const tabs = document.getElementById('resp-tabs-' + id);
+  if (!tabs) return;
+  tabs.querySelectorAll('.response-tab').forEach((t, i) => {
+    t.classList.toggle('active', (tab === 'body' && i === 0) || (tab === 'headers' && i === 1));
+  });
+  document.getElementById('resp-body-tab-' + id).classList.toggle('visible', tab === 'body');
+  document.getElementById('resp-headers-tab-' + id).classList.toggle('visible', tab === 'headers');
+}
+
+// ══════════════════════════════════════════════
+// RENDER PAGE
+// ══════════════════════════════════════════════
+const content = document.getElementById('content');
+const sidebarNav = document.getElementById('sidebarNav');
+let counts = { GET: 0, POST: 0, PUT: 0, DELETE: 0, total: 0 };
+
+API_DATA.forEach((group, gi) => {
+  let navHtml = `<div class="nav-group"><div class="nav-group-title">${group.icon} ${group.group}</div>`;
+  group.endpoints.forEach((ep, ei) => {
+    const id = `ep-${gi}-${ei}`;
+    navHtml += `<a class="nav-link" onclick="scrollToCard('${id}')" title="${ep.path}">
+      <span class="nav-method ${mc(ep.method)}">${ep.method}</span>
+      <span class="nav-path">${ep.path}</span></a>`;
+    counts[ep.method]++;
+    counts.total++;
+  });
+  navHtml += '</div>';
+  sidebarNav.innerHTML += navHtml;
+
+  let secHtml = `<div class="section" id="section-${group.id}">
+    <div class="section-header">
+      <div class="section-icon">${group.icon}</div>
+      <div class="section-title">${group.group}</div>
+      <div class="section-desc">${group.desc}</div>
+    </div>`;
+
+  group.endpoints.forEach((ep, ei) => {
+    const id = `ep-${gi}-${ei}`;
+    epRegistry[id] = ep;
+
+    let bodyHtml = '';
+    if (ep.params && ep.params.length > 0)
+      bodyHtml += `<div class="detail-group"><div class="detail-label">파라미터</div>${renderParams(ep.params)}</div>`;
+    if (ep.request)
+      bodyHtml += `<div class="detail-group"><div class="detail-label">요청 본문 (Request Body)</div>${renderSchemaTable(ep.request)}</div>`;
+    if (ep.response)
+      bodyHtml += `<div class="detail-group"><div class="detail-label">응답 (Response)</div>${renderSchemaTable(ep.response)}</div>`;
+    bodyHtml += `<div class="detail-group"><div class="detail-label">상태 코드</div>${renderStatuses(ep.statuses)}</div>`;
+    if (ep.notes)
+      bodyHtml += `<div class="detail-group"><div class="detail-label">비고</div><div style="font-size:13px;color:var(--text-secondary);line-height:1.7;">${ep.notes}</div></div>`;
+
+    // Try It Out section
+    bodyHtml += buildTrySection(ep, id, group.isAdmin);
+
+    secHtml += `<div class="api-card ${mc(ep.method)}" id="${id}" data-method="${ep.method}" data-path="${ep.path}" data-desc="${ep.desc}">
+      <div class="card-header" onclick="toggleCard('${id}')">
+        <span class="method-badge ${mc(ep.method)}">${ep.method}</span>
+        <span class="card-path">${ep.path}</span>
+        <span class="card-desc">${ep.desc}</span>
+        ${ep.auth ? '<span class="auth-tag">🔒 인증 필요</span>' : ''}
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+      <div class="card-body">${bodyHtml}</div>
+    </div>`;
+  });
+
+  secHtml += '</div>';
+  content.innerHTML += secHtml;
+});
+
+document.getElementById('totalCount').textContent = counts.total;
+document.getElementById('getCount').textContent = counts.GET;
+document.getElementById('postCount').textContent = counts.POST;
+document.getElementById('putCount').textContent = counts.PUT;
+document.getElementById('deleteCount').textContent = counts.DELETE;
+
+// ══════════════════════════════════════════════
+// UI INTERACTIONS
+// ══════════════════════════════════════════════
+function toggleCard(id) { document.getElementById(id).classList.toggle('open'); }
+
+function scrollToCard(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add('open');
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.style.boxShadow = '0 0 0 2px var(--accent)';
+  setTimeout(() => { el.style.boxShadow = ''; }, 1500);
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+function filterAPIs() {
+  const q = document.getElementById('searchInput').value.toLowerCase().trim();
+  const cards = document.querySelectorAll('.api-card');
+  const sections = document.querySelectorAll('.section');
+  let visible = 0;
+  cards.forEach(card => {
+    const match = !q || card.dataset.method.toLowerCase().includes(q) || card.dataset.path.toLowerCase().includes(q) || card.dataset.desc.toLowerCase().includes(q);
+    card.style.display = match ? '' : 'none';
+    if (match) visible++;
+  });
+  sections.forEach(sec => {
+    sec.style.display = sec.querySelectorAll('.api-card:not([style*="display: none"])').length > 0 ? '' : 'none';
+  });
+  document.getElementById('noResults').style.display = visible === 0 ? 'block' : 'none';
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('show');
+}
+
+window.addEventListener('scroll', () => {
+  document.getElementById('scrollTop').classList.toggle('visible', window.scrollY > 400);
+});
+</script>
+</body>
+</html>
