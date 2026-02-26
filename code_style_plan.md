@@ -65,7 +65,7 @@ Javadoc(`@author`, `@since`)과 블록 주석 제거. 단, `JwtProvider`의 **�
 | `gift/auth/KakaoAuthController.java` | `path = ` 제거 |
 | `gift/option/OptionController.java` | `path = ` 제거 |
 
-### 1-6. 에러 메시지 한국어 통일
+### 1-6. 에러 메시지 한국어 통일 [x]
 
 | 파일 | 변경 전 → 변경 후 |
 |------|-------------------|
