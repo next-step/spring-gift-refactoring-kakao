@@ -79,7 +79,7 @@ Javadoc(`@author`, `@since`)과 블록 주석 제거. 단, `JwtProvider`의 **�
 
 ## Phase 2: 불필요한 코드 제거
 
-### 2-1. `@ExceptionHandler` 중복 → `GlobalExceptionHandler`로 통합
+### 2-1. `@ExceptionHandler` 중복 → `GlobalExceptionHandler`로 통합 [x]
 
 3개 Controller에 동일한 `@ExceptionHandler(IllegalArgumentException.class)` 코드가 중복.
 
@@ -102,7 +102,7 @@ public class GlobalExceptionHandler {
 | `gift/option/OptionController.java` | `@ExceptionHandler` 메서드 + `ExceptionHandler` import |
 | `gift/member/MemberController.java` | `@ExceptionHandler` 메서드 + `ExceptionHandler` import |
 
-### 2-2. 보류 항목 (이번 단계에서 건드리지 않음)
+### 2-2. 보류 항목 (이번 단계에서 건드리지 않음) [x]
 
 - **OrderController의 WishRepository 미사용 주입**: Phase 3에서 OrderService 추출 시 함께 정리
 - **Kotlin 플러그인**: 빌드 설정 변경은 위험도 높으므로 별도 작업으로 분리
