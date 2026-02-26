@@ -38,8 +38,7 @@ public class OrderService {
     // 2. subtract stock
     // 3. deduct points
     // 4. save order
-    // 5. cleanup wish
-    // 6. send kakao notification
+    // 5. send kakao notification
     public Order createOrder(Member member, OrderRequest request) {
         // validate option
         Option option = optionRepository.findById(request.optionId())
