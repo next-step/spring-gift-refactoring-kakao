@@ -160,15 +160,26 @@ public class GiftStepDefinitions {
 
     @그리고("옵션 재고가 {int}개로 차감되어 있다")
     public void 옵션_재고가_n개로_차감되어_있다(int expectedQuantity) {
-        Integer actualQuantity = jdbcTemplate.queryForObject(
-                "SELECT quantity FROM options WHERE id = ?", Integer.class, context.getOptionId());
+        int actualQuantity = getOptionQuantityViaApi();
         assertThat(actualQuantity).isEqualTo(expectedQuantity);
     }
 
     @그리고("옵션 재고가 {int}개로 유지되어 있다")
     public void 옵션_재고가_n개로_유지되어_있다(int expectedQuantity) {
-        Integer actualQuantity = jdbcTemplate.queryForObject(
-                "SELECT quantity FROM options WHERE id = ?", Integer.class, context.getOptionId());
+        int actualQuantity = getOptionQuantityViaApi();
         assertThat(actualQuantity).isEqualTo(expectedQuantity);
+    }
+
+    private int getOptionQuantityViaApi() {
+        var response = RestAssured.given().log().all()
+                .when()
+                .get("/api/products/" + context.getProductId() + "/options")
+                .then().log().all()
+                .extract();
+
+        List<Long> ids = response.jsonPath().getList("id", Long.class);
+        List<Integer> quantities = response.jsonPath().getList("quantity", Integer.class);
+        int index = ids.indexOf(context.getOptionId());
+        return quantities.get(index);
     }
 }
