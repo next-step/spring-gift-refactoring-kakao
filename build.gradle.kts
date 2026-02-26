@@ -22,6 +22,7 @@ repositories {
 }
 
 dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
     implementation("org.springframework.boot:spring-boot-starter-validation")
@@ -38,6 +39,11 @@ dependencies {
     runtimeOnly("com.mysql:mysql-connector-j")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+    testImplementation("io.rest-assured:rest-assured:5.5.1")
+    testImplementation("io.cucumber:cucumber-java:7.21.1")
+    testImplementation("io.cucumber:cucumber-spring:7.21.1")
+    testImplementation("io.cucumber:cucumber-junit-platform-engine:7.21.1")
+    testImplementation("org.junit.platform:junit-platform-suite")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
@@ -59,4 +65,42 @@ ktlint {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+tasks.named<Test>("test") {
+    useJUnitPlatform {
+        excludeEngines("cucumber")
+    }
+    exclude("**/cucumber/**")
+}
+
+tasks.register<Test>("cucumberTest") {
+    description = "Runs Cucumber acceptance tests"
+    group = "verification"
+    dependsOn("dockerUp")
+    finalizedBy("dockerDown")
+    useJUnitPlatform()
+    include("**/RunCucumberTest.class")
+    testLogging {
+        events("passed", "skipped", "failed")
+        showStandardStreams = true
+    }
+}
+
+tasks.register<Exec>("dockerBuild") {
+    group = "docker"
+    description = "Builds the Docker image for the application"
+    commandLine("docker", "build", "-t", "gift-app", ".")
+}
+
+tasks.register<Exec>("dockerUp") {
+    group = "docker"
+    description = "Starts the application and database containers"
+    commandLine("docker-compose", "up", "-d", "--build", "--wait")
+}
+
+tasks.register<Exec>("dockerDown") {
+    group = "docker"
+    description = "Stops and removes the application and database containers"
+    commandLine("docker-compose", "down", "-v")
 }
