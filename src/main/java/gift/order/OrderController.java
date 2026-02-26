@@ -6,7 +6,6 @@ import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
 import gift.product.Product;
-import gift.wish.WishRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,7 +26,6 @@ import java.net.URI;
 public class OrderController {
     private final OrderRepository orderRepository;
     private final OptionRepository optionRepository;
-    private final WishRepository wishRepository;
     private final MemberRepository memberRepository;
     private final AuthenticationResolver authenticationResolver;
     private final KakaoMessageClient kakaoMessageClient;
