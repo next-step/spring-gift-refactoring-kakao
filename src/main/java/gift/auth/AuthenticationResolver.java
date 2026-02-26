@@ -2,6 +2,8 @@ package gift.auth;
 
 import gift.member.Member;
 import gift.member.MemberRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
