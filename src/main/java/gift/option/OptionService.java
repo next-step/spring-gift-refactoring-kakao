@@ -18,35 +18,28 @@ public class OptionService {
     }
 
     public Optional<List<OptionResponse>> getOptions(Long productId) {
-        Product product = productRepository.findById(productId).orElse(null);
-        if (product == null) {
-            return Optional.empty();
-        }
-        List<OptionResponse> options = optionRepository.findByProductId(productId).stream()
-            .map(OptionResponse::from)
-            .toList();
-        return Optional.of(options);
+        return productRepository.findById(productId)
+            .map(product -> optionRepository.findByProductId(productId).stream()
+                .map(OptionResponse::from)
+                .toList());
     }
 
     public Optional<OptionResponse> createOption(Long productId, OptionRequest request) {
         validateName(request.name());
 
-        Product product = productRepository.findById(productId).orElse(null);
-        if (product == null) {
-            return Optional.empty();
-        }
-
-        if (optionRepository.existsByProductIdAndName(productId, request.name())) {
-            throw new IllegalArgumentException("이미 존재하는 옵션명입니다.");
-        }
-
-        Option saved = optionRepository.save(new Option(product, request.name(), request.quantity()));
-        return Optional.of(OptionResponse.from(saved));
+        return productRepository.findById(productId)
+            .map(product -> {
+                if (optionRepository.existsByProductIdAndName(productId, request.name())) {
+                    throw new IllegalArgumentException("이미 존재하는 옵션명입니다.");
+                }
+                Option saved = optionRepository.save(new Option(product, request.name(), request.quantity()));
+                return OptionResponse.from(saved);
+            });
     }
 
     public Optional<Boolean> deleteOption(Long productId, Long optionId) {
-        Product product = productRepository.findById(productId).orElse(null);
-        if (product == null) {
+        Optional<Product> productOpt = productRepository.findById(productId);
+        if (productOpt.isEmpty()) {
             return Optional.empty();
         }
 
@@ -55,13 +48,12 @@ public class OptionService {
             throw new IllegalArgumentException("옵션이 1개인 상품은 옵션을 삭제할 수 없습니다.");
         }
 
-        Option option = optionRepository.findById(optionId).orElse(null);
-        if (option == null || !option.getProduct().getId().equals(productId)) {
-            return Optional.empty();
-        }
-
-        optionRepository.delete(option);
-        return Optional.of(true);
+        return optionRepository.findById(optionId)
+            .filter(option -> option.getProduct().getId().equals(productId))
+            .map(option -> {
+                optionRepository.delete(option);
+                return true;
+            });
     }
 
     private void validateName(String name) {

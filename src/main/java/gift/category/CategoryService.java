@@ -25,14 +25,12 @@ public class CategoryService {
     }
 
     public Optional<CategoryResponse> updateCategory(Long id, CategoryRequest request) {
-        Category category = categoryRepository.findById(id).orElse(null);
-        if (category == null) {
-            return Optional.empty();
-        }
-
-        category.update(request.name(), request.color(), request.imageUrl(), request.description());
-        categoryRepository.save(category);
-        return Optional.of(CategoryResponse.from(category));
+        return categoryRepository.findById(id)
+            .map(category -> {
+                category.update(request.name(), request.color(), request.imageUrl(), request.description());
+                categoryRepository.save(category);
+                return CategoryResponse.from(category);
+            });
     }
 
     public void deleteCategory(Long id) {

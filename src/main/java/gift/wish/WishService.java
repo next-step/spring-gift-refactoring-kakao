@@ -1,6 +1,5 @@
 package gift.wish;
 
-import gift.product.Product;
 import gift.product.ProductRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,28 +22,26 @@ public class WishService {
     }
 
     public Optional<AddWishResult> addWish(Long memberId, WishRequest request) {
-        Product product = productRepository.findById(request.productId()).orElse(null);
-        if (product == null) {
-            return Optional.empty();
-        }
-
-        Wish existing = wishRepository.findByMemberIdAndProductId(memberId, product.getId()).orElse(null);
-        if (existing != null) {
-            return Optional.of(new AddWishResult(WishResponse.from(existing), false));
-        }
-
-        Wish saved = wishRepository.save(new Wish(memberId, product));
-        return Optional.of(new AddWishResult(WishResponse.from(saved), true));
+        return productRepository.findById(request.productId())
+            .map(product -> {
+                Optional<Wish> existing = wishRepository.findByMemberIdAndProductId(memberId, product.getId());
+                if (existing.isPresent()) {
+                    return new AddWishResult(WishResponse.from(existing.get()), false);
+                }
+                Wish saved = wishRepository.save(new Wish(memberId, product));
+                return new AddWishResult(WishResponse.from(saved), true);
+            });
     }
 
     public record AddWishResult(WishResponse response, boolean created) {}
 
     public Optional<DeleteResult> removeWish(Long memberId, Long wishId) {
-        Wish wish = wishRepository.findById(wishId).orElse(null);
-        if (wish == null) {
+        Optional<Wish> wishOpt = wishRepository.findById(wishId);
+        if (wishOpt.isEmpty()) {
             return Optional.of(DeleteResult.NOT_FOUND);
         }
 
+        Wish wish = wishOpt.get();
         if (!wish.getMemberId().equals(memberId)) {
             return Optional.of(DeleteResult.FORBIDDEN);
         }

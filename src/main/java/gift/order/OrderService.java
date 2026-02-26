@@ -4,6 +4,7 @@ import gift.member.Member;
 import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
+import gift.product.Product;
 import gift.wish.WishRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -45,28 +46,25 @@ public class OrderService {
     // 5. cleanup wish
     // 6. send kakao notification
     public Optional<OrderResponse> createOrder(Member member, OrderRequest request) {
-        // validate option
-        Option option = optionRepository.findById(request.optionId()).orElse(null);
-        if (option == null) {
-            return Optional.empty();
-        }
+        return optionRepository.findById(request.optionId())
+            .map(option -> {
+                // subtract stock
+                option.subtractQuantity(request.quantity());
+                optionRepository.save(option);
 
-        // subtract stock
-        option.subtractQuantity(request.quantity());
-        optionRepository.save(option);
+                // deduct points
+                int price = option.getProduct().getPrice() * request.quantity();
+                member.deductPoint(price);
+                memberRepository.save(member);
 
-        // deduct points
-        int price = option.getProduct().getPrice() * request.quantity();
-        member.deductPoint(price);
-        memberRepository.save(member);
+                // save order
+                Order saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
 
-        // save order
-        Order saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
+                // best-effort kakao notification
+                sendKakaoMessageIfPossible(member, saved, option);
 
-        // best-effort kakao notification
-        sendKakaoMessageIfPossible(member, saved, option);
-
-        return Optional.of(OrderResponse.from(saved));
+                return OrderResponse.from(saved);
+            });
     }
 
     private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {
@@ -74,7 +72,7 @@ public class OrderService {
             return;
         }
         try {
-            var product = option.getProduct();
+            Product product = option.getProduct();
             kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
         } catch (Exception ignored) {
         }
