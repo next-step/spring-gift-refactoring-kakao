@@ -22,7 +22,6 @@ public class JwtProvider {
     private final SecretKey key;
     private final long expiration;
 
-    @Autowired
     public JwtProvider(
         @Value("${jwt.secret}") String secret,
         @Value("${jwt.expiration}") long expiration
