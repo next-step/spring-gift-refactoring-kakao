@@ -1,9 +1,7 @@
 package gift.product;
 
-import gift.category.Category;
-import gift.category.CategoryRepository;
+import gift.category.CategoryService;
 import java.util.List;
-import java.util.NoSuchElementException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,23 +13,23 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Controller
 @RequestMapping("/admin/products")
 public class AdminProductController {
-    private final ProductRepository productRepository;
-    private final CategoryRepository categoryRepository;
+    private final ProductService productService;
+    private final CategoryService categoryService;
 
-    public AdminProductController(ProductRepository productRepository, CategoryRepository categoryRepository) {
-        this.productRepository = productRepository;
-        this.categoryRepository = categoryRepository;
+    public AdminProductController(ProductService productService, CategoryService categoryService) {
+        this.productService = productService;
+        this.categoryService = categoryService;
     }
 
     @GetMapping
     public String list(Model model) {
-        model.addAttribute("products", productRepository.findAll());
+        model.addAttribute("products", productService.findAll());
         return "product/list";
     }
 
     @GetMapping("/new")
     public String newForm(Model model) {
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("categories", categoryService.findAll());
         return "product/new";
     }
 
@@ -48,19 +46,15 @@ public class AdminProductController {
             return "product/new";
         }
 
-        Category category = categoryRepository
-                .findById(categoryId)
-                .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
-        productRepository.save(new Product(name, price, imageUrl, category));
+        productService.create(name, price, imageUrl, categoryId, true);
         return "redirect:/admin/products";
     }
 
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
-        Product product =
-                productRepository.findById(id).orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
+        Product product = productService.findById(id);
         model.addAttribute("product", product);
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("categories", categoryService.findAll());
         return "product/edit";
     }
 
@@ -72,27 +66,20 @@ public class AdminProductController {
             @RequestParam String imageUrl,
             @RequestParam Long categoryId,
             Model model) {
-        Product product =
-                productRepository.findById(id).orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
-
         List<String> errors = ProductNameValidator.validate(name, true);
         if (!errors.isEmpty()) {
+            Product product = productService.findById(id);
             populateEditForm(model, product, errors, name, price, imageUrl, categoryId);
             return "product/edit";
         }
 
-        Category category = categoryRepository
-                .findById(categoryId)
-                .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
-
-        product.update(name, price, imageUrl, category);
-        productRepository.save(product);
+        productService.update(id, name, price, imageUrl, categoryId, true);
         return "redirect:/admin/products";
     }
 
     @PostMapping("/{id}/delete")
     public String delete(@PathVariable Long id) {
-        productRepository.deleteById(id);
+        productService.delete(id);
         return "redirect:/admin/products";
     }
 
@@ -103,7 +90,7 @@ public class AdminProductController {
         model.addAttribute("price", price);
         model.addAttribute("imageUrl", imageUrl);
         model.addAttribute("categoryId", categoryId);
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("categories", categoryService.findAll());
     }
 
     private void populateEditForm(
@@ -120,6 +107,6 @@ public class AdminProductController {
         model.addAttribute("price", price);
         model.addAttribute("imageUrl", imageUrl);
         model.addAttribute("categoryId", categoryId);
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("categories", categoryService.findAll());
     }
 }
