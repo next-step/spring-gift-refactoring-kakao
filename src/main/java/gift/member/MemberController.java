@@ -31,21 +31,21 @@ public class MemberController {
             throw new IllegalArgumentException("Email is already registered.");
         }
 
-        final Member member = memberRepository.save(new Member(request.email(), request.password()));
-        final String token = jwtProvider.createToken(member.getEmail());
+        Member member = memberRepository.save(new Member(request.email(), request.password()));
+        String token = jwtProvider.createToken(member.getEmail());
         return ResponseEntity.status(HttpStatus.CREATED).body(new TokenResponse(token));
     }
 
     @PostMapping("/login")
     public ResponseEntity<TokenResponse> login(@Valid @RequestBody MemberRequest request) {
-        final Member member = memberRepository.findByEmail(request.email())
+        Member member = memberRepository.findByEmail(request.email())
             .orElseThrow(() -> new IllegalArgumentException("Invalid email or password."));
 
         if (member.getPassword() == null || !member.getPassword().equals(request.password())) {
             throw new IllegalArgumentException("Invalid email or password.");
         }
 
-        final String token = jwtProvider.createToken(member.getEmail());
+        String token = jwtProvider.createToken(member.getEmail());
         return ResponseEntity.ok(new TokenResponse(token));
     }
 

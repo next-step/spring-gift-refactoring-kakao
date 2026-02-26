@@ -58,8 +58,6 @@ wildcard 는 사용하지 않는다. `ResponseEntity<Void>`, `ResponseEntity<Som
 
 변수 선언에는 `var` 키워드는 사용하지 않는다. 불필요한 `final` 은 사용하지 않는다.
 
-Entity 에 lombok getter 와 protected constructor 를 사용한다.
-
 ### Controller 메서드 이름
 
 **논의해야 함**
@@ -78,6 +76,11 @@ Entity 에 lombok getter 와 protected constructor 를 사용한다.
 
 ## 목록화된 스타일을 차례대로 진행한다.
 
+- 요청 검증 부분 통일 일부 진행
+  - OptionNameValidator 만 삭제
+- 요청 응답 부분 진행
+- Bean 주입 방식 통일
+- 변수 구성 방식 통일
 
 ---
 
