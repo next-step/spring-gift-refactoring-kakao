@@ -39,11 +39,11 @@ public class WishController {
     public ResponseEntity<Page<WishResponse>> getWishes(
             @RequestHeader("Authorization") String authorization, Pageable pageable) {
         // check auth
-        Member member = authenticationResolver.extractMember(authorization);
+        final Member member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        Page<WishResponse> wishes =
+        final Page<WishResponse> wishes =
                 wishRepository.findByMemberId(member.getId(), pageable).map(WishResponse::from);
         return ResponseEntity.ok(wishes);
     }
@@ -52,26 +52,26 @@ public class WishController {
     public ResponseEntity<WishResponse> addWish(
             @RequestHeader("Authorization") String authorization, @Valid @RequestBody WishRequest request) {
         // check auth
-        Member member = authenticationResolver.extractMember(authorization);
+        final Member member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         // check product
-        Product product = productRepository.findById(request.productId()).orElse(null);
+        final Product product = productRepository.findById(request.productId()).orElse(null);
         if (product == null) {
             return ResponseEntity.notFound().build();
         }
 
         // check duplicate
-        Wish existing = wishRepository
+        final Wish existing = wishRepository
                 .findByMemberIdAndProductId(member.getId(), product.getId())
                 .orElse(null);
         if (existing != null) {
             return ResponseEntity.ok(WishResponse.from(existing));
         }
 
-        Wish saved = wishRepository.save(new Wish(member.getId(), product));
+        final Wish saved = wishRepository.save(new Wish(member.getId(), product));
         return ResponseEntity.created(URI.create("/api/wishes/" + saved.getId()))
                 .body(WishResponse.from(saved));
     }
@@ -80,12 +80,12 @@ public class WishController {
     public ResponseEntity<Void> removeWish(
             @RequestHeader("Authorization") String authorization, @PathVariable Long id) {
         // check auth
-        Member member = authenticationResolver.extractMember(authorization);
+        final Member member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        Wish wish = wishRepository.findById(id).orElse(null);
+        final Wish wish = wishRepository.findById(id).orElse(null);
         if (wish == null) {
             return ResponseEntity.notFound().build();
         }

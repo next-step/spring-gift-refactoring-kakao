@@ -18,7 +18,7 @@
 - [ ] 1. `build: add Spotless plugin with pre-commit hook`
   - **수정 파일:** build.gradle.kts
   - **변경 내용:**
-    - `com.diffplug.spotless` 플러그인 추가 (Google Java Format, 미사용 import 자동 제거)
+    - `com.diffplug.spotless` 플러그인 추가 (Palantir Java Format, 미사용 import 자동 제거)
     - `spotlessCheck`를 실행하는 pre-commit Git hook 자동 설치 태스크 추가
   - **도입 근거:** 포맷 규칙은 도구로 강제하지 않으면 사람마다 다르게 적용된다.
     `spotlessApply`를 개발자가 매번 기억해서 실행하는 것은 현실적이지 않고,
@@ -114,7 +114,7 @@
 
 | 항목 | 규칙 |
 |---|---|
-| 포매터 | Google Java Format (Spotless) |
+| 포매터 | Palantir Java Format (Spotless) |
 | 타입 선언 | 명시적 타입 (`var` 사용 금지) |
 | 지역 변수 | 재할당하지 않으면 `final` |
 | 에러 메시지 | 한국어 |

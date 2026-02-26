@@ -33,11 +33,11 @@ public class OptionController {
 
     @GetMapping
     public ResponseEntity<List<OptionResponse>> getOptions(@PathVariable Long productId) {
-        Product product = productRepository.findById(productId).orElse(null);
+        final Product product = productRepository.findById(productId).orElse(null);
         if (product == null) {
             return ResponseEntity.notFound().build();
         }
-        List<OptionResponse> options = optionRepository.findByProductId(productId).stream()
+        final List<OptionResponse> options = optionRepository.findByProductId(productId).stream()
                 .map(OptionResponse::from)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(options);
@@ -48,7 +48,7 @@ public class OptionController {
             @PathVariable Long productId, @Valid @RequestBody OptionRequest request) {
         validateName(request.name());
 
-        Product product = productRepository.findById(productId).orElse(null);
+        final Product product = productRepository.findById(productId).orElse(null);
         if (product == null) {
             return ResponseEntity.notFound().build();
         }
@@ -57,24 +57,24 @@ public class OptionController {
             throw new IllegalArgumentException("이미 존재하는 옵션명입니다.");
         }
 
-        Option saved = optionRepository.save(new Option(product, request.name(), request.quantity()));
-        URI location = URI.create("/api/products/" + productId + "/options/" + saved.getId());
+        final Option saved = optionRepository.save(new Option(product, request.name(), request.quantity()));
+        final URI location = URI.create("/api/products/" + productId + "/options/" + saved.getId());
         return ResponseEntity.created(location).body(OptionResponse.from(saved));
     }
 
     @DeleteMapping(path = "/{optionId}")
     public ResponseEntity<Void> deleteOption(@PathVariable Long productId, @PathVariable Long optionId) {
-        Product product = productRepository.findById(productId).orElse(null);
+        final Product product = productRepository.findById(productId).orElse(null);
         if (product == null) {
             return ResponseEntity.notFound().build();
         }
 
-        List<Option> options = optionRepository.findByProductId(productId);
+        final List<Option> options = optionRepository.findByProductId(productId);
         if (options.size() <= 1) {
             throw new IllegalArgumentException("옵션이 1개인 상품은 옵션을 삭제할 수 없습니다.");
         }
 
-        Option option = optionRepository.findById(optionId).orElse(null);
+        final Option option = optionRepository.findById(optionId).orElse(null);
         if (option == null || !option.getProduct().getId().equals(productId)) {
             return ResponseEntity.notFound().build();
         }
@@ -84,7 +84,7 @@ public class OptionController {
     }
 
     private void validateName(String name) {
-        List<String> errors = OptionNameValidator.validate(name);
+        final List<String> errors = OptionNameValidator.validate(name);
         if (!errors.isEmpty()) {
             throw new IllegalArgumentException(String.join(", ", errors));
         }

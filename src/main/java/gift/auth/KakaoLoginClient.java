@@ -17,7 +17,7 @@ public class KakaoLoginClient {
     }
 
     public KakaoTokenResponse requestAccessToken(String code) {
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        final LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
         params.add("client_id", properties.clientId());
         params.add("redirect_uri", properties.redirectUri());

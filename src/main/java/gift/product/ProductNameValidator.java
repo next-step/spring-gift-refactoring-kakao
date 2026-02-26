@@ -15,7 +15,7 @@ public class ProductNameValidator {
     }
 
     public static List<String> validate(String name, boolean allowKakao) {
-        List<String> errors = new ArrayList<>();
+        final List<String> errors = new ArrayList<>();
 
         if (name == null || name.isBlank()) {
             errors.add("상품 이름은 필수입니다.");

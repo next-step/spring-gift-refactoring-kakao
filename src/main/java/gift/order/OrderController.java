@@ -48,11 +48,11 @@ public class OrderController {
     @GetMapping
     public ResponseEntity<?> getOrders(@RequestHeader("Authorization") String authorization, Pageable pageable) {
         // auth check
-        Member member = authenticationResolver.extractMember(authorization);
+        final Member member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        Page<OrderResponse> orders =
+        final Page<OrderResponse> orders =
                 orderRepository.findByMemberId(member.getId(), pageable).map(OrderResponse::from);
         return ResponseEntity.ok(orders);
     }
@@ -69,13 +69,13 @@ public class OrderController {
     public ResponseEntity<?> createOrder(
             @RequestHeader("Authorization") String authorization, @Valid @RequestBody OrderRequest request) {
         // auth check
-        Member member = authenticationResolver.extractMember(authorization);
+        final Member member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         // validate option
-        Option option = optionRepository.findById(request.optionId()).orElse(null);
+        final Option option = optionRepository.findById(request.optionId()).orElse(null);
         if (option == null) {
             return ResponseEntity.notFound().build();
         }
@@ -85,12 +85,13 @@ public class OrderController {
         optionRepository.save(option);
 
         // deduct points
-        int price = option.getProduct().getPrice() * request.quantity();
+        final int price = option.getProduct().getPrice() * request.quantity();
         member.deductPoint(price);
         memberRepository.save(member);
 
         // save order
-        Order saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
+        final Order saved =
+                orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
 
         // best-effort kakao notification
         sendKakaoMessageIfPossible(member, saved, option);
@@ -103,7 +104,7 @@ public class OrderController {
             return;
         }
         try {
-            Product product = option.getProduct();
+            final Product product = option.getProduct();
             kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
         } catch (Exception ignored) {
         }

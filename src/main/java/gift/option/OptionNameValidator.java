@@ -17,7 +17,7 @@ public class OptionNameValidator {
     private OptionNameValidator() {}
 
     public static List<String> validate(String name) {
-        List<String> errors = new ArrayList<>();
+        final List<String> errors = new ArrayList<>();
 
         if (name == null || name.isBlank()) {
             errors.add("옵션 이름은 필수입니다.");
