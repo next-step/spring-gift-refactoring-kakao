@@ -16,13 +16,9 @@ public class Member {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String email;
-
     private String password;
-
     private String kakaoAccessToken;
-
     private int point;
 
     protected Member() {
@@ -48,12 +44,11 @@ public class Member {
 
     public void chargePoint(int amount) {
         if (amount <= 0) {
-            throw new IllegalArgumentException("Amount must be greater than zero.");
+            throw new IllegalArgumentException("충전 금액은 1 이상이어야 합니다.");
         }
         this.point += amount;
     }
 
-    // point deduction for order payment
     public void deductPoint(int amount) {
         if (amount <= 0) {
             throw new IllegalArgumentException("차감 금액은 1 이상이어야 합니다.");
