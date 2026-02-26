@@ -1,7 +1,6 @@
 package gift.wish;
 
 import gift.auth.AuthenticationResolver;
-import gift.product.ProductRepository;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,17 +20,11 @@ import java.net.URI;
 @RestController
 @RequestMapping("/api/wishes")
 public class WishController {
-    private final WishRepository wishRepository;
-    private final ProductRepository productRepository;
+    private final WishService wishService;
     private final AuthenticationResolver authenticationResolver;
 
-    public WishController(
-        WishRepository wishRepository,
-        ProductRepository productRepository,
-        AuthenticationResolver authenticationResolver
-    ) {
-        this.wishRepository = wishRepository;
-        this.productRepository = productRepository;
+    public WishController(WishService wishService, AuthenticationResolver authenticationResolver) {
+        this.wishService = wishService;
         this.authenticationResolver = authenticationResolver;
     }
 
@@ -40,12 +33,11 @@ public class WishController {
         @RequestHeader("Authorization") String authorization,
         Pageable pageable
     ) {
-        // check auth
         var member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        var wishes = wishRepository.findByMemberId(member.getId(), pageable).map(WishResponse::from);
+        var wishes = wishService.findByMemberId(member.getId(), pageable).map(WishResponse::from);
         return ResponseEntity.ok(wishes);
     }
 
@@ -54,27 +46,17 @@ public class WishController {
         @RequestHeader("Authorization") String authorization,
         @Valid @RequestBody WishRequest request
     ) {
-        // check auth
         var member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        // check product
-        var product = productRepository.findById(request.productId()).orElse(null);
-        if (product == null) {
-            return ResponseEntity.notFound().build();
+        var result = wishService.add(member.getId(), request.productId());
+        if (result.created()) {
+            return ResponseEntity.created(URI.create("/api/wishes/" + result.wish().getId()))
+                .body(WishResponse.from(result.wish()));
         }
-
-        // check duplicate
-        var existing = wishRepository.findByMemberIdAndProductId(member.getId(), product.getId()).orElse(null);
-        if (existing != null) {
-            return ResponseEntity.ok(WishResponse.from(existing));
-        }
-
-        var saved = wishRepository.save(new Wish(member.getId(), product));
-        return ResponseEntity.created(URI.create("/api/wishes/" + saved.getId()))
-            .body(WishResponse.from(saved));
+        return ResponseEntity.ok(WishResponse.from(result.wish()));
     }
 
     @DeleteMapping("/{id}")
@@ -82,22 +64,12 @@ public class WishController {
         @RequestHeader("Authorization") String authorization,
         @PathVariable Long id
     ) {
-        // check auth
         var member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        var wish = wishRepository.findById(id).orElse(null);
-        if (wish == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        if (!wish.getMemberId().equals(member.getId())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        wishRepository.delete(wish);
+        wishService.remove(member.getId(), id);
         return ResponseEntity.noContent().build();
     }
 }

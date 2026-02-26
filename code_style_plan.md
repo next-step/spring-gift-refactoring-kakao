@@ -109,7 +109,43 @@ public class GlobalExceptionHandler {
 
 ---
 
-## Phase 3: 서비스 계층 추출
+## TDD 테스트 전략
+
+- **Unit 테스트 (Mockito)**: Service 단위 테스트. Repository/외부 의존성 모두 Mock
+- **Validator 테스트**: ProductNameValidator, OptionNameValidator 순수 함수 테스트 (Mock 불필요)
+- 테스트 언어: Java (기존 프로덕션 코드와 동일)
+- 예상 테스트 수: ~75개
+
+### TDD 사이클 (서비스당)
+
+1. **RED**: 컨트롤러에서 동작 목록 추출 → 테스트 메서드 작성 → 빈 서비스 스켈레톤 → 테스트 실패
+2. **GREEN**: 컨트롤러 로직을 서비스로 이동 → 테스트 통과
+3. **REFACTOR**: 컨트롤러를 서비스 의존으로 변경 → `./gradlew test` + `./gradlew compileJava` 확인
+
+### 테스트 파일 구조
+
+```
+src/test/
+├── java/gift/
+│   ├── TestFixtures.java
+│   ├── category/CategoryServiceTest.java
+│   ├── product/
+│   │   ├── ProductNameValidatorTest.java
+│   │   └── ProductServiceTest.java
+│   ├── member/MemberServiceTest.java
+│   ├── option/
+│   │   ├── OptionNameValidatorTest.java
+│   │   └── OptionServiceTest.java
+│   ├── wish/WishServiceTest.java
+│   ├── auth/KakaoAuthServiceTest.java
+│   └── order/OrderServiceTest.java
+└── resources/
+    └── application-test.properties
+```
+
+---
+
+## Phase 3: 서비스 계층 추출 [x]
 
 ### 공통 설계 원칙
 
@@ -118,7 +154,35 @@ public class GlobalExceptionHandler {
 - 조회 실패 시 `NoSuchElementException`, 비즈니스 규칙 위반 시 `IllegalArgumentException`
 - Controller는 HTTP 관심사만 (인증 확인, 응답 생성, 폼 렌더링)
 
-### 사전 작업: GlobalExceptionHandler 확장
+### 사전 작업
+
+#### 0-1. 테스트 설정 파일 생성
+
+**신규**: `src/test/resources/application-test.properties`
+
+```properties
+spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MYSQL
+spring.datasource.driver-class-name=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+spring.flyway.enabled=false
+spring.jpa.hibernate.ddl-auto=create-drop
+jwt.secret=test-secret-key-that-is-at-least-256-bits-long-for-hmac-sha
+jwt.expiration=3600000
+kakao.login.client-id=test-client-id
+kakao.login.client-secret=test-client-secret
+kakao.login.redirect-uri=http://localhost:8080/api/auth/kakao/callback
+```
+
+Flyway는 MySQL용 마이그레이션이므로 테스트에서 비활성화, H2 + JPA ddl-auto 사용.
+
+#### 0-2. TestFixtures 유틸 생성
+
+**신규**: `src/test/java/gift/TestFixtures.java`
+
+Entity 생성 팩토리 메서드 모음 (Category, Product, Member, Option 등). 모든 테스트에서 공유.
+
+#### 0-3. GlobalExceptionHandler 확장
 
 Phase 3 시작 전에 핸들러 추가:
 
@@ -155,6 +219,16 @@ public class CategoryService {
 }
 ```
 
+**테스트** (`CategoryServiceTest`, ~5개):
+
+| 테스트 | 검증 내용 |
+|--------|----------|
+| `findAll_returnsAllCategories` | Repository 위임 + 응답 매핑 |
+| `create_savesAndReturns` | save 호출 + 반환 |
+| `update_existingCategory_updatesFields` | findById → update → save |
+| `update_nonExistent_throwsNoSuchElementException` | orElseThrow 동작 |
+| `delete_delegatesToRepository` | deleteById 호출 |
+
 ### 3-2. ProductService
 
 **신규**: `gift/product/ProductService.java`
@@ -180,6 +254,33 @@ public class ProductService {
 
 **AdminProductController 특이사항**: Admin은 `ProductNameValidator.validate(name, true)`로 "카카오" 허용 + 에러를 폼에 표시해야 한다. Admin Controller에서 직접 `ProductNameValidator.validate()`를 호출하여 에러 리스트를 폼에 전달하고, 검증 통과 시 Service의 저장 메서드를 호출하는 구조로 한다. 즉 Admin 검증은 Controller에 남기고, Service에는 별도 `saveProduct(name, price, imageUrl, category)` / `updateProduct(id, name, price, imageUrl, category)` 메서드를 둔다.
 
+**테스트 — ProductNameValidatorTest** (~6개):
+
+| 테스트 | 검증 내용 |
+|--------|----------|
+| `validate_validName_returnsEmpty` | 정상 이름 |
+| `validate_exceedsMaxLength_returnsError` | 15자 초과 |
+| `validate_invalidChars_returnsError` | 허용 외 특수문자 |
+| `validate_containsKakao_returnsError` | "카카오" 포함 |
+| `validate_containsKakao_allowTrue_noError` | allowKakao=true |
+| `validate_blankName_returnsError` | 빈 문자열 |
+
+**테스트 — ProductServiceTest** (~11개):
+
+| 테스트 | 검증 내용 |
+|--------|----------|
+| `findAll_returnsPage` | Pageable 위임 |
+| `findById_existing_returns` | 정상 조회 |
+| `findById_nonExistent_throws` | NoSuchElementException |
+| `create_validRequest_saves` | 검증 + 카테고리 조회 + 저장 |
+| `create_invalidName_throws` | 이름 검증 실패 |
+| `create_categoryNotFound_throws` | 카테고리 없음 |
+| `create_kakaoName_allowFalse_throws` | API 경로 "카카오" 차단 |
+| `create_kakaoName_allowTrue_succeeds` | Admin 경로 "카카오" 허용 |
+| `update_happyPath_updates` | 전체 필드 업데이트 |
+| `update_notFound_throws` | 존재하지 않는 상품 |
+| `delete_delegatesToRepository` | 삭제 위임 |
+
 ### 3-3. MemberService
 
 **신규**: `gift/member/MemberService.java`
@@ -203,6 +304,22 @@ public class MemberService {
 }
 ```
 
+**테스트** (`MemberServiceTest`, ~11개):
+
+| 테스트 | 검증 내용 |
+|--------|----------|
+| `register_newEmail_savesAndReturnsToken` | 중복 검증 + 저장 + JWT |
+| `register_duplicateEmail_throws` | existsByEmail → IllegalArgumentException |
+| `login_validCredentials_returnsToken` | findByEmail + 비밀번호 + JWT |
+| `login_emailNotFound_throws` | 이메일 없음 |
+| `login_wrongPassword_throws` | 비밀번호 불일치 |
+| `findAll_returnsList` | Admin 목록 |
+| `findById_existing_returns` | Admin 조회 |
+| `findById_notFound_throws` | NoSuchElementException |
+| `update_updatesFields` | email, password 변경 |
+| `chargePoint_validAmount_updates` | chargePoint 호출 + 저장 |
+| `delete_delegatesToRepository` | 삭제 위임 |
+
 ### 3-4. OptionService
 
 **신규**: `gift/option/OptionService.java`
@@ -220,6 +337,31 @@ public class OptionService {
     // delete(Long productId, Long optionId): void    ← 최소 1개 유지 + 소속 확인
 }
 ```
+
+**테스트 — OptionNameValidatorTest** (~5개):
+
+| 테스트 | 검증 내용 |
+|--------|----------|
+| `validate_validName_returnsEmpty` | 정상 이름 |
+| `validate_exceedsMaxLength_returnsError` | 50자 초과 |
+| `validate_invalidChars_returnsError` | 허용 외 특수문자 |
+| `validate_blankName_returnsError` | 빈 문자열 |
+| `validate_validSpecialChars_returnsEmpty` | 허용 특수문자 `()[]+-&/_` |
+
+**테스트 — OptionServiceTest** (~10개):
+
+| 테스트 | 검증 내용 |
+|--------|----------|
+| `findByProductId_exists_returnsOptions` | 상품 확인 + 옵션 목록 |
+| `findByProductId_productNotFound_throws` | NoSuchElementException |
+| `create_happyPath_saves` | 이름 검증 + 상품 확인 + 중복 확인 + 저장 |
+| `create_invalidName_throws` | 이름 검증 실패 |
+| `create_productNotFound_throws` | 상품 없음 |
+| `create_duplicateName_throws` | 동일 상품 내 중복 이름 |
+| `delete_happyPath_deletes` | 정상 삭제 |
+| `delete_onlyOneOption_throws` | 최소 1개 옵션 제약 |
+| `delete_optionNotOwnedByProduct_throws` | 소속 확인 |
+| `delete_productNotFound_throws` | 상품 없음 |
 
 ### 3-5. WishService
 
@@ -265,6 +407,18 @@ return ResponseEntity.ok(WishResponse.from(result.wish()));
 
 `removeWish`의 기존 403 응답: 소유권 불일치 시 `IllegalStateException` 발생 → GlobalExceptionHandler가 403으로 변환.
 
+**테스트** (`WishServiceTest`, ~7개):
+
+| 테스트 | 검증 내용 |
+|--------|----------|
+| `findByMemberId_returnsPagedWishes` | Pageable 위임 |
+| `add_newWish_returnsCreatedTrue` | AddResult(wish, created=true) |
+| `add_duplicateWish_returnsCreatedFalse` | AddResult(existing, created=false) |
+| `add_productNotFound_throws` | NoSuchElementException |
+| `remove_happyPath_deletes` | 정상 삭제 |
+| `remove_wishNotFound_throws` | NoSuchElementException |
+| `remove_notOwner_throwsIllegalState` | 소유권 → IllegalStateException → 403 |
+
 ### 3-6. KakaoAuthService
 
 **신규**: `gift/auth/KakaoAuthService.java`
@@ -283,6 +437,18 @@ public class KakaoAuthService {
 ```
 
 KakaoAuthController는 `KakaoAuthService` + `KakaoLoginProperties` 의존. `/login` 엔드포인트의 리다이렉트 URL 구성은 HTTP 관심사이므로 Controller에 남김.
+
+**테스트** (`KakaoAuthServiceTest`, ~5개):
+
+| 테스트 | 검증 내용 |
+|--------|----------|
+| `loginOrRegister_existingMember_updatesTokenReturnsJwt` | 기존 회원 → 토큰 갱신 |
+| `loginOrRegister_newMember_createsAndReturnsJwt` | 신규 회원 생성 |
+| `loginOrRegister_savesKakaoAccessToken` | kakaoAccessToken 저장 검증 |
+| `loginOrRegister_generatesJwtWithEmail` | JWT 이메일 일치 |
+| `loginOrRegister_kakaoClientError_propagates` | 예외 전파 (삼키지 않음) |
+
+Mock 대상: `KakaoLoginClient`, `MemberRepository`, `JwtProvider`
 
 ### 3-7. OrderService
 
@@ -308,6 +474,23 @@ public class OrderService {
 - `sendKakaoMessageIfPossible()` private 메서드를 OrderService로 이동
 - Controller에는 `AuthenticationResolver` + `OrderService` 의존만 남김
 
+**테스트** (`OrderServiceTest`, ~10개):
+
+| 테스트 | 검증 내용 |
+|--------|----------|
+| `placeOrder_happyPath_completesAllSteps` | 전체 흐름 |
+| `placeOrder_optionNotFound_throws` | 옵션 없음 |
+| `placeOrder_insufficientStock_throws` | 재고 부족 |
+| `placeOrder_insufficientPoints_throws` | 포인트 부족 |
+| `placeOrder_savesOrderWithCorrectFields` | 주문 엔티티 필드 검증 |
+| `placeOrder_calculatesCorrectPrice` | price × quantity |
+| `placeOrder_withKakaoToken_sendsNotification` | 알림 전송 |
+| `placeOrder_withoutKakaoToken_skipsNotification` | 알림 건너뜀 |
+| `placeOrder_notificationFails_orderStillSucceeds` | 알림 실패해도 주문 성공 |
+| `findByMemberId_returnsPagedOrders` | 페이징 위임 |
+
+Mock 대상: `OrderRepository`, `OptionRepository`, `MemberRepository`, `KakaoMessageClient`
+
 ### Phase 3 실행 순서
 
 ```
@@ -325,11 +508,16 @@ public class OrderService {
 
 ## 검증 방법
 
-테스트 코드가 없으므로 각 단계마다:
+각 서비스 추출 후:
 
-1. `./gradlew compileJava` — 컴파일 통과
-2. `./gradlew bootRun` — 애플리케이션 정상 기동 (H2 인메모리)
-3. 주요 엔드포인트 수동 확인:
+1. `./gradlew test` — 해당 서비스 테스트 전체 통과 + 회귀 없음
+2. `./gradlew compileJava` — 컴파일 통과
+
+최종 완료 후:
+
+3. `./gradlew test` — 전체 ~75개 테스트 통과
+4. `./gradlew bootRun` — 애플리케이션 정상 기동 (H2 인메모리)
+5. 주요 엔드포인트 수동 확인:
    - `GET /api/categories` → 200 + JSON 배열
    - `POST /api/products` 잘못된 이름 → 400 + 에러 메시지
    - `GET /api/products?page=0` → 200 + 페이지 응답
