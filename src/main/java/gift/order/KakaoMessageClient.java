@@ -14,9 +14,9 @@ public class KakaoMessageClient {
     }
 
     public void sendToMe(String accessToken, Order order, Product product) {
-        var templateObject = buildTemplate(order, product);
+        String templateObject = buildTemplate(order, product);
 
-        var params = new LinkedMultiValueMap<String, String>();
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("template_object", templateObject);
 
         restClient
@@ -30,8 +30,8 @@ public class KakaoMessageClient {
     }
 
     private String buildTemplate(Order order, Product product) {
-        var totalPrice = String.format("%,d", product.getPrice() * order.getQuantity());
-        var message =
+        String totalPrice = String.format("%,d", product.getPrice() * order.getQuantity());
+        String message =
                 order.getMessage() != null && !order.getMessage().isBlank() ? "\\n\\n💌 " + order.getMessage() : "";
         return """
             {
