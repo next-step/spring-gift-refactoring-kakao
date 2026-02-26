@@ -28,6 +28,20 @@ semi 가 claude 한테 인수 테스트코드를 만들어달라 요청함.
 
 요청 객체에 대한 validation 이 종종 `...Validator` 로 구성되어있는데, 이를 일괄 spring validation 을 이용한다.
 
+> ### 문제상황 : ProductNameValidator
+> 
+> 현재 코드를 보니 ProductNameValidator 가 2 군데서 사용된다. 하나는 ProductController, 하나는 AdminProductController 이다.
+> 
+> 문제는 AdminProductController 에서 예외 처리이다. 여기선 validator 가 model 에 에러 메세지를 추가해 view 에서 보여주는 용도로 사용되고 있다. 즉, 여기선 exception 이 throw 되면 안된다.
+> 
+> 반면 ProductController 에서는 exception (IllegalArgumentException --> 400 CODE) 던지는데 사용된다.
+> 
+> product name 은 아래 규칙을 따라야 한다.
+> - 길이 규칙, 특수문자 규칙, not blank 규칙
+> - admin 에서는 이름 '카카오' 가 허용되는데 일반 product 에서는 안된다.
+>
+> 이것을 어떻게 처리해야할지 아직 논의중
+
 ### 요청 응답 `ResponseEntity<...>`
 
 코드를 보니 (개발자의 실수인 것 같지만) `ResponseEntity<?>` 처럼 되어 있는 부분이 있다.
