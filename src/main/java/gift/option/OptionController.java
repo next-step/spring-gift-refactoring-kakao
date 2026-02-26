@@ -2,7 +2,9 @@ package gift.option;
 
 import gift.product.Product;
 import gift.product.ProductRepository;
+
 import jakarta.validation.Valid;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -17,7 +19,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/*
+/**
  * Each product must have at least one option at all times.
  * Option names are validated against allowed characters and length constraints.
  */

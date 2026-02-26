@@ -5,8 +5,12 @@ import gift.member.Member;
 import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
+import gift.product.Product;
 import gift.wish.WishRepository;
+
 import jakarta.validation.Valid;
+
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,11 +54,11 @@ public class OrderController {
         Pageable pageable
     ) {
         // auth check
-        var member = authenticationResolver.extractMember(authorization);
+        Member member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             return ResponseEntity.status(401).build();
         }
-        var orders = orderRepository.findByMemberId(member.getId(), pageable).map(OrderResponse::from);
+        Page<OrderResponse> orders = orderRepository.findByMemberId(member.getId(), pageable).map(OrderResponse::from);
         return ResponseEntity.ok(orders);
     }
 
@@ -72,13 +76,13 @@ public class OrderController {
         @Valid @RequestBody OrderRequest request
     ) {
         // auth check
-        var member = authenticationResolver.extractMember(authorization);
+        Member member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             return ResponseEntity.status(401).build();
         }
 
         // validate option
-        var option = optionRepository.findById(request.optionId()).orElse(null);
+        Option option = optionRepository.findById(request.optionId()).orElse(null);
         if (option == null) {
             return ResponseEntity.notFound().build();
         }
@@ -88,12 +92,12 @@ public class OrderController {
         optionRepository.save(option);
 
         // deduct points
-        var price = option.getProduct().getPrice() * request.quantity();
+        int price = option.getProduct().getPrice() * request.quantity();
         member.deductPoint(price);
         memberRepository.save(member);
 
         // save order
-        var saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
+        Order saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
 
         // best-effort kakao notification
         sendKakaoMessageIfPossible(member, saved, option);
@@ -106,7 +110,7 @@ public class OrderController {
             return;
         }
         try {
-            var product = option.getProduct();
+            Product product = option.getProduct();
             kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
         } catch (Exception ignored) {
         }

@@ -26,3 +26,7 @@
 - /write-test TDD 방식으로 테스트 코드 작성해줘.
 - 통합테스트는 MockMVC 대신에 RestAssured를 이용해서 Given/When/Then으로 하고, 초기 데이터 셋업은 Repository 대신에 SQL로 해주도록 기존에 있는 write-test스킬을 수정해줘.
 - /write-test 기존 통합 테스트도 RestAssured + SQL 방식으로 다시 작성해줘.
+
+### 계획 6
+- /style-fix 1단계 스타일 정리 진행해줘.
+- 6번에서 삭제한 주석 다시 살려줘.

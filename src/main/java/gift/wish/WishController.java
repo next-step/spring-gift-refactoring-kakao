@@ -1,8 +1,12 @@
 package gift.wish;
 
 import gift.auth.AuthenticationResolver;
+import gift.member.Member;
+import gift.product.Product;
 import gift.product.ProductRepository;
+
 import jakarta.validation.Valid;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -40,11 +44,11 @@ public class WishController {
         Pageable pageable
     ) {
         // check auth
-        var member = authenticationResolver.extractMember(authorization);
+        Member member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             return ResponseEntity.status(401).build();
         }
-        var wishes = wishRepository.findByMemberId(member.getId(), pageable).map(WishResponse::from);
+        Page<WishResponse> wishes = wishRepository.findByMemberId(member.getId(), pageable).map(WishResponse::from);
         return ResponseEntity.ok(wishes);
     }
 
@@ -54,24 +58,24 @@ public class WishController {
         @Valid @RequestBody WishRequest request
     ) {
         // check auth
-        var member = authenticationResolver.extractMember(authorization);
+        Member member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             return ResponseEntity.status(401).build();
         }
 
         // check product
-        var product = productRepository.findById(request.productId()).orElse(null);
+        Product product = productRepository.findById(request.productId()).orElse(null);
         if (product == null) {
             return ResponseEntity.notFound().build();
         }
 
         // check duplicate
-        var existing = wishRepository.findByMemberIdAndProductId(member.getId(), product.getId()).orElse(null);
+        Wish existing = wishRepository.findByMemberIdAndProductId(member.getId(), product.getId()).orElse(null);
         if (existing != null) {
             return ResponseEntity.ok(WishResponse.from(existing));
         }
 
-        var saved = wishRepository.save(new Wish(member.getId(), product));
+        Wish saved = wishRepository.save(new Wish(member.getId(), product));
         return ResponseEntity.created(URI.create("/api/wishes/" + saved.getId()))
             .body(WishResponse.from(saved));
     }
@@ -82,12 +86,12 @@ public class WishController {
         @PathVariable Long id
     ) {
         // check auth
-        var member = authenticationResolver.extractMember(authorization);
+        Member member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             return ResponseEntity.status(401).build();
         }
 
-        var wish = wishRepository.findById(id).orElse(null);
+        Wish wish = wishRepository.findById(id).orElse(null);
         if (wish == null) {
             return ResponseEntity.notFound().build();
         }
