@@ -5,6 +5,7 @@ plugins {
     id("org.springframework.boot") version "3.5.9"
     id("io.spring.dependency-management") version "1.1.7"
     id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
+    id("com.diffplug.spotless") version "7.0.2"
     id("org.flywaydb.flyway") version "12.0.1"
 }
 
@@ -61,6 +62,29 @@ allOpen {
 
 ktlint {
     verbose.set(true)
+}
+
+spotless {
+    java {
+        palantirJavaFormat()
+        removeUnusedImports()
+    }
+}
+
+tasks.register("installGitHooks") {
+    group = "setup"
+    description = "Installs pre-commit Git hook for Spotless formatting check"
+    doLast {
+        val preCommit = file(".git/hooks/pre-commit")
+        preCommit.writeText(
+            """
+            #!/bin/sh
+            ./gradlew spotlessCheck
+            """.trimIndent()
+        )
+        preCommit.setExecutable(true)
+        println("pre-commit hook installed.")
+    }
 }
 
 tasks.withType<Test> {
