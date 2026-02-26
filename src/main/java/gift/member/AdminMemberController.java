@@ -1,6 +1,5 @@
 package gift.member;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,18 +8,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-/**
- * Admin controller for managing members.
- *
- * @author brian.kim
- * @since 1.0
- */
 @Controller
 @RequestMapping("/admin/members")
 public class AdminMemberController {
     private final MemberRepository memberRepository;
 
-    @Autowired
     public AdminMemberController(MemberRepository memberRepository) {
         this.memberRepository = memberRepository;
     }
