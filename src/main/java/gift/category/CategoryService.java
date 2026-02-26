@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+@Transactional
 @Service
 public class CategoryService {
     private final CategoryRepository categoryRepository;
@@ -26,7 +27,6 @@ public class CategoryService {
         return CategoryResponse.from(saved);
     }
 
-    @Transactional
     public CategoryResponse update(Long id, CategoryRequest request) {
         Category category = categoryRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다."));
