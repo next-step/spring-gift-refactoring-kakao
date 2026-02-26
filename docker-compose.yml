@@ -2,14 +2,14 @@ services:
   mysql:
     image: mysql:8.0
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: gift_test
-      MYSQL_USER: gift
-      MYSQL_PASSWORD: gift1234
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "3306:3306"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "gift", "-pgift1234"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 3s
       timeout: 3s
       retries: 10
@@ -22,15 +22,15 @@ services:
       mysql:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/gift_test
-      SPRING_DATASOURCE_USERNAME: gift
-      SPRING_DATASOURCE_PASSWORD: gift1234
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
       SPRING_FLYWAY_ENABLED: "true"
-      JWT_SECRET: a-string-secret-at-least-256-bits-long-for-testing
-      JWT_EXPIRATION: "3600000"
-      KAKAO_CLIENT_ID: test
-      KAKAO_CLIENT_SECRET: test
-      KAKAO_REDIRECT_URI: http://localhost:8080/api/auth/kakao/callback
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
+      KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
+      KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI}
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/categories"]
       interval: 5s
