@@ -21,6 +21,28 @@
   - 단위 테스트 작성
   - 인수 테스트 작성
 
+## 테스트 실행 방법
+
+### 전체 테스트 실행
+```bash
+./gradlew test
+```
+
+### 단위테스트만 실행
+```bash
+./gradlew test --tests "gift.category.*Test" --tests "gift.member.*Test" --tests "gift.product.*Test" --tests "gift.option.*Test" --tests "gift.wish.*Test" --tests "gift.order.*Test"
+```
+
+### 인수테스트만 실행
+```bash
+./gradlew test --tests "gift.acceptance.*"
+```
+
+### 특정 도메인 인수테스트 실행
+```bash
+./gradlew test --tests "gift.acceptance.CategoryAcceptanceTest"
+```
+
 ## 프로그래밍 요구 사항
 - 코드를 포기하지 않는다.
     AI를 쓰더라도 "행동만 맞으면 된다"로 끝내지 않는다.
