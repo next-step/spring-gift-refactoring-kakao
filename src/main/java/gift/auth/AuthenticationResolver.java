@@ -1,9 +1,9 @@
 package gift.auth;
 
+import org.springframework.stereotype.Component;
+
 import gift.member.Member;
 import gift.member.MemberRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 /**
  * Resolves the authenticated member from an Authorization header.
@@ -16,7 +16,6 @@ public class AuthenticationResolver {
     private final JwtProvider jwtProvider;
     private final MemberRepository memberRepository;
 
-    @Autowired
     public AuthenticationResolver(JwtProvider jwtProvider, MemberRepository memberRepository) {
         this.jwtProvider = jwtProvider;
         this.memberRepository = memberRepository;
@@ -24,8 +23,8 @@ public class AuthenticationResolver {
 
     public Member extractMember(String authorization) {
         try {
-            final String token = authorization.replace("Bearer ", "");
-            final String email = jwtProvider.getEmail(token);
+            String token = authorization.replace("Bearer ", "");
+            String email = jwtProvider.getEmail(token);
             return memberRepository.findByEmail(email).orElse(null);
         } catch (Exception e) {
             return null;

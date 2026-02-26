@@ -1,5 +1,7 @@
 package gift.order;
 
+import java.time.LocalDateTime;
+
 import gift.option.Option;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -8,8 +10,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "orders")
@@ -44,10 +44,6 @@ public class Order {
 
     public Option getOption() {
         return option;
-    }
-
-    public Long getMemberId() {
-        return memberId;
     }
 
     public int getQuantity() {
