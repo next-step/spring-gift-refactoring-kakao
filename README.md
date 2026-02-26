@@ -83,11 +83,81 @@ JWT 인증이 필요한 API의 경우, 테스트 JVM에서 동일한 시크릿�
 
 Cucumber 테스트를 통해 `OrderController`의 트랜잭션 미적용 문제를 발견하였다. 참고 프로젝트는 Service 계층에 `@Transactional`을 적용하여 재고 차감과 포인트 차감이 하나의 트랜잭션으로 묶이지만, 현재 프로젝트는 Controller에서 Repository를 직접 호출하여 각 `save()`가 독립 커밋된다. 포인트 부족 시 재고만 차감되고 롤백되지 않는 문제가 테스트로 확인되었다.
 
+## 1단계 — 인수 테스트 확장
+
+### 작업 배경
+
+리팩터링에 앞서 "현재 작동"을 보호하는 인수 테스트를 전 도메인으로 확장하였다.
+기존에는 주문(order) 도메인만 Cucumber 시나리오가 존재했으나, 구조 변경(Service 계층 추출 등) 시 회귀를 잡으려면 모든 API 경계에 테스트가 필요했다.
+
+### 변경 사항
+
+#### 1. Feature 파일 스타일 통일
+
+참고 프로젝트(`spring-gift-test-kakao`)의 feature 파일 스타일을 분석하여 기존 `order.feature`를 리라이팅하였다.
+
+| 변경 전 | 변경 후 |
+|---------|---------|
+| `가격이 1000이고 재고가 10인 옵션이 존재한다` | `"M2 Silver" 옵션의 가격이 1000원이고 재고가 10개 있다` |
+| `만일 3개를 주문한다` | `만약 "M2 Silver" 3개를 주문한다` |
+| `응답 상태코드는 201이다` | `주문이 성공한다` |
+| `재고는 7이다` | `"M2 Silver" 옵션의 재고가 7개이다` |
+
+핵심 원칙: **비개발자도 시나리오를 읽고 의도를 이해할 수 있어야 한다.**
+
+#### 2. 전 도메인 인수 테스트 추가 (34개 시나리오)
+
+| 도메인 | 파일 | 시나리오 수 | 검증 내용 |
+|--------|------|-----------|----------|
+| 회원 | `member.feature` | 5 | 회원가입, 중복 이메일, 로그인, 미등록 이메일, 비밀번호 불일치 |
+| 카테고리 | `category.feature` | 7 | 생성, 목록조회, 다건조회, 빈 배열, 수정, 수정실패, 삭제 |
+| 상품 | `product.feature` | 7 | 생성, 목록조회, 다건조회, 빈 배열, 카테고리없음, 카카오이름, 15자초과 |
+| 옵션 | `option.feature` | 4 | 추가+조회, 중복이름, 삭제, 마지막옵션 삭제불가 |
+| 위시리스트 | `wish.feature` | 4 | 추가+조회, 삭제, 인증실패, 타인삭제 거부 |
+| 주문 | `order.feature` | 7 | 재고차감, 누적차감, 재고부족, 재고소진, 미존재옵션, 정확한재고, 포인트부족 |
+
+#### 3. Step Definitions 구조 개선
+
+공통 초기화 로직(`@Before` TRUNCATE + RestAssured 설정)을 `CommonStepDefinitions`로 분리하여 중복을 제거하였다.
+
+| 파일 | 역할 |
+|------|------|
+| `CommonStepDefinitions.java` | 매 시나리오마다 전체 테이블 TRUNCATE, RestAssured 설정 |
+| `MemberStepDefinitions.java` | 회원가입/로그인 API 호출 및 검증 |
+| `CategoryStepDefinitions.java` | 카테고리 CRUD API 호출 및 검증 |
+| `ProductStepDefinitions.java` | 상품 CRUD API 호출 및 검증 (Page 응답 처리) |
+| `OptionStepDefinitions.java` | 옵션 추가/삭제 API 호출 및 검증 |
+| `WishStepDefinitions.java` | 위시리스트 API 호출 및 인증/인가 검증 |
+| `OrderStepDefinitions.java` | 주문 API 호출 및 재고/포인트 검증 |
+
+### 학습 내용
+
+#### Cucumber Step 충돌 문제
+
+Cucumber는 glue 패키지 내 모든 Step Definition 클래스를 하나의 글로벌 레지스트리로 관리한다. 서로 다른 클래스에 동일한 step 표현(`"응답에 id가 포함되어 있다"`)이 존재하면 ambiguous match 오류가 발생하고, 다른 클래스에 정의된 step을 실행하면 해당 클래스의 `lastResponse`가 null이어서 NPE가 발생한다. 각 도메인별로 step 표현을 구체적으로 분리(`"응답에 상품 id가 포함되어 있다"`)하여 해결하였다.
+
+#### `@Before` 중복 실행
+
+여러 Step Definition 클래스에 `@Before`를 정의하면 Cucumber가 모든 `@Before`를 매 시나리오마다 실행한다. TRUNCATE가 여러 번 실행되는 비효율과 충돌을 방지하기 위해 공통 초기화를 `CommonStepDefinitions` 한 곳으로 집중시켰다.
+
+#### Page 응답 구조
+
+Spring Data의 `Page` 응답은 `{ "content": [...], "pageable": {...}, ... }` 구조를 가진다. 상품/위시리스트처럼 `Pageable`을 사용하는 API는 목록을 `$.content`로 접근해야 하고, 카테고리/옵션처럼 `List`를 직접 반환하는 API는 `$`로 접근해야 한다.
+
 ### Claude Code 활용
 
 이번 작업에서 Claude Code를 다음과 같이 활용하였다:
+
+#### 이전 단계 (Docker + Cucumber 인프라)
 
 - **참고 프로젝트 분석** — 기존 Docker 설정의 구조와 의도를 파악하여 단순 복사가 아닌 기술 스택에 맞는 적응 방향을 잡음
 - **Gradle DSL 변환 검증** — Groovy에서 Kotlin DSL로 변환 시 `tasks.withType` vs `tasks.named` 스코핑 이슈를 빌드 실행으로 즉시 확인하고 수정
 - **E2E 검증 자동화** — Docker 이미지 빌드 → 컨테이너 기동 → 헬스체크 → API 호출 → 정리까지 전 과정을 반복 실행하며 설정 오류를 조기에 잡음
 - **테스트 기반 결함 발견** — Cucumber 시나리오 실행 결과를 분석하여 트랜잭션 미적용 문제의 근본 원인(아키텍처 차이)을 참고 프로젝트와의 비교를 통해 진단
+
+#### 1단계 (인수 테스트 확장)
+
+- **참고 프로젝트 Feature 스타일 분석** — `spring-gift-test-kakao`의 feature 파일 3개를 분석하여 "비개발자 가독성" 스타일 규칙(구체적 이름, 비즈니스 언어, 상태코드 배제)을 도출하고, 기존 `order.feature`를 해당 스타일로 리라이팅
+- **도메인별 인수 테스트 생성** — 각 도메인의 Controller/Entity/DTO 코드를 분석한 뒤 feature 파일과 step definitions를 생성. 매 도메인마다 `./gradlew cucumberTest`를 실행하여 34개 시나리오 전체 통과를 확인
+- **Step 충돌 디버깅** — 상품 테스트 추가 시 발생한 NPE(CategoryStepDefinitions의 `lastResponse` null 참조)를 분석하여 Cucumber 글로벌 step 레지스트리 구조를 이해하고, 도메인별 step 표현 분리로 해결
+- **공통 초기화 추출** — `@Before` TRUNCATE 중복 문제를 인지하고 `CommonStepDefinitions`로 분리하는 리팩터링을 제안받아 적용

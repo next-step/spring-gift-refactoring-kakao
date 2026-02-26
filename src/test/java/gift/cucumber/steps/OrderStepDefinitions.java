@@ -3,16 +3,20 @@ package gift.cucumber.steps;
 import gift.auth.JwtProvider;
 import io.cucumber.java.Before;
 import io.cucumber.java.ko.그러면;
-import io.cucumber.java.ko.만일;
+import io.cucumber.java.ko.만약;
 import io.cucumber.java.ko.조건;
-import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Component
 public class OrderStepDefinitions {
 
     private static final String TEST_EMAIL = "buyer@test.com";
@@ -25,21 +29,12 @@ public class OrderStepDefinitions {
     private JwtProvider jwtProvider;
 
     private String token;
-    private Long currentOptionId;
+    private final Map<String, Long> optionIdByName = new HashMap<>();
     private Response lastResponse;
 
     @Before
-    public void setUp() {
-        RestAssured.baseURI = "http://localhost";
-        RestAssured.port = 28080;
-        jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 0");
-        jdbcTemplate.execute("TRUNCATE TABLE orders");
-        jdbcTemplate.execute("TRUNCATE TABLE wish");
-        jdbcTemplate.execute("TRUNCATE TABLE options");
-        jdbcTemplate.execute("TRUNCATE TABLE product");
-        jdbcTemplate.execute("TRUNCATE TABLE category");
-        jdbcTemplate.execute("TRUNCATE TABLE member");
-        jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1");
+    public void orderSetUp() {
+        optionIdByName.clear();
     }
 
     @조건("포인트가 {int}인 회원이 존재한다")
@@ -51,8 +46,8 @@ public class OrderStepDefinitions {
         token = jwtProvider.createToken(TEST_EMAIL);
     }
 
-    @조건("가격이 {int}이고 재고가 {int}인 옵션이 존재한다")
-    public void 가격이_n이고_재고가_n인_옵션이_존재한다(int price, int stock) {
+    @조건("{string} 옵션의 가격이 {int}원이고 재고가 {int}개 있다")
+    public void 옵션의_가격이_n원이고_재고가_n개_있다(String optionName, int price, int stock) {
         jdbcTemplate.update(
             "INSERT INTO category (name, color, image_url) VALUES (?, ?, ?)",
             "테스트 카테고리", "#000000", "https://test.com/img.jpg"
@@ -67,29 +62,15 @@ public class OrderStepDefinitions {
 
         jdbcTemplate.update(
             "INSERT INTO options (product_id, name, quantity) VALUES (?, ?, ?)",
-            productId, "테스트 옵션", stock
+            productId, optionName, stock
         );
-        currentOptionId = jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()", Long.class);
+        Long optionId = jdbcTemplate.queryForObject("SELECT LAST_INSERT_ID()", Long.class);
+        optionIdByName.put(optionName, optionId);
     }
 
-    @만일("{int}개를 주문한다")
-    public void n개를_주문한다(int quantity) {
-        lastResponse = given()
-            .contentType("application/json")
-            .header("Authorization", "Bearer " + token)
-            .body("""
-                {
-                    "optionId": %d,
-                    "quantity": %d,
-                    "message": "테스트 주문입니다"
-                }
-                """.formatted(currentOptionId, quantity))
-            .when()
-            .post("/api/orders");
-    }
-
-    @만일("옵션ID {long}로 {int}개를 주문한다")
-    public void 옵션ID로_n개를_주문한다(long optionId, int quantity) {
+    @만약("{string} {int}개를 주문한다")
+    public void n개를_주문한다(String optionName, int quantity) {
+        Long optionId = optionIdByName.get(optionName);
         lastResponse = given()
             .contentType("application/json")
             .header("Authorization", "Bearer " + token)
@@ -104,15 +85,37 @@ public class OrderStepDefinitions {
             .post("/api/orders");
     }
 
-    @그러면("응답 상태코드는 {int}이다")
-    public void 응답_상태코드는_n이다(int statusCode) {
-        assertThat(lastResponse.statusCode()).isEqualTo(statusCode);
+    @만약("존재하지 않는 옵션을 {int}개 주문한다")
+    public void 존재하지_않는_옵션을_n개_주문한다(int quantity) {
+        lastResponse = given()
+            .contentType("application/json")
+            .header("Authorization", "Bearer " + token)
+            .body("""
+                {
+                    "optionId": 99999,
+                    "quantity": %d,
+                    "message": "테스트 주문입니다"
+                }
+                """.formatted(quantity))
+            .when()
+            .post("/api/orders");
     }
 
-    @그러면("재고는 {int}이다")
-    public void 재고는_n이다(int expectedStock) {
+    @그러면("주문이 성공한다")
+    public void 주문이_성공한다() {
+        assertThat(lastResponse.statusCode()).isEqualTo(201);
+    }
+
+    @그러면("주문이 실패한다")
+    public void 주문이_실패한다() {
+        assertThat(lastResponse.statusCode()).isGreaterThanOrEqualTo(400);
+    }
+
+    @그러면("{string} 옵션의 재고가 {int}개이다")
+    public void 옵션의_재고가_n개이다(String optionName, int expectedStock) {
+        Long optionId = optionIdByName.get(optionName);
         Integer actual = jdbcTemplate.queryForObject(
-            "SELECT quantity FROM options WHERE id = ?", Integer.class, currentOptionId
+            "SELECT quantity FROM options WHERE id = ?", Integer.class, optionId
         );
         assertThat(actual).isEqualTo(expectedStock);
     }
