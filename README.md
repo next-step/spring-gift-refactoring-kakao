@@ -24,7 +24,7 @@
 - [x] `ProductController` → `ProductService` 추출
 - [x] `AdminProductController` → `ProductService` 재사용
 - [x] `AdminMemberController` → `MemberService` 재사용
-- [ ] `CategoryController` → `CategoryService` 추출 (단순 CRUD지만 일관성을 위해)
+- [x] `CategoryController` → `CategoryService` 추출 (단순 CRUD지만 일관성을 위해)
 
 ### 구현 전략
 1. **스타일 → 불필요 코드 → 서비스 추출** 순서로 진행한다.
