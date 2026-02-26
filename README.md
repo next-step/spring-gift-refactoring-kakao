@@ -44,12 +44,12 @@
 
 Controller에 있는 비즈니스 로직을 Service 계층으로 이동합니다. 작동 변경 없이 순수하게 코드를 이동하는 구조 변경입니다.
 
-- [ ] MemberService 추출
-- [ ] CategoryService 추출
-- [ ] ProductService 추출
-- [ ] OptionService 추출
-- [ ] WishService 추출
-- [ ] OrderService 추출
+- [x] MemberService 추출
+- [x] CategoryService 추출
+- [x] ProductService 추출
+- [x] OptionService 추출
+- [x] WishService 추출
+- [x] OrderService 추출
 
 ### 4단계: 코드 스멜 수정
 
@@ -97,7 +97,14 @@ Controller에 있는 비즈니스 로직을 Service 계층으로 이동합니다
   - 테스트 데이터 정리 시 FK 순서 중요 (orders → wishes → options → products → categories → members)
 
 ### 3단계: 서비스 계층 추출
-- (진행 예정)
+- **활용 방식**: Controller의 비즈니스 로직을 Service로 이동, 각 단위별로 테스트 실행 후 커밋
+- **수정 내용**:
+  - 6개 Service 클래스 생성 (Member, Category, Product, Option, Wish, Order)
+  - Controller는 인증/HTTP 처리만 담당하도록 간소화
+  - 인증 로직은 Controller에 유지 (AuthenticationResolver 사용)
+- **학습 내용**:
+  - 구조 변경 시 작동 변경을 섞지 않는 것이 중요
+  - 각 단위별로 커밋하면 문제 발생 시 롤백이 용이
 
 ### 4단계: 코드 스멜 수정
 - (진행 예정)
