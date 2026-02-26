@@ -5,6 +5,7 @@ import gift.product.ProductRepository;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -42,7 +43,7 @@ public class WishController {
         // check auth
         var member = authenticationResolver.extractMember(authorization);
         if (member == null) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
         var wishes = wishRepository.findByMemberId(member.getId(), pageable).map(WishResponse::from);
         return ResponseEntity.ok(wishes);
@@ -56,7 +57,7 @@ public class WishController {
         // check auth
         var member = authenticationResolver.extractMember(authorization);
         if (member == null) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         // check product
@@ -84,7 +85,7 @@ public class WishController {
         // check auth
         var member = authenticationResolver.extractMember(authorization);
         if (member == null) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         var wish = wishRepository.findById(id).orElse(null);
@@ -93,7 +94,7 @@ public class WishController {
         }
 
         if (!wish.getMemberId().equals(member.getId())) {
-            return ResponseEntity.status(403).build();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         wishRepository.delete(wish);
