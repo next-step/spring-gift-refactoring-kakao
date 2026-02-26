@@ -83,6 +83,28 @@ spring-gift-refactoring-kakao/
 │   │
 │   └── test/
 │       ├── java/gift/
+│       │   └── acceptance/
+│       │       ├── CucumberRunnerTest.java
+│       │       ├── CucumberSpringConfig.java
+│       │       ├── Hooks.java
+│       │       ├── ScenarioContext.java
+│       │       └── steps/
+│       │           ├── CommonSteps.java
+│       │           ├── MemberSteps.java
+│       │           ├── CategorySteps.java
+│       │           ├── ProductSteps.java
+│       │           ├── OptionSteps.java
+│       │           ├── WishSteps.java
+│       │           └── OrderSteps.java
+│       ├── resources/
+│       │   ├── application-test.properties
+│       │   └── features/
+│       │       ├── member.feature
+│       │       ├── category.feature
+│       │       ├── product.feature
+│       │       ├── option.feature
+│       │       ├── wish.feature
+│       │       └── order.feature
 │       └── kotlin/gift/
 │
 └── docs/
@@ -103,6 +125,9 @@ spring-gift-refactoring-kakao/
 | Flyway | 12.0.1 | DB 마이그레이션 |
 | H2 | - | 개발 in-memory DB |
 | MySQL | - | MySQL 드라이버 |
+| Cucumber | 7.18.1 | BDD 인수 테스트 |
+| RestAssured | 5.5.0 | HTTP API 테스트 |
+| JUnit Platform Suite | 1.11.0 | Cucumber 테스트 실행 |
 | Gradle | 8.14 | 빌드 도구 |
 | Ktlint | 14.0.1 | 코드 포맷팅 |
 
