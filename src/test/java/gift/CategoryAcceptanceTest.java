@@ -1,7 +1,11 @@
 package gift;
 
-import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
+import static io.restassured.RestAssured.*;
+import static org.hamcrest.Matchers.*;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,17 +13,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
 import gift.category.CategoryRepository;
-import gift.order.OrderRepository;
-import gift.wish.WishRepository;
-import gift.option.OptionRepository;
-import gift.product.ProductRepository;
 import gift.member.MemberRepository;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
+import gift.option.OptionRepository;
+import gift.order.OrderRepository;
+import gift.product.ProductRepository;
+import gift.wish.WishRepository;
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class CategoryAcceptanceTest {
@@ -71,9 +71,9 @@ class CategoryAcceptanceTest {
         return given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .post("/api/categories")
-        .then()
+            .then()
             .statusCode(201)
             .extract().jsonPath().getLong("id");
     }
@@ -94,7 +94,7 @@ class CategoryAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .post("/api/categories");
 
         // then
@@ -121,7 +121,7 @@ class CategoryAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .post("/api/categories");
 
         // then
@@ -144,7 +144,7 @@ class CategoryAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .post("/api/categories");
 
         // then
@@ -164,7 +164,7 @@ class CategoryAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .post("/api/categories");
 
         // then
@@ -184,7 +184,7 @@ class CategoryAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .post("/api/categories");
 
         // then
@@ -204,7 +204,7 @@ class CategoryAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .post("/api/categories");
 
         // then
@@ -222,9 +222,9 @@ class CategoryAcceptanceTest {
                 "color", "#FF0000",
                 "imageUrl", "https://example.com/test.jpg"
             ))
-        .when()
+            .when()
             .post("/api/categories")
-        .then()
+            .then()
             .statusCode(201);
 
         // when — 같은 이름으로 재생성
@@ -235,7 +235,7 @@ class CategoryAcceptanceTest {
                 "color", "#00FF00",
                 "imageUrl", "https://example.com/test2.jpg"
             ))
-        .when()
+            .when()
             .post("/api/categories");
 
         // then — DB unique 제약 위반
@@ -251,7 +251,7 @@ class CategoryAcceptanceTest {
 
         // when
         var response = given()
-        .when()
+            .when()
             .get("/api/categories");
 
         // then
@@ -268,7 +268,7 @@ class CategoryAcceptanceTest {
 
         // when
         var response = given()
-        .when()
+            .when()
             .get("/api/categories");
 
         // then
@@ -285,7 +285,7 @@ class CategoryAcceptanceTest {
 
         // when
         var response = given()
-        .when()
+            .when()
             .get("/api/categories");
 
         // then
@@ -316,7 +316,7 @@ class CategoryAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .put("/api/categories/" + id);
 
         // then
@@ -342,7 +342,7 @@ class CategoryAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .put("/api/categories/999999");
 
         // then
@@ -363,7 +363,7 @@ class CategoryAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .put("/api/categories/" + id);
 
         // then
@@ -386,7 +386,7 @@ class CategoryAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .put("/api/categories/" + id);
 
         // then — DB unique 제약 위반
@@ -408,7 +408,7 @@ class CategoryAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .put("/api/categories/" + id);
 
         // then
@@ -426,7 +426,7 @@ class CategoryAcceptanceTest {
 
         // when
         var response = given()
-        .when()
+            .when()
             .delete("/api/categories/" + id);
 
         // then — Layer 1: 상태 코드
@@ -435,9 +435,9 @@ class CategoryAcceptanceTest {
 
         // then — Layer 3: DB 상태 변화 확인
         given()
-        .when()
+            .when()
             .get("/api/categories")
-        .then()
+            .then()
             .statusCode(200)
             .body("$", hasSize(0));
     }
@@ -454,14 +454,14 @@ class CategoryAcceptanceTest {
                 "imageUrl", "https://example.com/macbook.jpg",
                 "categoryId", categoryId
             ))
-        .when()
+            .when()
             .post("/api/products")
-        .then()
+            .then()
             .statusCode(201);
 
         // when — 상품이 참조 중인 카테고리 삭제 시도
         var response = given()
-        .when()
+            .when()
             .delete("/api/categories/" + categoryId);
 
         // then — FK 제약 위반으로 삭제 실패
@@ -475,7 +475,7 @@ class CategoryAcceptanceTest {
 
         // when
         var response = given()
-        .when()
+            .when()
             .delete("/api/categories/999999");
 
         // then — Spring Data JPA 3.x: deleteById는 존재하지 않아도 예외 없이 204

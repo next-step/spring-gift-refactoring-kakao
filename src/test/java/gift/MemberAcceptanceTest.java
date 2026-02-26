@@ -1,24 +1,24 @@
 package gift;
 
-import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
+import static io.restassured.RestAssured.*;
+import static org.hamcrest.Matchers.*;
+
+import java.util.Map;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
-import gift.order.OrderRepository;
-import gift.wish.WishRepository;
-import gift.option.OptionRepository;
-import gift.product.ProductRepository;
 import gift.category.CategoryRepository;
 import gift.member.MemberRepository;
-
-import java.util.Map;
-
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
+import gift.option.OptionRepository;
+import gift.order.OrderRepository;
+import gift.product.ProductRepository;
+import gift.wish.WishRepository;
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class MemberAcceptanceTest {
@@ -60,9 +60,9 @@ class MemberAcceptanceTest {
         return given()
             .contentType(ContentType.JSON)
             .body(Map.of("email", email, "password", password))
-        .when()
+            .when()
             .post("/api/members/register")
-        .then()
+            .then()
             .statusCode(201)
             .extract().jsonPath().getString("token");
     }
@@ -78,7 +78,7 @@ class MemberAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .post("/api/members/register");
 
         // then
@@ -97,7 +97,7 @@ class MemberAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .post("/api/members/register");
 
         // then
@@ -114,7 +114,7 @@ class MemberAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .post("/api/members/register");
 
         // then
@@ -131,7 +131,7 @@ class MemberAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .post("/api/members/register");
 
         // then
@@ -148,7 +148,7 @@ class MemberAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .post("/api/members/register");
 
         // then
@@ -164,7 +164,7 @@ class MemberAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(Map.of())
-        .when()
+            .when()
             .post("/api/members/register");
 
         // then
@@ -184,7 +184,7 @@ class MemberAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .post("/api/members/login");
 
         // then
@@ -202,7 +202,7 @@ class MemberAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .post("/api/members/login");
 
         // then
@@ -220,7 +220,7 @@ class MemberAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .post("/api/members/login");
 
         // then
@@ -237,7 +237,7 @@ class MemberAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .post("/api/members/login");
 
         // then
@@ -253,7 +253,7 @@ class MemberAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(Map.of())
-        .when()
+            .when()
             .post("/api/members/login");
 
         // then

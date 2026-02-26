@@ -1,7 +1,11 @@
 package gift;
 
-import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
+import static io.restassured.RestAssured.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.hamcrest.Matchers.*;
+
+import java.util.Map;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,15 +18,10 @@ import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
 import gift.order.OrderRepository;
-import gift.product.Product;
 import gift.product.ProductRepository;
 import gift.wish.WishRepository;
-
-import java.util.Map;
-
-import static io.restassured.RestAssured.given;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.*;
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class OrderAcceptanceTest {
@@ -65,9 +64,9 @@ class OrderAcceptanceTest {
         return given()
             .contentType(ContentType.JSON)
             .body(Map.of("email", email, "password", "password123"))
-        .when()
+            .when()
             .post("/api/members/register")
-        .then()
+            .then()
             .statusCode(201)
             .extract().jsonPath().getString("token");
     }
@@ -82,10 +81,11 @@ class OrderAcceptanceTest {
     Long createCategory() {
         return given()
             .contentType(ContentType.JSON)
-            .body(Map.of("name", "테스트", "color", "#000000", "imageUrl", "https://example.com/cat.jpg", "description", ""))
-        .when()
+            .body(
+                Map.of("name", "테스트", "color", "#000000", "imageUrl", "https://example.com/cat.jpg", "description", ""))
+            .when()
             .post("/api/categories")
-        .then()
+            .then()
             .statusCode(201)
             .extract().jsonPath().getLong("id");
     }
@@ -93,10 +93,11 @@ class OrderAcceptanceTest {
     Long createProduct(Long categoryId, int price) {
         return given()
             .contentType(ContentType.JSON)
-            .body(Map.of("name", "테스트상품", "price", price, "imageUrl", "https://example.com/p.jpg", "categoryId", categoryId))
-        .when()
+            .body(Map.of("name", "테스트상품", "price", price, "imageUrl", "https://example.com/p.jpg", "categoryId",
+                categoryId))
+            .when()
             .post("/api/products")
-        .then()
+            .then()
             .statusCode(201)
             .extract().jsonPath().getLong("id");
     }
@@ -106,9 +107,9 @@ class OrderAcceptanceTest {
         return given()
             .contentType(ContentType.JSON)
             .body(Map.of("name", name, "quantity", quantity))
-        .when()
+            .when()
             .post("/api/products/" + productId + "/options")
-        .then()
+            .then()
             .statusCode(201)
             .extract().jsonPath().getLong("id");
     }
@@ -119,7 +120,7 @@ class OrderAcceptanceTest {
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + token)
             .body(Map.of("productId", productId))
-        .when()
+            .when()
             .post("/api/wishes");
     }
 
@@ -138,15 +139,15 @@ class OrderAcceptanceTest {
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + token)
             .body(Map.of("optionId", optionId, "quantity", 2, "message", "테스트"))
-        .when()
+            .when()
             .post("/api/orders")
-        .then()
+            .then()
             .statusCode(201);
 
         // when
         var response = given()
             .header("Authorization", "Bearer " + token)
-        .when()
+            .when()
             .get("/api/orders");
 
         // then
@@ -164,7 +165,7 @@ class OrderAcceptanceTest {
         // when
         var response = given()
             .header("Authorization", "Bearer " + token)
-        .when()
+            .when()
             .get("/api/orders");
 
         // then
@@ -187,15 +188,15 @@ class OrderAcceptanceTest {
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + tokenA)
             .body(Map.of("optionId", optionId, "quantity", 1, "message", ""))
-        .when()
+            .when()
             .post("/api/orders")
-        .then()
+            .then()
             .statusCode(201);
 
         // when — userB로 조회
         var response = given()
             .header("Authorization", "Bearer " + tokenB)
-        .when()
+            .when()
             .get("/api/orders");
 
         // then
@@ -208,7 +209,7 @@ class OrderAcceptanceTest {
     void 주문_목록_조회_실패_인증_없음() {
         // when
         var response = given()
-        .when()
+            .when()
             .get("/api/orders");
 
         // then
@@ -232,7 +233,7 @@ class OrderAcceptanceTest {
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + token)
             .body(Map.of("optionId", optionId, "quantity", 3, "message", "선물입니다"))
-        .when()
+            .when()
             .post("/api/orders");
 
         // then
@@ -260,9 +261,9 @@ class OrderAcceptanceTest {
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + token)
             .body(Map.of("optionId", optionId, "quantity", 5, "message", ""))
-        .when()
+            .when()
             .post("/api/orders")
-        .then()
+            .then()
             .statusCode(201);
 
         // then — 재고 확인 (Layer 3)
@@ -284,9 +285,9 @@ class OrderAcceptanceTest {
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + token)
             .body(Map.of("optionId", optionId, "quantity", 3, "message", ""))
-        .when()
+            .when()
             .post("/api/orders")
-        .then()
+            .then()
             .statusCode(201);
 
         // then — 포인트 확인 (Layer 3): 10000 - (1000 * 3) = 7000
@@ -304,7 +305,7 @@ class OrderAcceptanceTest {
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + token)
             .body(Map.of("optionId", 999999, "quantity", 1, "message", ""))
-        .when()
+            .when()
             .post("/api/orders");
 
         // then
@@ -326,7 +327,7 @@ class OrderAcceptanceTest {
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + token)
             .body(Map.of("optionId", optionId, "quantity", 10, "message", ""))
-        .when()
+            .when()
             .post("/api/orders");
 
         // then
@@ -348,7 +349,7 @@ class OrderAcceptanceTest {
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + token)
             .body(Map.of("optionId", optionId, "quantity", 1, "message", ""))
-        .when()
+            .when()
             .post("/api/orders");
 
         // then
@@ -362,7 +363,7 @@ class OrderAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(Map.of("optionId", 1, "quantity", 1, "message", ""))
-        .when()
+            .when()
             .post("/api/orders");
 
         // then
@@ -377,7 +378,7 @@ class OrderAcceptanceTest {
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer invalid-token")
             .body(Map.of("optionId", 1, "quantity", 1, "message", ""))
-        .when()
+            .when()
             .post("/api/orders");
 
         // then
@@ -399,7 +400,7 @@ class OrderAcceptanceTest {
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + token)
             .body(Map.of("optionId", optionId, "quantity", 0, "message", ""))
-        .when()
+            .when()
             .post("/api/orders");
 
         // then

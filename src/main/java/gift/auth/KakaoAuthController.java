@@ -1,7 +1,5 @@
 package gift.auth;
 
-import gift.member.Member;
-import gift.member.MemberRepository;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +8,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import gift.member.Member;
+import gift.member.MemberRepository;
 
 /*
  * Handles the Kakao OAuth2 login flow.

@@ -1,5 +1,8 @@
 package gift.product;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import gift.category.Category;
 import gift.option.Option;
 import jakarta.persistence.CascadeType;
@@ -10,9 +13,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 public class Product {
@@ -28,7 +28,7 @@ public class Product {
     private Category category;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Option> options = new ArrayList<>();
+    private final List<Option> options = new ArrayList<>();
 
     protected Product() {
     }

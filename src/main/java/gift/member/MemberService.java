@@ -1,9 +1,10 @@
 package gift.member;
 
-import gift.auth.JwtProvider;
-import gift.auth.TokenResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import gift.auth.JwtProvider;
+import gift.auth.TokenResponse;
 
 @Transactional
 @Service

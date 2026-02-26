@@ -1,7 +1,10 @@
 package gift;
 
-import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
+import static io.restassured.RestAssured.*;
+import static org.hamcrest.Matchers.*;
+
+import java.util.Map;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,11 +17,8 @@ import gift.option.OptionRepository;
 import gift.order.OrderRepository;
 import gift.product.ProductRepository;
 import gift.wish.WishRepository;
-
-import java.util.Map;
-
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class WishAcceptanceTest {
@@ -59,9 +59,9 @@ class WishAcceptanceTest {
         return given()
             .contentType(ContentType.JSON)
             .body(Map.of("email", email, "password", "password123"))
-        .when()
+            .when()
             .post("/api/members/register")
-        .then()
+            .then()
             .statusCode(201)
             .extract().jsonPath().getString("token");
     }
@@ -69,10 +69,11 @@ class WishAcceptanceTest {
     Long createCategory() {
         return given()
             .contentType(ContentType.JSON)
-            .body(Map.of("name", "테스트", "color", "#000000", "imageUrl", "https://example.com/cat.jpg", "description", ""))
-        .when()
+            .body(
+                Map.of("name", "테스트", "color", "#000000", "imageUrl", "https://example.com/cat.jpg", "description", ""))
+            .when()
             .post("/api/categories")
-        .then()
+            .then()
             .statusCode(201)
             .extract().jsonPath().getLong("id");
     }
@@ -80,10 +81,11 @@ class WishAcceptanceTest {
     Long createProduct(Long categoryId) {
         return given()
             .contentType(ContentType.JSON)
-            .body(Map.of("name", "테스트상품", "price", 10000, "imageUrl", "https://example.com/p.jpg", "categoryId", categoryId))
-        .when()
+            .body(Map.of("name", "테스트상품", "price", 10000, "imageUrl", "https://example.com/p.jpg", "categoryId",
+                categoryId))
+            .when()
             .post("/api/products")
-        .then()
+            .then()
             .statusCode(201)
             .extract().jsonPath().getLong("id");
     }
@@ -93,9 +95,9 @@ class WishAcceptanceTest {
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + token)
             .body(Map.of("productId", productId))
-        .when()
+            .when()
             .post("/api/wishes")
-        .then()
+            .then()
             .extract().jsonPath().getLong("id");
     }
 
@@ -112,7 +114,7 @@ class WishAcceptanceTest {
         // when
         var response = given()
             .header("Authorization", "Bearer " + token)
-        .when()
+            .when()
             .get("/api/wishes");
 
         // then
@@ -130,7 +132,7 @@ class WishAcceptanceTest {
         // when
         var response = given()
             .header("Authorization", "Bearer " + token)
-        .when()
+            .when()
             .get("/api/wishes");
 
         // then
@@ -151,7 +153,7 @@ class WishAcceptanceTest {
         // when — userB로 조회
         var response = given()
             .header("Authorization", "Bearer " + tokenB)
-        .when()
+            .when()
             .get("/api/wishes");
 
         // then
@@ -166,7 +168,7 @@ class WishAcceptanceTest {
 
         // when
         var response = given()
-        .when()
+            .when()
             .get("/api/wishes");
 
         // then
@@ -188,7 +190,7 @@ class WishAcceptanceTest {
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + token)
             .body(Map.of("productId", productId))
-        .when()
+            .when()
             .post("/api/wishes");
 
         // then
@@ -213,7 +215,7 @@ class WishAcceptanceTest {
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + token)
             .body(Map.of("productId", productId))
-        .when()
+            .when()
             .post("/api/wishes");
 
         // then — 200 (기존 반환)
@@ -232,7 +234,7 @@ class WishAcceptanceTest {
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer " + token)
             .body(Map.of("productId", 999999))
-        .when()
+            .when()
             .post("/api/wishes");
 
         // then
@@ -250,7 +252,7 @@ class WishAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(Map.of("productId", productId))
-        .when()
+            .when()
             .post("/api/wishes");
 
         // then
@@ -269,7 +271,7 @@ class WishAcceptanceTest {
             .contentType(ContentType.JSON)
             .header("Authorization", "Bearer invalid-token")
             .body(Map.of("productId", productId))
-        .when()
+            .when()
             .post("/api/wishes");
 
         // then
@@ -290,7 +292,7 @@ class WishAcceptanceTest {
         // when
         var response = given()
             .header("Authorization", "Bearer " + token)
-        .when()
+            .when()
             .delete("/api/wishes/" + wishId);
 
         // then
@@ -300,9 +302,9 @@ class WishAcceptanceTest {
         // 삭제 확인
         given()
             .header("Authorization", "Bearer " + token)
-        .when()
+            .when()
             .get("/api/wishes")
-        .then()
+            .then()
             .statusCode(200)
             .body("content", hasSize(0));
     }
@@ -315,7 +317,7 @@ class WishAcceptanceTest {
         // when
         var response = given()
             .header("Authorization", "Bearer " + token)
-        .when()
+            .when()
             .delete("/api/wishes/999999");
 
         // then
@@ -335,7 +337,7 @@ class WishAcceptanceTest {
         // when — userB가 userA의 위시 삭제 시도
         var response = given()
             .header("Authorization", "Bearer " + tokenB)
-        .when()
+            .when()
             .delete("/api/wishes/" + wishId);
 
         // then
@@ -353,7 +355,7 @@ class WishAcceptanceTest {
 
         // when
         var response = given()
-        .when()
+            .when()
             .delete("/api/wishes/" + wishId);
 
         // then

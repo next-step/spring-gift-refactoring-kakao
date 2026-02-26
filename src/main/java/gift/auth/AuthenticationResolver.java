@@ -1,9 +1,10 @@
 package gift.auth;
 
-import gift.member.Member;
-import gift.member.MemberRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import gift.member.Member;
+import gift.member.MemberRepository;
 
 /**
  * Resolves the authenticated member from an Authorization header.

@@ -1,7 +1,10 @@
 package gift;
 
-import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
+import static io.restassured.RestAssured.*;
+import static org.hamcrest.Matchers.*;
+
+import java.util.Map;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,11 +17,8 @@ import gift.option.OptionRepository;
 import gift.order.OrderRepository;
 import gift.product.ProductRepository;
 import gift.wish.WishRepository;
-
-import java.util.Map;
-
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class OptionAcceptanceTest {
@@ -58,10 +58,11 @@ class OptionAcceptanceTest {
     Long createCategory() {
         return given()
             .contentType(ContentType.JSON)
-            .body(Map.of("name", "테스트", "color", "#000000", "imageUrl", "https://example.com/cat.jpg", "description", ""))
-        .when()
+            .body(
+                Map.of("name", "테스트", "color", "#000000", "imageUrl", "https://example.com/cat.jpg", "description", ""))
+            .when()
             .post("/api/categories")
-        .then()
+            .then()
             .statusCode(201)
             .extract().jsonPath().getLong("id");
     }
@@ -69,10 +70,11 @@ class OptionAcceptanceTest {
     Long createProduct(Long categoryId) {
         return given()
             .contentType(ContentType.JSON)
-            .body(Map.of("name", "테스트상품", "price", 10000, "imageUrl", "https://example.com/p.jpg", "categoryId", categoryId))
-        .when()
+            .body(Map.of("name", "테스트상품", "price", 10000, "imageUrl", "https://example.com/p.jpg", "categoryId",
+                categoryId))
+            .when()
             .post("/api/products")
-        .then()
+            .then()
             .statusCode(201)
             .extract().jsonPath().getLong("id");
     }
@@ -81,9 +83,9 @@ class OptionAcceptanceTest {
         return given()
             .contentType(ContentType.JSON)
             .body(Map.of("name", name, "quantity", quantity))
-        .when()
+            .when()
             .post("/api/products/" + productId + "/options")
-        .then()
+            .then()
             .statusCode(201)
             .extract().jsonPath().getLong("id");
     }
@@ -100,7 +102,7 @@ class OptionAcceptanceTest {
 
         // when
         var response = given()
-        .when()
+            .when()
             .get("/api/products/" + productId + "/options");
 
         // then
@@ -120,7 +122,7 @@ class OptionAcceptanceTest {
 
         // when
         var response = given()
-        .when()
+            .when()
             .get("/api/products/" + productId + "/options");
 
         // then
@@ -135,7 +137,7 @@ class OptionAcceptanceTest {
 
         // when
         var response = given()
-        .when()
+            .when()
             .get("/api/products/999999/options");
 
         // then
@@ -156,7 +158,7 @@ class OptionAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .post("/api/products/" + productId + "/options");
 
         // then
@@ -177,7 +179,7 @@ class OptionAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .post("/api/products/999999/options");
 
         // then
@@ -197,7 +199,7 @@ class OptionAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .post("/api/products/" + productId + "/options");
 
         // then
@@ -216,7 +218,7 @@ class OptionAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .post("/api/products/" + productId + "/options");
 
         // then
@@ -235,7 +237,7 @@ class OptionAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .post("/api/products/" + productId + "/options");
 
         // then
@@ -254,7 +256,7 @@ class OptionAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .post("/api/products/" + productId + "/options");
 
         // then
@@ -273,7 +275,7 @@ class OptionAcceptanceTest {
         var response = given()
             .contentType(ContentType.JSON)
             .body(request)
-        .when()
+            .when()
             .post("/api/products/" + productId + "/options");
 
         // then
@@ -293,7 +295,7 @@ class OptionAcceptanceTest {
 
         // when
         var response = given()
-        .when()
+            .when()
             .delete("/api/products/" + productId + "/options/" + optionA);
 
         // then
@@ -302,9 +304,9 @@ class OptionAcceptanceTest {
 
         // 삭제 확인 — 1개만 남음
         given()
-        .when()
+            .when()
             .get("/api/products/" + productId + "/options")
-        .then()
+            .then()
             .statusCode(200)
             .body("$", hasSize(1));
     }
@@ -318,7 +320,7 @@ class OptionAcceptanceTest {
 
         // when
         var response = given()
-        .when()
+            .when()
             .delete("/api/products/" + productId + "/options/" + optionId);
 
         // then
@@ -332,7 +334,7 @@ class OptionAcceptanceTest {
 
         // when
         var response = given()
-        .when()
+            .when()
             .delete("/api/products/999999/options/1");
 
         // then
@@ -350,7 +352,7 @@ class OptionAcceptanceTest {
 
         // when
         var response = given()
-        .when()
+            .when()
             .delete("/api/products/" + productId + "/options/999999");
 
         // then
@@ -370,7 +372,7 @@ class OptionAcceptanceTest {
 
         // when — productA의 옵션 삭제 URL에 productB의 옵션 ID
         var response = given()
-        .when()
+            .when()
             .delete("/api/products/" + productA + "/options/" + optionB);
 
         // then
