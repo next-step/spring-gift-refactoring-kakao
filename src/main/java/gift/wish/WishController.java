@@ -38,7 +38,7 @@ public class WishController {
     @GetMapping
     public ResponseEntity<Page<WishResponse>> getWishes(
             @RequestHeader("Authorization") String authorization, Pageable pageable) {
-        // check auth
+        // 인증 확인
         final Member member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -51,19 +51,19 @@ public class WishController {
     @PostMapping
     public ResponseEntity<WishResponse> addWish(
             @RequestHeader("Authorization") String authorization, @Valid @RequestBody WishRequest request) {
-        // check auth
+        // 인증 확인
         final Member member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        // check product
+        // 상품 확인
         final Product product = productRepository.findById(request.productId()).orElse(null);
         if (product == null) {
             return ResponseEntity.notFound().build();
         }
 
-        // check duplicate
+        // 중복 확인
         final Wish existing = wishRepository
                 .findByMemberIdAndProductId(member.getId(), product.getId())
                 .orElse(null);
@@ -79,7 +79,7 @@ public class WishController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> removeWish(
             @RequestHeader("Authorization") String authorization, @PathVariable Long id) {
-        // check auth
+        // 인증 확인
         final Member member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();

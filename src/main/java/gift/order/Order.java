@@ -20,7 +20,7 @@ public class Order {
     @ManyToOne
     @JoinColumn(name = "option_id")
     private Option option;
-    // primitive FK
+    // 엔티티 참조 없이 FK만 저장
     private Long memberId;
     private int quantity;
     private String message;

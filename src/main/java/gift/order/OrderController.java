@@ -47,7 +47,7 @@ public class OrderController {
 
     @GetMapping
     public ResponseEntity<?> getOrders(@RequestHeader("Authorization") String authorization, Pageable pageable) {
-        // auth check
+        // 인증 확인
         final Member member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -57,43 +57,43 @@ public class OrderController {
         return ResponseEntity.ok(orders);
     }
 
-    // order flow:
-    // 1. auth check
-    // 2. validate option
-    // 3. subtract stock
-    // 4. deduct points
-    // 5. save order
-    // 6. cleanup wish
-    // 7. send kakao notification
+    // 주문 흐름:
+    // 1. 인증 확인
+    // 2. 옵션 검증
+    // 3. 재고 차감
+    // 4. 포인트 차감
+    // 5. 주문 저장
+    // 6. 위시 정리
+    // 7. 카카오 알림 전송
     @PostMapping
     public ResponseEntity<?> createOrder(
             @RequestHeader("Authorization") String authorization, @Valid @RequestBody OrderRequest request) {
-        // auth check
+        // 인증 확인
         final Member member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        // validate option
+        // 옵션 검증
         final Option option = optionRepository.findById(request.optionId()).orElse(null);
         if (option == null) {
             return ResponseEntity.notFound().build();
         }
 
-        // subtract stock
+        // 재고 차감
         option.subtractQuantity(request.quantity());
         optionRepository.save(option);
 
-        // deduct points
+        // 포인트 차감
         final int price = option.getProduct().getPrice() * request.quantity();
         member.deductPoint(price);
         memberRepository.save(member);
 
-        // save order
+        // 주문 저장
         final Order saved =
                 orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
 
-        // best-effort kakao notification
+        // 카카오 알림 전송 (실패해도 주문은 유지)
         sendKakaoMessageIfPossible(member, saved, option);
         return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
                 .body(OrderResponse.from(saved));

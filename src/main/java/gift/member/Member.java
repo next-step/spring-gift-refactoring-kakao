@@ -52,7 +52,7 @@ public class Member {
         this.point += amount;
     }
 
-    // point deduction for order payment
+    // 주문 결제를 위한 포인트 차감
     public void deductPoint(int amount) {
         if (amount <= 0) {
             throw new IllegalArgumentException("차감 금액은 1 이상이어야 합니다.");
