@@ -56,14 +56,14 @@ Controller에 있는 비즈니스 로직을 Service 계층으로 이동합니다
 서비스 계층이 정리된 후, 분석 문서에 정리된 코드 스멜을 수정합니다.
 
 #### Anti-pattern 수정 (`anti-pattern.md`)
-- [ ] `orElse(null)` 후 null 체크 → `orElseThrow()` 패턴으로 변경
+- [x] `orElse(null)` 후 null 체크 → Optional chain으로 변경
 - [ ] Exception Swallowing → 최소 로깅 추가
 - [ ] `ResponseEntity<?>` 와일드카드 → 구체 타입으로 변경
-- [ ] 매직 넘버 HTTP 상태 코드 → `HttpStatus` 상수 사용
+- [x] 매직 넘버 HTTP 상태 코드 → `HttpStatus` 상수 사용
 
 #### 스타일 통일 (`style.md`)
-- [ ] 에러 메시지 한국어 통일
-- [ ] `@Autowired` 생략
+- [x] 에러 메시지 한국어 통일
+- [x] `@Autowired` 생략
 - [ ] `var` → 명시적 타입 선언
 - [ ] `.collect(Collectors.toList())` → `.toList()`
 - [ ] `path=` 속성 생략
@@ -73,8 +73,8 @@ Controller에 있는 비즈니스 로직을 Service 계층으로 이동합니다
 - [ ] 과도한 접근 범위 → package-private 검토
 
 #### 미참조 코드 삭제 (`unreferenced.md`)
-- [ ] `Order.getMemberId()` 삭제
-- [ ] `Product.getOptions()` 삭제
+- [x] `Order.getMemberId()` 삭제
+- [x] `Product.getOptions()` 삭제
 
 ---
 
@@ -107,7 +107,16 @@ Controller에 있는 비즈니스 로직을 Service 계층으로 이동합니다
   - 각 단위별로 커밋하면 문제 발생 시 롤백이 용이
 
 ### 4단계: 코드 스멜 수정
-- (진행 예정)
+- **활용 방식**: 분석 문서 기반으로 코드 스멜 수정, 각 패턴별 일괄 변경 후 테스트
+- **수정 내용**:
+  - `orElse(null)` + null 체크 → Optional chain (map/filter) 패턴으로 변경
+  - HTTP 상태 코드 매직 넘버 → `HttpStatus.UNAUTHORIZED`, `HttpStatus.FORBIDDEN` 상수 사용
+  - 불필요한 `@Autowired` 제거 (Spring 4.3+ 단일 생성자 자동 주입)
+  - 에러 메시지 한국어로 통일
+  - 미참조 getter 메서드 삭제 (`Order.getMemberId()`, `Product.getOptions()`)
+- **학습 내용**:
+  - 에러 메시지 변경 시 해당 메시지를 검증하는 테스트도 함께 수정 필요
+  - Optional chain 패턴은 orElse(null) + null 체크보다 의도가 명확함
 
 ---
 
