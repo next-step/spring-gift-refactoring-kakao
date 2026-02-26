@@ -32,6 +32,7 @@ dependencies {
     implementation("org.flywaydb:flyway-mysql")
     implementation(platform("io.jsonwebtoken:jjwt-bom:0.13.0"))
     implementation("io.jsonwebtoken:jjwt-api")
+    implementation("me.paulschwarz:spring-dotenv:4.0.0")
     runtimeOnly("io.jsonwebtoken:jjwt-impl")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson")
     runtimeOnly("com.h2database:h2")
