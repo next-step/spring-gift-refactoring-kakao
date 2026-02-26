@@ -1,6 +1,5 @@
 package gift.product;
 
-import gift.category.Category;
 import gift.category.CategoryRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -44,13 +43,13 @@ public class AdminProductController {
         @RequestParam Long categoryId,
         Model model
     ) {
-        List<String> errors = ProductNameValidator.validate(name, true);
+        var errors = ProductNameValidator.validate(name, true);
         if (!errors.isEmpty()) {
             populateNewForm(model, errors, name, price, imageUrl, categoryId);
             return "product/new";
         }
 
-        Category category = categoryRepository.findById(categoryId)
+        var category = categoryRepository.findById(categoryId)
             .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
         productRepository.save(new Product(name, price, imageUrl, category));
         return "redirect:/admin/products";
@@ -58,7 +57,7 @@ public class AdminProductController {
 
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
-        Product product = productRepository.findById(id)
+        var product = productRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
         model.addAttribute("product", product);
         model.addAttribute("categories", categoryRepository.findAll());
@@ -74,16 +73,16 @@ public class AdminProductController {
         @RequestParam Long categoryId,
         Model model
     ) {
-        Product product = productRepository.findById(id)
+        var product = productRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
 
-        List<String> errors = ProductNameValidator.validate(name, true);
+        var errors = ProductNameValidator.validate(name, true);
         if (!errors.isEmpty()) {
             populateEditForm(model, product, errors, name, price, imageUrl, categoryId);
             return "product/edit";
         }
 
-        Category category = categoryRepository.findById(categoryId)
+        var category = categoryRepository.findById(categoryId)
             .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
 
         product.update(name, price, imageUrl, category);

@@ -11,14 +11,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
-/*
- * Handles the Kakao OAuth2 login flow.
- * 1. /login redirects the user to Kakao's authorization page
- * 2. /callback receives the authorization code, exchanges it for an access token,
- *    retrieves user info, auto-registers the member if new, and issues a service JWT
- */
 @RestController
-@RequestMapping(path = "/api/auth/kakao")
+@RequestMapping("/api/auth/kakao")
 public class KakaoAuthController {
     private final KakaoLoginProperties properties;
     private final KakaoLoginClient kakaoLoginClient;
@@ -37,7 +31,7 @@ public class KakaoAuthController {
         this.jwtProvider = jwtProvider;
     }
 
-    @GetMapping(path = "/login")
+    @GetMapping("/login")
     public ResponseEntity<Void> login() {
         String kakaoAuthUrl = UriComponentsBuilder.fromUriString("https://kauth.kakao.com/oauth/authorize")
             .queryParam("response_type", "code")
@@ -52,18 +46,18 @@ public class KakaoAuthController {
             .build();
     }
 
-    @GetMapping(path = "/callback")
+    @GetMapping("/callback")
     public ResponseEntity<TokenResponse> callback(@RequestParam("code") String code) {
         KakaoLoginClient.KakaoTokenResponse kakaoToken = kakaoLoginClient.requestAccessToken(code);
         KakaoLoginClient.KakaoUserResponse kakaoUser = kakaoLoginClient.requestUserInfo(kakaoToken.accessToken());
         String email = kakaoUser.email();
 
-        Member member = memberRepository.findByEmail(email)
+        var member = memberRepository.findByEmail(email)
             .orElseGet(() -> new Member(email));
         member.updateKakaoAccessToken(kakaoToken.accessToken());
         memberRepository.save(member);
 
-        String token = jwtProvider.createToken(member.getEmail());
+        var token = jwtProvider.createToken(member.getEmail());
         return ResponseEntity.ok(new TokenResponse(token));
     }
 }

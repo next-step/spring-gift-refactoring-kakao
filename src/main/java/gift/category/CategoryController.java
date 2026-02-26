@@ -25,7 +25,7 @@ public class CategoryController {
 
     @GetMapping
     public ResponseEntity<List<CategoryResponse>> getCategories() {
-        List<CategoryResponse> categories = categoryRepository.findAll().stream()
+        var categories = categoryRepository.findAll().stream()
             .map(CategoryResponse::from)
             .toList();
         return ResponseEntity.ok(categories);
@@ -33,7 +33,7 @@ public class CategoryController {
 
     @PostMapping
     public ResponseEntity<CategoryResponse> createCategory(@Valid @RequestBody CategoryRequest request) {
-        Category saved = categoryRepository.save(request.toEntity());
+        var saved = categoryRepository.save(request.toEntity());
         return ResponseEntity.created(URI.create("/api/categories/" + saved.getId()))
             .body(CategoryResponse.from(saved));
     }
@@ -43,7 +43,7 @@ public class CategoryController {
         @PathVariable Long id,
         @Valid @RequestBody CategoryRequest request
     ) {
-        Category category = categoryRepository.findById(id).orElse(null);
+        var category = categoryRepository.findById(id).orElse(null);
         if (category == null) {
             return ResponseEntity.notFound().build();
         }

@@ -39,7 +39,6 @@ public class WishController {
         @RequestHeader("Authorization") String authorization,
         Pageable pageable
     ) {
-        // check auth
         var member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             return ResponseEntity.status(401).build();
@@ -53,19 +52,16 @@ public class WishController {
         @RequestHeader("Authorization") String authorization,
         @Valid @RequestBody WishRequest request
     ) {
-        // check auth
         var member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             return ResponseEntity.status(401).build();
         }
 
-        // check product
         var product = productRepository.findById(request.productId()).orElse(null);
         if (product == null) {
             return ResponseEntity.notFound().build();
         }
 
-        // check duplicate
         var existing = wishRepository.findByMemberIdAndProductId(member.getId(), product.getId()).orElse(null);
         if (existing != null) {
             return ResponseEntity.ok(WishResponse.from(existing));
@@ -81,7 +77,6 @@ public class WishController {
         @RequestHeader("Authorization") String authorization,
         @PathVariable Long id
     ) {
-        // check auth
         var member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             return ResponseEntity.status(401).build();

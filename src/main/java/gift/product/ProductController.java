@@ -1,6 +1,5 @@
 package gift.product;
 
-import gift.category.Category;
 import gift.category.CategoryRepository;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -17,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
@@ -32,13 +30,13 @@ public class ProductController {
 
     @GetMapping
     public ResponseEntity<Page<ProductResponse>> getProducts(Pageable pageable) {
-        Page<ProductResponse> products = productRepository.findAll(pageable).map(ProductResponse::from);
+        var products = productRepository.findAll(pageable).map(ProductResponse::from);
         return ResponseEntity.ok(products);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> getProduct(@PathVariable Long id) {
-        Product product = productRepository.findById(id).orElse(null);
+        var product = productRepository.findById(id).orElse(null);
         if (product == null) {
             return ResponseEntity.notFound().build();
         }
@@ -49,12 +47,12 @@ public class ProductController {
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductRequest request) {
         validateName(request.name());
 
-        Category category = categoryRepository.findById(request.categoryId()).orElse(null);
+        var category = categoryRepository.findById(request.categoryId()).orElse(null);
         if (category == null) {
             return ResponseEntity.notFound().build();
         }
 
-        Product saved = productRepository.save(request.toEntity(category));
+        var saved = productRepository.save(request.toEntity(category));
         return ResponseEntity.created(URI.create("/api/products/" + saved.getId()))
             .body(ProductResponse.from(saved));
     }
@@ -66,18 +64,18 @@ public class ProductController {
     ) {
         validateName(request.name());
 
-        Category category = categoryRepository.findById(request.categoryId()).orElse(null);
+        var category = categoryRepository.findById(request.categoryId()).orElse(null);
         if (category == null) {
             return ResponseEntity.notFound().build();
         }
 
-        Product product = productRepository.findById(id).orElse(null);
+        var product = productRepository.findById(id).orElse(null);
         if (product == null) {
             return ResponseEntity.notFound().build();
         }
 
         product.update(request.name(), request.price(), request.imageUrl(), category);
-        Product saved = productRepository.save(product);
+        var saved = productRepository.save(product);
         return ResponseEntity.ok(ProductResponse.from(saved));
     }
 
@@ -88,7 +86,7 @@ public class ProductController {
     }
 
     private void validateName(String name) {
-        List<String> errors = ProductNameValidator.validate(name);
+        var errors = ProductNameValidator.validate(name);
         if (!errors.isEmpty()) {
             throw new IllegalArgumentException(String.join(", ", errors));
         }
