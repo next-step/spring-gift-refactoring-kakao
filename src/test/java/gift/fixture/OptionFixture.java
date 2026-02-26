@@ -11,5 +11,4 @@ public class OptionFixture {
     public static Option 옵션(String name, int quantity) {
         return new Option(null, name, quantity);
     }
-
 }

@@ -2,6 +2,8 @@ package gift.product;
 
 import gift.category.Category;
 import gift.category.CategoryRepository;
+import java.util.List;
+import java.util.NoSuchElementException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,9 +11,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import java.util.List;
-import java.util.NoSuchElementException;
 
 @Controller
 @RequestMapping("/admin/products")
@@ -38,28 +37,28 @@ public class AdminProductController {
 
     @PostMapping
     public String create(
-        @RequestParam String name,
-        @RequestParam int price,
-        @RequestParam String imageUrl,
-        @RequestParam Long categoryId,
-        Model model
-    ) {
+            @RequestParam String name,
+            @RequestParam int price,
+            @RequestParam String imageUrl,
+            @RequestParam Long categoryId,
+            Model model) {
         List<String> errors = ProductNameValidator.validate(name, true);
         if (!errors.isEmpty()) {
             populateNewForm(model, errors, name, price, imageUrl, categoryId);
             return "product/new";
         }
 
-        Category category = categoryRepository.findById(categoryId)
-            .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
+        Category category = categoryRepository
+                .findById(categoryId)
+                .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
         productRepository.save(new Product(name, price, imageUrl, category));
         return "redirect:/admin/products";
     }
 
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
-        Product product = productRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
+        Product product =
+                productRepository.findById(id).orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
         model.addAttribute("product", product);
         model.addAttribute("categories", categoryRepository.findAll());
         return "product/edit";
@@ -67,15 +66,14 @@ public class AdminProductController {
 
     @PostMapping("/{id}/edit")
     public String update(
-        @PathVariable Long id,
-        @RequestParam String name,
-        @RequestParam int price,
-        @RequestParam String imageUrl,
-        @RequestParam Long categoryId,
-        Model model
-    ) {
-        Product product = productRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
+            @PathVariable Long id,
+            @RequestParam String name,
+            @RequestParam int price,
+            @RequestParam String imageUrl,
+            @RequestParam Long categoryId,
+            Model model) {
+        Product product =
+                productRepository.findById(id).orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
 
         List<String> errors = ProductNameValidator.validate(name, true);
         if (!errors.isEmpty()) {
@@ -83,8 +81,9 @@ public class AdminProductController {
             return "product/edit";
         }
 
-        Category category = categoryRepository.findById(categoryId)
-            .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
+        Category category = categoryRepository
+                .findById(categoryId)
+                .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
 
         product.update(name, price, imageUrl, category);
         productRepository.save(product);
@@ -98,13 +97,7 @@ public class AdminProductController {
     }
 
     private void populateNewForm(
-        Model model,
-        List<String> errors,
-        String name,
-        int price,
-        String imageUrl,
-        Long categoryId
-    ) {
+            Model model, List<String> errors, String name, int price, String imageUrl, Long categoryId) {
         model.addAttribute("errors", errors);
         model.addAttribute("name", name);
         model.addAttribute("price", price);
@@ -114,14 +107,13 @@ public class AdminProductController {
     }
 
     private void populateEditForm(
-        Model model,
-        Product product,
-        List<String> errors,
-        String name,
-        int price,
-        String imageUrl,
-        Long categoryId
-    ) {
+            Model model,
+            Product product,
+            List<String> errors,
+            String name,
+            int price,
+            String imageUrl,
+            Long categoryId) {
         model.addAttribute("errors", errors);
         model.addAttribute("product", product);
         model.addAttribute("name", name);

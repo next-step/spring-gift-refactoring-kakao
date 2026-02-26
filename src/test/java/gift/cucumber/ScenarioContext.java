@@ -1,10 +1,9 @@
 package gift.cucumber;
 
-import org.springframework.stereotype.Component;
-
 import io.cucumber.spring.ScenarioScope;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
+import org.springframework.stereotype.Component;
 
 @Component
 @ScenarioScope

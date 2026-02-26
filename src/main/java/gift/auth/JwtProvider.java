@@ -2,12 +2,11 @@ package gift.auth;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import java.util.Date;
+import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-
-import javax.crypto.SecretKey;
-import java.util.Date;
 
 /**
  * Provides JWT token creation and validation.
@@ -21,10 +20,7 @@ public class JwtProvider {
     private final long expiration;
 
     @Autowired
-    public JwtProvider(
-        @Value("${jwt.secret}") String secret,
-        @Value("${jwt.expiration}") long expiration
-    ) {
+    public JwtProvider(@Value("${jwt.secret}") String secret, @Value("${jwt.expiration}") long expiration) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
         this.expiration = expiration;
     }
@@ -37,11 +33,11 @@ public class JwtProvider {
      */
     public String getEmail(String token) {
         return Jwts.parser()
-            .verifyWith(key)
-            .build()
-            .parseSignedClaims(token)
-            .getPayload()
-            .getSubject();
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
     }
 
     /**
@@ -55,10 +51,10 @@ public class JwtProvider {
         final Date expiryDate = new Date(now.getTime() + expiration);
 
         return Jwts.builder()
-            .subject(email)
-            .issuedAt(now)
-            .expiration(expiryDate)
-            .signWith(key)
-            .compact();
+                .subject(email)
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(key)
+                .compact();
     }
 }

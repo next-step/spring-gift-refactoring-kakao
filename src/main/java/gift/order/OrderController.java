@@ -7,6 +7,7 @@ import gift.option.Option;
 import gift.option.OptionRepository;
 import gift.wish.WishRepository;
 import jakarta.validation.Valid;
+import java.net.URI;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,8 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.net.URI;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -29,13 +28,12 @@ public class OrderController {
     private final KakaoMessageClient kakaoMessageClient;
 
     public OrderController(
-        OrderRepository orderRepository,
-        OptionRepository optionRepository,
-        WishRepository wishRepository,
-        MemberRepository memberRepository,
-        AuthenticationResolver authenticationResolver,
-        KakaoMessageClient kakaoMessageClient
-    ) {
+            OrderRepository orderRepository,
+            OptionRepository optionRepository,
+            WishRepository wishRepository,
+            MemberRepository memberRepository,
+            AuthenticationResolver authenticationResolver,
+            KakaoMessageClient kakaoMessageClient) {
         this.orderRepository = orderRepository;
         this.optionRepository = optionRepository;
         this.wishRepository = wishRepository;
@@ -45,10 +43,7 @@ public class OrderController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getOrders(
-        @RequestHeader("Authorization") String authorization,
-        Pageable pageable
-    ) {
+    public ResponseEntity<?> getOrders(@RequestHeader("Authorization") String authorization, Pageable pageable) {
         // auth check
         var member = authenticationResolver.extractMember(authorization);
         if (member == null) {
@@ -68,9 +63,7 @@ public class OrderController {
     // 7. send kakao notification
     @PostMapping
     public ResponseEntity<?> createOrder(
-        @RequestHeader("Authorization") String authorization,
-        @Valid @RequestBody OrderRequest request
-    ) {
+            @RequestHeader("Authorization") String authorization, @Valid @RequestBody OrderRequest request) {
         // auth check
         var member = authenticationResolver.extractMember(authorization);
         if (member == null) {
@@ -98,7 +91,7 @@ public class OrderController {
         // best-effort kakao notification
         sendKakaoMessageIfPossible(member, saved, option);
         return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
-            .body(OrderResponse.from(saved));
+                .body(OrderResponse.from(saved));
     }
 
     private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {

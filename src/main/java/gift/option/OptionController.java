@@ -3,6 +3,9 @@ package gift.option;
 import gift.product.Product;
 import gift.product.ProductRepository;
 import jakarta.validation.Valid;
+import java.net.URI;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -12,10 +15,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.net.URI;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /*
  * Each product must have at least one option at all times.
@@ -39,16 +38,14 @@ public class OptionController {
             return ResponseEntity.notFound().build();
         }
         List<OptionResponse> options = optionRepository.findByProductId(productId).stream()
-            .map(OptionResponse::from)
-            .collect(Collectors.toList());
+                .map(OptionResponse::from)
+                .collect(Collectors.toList());
         return ResponseEntity.ok(options);
     }
 
     @PostMapping
     public ResponseEntity<OptionResponse> createOption(
-        @PathVariable Long productId,
-        @Valid @RequestBody OptionRequest request
-    ) {
+            @PathVariable Long productId, @Valid @RequestBody OptionRequest request) {
         validateName(request.name());
 
         Product product = productRepository.findById(productId).orElse(null);
@@ -62,15 +59,11 @@ public class OptionController {
 
         Option saved = optionRepository.save(new Option(product, request.name(), request.quantity()));
         URI location = URI.create("/api/products/" + productId + "/options/" + saved.getId());
-        return ResponseEntity.created(location)
-            .body(OptionResponse.from(saved));
+        return ResponseEntity.created(location).body(OptionResponse.from(saved));
     }
 
     @DeleteMapping(path = "/{optionId}")
-    public ResponseEntity<Void> deleteOption(
-        @PathVariable Long productId,
-        @PathVariable Long optionId
-    ) {
+    public ResponseEntity<Void> deleteOption(@PathVariable Long productId, @PathVariable Long optionId) {
         Product product = productRepository.findById(productId).orElse(null);
         if (product == null) {
             return ResponseEntity.notFound().build();

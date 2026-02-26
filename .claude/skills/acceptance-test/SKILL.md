@@ -256,6 +256,15 @@ public class ScenarioContext {
 
 ---
 
+## 스타일 적용
+
+Java 테스트 코드를 작성하거나 변경한 경우, 반드시 Spotless 포매터를 실행한다.
+
+```bash
+./gradlew spotlessApply      # 자동 포매팅 적용
+./gradlew spotlessCheck      # 포매팅 위반 없음 확인
+```
+
 ## 테스트 실행
 
 ```bash

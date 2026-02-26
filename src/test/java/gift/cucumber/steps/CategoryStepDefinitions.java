@@ -2,10 +2,6 @@ package gift.cucumber.steps;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-
 import gift.cucumber.ScenarioContext;
 import gift.fixture.CategoryFixture;
 import gift.support.TestDataInitializer;
@@ -15,6 +11,8 @@ import io.cucumber.java.ko.만일;
 import io.cucumber.java.ko.조건;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class CategoryStepDefinitions {
 
@@ -32,20 +30,26 @@ public class CategoryStepDefinitions {
 
     @만일("{string} 카테고리를 등록한다")
     public void 카테고리를_등록한다(String name) {
-        String body = """
+        String body =
+                """
                 {
                     "name": "%s",
                     "color": "#000000",
                     "imageUrl": "https://example.com/default.png"
                 }
-                """.formatted(name);
+                """
+                        .formatted(name);
 
-        var response = RestAssured.given().log().all()
+        var response = RestAssured.given()
+                .log()
+                .all()
                 .contentType(ContentType.JSON)
                 .body(body)
                 .when()
                 .post("/api/categories")
-                .then().log().all()
+                .then()
+                .log()
+                .all()
                 .extract();
 
         context.setResponse(response);
@@ -61,20 +65,26 @@ public class CategoryStepDefinitions {
 
     @만일("해당 카테고리의 이름을 {string}으로 수정한다")
     public void 해당_카테고리의_이름을_수정한다(String name) {
-        String body = """
+        String body =
+                """
                 {
                     "name": "%s",
                     "color": "#000000",
                     "imageUrl": "https://example.com/default.png"
                 }
-                """.formatted(name);
+                """
+                        .formatted(name);
 
-        var response = RestAssured.given().log().all()
+        var response = RestAssured.given()
+                .log()
+                .all()
                 .contentType(ContentType.JSON)
                 .body(body)
                 .when()
                 .put("/api/categories/" + context.getCategoryId())
-                .then().log().all()
+                .then()
+                .log()
+                .all()
                 .extract();
 
         context.setResponse(response);
@@ -87,10 +97,14 @@ public class CategoryStepDefinitions {
 
     @만일("해당 카테고리를 삭제한다")
     public void 해당_카테고리를_삭제한다() {
-        var response = RestAssured.given().log().all()
+        var response = RestAssured.given()
+                .log()
+                .all()
                 .when()
                 .delete("/api/categories/" + context.getCategoryId())
-                .then().log().all()
+                .then()
+                .log()
+                .all()
                 .extract();
 
         context.setResponse(response);
@@ -103,10 +117,14 @@ public class CategoryStepDefinitions {
 
     @그리고("카테고리 목록이 비어있다")
     public void 카테고리_목록이_비어있다() {
-        var response = RestAssured.given().log().all()
+        var response = RestAssured.given()
+                .log()
+                .all()
                 .when()
                 .get("/api/categories")
-                .then().log().all()
+                .then()
+                .log()
+                .all()
                 .extract();
 
         List<Long> ids = response.jsonPath().getList("id", Long.class);
@@ -115,10 +133,14 @@ public class CategoryStepDefinitions {
 
     @그리고("카테고리 목록에 {string}이 포함되어 있다")
     public void 카테고리_목록에_이름이_포함되어_있다(String name) {
-        var response = RestAssured.given().log().all()
+        var response = RestAssured.given()
+                .log()
+                .all()
                 .when()
                 .get("/api/categories")
-                .then().log().all()
+                .then()
+                .log()
+                .all()
                 .extract();
 
         List<Long> ids = response.jsonPath().getList("id", Long.class);

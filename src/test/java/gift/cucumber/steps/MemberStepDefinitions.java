@@ -2,8 +2,6 @@ package gift.cucumber.steps;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.springframework.beans.factory.annotation.Autowired;
-
 import gift.cucumber.ScenarioContext;
 import io.cucumber.java.ko.그러면;
 import io.cucumber.java.ko.그리고;
@@ -11,6 +9,7 @@ import io.cucumber.java.ko.만일;
 import io.cucumber.java.ko.조건;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class MemberStepDefinitions {
 
@@ -19,55 +18,73 @@ public class MemberStepDefinitions {
 
     @조건("{string} 이메일로 가입된 회원이 있다")
     public void 이메일로_가입된_회원이_있다(String email) {
-        String body = """
+        String body =
+                """
                 {
                     "email": "%s",
                     "password": "password"
                 }
-                """.formatted(email);
+                """
+                        .formatted(email);
 
-        RestAssured.given().log().all()
+        RestAssured.given()
+                .log()
+                .all()
                 .contentType(ContentType.JSON)
                 .body(body)
                 .when()
                 .post("/api/members/register")
-                .then().log().all()
+                .then()
+                .log()
+                .all()
                 .extract();
     }
 
     @조건("{string} 이메일과 {string} 비밀번호로 가입된 회원이 있다")
     public void 이메일과_비밀번호로_가입된_회원이_있다(String email, String password) {
-        String body = """
+        String body =
+                """
                 {
                     "email": "%s",
                     "password": "%s"
                 }
-                """.formatted(email, password);
+                """
+                        .formatted(email, password);
 
-        RestAssured.given().log().all()
+        RestAssured.given()
+                .log()
+                .all()
                 .contentType(ContentType.JSON)
                 .body(body)
                 .when()
                 .post("/api/members/register")
-                .then().log().all()
+                .then()
+                .log()
+                .all()
                 .extract();
     }
 
     @만일("{string} 이메일과 {string} 비밀번호로 회원가입한다")
     public void 이메일과_비밀번호로_회원가입한다(String email, String password) {
-        String body = """
+        String body =
+                """
                 {
                     "email": "%s",
                     "password": "%s"
                 }
-                """.formatted(email, password);
+                """
+                        .formatted(email, password);
 
-        var response = RestAssured.given().log().all()
+        var response = RestAssured.given()
+                .log()
+                .all()
                 .contentType(ContentType.JSON)
                 .body(body)
                 .when()
                 .post("/api/members/register")
-                .then().log().all()
+                .then()
+                .log()
+                .all()
                 .extract();
 
         context.setResponse(response);
@@ -75,19 +92,25 @@ public class MemberStepDefinitions {
 
     @만일("{string} 이메일과 {string} 비밀번호로 로그인한다")
     public void 이메일과_비밀번호로_로그인한다(String email, String password) {
-        String body = """
+        String body =
+                """
                 {
                     "email": "%s",
                     "password": "%s"
                 }
-                """.formatted(email, password);
+                """
+                        .formatted(email, password);
 
-        var response = RestAssured.given().log().all()
+        var response = RestAssured.given()
+                .log()
+                .all()
                 .contentType(ContentType.JSON)
                 .body(body)
                 .when()
                 .post("/api/members/login")
-                .then().log().all()
+                .then()
+                .log()
+                .all()
                 .extract();
 
         context.setResponse(response);

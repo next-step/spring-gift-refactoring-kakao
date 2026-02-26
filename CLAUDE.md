@@ -4,6 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 필수 지침
 - 모든 프롬프트 입력(원본)은 docs/PROMPT.md에 시간순으로 기록해야 한다.
+- Java 코드를 변경한 경우, 커밋 전에 반드시 `./gradlew spotlessApply`를 실행하여 포매팅을 적용한다.
 
 ## Build & Test Commands
 
@@ -12,8 +13,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ./gradlew test               # Unit tests only
 ./gradlew cucumberTest       # Acceptance tests (auto starts/stops Docker containers)
 ./gradlew bootRun            # Run app locally
-./gradlew ktlintCheck        # Lint check
-./gradlew ktlintFormat       # Auto-fix lint issues
+./gradlew spotlessCheck      # Java formatting check (palantir-java-format)
+./gradlew spotlessApply      # Auto-fix Java formatting
 ```
 
 Cucumber tests require Docker. The `cucumberTest` task handles `dockerUp`/`dockerDown` automatically.
@@ -25,7 +26,7 @@ To run containers manually: `./gradlew dockerUp` / `./gradlew dockerDown`.
 - **Persistence**: Spring Data JPA, MySQL (production/E2E), H2 (local), Flyway migrations
 - **Auth**: JWT (JJWT library), Kakao OAuth
 - **Testing**: Cucumber 7.21.1 (Korean Gherkin), RestAssured 5.5.1, JUnit 5
-- **Linting**: ktlint
+- **Linting**: ktlint (Kotlin), Spotless + palantir-java-format (Java)
 
 ## Architecture
 
