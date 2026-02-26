@@ -12,8 +12,8 @@
 - [x] `Collectors.toList()` → `.toList()` 통일 (Java 16+)
 
 #### 2. 불필요한 코드 제거
-- [ ] `OrderController.wishRepository` — 주입만 되고 사용되지 않는 필드 제거
-- [ ] `OptionController`의 `import java.util.stream.Collectors` — `.toList()` 전환 후 제거
+- [x] `OrderController.wishRepository` — 주입만 되고 사용되지 않는 필드 제거
+- [x] `OptionController`의 `import java.util.stream.Collectors` — `.toList()` 전환 후 제거 (1-4에서 완료)
 
 #### 3. 서비스 계층 추출 (컨트롤러별, 작동 변경 없음)
 - [ ] `OrderController` → `OrderService` 추출

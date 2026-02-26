@@ -8,7 +8,6 @@ import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
 import gift.product.Product;
-import gift.wish.WishRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -50,9 +49,6 @@ class OrderControllerTest {
 
     @MockitoBean
     private OptionRepository optionRepository;
-
-    @MockitoBean
-    private WishRepository wishRepository;
 
     @MockitoBean
     private MemberRepository memberRepository;
