@@ -1,5 +1,7 @@
 package gift.member;
 
+import static org.springframework.http.HttpStatus.*;
+
 import gift.auth.TokenResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -28,7 +30,7 @@ public class MemberController {
     @PostMapping("/register")
     public ResponseEntity<TokenResponse> register(@Valid @RequestBody MemberRequest request) {
         TokenResponse token = memberService.register(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(token);
+        return ResponseEntity.status(CREATED).body(token);
     }
 
     @PostMapping("/login")

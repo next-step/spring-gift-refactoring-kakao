@@ -4,6 +4,9 @@ import gift.member.Member;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -63,7 +66,7 @@ public class WishController {
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Void> handleUnauthorized(IllegalStateException e) {
-        return ResponseEntity.status(401).build();
+        return ResponseEntity.status(UNAUTHORIZED).build();
     }
 
     @ExceptionHandler(NoSuchElementException.class)
@@ -73,6 +76,6 @@ public class WishController {
 
     @ExceptionHandler(SecurityException.class)
     public ResponseEntity<Void> handleForbidden(SecurityException e) {
-        return ResponseEntity.status(403).build();
+        return ResponseEntity.status(FORBIDDEN).build();
     }
 }

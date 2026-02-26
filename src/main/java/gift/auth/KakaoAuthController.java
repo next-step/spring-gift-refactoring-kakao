@@ -1,5 +1,7 @@
 package gift.auth;
 
+import static org.springframework.http.HttpStatus.*;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,7 +38,7 @@ public class KakaoAuthController {
             .build()
             .toUriString();
 
-        return ResponseEntity.status(HttpStatus.FOUND)
+        return ResponseEntity.status(FOUND)
             .header(HttpHeaders.LOCATION, kakaoAuthUrl)
             .build();
     }

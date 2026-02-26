@@ -4,6 +4,8 @@ import gift.member.Member;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,7 +49,7 @@ public class OrderController {
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Void> handleUnauthorized(IllegalStateException e) {
-        return ResponseEntity.status(401).build();
+        return ResponseEntity.status(UNAUTHORIZED).build();
     }
 
     @ExceptionHandler(NoSuchElementException.class)
