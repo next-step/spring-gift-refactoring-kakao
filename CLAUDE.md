@@ -23,9 +23,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Prompt 문서화
 
-- 프롬프트 시 모든 작업이 끝난 후 `/prompt` 스킬을 사용하여 현재 프롬프트 내용을 기록한다.
+- 사용자가 프롬프트를 입력할 때마다 해당 작업이 완료되면 **자동으로** `/prompt` 스킬을 사용하여 프롬프트를 기록한다. 사용자가 별도로 요청하지 않아도 수행한다.
+- 프롬프트 기록 없이 다음 작업으로 넘어가지 않는다.
 - 모든 프롬프트는 `docs/PROMPT.md` 파일 하나에 시간순으로 누적 기록한다.
 - 매번 새 문서를 생성하지 않고, 기존 파일에 append 한다.
+- `docs/PROMPT.md`는 자동 커밋하지 않는다. 사용자가 별도로 요청할 때만 커밋한다.
 
 ## 프로젝트 구조 관리
 
