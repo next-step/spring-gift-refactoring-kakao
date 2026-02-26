@@ -5,10 +5,10 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /*
- * Validates option names against the following rules:
- * - Must not be null or blank
- * - Maximum length of 50 characters (including spaces)
- * - Only Korean, English, digits, spaces, and selected special characters are allowed: ( ) [ ] + - & / _
+ * 옵션 이름 검증 규칙:
+ * - null 또는 빈 값 불가
+ * - 공백 포함 최대 50자
+ * - 한글, 영문, 숫자, 공백 및 특수 문자만 허용: ( ) [ ] + - & / _
  */
 public class OptionNameValidator {
     private static final int MAX_LENGTH = 50;

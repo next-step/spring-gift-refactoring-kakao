@@ -2,6 +2,7 @@ package gift.product;
 
 import gift.category.Category;
 import gift.category.CategoryRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +20,7 @@ public class AdminProductController {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
 
+    @Autowired
     public AdminProductController(ProductRepository productRepository, CategoryRepository categoryRepository) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
@@ -51,7 +53,7 @@ public class AdminProductController {
         }
 
         Category category = categoryRepository.findById(categoryId)
-            .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
+            .orElseThrow(() -> new NoSuchElementException("카테고리를 찾을 수 없습니다. id=" + categoryId));
         productRepository.save(new Product(name, price, imageUrl, category));
         return "redirect:/admin/products";
     }
@@ -59,7 +61,7 @@ public class AdminProductController {
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
         Product product = productRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
+            .orElseThrow(() -> new NoSuchElementException("상품을 찾을 수 없습니다. id=" + id));
         model.addAttribute("product", product);
         model.addAttribute("categories", categoryRepository.findAll());
         return "product/edit";
@@ -75,7 +77,7 @@ public class AdminProductController {
         Model model
     ) {
         Product product = productRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
+            .orElseThrow(() -> new NoSuchElementException("상품을 찾을 수 없습니다. id=" + id));
 
         List<String> errors = ProductNameValidator.validate(name, true);
         if (!errors.isEmpty()) {
@@ -84,7 +86,7 @@ public class AdminProductController {
         }
 
         Category category = categoryRepository.findById(categoryId)
-            .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
+            .orElseThrow(() -> new NoSuchElementException("카테고리를 찾을 수 없습니다. id=" + categoryId));
 
         product.update(name, price, imageUrl, category);
         productRepository.save(product);

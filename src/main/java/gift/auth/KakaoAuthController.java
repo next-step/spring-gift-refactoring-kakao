@@ -2,6 +2,7 @@ package gift.auth;
 
 import gift.member.Member;
 import gift.member.MemberRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,19 +13,20 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /*
- * Handles the Kakao OAuth2 login flow.
- * 1. /login redirects the user to Kakao's authorization page
- * 2. /callback receives the authorization code, exchanges it for an access token,
- *    retrieves user info, auto-registers the member if new, and issues a service JWT
+ * 카카오 OAuth2 로그인 흐름을 처리한다.
+ * 1. /login - 카카오 인가 페이지로 리다이렉트
+ * 2. /callback - 인가 코드를 받아 액세스 토큰으로 교환하고,
+ *    사용자 정보를 조회하여 신규 회원이면 자동 등록 후 서비스 JWT 발급
  */
 @RestController
-@RequestMapping(path = "/api/auth/kakao")
+@RequestMapping("/api/auth/kakao")
 public class KakaoAuthController {
     private final KakaoLoginProperties properties;
     private final KakaoLoginClient kakaoLoginClient;
     private final MemberRepository memberRepository;
     private final JwtProvider jwtProvider;
 
+    @Autowired
     public KakaoAuthController(
         KakaoLoginProperties properties,
         KakaoLoginClient kakaoLoginClient,
@@ -37,7 +39,7 @@ public class KakaoAuthController {
         this.jwtProvider = jwtProvider;
     }
 
-    @GetMapping(path = "/login")
+    @GetMapping("/login")
     public ResponseEntity<Void> login() {
         String kakaoAuthUrl = UriComponentsBuilder.fromUriString("https://kauth.kakao.com/oauth/authorize")
             .queryParam("response_type", "code")
@@ -52,7 +54,7 @@ public class KakaoAuthController {
             .build();
     }
 
-    @GetMapping(path = "/callback")
+    @GetMapping("/callback")
     public ResponseEntity<TokenResponse> callback(@RequestParam("code") String code) {
         KakaoLoginClient.KakaoTokenResponse kakaoToken = kakaoLoginClient.requestAccessToken(code);
         KakaoLoginClient.KakaoUserResponse kakaoUser = kakaoLoginClient.requestUserInfo(kakaoToken.accessToken());

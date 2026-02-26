@@ -3,11 +3,11 @@ package gift.product;
 import gift.category.Category;
 import gift.category.CategoryRepository;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/products")
@@ -25,6 +26,7 @@ public class ProductController {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
 
+    @Autowired
     public ProductController(ProductRepository productRepository, CategoryRepository categoryRepository) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
@@ -38,10 +40,8 @@ public class ProductController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> getProduct(@PathVariable Long id) {
-        Product product = productRepository.findById(id).orElse(null);
-        if (product == null) {
-            return ResponseEntity.notFound().build();
-        }
+        Product product = productRepository.findById(id)
+            .orElseThrow(() -> new NoSuchElementException("상품을 찾을 수 없습니다. id=" + id));
         return ResponseEntity.ok(ProductResponse.from(product));
     }
 
@@ -49,10 +49,8 @@ public class ProductController {
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductRequest request) {
         validateName(request.name());
 
-        Category category = categoryRepository.findById(request.categoryId()).orElse(null);
-        if (category == null) {
-            return ResponseEntity.notFound().build();
-        }
+        Category category = categoryRepository.findById(request.categoryId())
+            .orElseThrow(() -> new NoSuchElementException("카테고리를 찾을 수 없습니다. id=" + request.categoryId()));
 
         Product saved = productRepository.save(request.toEntity(category));
         return ResponseEntity.created(URI.create("/api/products/" + saved.getId()))
@@ -66,15 +64,11 @@ public class ProductController {
     ) {
         validateName(request.name());
 
-        Category category = categoryRepository.findById(request.categoryId()).orElse(null);
-        if (category == null) {
-            return ResponseEntity.notFound().build();
-        }
+        Category category = categoryRepository.findById(request.categoryId())
+            .orElseThrow(() -> new NoSuchElementException("카테고리를 찾을 수 없습니다. id=" + request.categoryId()));
 
-        Product product = productRepository.findById(id).orElse(null);
-        if (product == null) {
-            return ResponseEntity.notFound().build();
-        }
+        Product product = productRepository.findById(id)
+            .orElseThrow(() -> new NoSuchElementException("상품을 찾을 수 없습니다. id=" + id));
 
         product.update(request.name(), request.price(), request.imageUrl(), category);
         Product saved = productRepository.save(product);
@@ -92,10 +86,5 @@ public class ProductController {
         if (!errors.isEmpty()) {
             throw new IllegalArgumentException(String.join(", ", errors));
         }
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
-        return ResponseEntity.badRequest().body(e.getMessage());
     }
 }

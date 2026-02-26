@@ -7,6 +7,8 @@ import gift.option.Option;
 import gift.option.OptionRepository;
 import gift.wish.WishRepository;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/orders")
@@ -28,6 +31,7 @@ public class OrderController {
     private final AuthenticationResolver authenticationResolver;
     private final KakaoMessageClient kakaoMessageClient;
 
+    @Autowired
     public OrderController(
         OrderRepository orderRepository,
         OptionRepository optionRepository,
@@ -45,57 +49,50 @@ public class OrderController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getOrders(
+    public ResponseEntity<Page<OrderResponse>> getOrders(
         @RequestHeader("Authorization") String authorization,
         Pageable pageable
     ) {
-        // auth check
         var member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(401).build();
-        }
         var orders = orderRepository.findByMemberId(member.getId(), pageable).map(OrderResponse::from);
         return ResponseEntity.ok(orders);
     }
 
-    // order flow:
-    // 1. auth check
-    // 2. validate option
-    // 3. subtract stock
-    // 4. deduct points
-    // 5. save order
-    // 6. cleanup wish
-    // 7. send kakao notification
+    /*
+     * 주문 흐름:
+     * 1. 인증 확인
+     * 2. 옵션 검증
+     * 3. 재고 차감
+     * 4. 포인트 차감
+     * 5. 주문 저장
+     * 6. 위시리스트 정리
+     * 7. 카카오 알림 발송
+     */
     @PostMapping
-    public ResponseEntity<?> createOrder(
+    public ResponseEntity<OrderResponse> createOrder(
         @RequestHeader("Authorization") String authorization,
         @Valid @RequestBody OrderRequest request
     ) {
-        // auth check
+        /* 인증 확인 */
         var member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(401).build();
-        }
 
-        // validate option
-        var option = optionRepository.findById(request.optionId()).orElse(null);
-        if (option == null) {
-            return ResponseEntity.notFound().build();
-        }
+        /* 옵션 검증 */
+        var option = optionRepository.findById(request.optionId())
+            .orElseThrow(() -> new NoSuchElementException("옵션을 찾을 수 없습니다. id=" + request.optionId()));
 
-        // subtract stock
+        /* 재고 차감 */
         option.subtractQuantity(request.quantity());
         optionRepository.save(option);
 
-        // deduct points
+        /* 포인트 차감 */
         var price = option.getProduct().getPrice() * request.quantity();
         member.deductPoint(price);
         memberRepository.save(member);
 
-        // save order
-        var saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
+        /* 주문 저장 */
+        var saved = orderRepository.save(request.toEntity(option, member.getId()));
 
-        // best-effort kakao notification
+        /* 카카오 알림 발송 (최선 노력) */
         sendKakaoMessageIfPossible(member, saved, option);
         return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
             .body(OrderResponse.from(saved));

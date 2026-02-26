@@ -1,10 +1,5 @@
 package gift.auth;
 
-/**
- * Response containing a JWT access token.
- *
- * @author brian.kim
- * @since 1.0
- */
+/* JWT 액세스 토큰 응답 */
 public record TokenResponse(String token) {
 }

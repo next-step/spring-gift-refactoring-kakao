@@ -1,6 +1,7 @@
 package gift.category;
 
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,12 +14,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/categories")
 public class CategoryController {
     private final CategoryRepository categoryRepository;
 
+    @Autowired
     public CategoryController(CategoryRepository categoryRepository) {
         this.categoryRepository = categoryRepository;
     }
@@ -43,10 +46,8 @@ public class CategoryController {
         @PathVariable Long id,
         @Valid @RequestBody CategoryRequest request
     ) {
-        Category category = categoryRepository.findById(id).orElse(null);
-        if (category == null) {
-            return ResponseEntity.notFound().build();
-        }
+        Category category = categoryRepository.findById(id)
+            .orElseThrow(() -> new NoSuchElementException("카테고리를 찾을 수 없습니다. id=" + id));
 
         category.update(request.name(), request.color(), request.imageUrl(), request.description());
         categoryRepository.save(category);
