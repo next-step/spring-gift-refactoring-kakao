@@ -8,12 +8,6 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.util.Date;
 
-/**
- * Provides JWT token creation and validation.
- *
- * @author brian.kim
- * @since 1.0
- */
 @Component
 public class JwtProvider {
     private final SecretKey key;

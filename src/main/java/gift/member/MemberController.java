@@ -11,12 +11,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/**
- * Handles member registration and login.
- *
- * @author brian.kim
- * @since 1.0
- */
 @RestController
 @RequestMapping("/api/members")
 public class MemberController {
