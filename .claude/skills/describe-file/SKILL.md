@@ -1,10 +1,10 @@
 ---
-name: describe
+name: describe-file
 description: 소스 코드 파일을 읽고 모든 라인에 대해 한국어 설명을 추가한 .desc 파일을 생성한다
 argument-hint: "<파일 경로>"
 ---
 
-# Describe — 소스 코드 파일 설명
+# Describe File
 소스 코드 파일을 읽고, 모든 라인에 대해 한국어 설명을 추가한 `.desc` 파일을 생성한다.
 
 ## 페르소나
