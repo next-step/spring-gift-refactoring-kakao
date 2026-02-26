@@ -21,8 +21,8 @@
 - [x] `KakaoAuthController` → `KakaoAuthService` 추출
 - [x] `OptionController` → `OptionService` 추출
 - [x] `WishController` → `WishService` 추출
-- [ ] `ProductController` → `ProductService` 추출
-- [ ] `AdminProductController` → `ProductService` 재사용 또는 별도 추출
+- [x] `ProductController` → `ProductService` 추출
+- [x] `AdminProductController` → `ProductService` 재사용
 - [ ] `AdminMemberController` → `MemberService` 재사용 또는 별도 추출
 - [ ] `CategoryController` → `CategoryService` 추출 (단순 CRUD지만 일관성을 위해)
 
