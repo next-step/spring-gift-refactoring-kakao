@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
-import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/products")
@@ -59,11 +58,6 @@ public class ProductController {
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.delete(id);
         return ResponseEntity.noContent().build();
-    }
-
-    @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<Void> handleNotFound(NoSuchElementException e) {
-        return ResponseEntity.notFound().build();
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

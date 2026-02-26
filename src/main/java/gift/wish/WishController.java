@@ -6,7 +6,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
-import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/wishes")
@@ -74,15 +72,5 @@ public class WishController {
 
         wishService.remove(member.getId(), id);
         return ResponseEntity.noContent().build();
-    }
-
-    @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<Void> handleNotFound(NoSuchElementException e) {
-        return ResponseEntity.notFound().build();
-    }
-
-    @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<Void> handleForbidden(ForbiddenException e) {
-        return ResponseEntity.status(403).build();
     }
 }

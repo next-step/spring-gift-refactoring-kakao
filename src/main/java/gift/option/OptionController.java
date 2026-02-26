@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping(path = "/api/products/{productId}/options")
@@ -50,11 +49,6 @@ public class OptionController {
     ) {
         optionService.delete(productId, optionId);
         return ResponseEntity.noContent().build();
-    }
-
-    @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<Void> handleNotFound(NoSuchElementException e) {
-        return ResponseEntity.notFound().build();
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
