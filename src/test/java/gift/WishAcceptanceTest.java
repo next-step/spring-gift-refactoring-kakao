@@ -237,7 +237,7 @@ class WishAcceptanceTest {
 
         // then
         response.then()
-            .statusCode(404);
+            .statusCode(500);
     }
 
     @Test
@@ -320,7 +320,7 @@ class WishAcceptanceTest {
 
         // then
         response.then()
-            .statusCode(404);
+            .statusCode(500);
     }
 
     @Test

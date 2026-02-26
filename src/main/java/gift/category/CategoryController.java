@@ -50,9 +50,4 @@ public class CategoryController {
         categoryService.delete(id);
         return ResponseEntity.noContent().build();
     }
-
-    @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<Void> handleNotFound() {
-        return ResponseEntity.notFound().build();
-    }
 }

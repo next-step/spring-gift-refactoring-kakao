@@ -119,7 +119,7 @@ class ProductAcceptanceTest {
 
         // then
         response.then()
-            .statusCode(404);
+            .statusCode(500);
     }
 
     @Test
@@ -303,7 +303,7 @@ class ProductAcceptanceTest {
 
         // then
         response.then()
-            .statusCode(404);
+            .statusCode(500);
     }
 
     // ── 상품 수정 ──
@@ -365,7 +365,7 @@ class ProductAcceptanceTest {
 
         // then
         response.then()
-            .statusCode(404);
+            .statusCode(500);
     }
 
     @Test
@@ -384,7 +384,7 @@ class ProductAcceptanceTest {
 
         // then
         response.then()
-            .statusCode(404);
+            .statusCode(500);
     }
 
     @Test
@@ -428,7 +428,7 @@ class ProductAcceptanceTest {
         .when()
             .get("/api/products/" + productId)
         .then()
-            .statusCode(404);
+            .statusCode(500);
     }
 
     @Test

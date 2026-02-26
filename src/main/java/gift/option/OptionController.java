@@ -48,11 +48,6 @@ public class OptionController {
         return ResponseEntity.noContent().build();
     }
 
-    @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<Void> handleNotFound() {
-        return ResponseEntity.notFound().build();
-    }
-
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
         return ResponseEntity.badRequest().body(e.getMessage());
