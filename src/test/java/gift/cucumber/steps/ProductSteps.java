@@ -38,6 +38,36 @@ public class ProductSteps {
         }
     }
 
+    @When("{string} 카테고리에 이름 없이 상품을 생성한다")
+    public void 이름_없이_상품을_생성한다(String categoryName) {
+        Long categoryId = state.getCategoryId(categoryName);
+        ExtractableResponse<Response> response = RestAssured.given().log().all()
+                .contentType(ContentType.JSON)
+                .body(Map.of(
+                        "price", 1000,
+                        "imageUrl", "http://img.com/noname.png",
+                        "categoryId", categoryId
+                ))
+                .when().post("/api/products")
+                .then().log().all().extract();
+        state.setLastResponse(response);
+    }
+
+    @When("존재하지 않는 카테고리로 상품을 생성한다")
+    public void 존재하지_않는_카테고리로_상품을_생성한다() {
+        ExtractableResponse<Response> response = RestAssured.given().log().all()
+                .contentType(ContentType.JSON)
+                .body(Map.of(
+                        "name", "테스트상품",
+                        "price", 1000,
+                        "imageUrl", "http://img.com/test.png",
+                        "categoryId", 999999
+                ))
+                .when().post("/api/products")
+                .then().log().all().extract();
+        state.setLastResponse(response);
+    }
+
     @Then("상품이 정상적으로 생성된다")
     public void 상품이_정상적으로_생성된다() {
         ExtractableResponse<Response> response = state.getLastResponse();

@@ -32,6 +32,16 @@ public class CategorySteps {
         }
     }
 
+    @When("이름 없이 카테고리를 생성한다")
+    public void 이름_없이_카테고리를_생성한다() {
+        ExtractableResponse<Response> response = RestAssured.given().log().all()
+                .contentType(ContentType.JSON)
+                .body(Map.of())
+                .when().post("/api/categories")
+                .then().log().all().extract();
+        state.setLastResponse(response);
+    }
+
     @Then("카테고리가 정상적으로 생성된다")
     public void 카테고리가_정상적으로_생성된다() {
         ExtractableResponse<Response> response = state.getLastResponse();
