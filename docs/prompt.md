@@ -12,6 +12,7 @@
 - 1단계 스타일 정리를 하려고 해. claude skill을 만들어줘.
   https://code.claude.com/docs/ko/skills#claude-skills 이거 참고해줘.
 - 커밋메시지 알려줘.
-- 2단계 스타일 정리를 하려고 해. claude skill을 만들어줘.
+- 2단계 불필요한 코드 제거를 하려고 해. claude skill을 만들어줘.
 - 커밋메시지 알려줘.
-- 3단계 스타일 정리를 하려고 해. claude skill을 만들어줘.
+- 3단계 서비스 계층 추출을 하려고 해. claude skill을 만들어줘.
+- 커밋메시지 알려줘.
