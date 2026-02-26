@@ -67,7 +67,4 @@ public class Product {
         return category;
     }
 
-    public List<Option> getOptions() {
-        return options;
-    }
 }

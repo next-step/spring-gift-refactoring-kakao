@@ -1,8 +1,8 @@
 package gift.wish;
 
 import gift.auth.AuthenticationResolver;
-import gift.product.ProductRepository;
-import jakarta.validation.Valid;
+import gift.member.Member;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -16,21 +16,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/wishes")
 public class WishController {
-    private final WishRepository wishRepository;
-    private final ProductRepository productRepository;
+    private final WishService wishService;
     private final AuthenticationResolver authenticationResolver;
 
-    public WishController(
-        WishRepository wishRepository,
-        ProductRepository productRepository,
-        AuthenticationResolver authenticationResolver
-    ) {
-        this.wishRepository = wishRepository;
-        this.productRepository = productRepository;
+    public WishController(WishService wishService, AuthenticationResolver authenticationResolver) {
+        this.wishService = wishService;
         this.authenticationResolver = authenticationResolver;
     }
 
@@ -40,40 +35,36 @@ public class WishController {
         Pageable pageable
     ) {
         // check auth
-        var member = authenticationResolver.extractMember(authorization);
+        Member member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             return ResponseEntity.status(401).build();
         }
-        var wishes = wishRepository.findByMemberId(member.getId(), pageable).map(WishResponse::from);
+        Page<WishResponse> wishes = wishService.findByMemberId(member.getId(), pageable).map(WishResponse::from);
         return ResponseEntity.ok(wishes);
     }
 
     @PostMapping
     public ResponseEntity<WishResponse> addWish(
         @RequestHeader("Authorization") String authorization,
-        @Valid @RequestBody WishRequest request
+        @RequestBody WishRequest request
     ) {
         // check auth
-        var member = authenticationResolver.extractMember(authorization);
+        Member member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             return ResponseEntity.status(401).build();
         }
 
-        // check product
-        var product = productRepository.findById(request.productId()).orElse(null);
-        if (product == null) {
+        try {
+            WishService.WishResult result = wishService.addWish(member.getId(), request.productId());
+            if (!result.created()) {
+                return ResponseEntity.ok(WishResponse.from(result.wish()));
+            }
+            Wish saved = result.wish();
+            return ResponseEntity.created(URI.create("/api/wishes/" + saved.getId()))
+                .body(WishResponse.from(saved));
+        } catch (NoSuchElementException e) {
             return ResponseEntity.notFound().build();
         }
-
-        // check duplicate
-        var existing = wishRepository.findByMemberIdAndProductId(member.getId(), product.getId()).orElse(null);
-        if (existing != null) {
-            return ResponseEntity.ok(WishResponse.from(existing));
-        }
-
-        var saved = wishRepository.save(new Wish(member.getId(), product));
-        return ResponseEntity.created(URI.create("/api/wishes/" + saved.getId()))
-            .body(WishResponse.from(saved));
     }
 
     @DeleteMapping("/{id}")
@@ -82,21 +73,18 @@ public class WishController {
         @PathVariable Long id
     ) {
         // check auth
-        var member = authenticationResolver.extractMember(authorization);
+        Member member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             return ResponseEntity.status(401).build();
         }
 
-        var wish = wishRepository.findById(id).orElse(null);
-        if (wish == null) {
+        try {
+            wishService.removeWish(member.getId(), id);
+            return ResponseEntity.noContent().build();
+        } catch (NoSuchElementException e) {
             return ResponseEntity.notFound().build();
-        }
-
-        if (!wish.getMemberId().equals(member.getId())) {
+        } catch (IllegalStateException e) {
             return ResponseEntity.status(403).build();
         }
-
-        wishRepository.delete(wish);
-        return ResponseEntity.noContent().build();
     }
 }
