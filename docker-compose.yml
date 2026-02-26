@@ -21,6 +21,7 @@ services:
       postgres:
         condition: service_healthy
     environment:
+      SPRING_PROFILES_ACTIVE: seed
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/gift
       SPRING_DATASOURCE_USERNAME: gift
       SPRING_DATASOURCE_PASSWORD: gift

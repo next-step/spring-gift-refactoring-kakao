@@ -9,7 +9,6 @@ import io.restassured.http.ContentType;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.Map;
 
@@ -19,9 +18,6 @@ public class GiftSteps {
 
     @Autowired
     private ScenarioState state;
-
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
 
     @Given("회원 {string}과 {string}이 등록되어 있다")
     public void 회원이_등록되어_있다(String sender, String receiver) {
@@ -33,12 +29,12 @@ public class GiftSteps {
         if (state.getMemberId(name) != null) {
             return;
         }
-        jdbcTemplate.update(
-                "INSERT INTO member (name, email) VALUES (?, ?)",
-                name, name + "@test.com");
-        Long id = jdbcTemplate.queryForObject(
-                "SELECT id FROM member WHERE name = ?", Long.class, name);
-        state.putMemberId(name, id);
+        ExtractableResponse<Response> response = RestAssured.given().log().all()
+                .contentType(ContentType.JSON)
+                .body(Map.of("name", name, "email", name + "@test.com"))
+                .when().post("/api/seed/members")
+                .then().log().all().extract();
+        state.putMemberId(name, response.jsonPath().getLong("id"));
     }
 
     @Given("{string} 카테고리에 {string} 상품이 등록되어 있다")
@@ -71,13 +67,16 @@ public class GiftSteps {
     @Given("{string} 상품에 재고가 {int}개인 {string} 옵션이 있다")
     public void 상품에_옵션이_있다(String productName, int quantity, String optionName) {
         Long productId = state.getProductId(productName);
-        jdbcTemplate.update(
-                "INSERT INTO option (name, quantity, product_id) VALUES (?, ?, ?)",
-                optionName, quantity, productId);
-        Long optionId = jdbcTemplate.queryForObject(
-                "SELECT id FROM option WHERE name = ? AND product_id = ?",
-                Long.class, optionName, productId);
-        state.putOptionId(productName + ":" + optionName, optionId);
+        ExtractableResponse<Response> response = RestAssured.given().log().all()
+                .contentType(ContentType.JSON)
+                .body(Map.of(
+                        "name", optionName,
+                        "quantity", quantity,
+                        "productId", productId
+                ))
+                .when().post("/api/seed/options")
+                .then().log().all().extract();
+        state.putOptionId(productName + ":" + optionName, response.jsonPath().getLong("id"));
     }
 
     @When("{string}이 {string}에게 {string}의 {string} 옵션 {int}개를 선물한다")
