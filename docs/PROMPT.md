@@ -41,3 +41,6 @@
 
 ## 프롬프트 10
 3-2. 불필요한 코드 제거 — docs/step3-1-미사용-코드-분석.md 보고서에서 "삭제" 또는 "TODO 변경" 판정을 받은 17개 항목을 카테고리별로 나누어 제거/수정한다. 각 작업 후 빌드 검증.
+
+## 프롬프트 11
+4단계 서비스 계층 추출 — Controller 9개에 포함된 비즈니스 로직을 도메인 단위 Service 6개(CategoryService, ProductService, MemberService, OptionService, WishService, OrderService)로 추출한다. 단순한 것부터 복잡한 것 순서로 진행하며, 각 도메인별로 작업 후 사용자 검토를 받는다. 신규 기능 추가 없이 구조만 변경하고, 인수 테스트 17개 시나리오가 변경 전후 모두 통과해야 한다.

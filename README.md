@@ -66,7 +66,7 @@
 > 이 단계에서는 신규 기능을 추가하지 않는다.
 
 #### 4-1. 추출 계획
-- [ ] Controller에 포함된 비즈니스 로직 식별
+- [x] Controller에 포함된 비즈니스 로직 식별
     - Controller별 엔드포인트, 현재 로직, 이동 대상, Controller에 남길 것
     - 대안 비교: 메서드 단위 추출 vs 도메인 단위 추출 등
 
@@ -74,9 +74,10 @@
 
 > 한 번에 모든 도메인에 대해 작업해서는 안되며, 각 도메인별로 작업한 후 사용자의 검토를 받아야 한다.
 
-- [ ] Controller A → Service A 추출
-    - [ ] Service 클래스 생성
-    - [ ] Controller의 비즈니스 로직을 Service 메서드로 이동
-    - [ ] Controller는 요청 검증 + Service 위임만 남김
-    - [ ] 전체 테스트 실행 → 통과 확인
-- [ ] (Controller별 반복)
+- [x] CategoryController → CategoryService 추출
+- [x] ProductController, AdminProductController → ProductService 추출
+- [x] MemberController, AdminMemberController, KakaoAuthController → MemberService 추출
+- [x] OptionController → OptionService 추출
+- [x] WishController → WishService 추출
+- [x] OrderController → OrderService 추출
+- [x] 전체 테스트 실행 → 통과 확인
