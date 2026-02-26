@@ -1,6 +1,5 @@
 package gift.product;
 
-import gift.category.CategoryRepository;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,23 +19,21 @@ import java.net.URI;
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {
-    private final ProductRepository productRepository;
-    private final CategoryRepository categoryRepository;
+    private final ProductService productService;
 
-    public ProductController(ProductRepository productRepository, CategoryRepository categoryRepository) {
-        this.productRepository = productRepository;
-        this.categoryRepository = categoryRepository;
+    public ProductController(ProductService productService) {
+        this.productService = productService;
     }
 
     @GetMapping
     public ResponseEntity<Page<ProductResponse>> getProducts(Pageable pageable) {
-        var products = productRepository.findAll(pageable).map(ProductResponse::from);
+        var products = productService.findAll(pageable).map(ProductResponse::from);
         return ResponseEntity.ok(products);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> getProduct(@PathVariable Long id) {
-        var product = productRepository.findById(id).orElse(null);
+        var product = productService.findById(id);
         if (product == null) {
             return ResponseEntity.notFound().build();
         }
@@ -45,14 +42,10 @@ public class ProductController {
 
     @PostMapping
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductRequest request) {
-        validateName(request.name());
-
-        var category = categoryRepository.findById(request.categoryId()).orElse(null);
-        if (category == null) {
+        var saved = productService.create(request);
+        if (saved == null) {
             return ResponseEntity.notFound().build();
         }
-
-        var saved = productRepository.save(request.toEntity(category));
         return ResponseEntity.created(URI.create("/api/products/" + saved.getId()))
             .body(ProductResponse.from(saved));
     }
@@ -62,34 +55,17 @@ public class ProductController {
         @PathVariable Long id,
         @Valid @RequestBody ProductRequest request
     ) {
-        validateName(request.name());
-
-        var category = categoryRepository.findById(request.categoryId()).orElse(null);
-        if (category == null) {
+        var saved = productService.update(id, request);
+        if (saved == null) {
             return ResponseEntity.notFound().build();
         }
-
-        var product = productRepository.findById(id).orElse(null);
-        if (product == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        product.update(request.name(), request.price(), request.imageUrl(), category);
-        var saved = productRepository.save(product);
         return ResponseEntity.ok(ProductResponse.from(saved));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
-        productRepository.deleteById(id);
+        productService.delete(id);
         return ResponseEntity.noContent().build();
-    }
-
-    private void validateName(String name) {
-        var errors = ProductNameValidator.validate(name);
-        if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(String.join(", ", errors));
-        }
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
