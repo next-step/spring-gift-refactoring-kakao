@@ -29,8 +29,6 @@
 
 | 항목 | 위치 | 이유 |
 |------|------|------|
-| `Product.getOptions()` | `Product.java:70` | 옵션은 항상 `OptionRepository.findByProductId()`로 조회. getter 호출처 없음 |
-| `Order.getMemberId()` | `Order.java:49` | `OrderResponse.from()`에서 사용하지 않음. 생성자로 저장만 되고 읽히지 않음 |
 | `OrderController.wishRepository` | `OrderController.java:26` | 주입만 되고 사용 안 됨. 주석에 "6. cleanup wish"가 있으나 미구현 |
 
 `Product.getOptions()`와 `Order.getMemberId()`는 현재 호출처가 없으나, 추후 확장성을 고려하여 제거하지 않는다.
