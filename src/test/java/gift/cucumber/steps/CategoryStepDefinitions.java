@@ -6,12 +6,9 @@ import io.cucumber.java.ko.조건;
 import io.restassured.response.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Component;
-
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Component
 public class CategoryStepDefinitions {
 
     @Autowired

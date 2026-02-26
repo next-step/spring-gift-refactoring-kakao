@@ -161,3 +161,109 @@ Spring Data의 `Page` 응답은 `{ "content": [...], "pageable": {...}, ... }` �
 - **도메인별 인수 테스트 생성** — 각 도메인의 Controller/Entity/DTO 코드를 분석한 뒤 feature 파일과 step definitions를 생성. 매 도메인마다 `./gradlew cucumberTest`를 실행하여 34개 시나리오 전체 통과를 확인
 - **Step 충돌 디버깅** — 상품 테스트 추가 시 발생한 NPE(CategoryStepDefinitions의 `lastResponse` null 참조)를 분석하여 Cucumber 글로벌 step 레지스트리 구조를 이해하고, 도메인별 step 표현 분리로 해결
 - **공통 초기화 추출** — `@Before` TRUNCATE 중복 문제를 인지하고 `CommonStepDefinitions`로 분리하는 리팩터링을 제안받아 적용
+
+## 2단계 — 서비스 레이어 추출
+
+### 작업 배경
+
+모든 비즈니스 로직이 컨트롤러에 직접 구현되어 있어 `@Transactional` 없이 다중 엔티티 수정이 이루어지고 있었다. 특히 `OrderController`에서 재고 차감(`optionRepository.save()`)과 포인트 차감(`memberRepository.save()`)이 별도 커밋되어, 포인트 부족 시 재고만 차감되고 롤백되지 않는 버그가 존재했다. 서비스 레이어를 추출하여 관심사 분리와 트랜잭션 원자성을 확보하였다.
+
+### 변경 사항
+
+#### 1. 서비스 클래스 7개 생성
+
+| 서비스 | 패키지 | 핵심 역할 |
+|--------|--------|----------|
+| `CategoryService` | `gift.category` | 카테고리 CRUD |
+| `MemberService` | `gift.member` | 회원가입/로그인(JWT 발급), Admin 회원 관리, 포인트 충전 |
+| `ProductService` | `gift.product` | 상품 CRUD, 이름 검증(API: 카카오 금지, Admin: 허용) |
+| `OptionService` | `gift.option` | 옵션 추가/삭제, 이름 검증, 최소 1개 규칙 |
+| `WishService` | `gift.wish` | 위시리스트 추가(중복 처리)/삭제(소유자 검증) |
+| `KakaoAuthService` | `gift.auth` | 카카오 OAuth 인가 URL 생성, 콜백 처리(토큰 교환 + 회원 생성/조회 + JWT) |
+| `OrderService` | `gift.order` | 주문 생성(재고 차감 + 포인트 차감 + 저장을 단일 트랜잭션으로 처리) |
+
+#### 2. 컨트롤러 9개 수정
+
+모든 컨트롤러에서 Repository 직접 주입을 Service 주입으로 변경하고, 각 메서드를 1~2줄 위임으로 축소하였다.
+
+| 컨트롤러 | 변경 전 의존성 | 변경 후 의존성 |
+|----------|---------------|---------------|
+| `CategoryController` | `CategoryRepository` | `CategoryService` |
+| `MemberController` | `MemberRepository`, `JwtProvider` | `MemberService` |
+| `AdminMemberController` | `MemberRepository` | `MemberService` |
+| `ProductController` | `ProductRepository`, `CategoryRepository` | `ProductService` |
+| `AdminProductController` | `ProductRepository`, `CategoryRepository` | `ProductService`, `CategoryRepository`(폼 데이터용) |
+| `OptionController` | `OptionRepository`, `ProductRepository` | `OptionService` |
+| `WishController` | `WishRepository`, `ProductRepository`, `AuthenticationResolver` | `WishService`, `AuthenticationResolver` |
+| `KakaoAuthController` | `KakaoLoginProperties`, `KakaoLoginClient`, `MemberRepository`, `JwtProvider` | `KakaoAuthService` |
+| `OrderController` | `OrderRepository`, `OptionRepository`, `WishRepository`, `MemberRepository`, `AuthenticationResolver`, `KakaoMessageClient` | `OrderService`, `AuthenticationResolver` |
+
+#### 3. 핵심 변경: OrderService 트랜잭션 도입
+
+변경 전 (`OrderController`에서 직접 처리):
+```java
+/* 재고 차감 — 즉시 커밋 */
+option.subtractQuantity(request.quantity());
+optionRepository.save(option);
+
+/* 포인트 차감 — 별도 커밋, 실패해도 재고는 이미 차감됨 */
+member.deductPoint(price);
+memberRepository.save(member);
+```
+
+변경 후 (`OrderService`에서 `@Transactional`로 처리):
+```java
+@Transactional
+public OrderResponse createOrder(Long memberId, OrderRequest request) {
+    Member member = memberRepository.findById(memberId).orElseThrow(...);
+    Option option = optionRepository.findById(request.optionId()).orElseThrow(...);
+
+    option.subtractQuantity(request.quantity());   // 재고 차감
+    int price = option.getProduct().getPrice() * request.quantity();
+    member.deductPoint(price);                     // 포인트 차감 — 실패 시 전체 롤백
+
+    Order saved = orderRepository.save(request.toEntity(option, member.getId()));
+    sendKakaoMessageIfPossible(member, saved, option);
+    return OrderResponse.from(saved);
+}
+```
+
+`@Transactional` 내에서 JPA managed entity의 dirty checking이 작동하므로 명시적 `save()` 호출 없이도 재고/포인트 변경이 트랜잭션 커밋 시 반영된다. 포인트 부족 예외 발생 시 트랜잭션 전체가 롤백되어 재고 차감도 취소된다.
+
+#### 4. 테스트 기대값 수정
+
+`order.feature`의 "포인트가 부족하면 주문이 실패한다" 시나리오에서 기대 재고를 변경하였다:
+
+| | 변경 전 | 변경 후 |
+|---|---------|---------|
+| 기대 재고 | 9개 (재고 차감이 롤백되지 않음) | 10개 (트랜잭션 롤백으로 재고 원복) |
+| 주석 | `@Transactional 미적용으로 재고 차감이 포인트 검증보다 먼저 커밋됨` | `@Transactional 적용으로 포인트 부족 시 재고 차감도 롤백됨` |
+
+### 학습 내용
+
+#### 서비스 레이어의 역할
+
+컨트롤러는 HTTP 요청/응답 처리(인증 헤더 파싱, 상태코드 결정, URI 생성)에 집중하고, 서비스는 비즈니스 로직(검증, 엔티티 조회/수정, 트랜잭션 관리)을 담당한다. 이 분리로 같은 비즈니스 로직을 API 컨트롤러와 Admin 컨트롤러에서 재사용할 수 있게 되었다(예: `ProductService`를 `ProductController`와 `AdminProductController`가 공유).
+
+#### @Transactional과 JPA Dirty Checking
+
+`@Transactional` 메서드 내에서 `EntityManager`가 관리하는 엔티티의 필드를 변경하면, 트랜잭션 커밋 시점에 JPA가 자동으로 UPDATE SQL을 실행한다. 이 때문에 `OrderService.createOrder()`에서 `option.subtractQuantity()`와 `member.deductPoint()`만 호출하면 되고, 명시적 `save()` 호출이 불필요하다. 단, 컨트롤러에서 주입받은 `Member` 객체는 트랜잭션 바깥에서 조회된 detached 상태이므로, 서비스 메서드에서 `memberId`를 받아 트랜잭션 내에서 다시 조회하여 managed 상태의 엔티티를 사용해야 dirty checking이 정상 작동한다.
+
+#### 트랜잭션 원자성의 실제 효과
+
+서비스 레이어 추출 전에는 `optionRepository.save()`와 `memberRepository.save()`가 각각 독립된 트랜잭션으로 커밋되어, 포인트 차감 실패 시 재고만 차감되는 데이터 불일치가 발생했다. `@Transactional`로 두 연산을 하나의 트랜잭션으로 묶은 후, 포인트 부족 예외 시 재고 차감까지 롤백되는 것을 Cucumber 테스트(재고 기대값 9→10)로 검증하였다.
+
+### Claude Code 활용
+
+#### 활용 방식
+
+- **리팩토링 계획 수립** — 현재 컨트롤러 9개의 코드를 분석하여 서비스 추출 순서(단순 CRUD → 복합 로직 순)와 각 서비스의 메서드 시그니처를 설계. 의존성이 적은 `CategoryService`부터 시작하여 패턴을 확립하고, 가장 복잡한 `OrderService`를 마지막에 구현하는 단계별 계획을 작성
+- **서비스 클래스 생성 및 컨트롤러 리팩토링** — 각 단계마다 서비스 클래스를 생성하고 대응하는 컨트롤러를 수정. 기존 컨트롤러의 비즈니스 로직을 서비스로 이동하면서 `@Transactional`, `@Transactional(readOnly = true)` 어노테이션을 적절히 적용
+- **테스트 기반 검증** — 7개 서비스 생성 + 9개 컨트롤러 수정 + 1개 테스트 수정 후 `./gradlew cucumberTest`를 실행하여 전체 시나리오 통과를 확인. 특히 `OrderService`의 `@Transactional` 적용 후 포인트 부족 시 재고 롤백이 정상 동작하는 것을 기존 테스트 기대값 수정(9개→10개)으로 검증
+
+#### 코드 수정 내용
+
+총 17개 파일을 수정/생성하였다:
+- **새 파일 7개**: `CategoryService`, `MemberService`, `ProductService`, `OptionService`, `WishService`, `KakaoAuthService`, `OrderService`
+- **수정 파일 9개**: `CategoryController`, `MemberController`, `AdminMemberController`, `ProductController`, `AdminProductController`, `OptionController`, `WishController`, `KakaoAuthController`, `OrderController`
+- **테스트 수정 1개**: `order.feature` (트랜잭션 롤백 기대값 반영)

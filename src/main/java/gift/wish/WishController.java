@@ -1,9 +1,6 @@
 package gift.wish;
 
 import gift.auth.AuthenticationResolver;
-import gift.error.ForbiddenException;
-import gift.product.Product;
-import gift.product.ProductRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -19,23 +16,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
-import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/wishes")
 public class WishController {
-    private final WishRepository wishRepository;
-    private final ProductRepository productRepository;
+    private final WishService wishService;
     private final AuthenticationResolver authenticationResolver;
 
     @Autowired
-    public WishController(
-        WishRepository wishRepository,
-        ProductRepository productRepository,
-        AuthenticationResolver authenticationResolver
-    ) {
-        this.wishRepository = wishRepository;
-        this.productRepository = productRepository;
+    public WishController(WishService wishService, AuthenticationResolver authenticationResolver) {
+        this.wishService = wishService;
         this.authenticationResolver = authenticationResolver;
     }
 
@@ -45,8 +35,7 @@ public class WishController {
         Pageable pageable
     ) {
         var member = authenticationResolver.extractMember(authorization);
-        var wishes = wishRepository.findByMemberId(member.getId(), pageable).map(WishResponse::from);
-        return ResponseEntity.ok(wishes);
+        return ResponseEntity.ok(wishService.findByMemberId(member.getId(), pageable));
     }
 
     @PostMapping
@@ -55,19 +44,13 @@ public class WishController {
         @Valid @RequestBody WishRequest request
     ) {
         var member = authenticationResolver.extractMember(authorization);
+        var result = wishService.addWish(member.getId(), request);
 
-        Product product = productRepository.findById(request.productId())
-            .orElseThrow(() -> new NoSuchElementException("상품을 찾을 수 없습니다. id=" + request.productId()));
-
-        /* 중복 위시 확인 */
-        var existing = wishRepository.findByMemberIdAndProductId(member.getId(), product.getId()).orElse(null);
-        if (existing != null) {
-            return ResponseEntity.ok(WishResponse.from(existing));
+        if (result.isNew()) {
+            return ResponseEntity.created(URI.create("/api/wishes/" + result.response().id()))
+                .body(result.response());
         }
-
-        var saved = wishRepository.save(request.toEntity(member.getId(), product));
-        return ResponseEntity.created(URI.create("/api/wishes/" + saved.getId()))
-            .body(WishResponse.from(saved));
+        return ResponseEntity.ok(result.response());
     }
 
     @DeleteMapping("/{id}")
@@ -76,15 +59,7 @@ public class WishController {
         @PathVariable Long id
     ) {
         var member = authenticationResolver.extractMember(authorization);
-
-        var wish = wishRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("위시를 찾을 수 없습니다. id=" + id));
-
-        if (!wish.getMemberId().equals(member.getId())) {
-            throw new ForbiddenException("다른 회원의 위시를 삭제할 수 없습니다.");
-        }
-
-        wishRepository.delete(wish);
+        wishService.removeWish(member.getId(), id);
         return ResponseEntity.noContent().build();
     }
 }

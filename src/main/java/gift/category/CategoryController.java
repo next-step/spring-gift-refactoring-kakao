@@ -14,31 +14,27 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/categories")
 public class CategoryController {
-    private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
 
     @Autowired
-    public CategoryController(CategoryRepository categoryRepository) {
-        this.categoryRepository = categoryRepository;
+    public CategoryController(CategoryService categoryService) {
+        this.categoryService = categoryService;
     }
 
     @GetMapping
     public ResponseEntity<List<CategoryResponse>> getCategories() {
-        List<CategoryResponse> categories = categoryRepository.findAll().stream()
-            .map(CategoryResponse::from)
-            .toList();
-        return ResponseEntity.ok(categories);
+        return ResponseEntity.ok(categoryService.findAll());
     }
 
     @PostMapping
     public ResponseEntity<CategoryResponse> createCategory(@Valid @RequestBody CategoryRequest request) {
-        Category saved = categoryRepository.save(request.toEntity());
-        return ResponseEntity.created(URI.create("/api/categories/" + saved.getId()))
-            .body(CategoryResponse.from(saved));
+        CategoryResponse response = categoryService.create(request);
+        return ResponseEntity.created(URI.create("/api/categories/" + response.id()))
+            .body(response);
     }
 
     @PutMapping("/{id}")
@@ -46,17 +42,12 @@ public class CategoryController {
         @PathVariable Long id,
         @Valid @RequestBody CategoryRequest request
     ) {
-        Category category = categoryRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("카테고리를 찾을 수 없습니다. id=" + id));
-
-        category.update(request.name(), request.color(), request.imageUrl(), request.description());
-        categoryRepository.save(category);
-        return ResponseEntity.ok(CategoryResponse.from(category));
+        return ResponseEntity.ok(categoryService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
-        categoryRepository.deleteById(id);
+        categoryService.delete(id);
         return ResponseEntity.noContent().build();
     }
 }

@@ -1,0 +1,46 @@
+package gift.category;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.NoSuchElementException;
+
+@Service
+public class CategoryService {
+    private final CategoryRepository categoryRepository;
+
+    @Autowired
+    public CategoryService(CategoryRepository categoryRepository) {
+        this.categoryRepository = categoryRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public List<CategoryResponse> findAll() {
+        return categoryRepository.findAll().stream()
+            .map(CategoryResponse::from)
+            .toList();
+    }
+
+    @Transactional
+    public CategoryResponse create(CategoryRequest request) {
+        Category saved = categoryRepository.save(request.toEntity());
+        return CategoryResponse.from(saved);
+    }
+
+    @Transactional
+    public CategoryResponse update(Long id, CategoryRequest request) {
+        Category category = categoryRepository.findById(id)
+            .orElseThrow(() -> new NoSuchElementException("카테고리를 찾을 수 없습니다. id=" + id));
+
+        category.update(request.name(), request.color(), request.imageUrl(), request.description());
+        categoryRepository.save(category);
+        return CategoryResponse.from(category);
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        categoryRepository.deleteById(id);
+    }
+}
