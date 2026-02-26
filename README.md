@@ -20,7 +20,7 @@
 - [x] `MemberController` → `MemberService` 추출
 - [x] `KakaoAuthController` → `KakaoAuthService` 추출
 - [x] `OptionController` → `OptionService` 추출
-- [ ] `WishController` → `WishService` 추출
+- [x] `WishController` → `WishService` 추출
 - [ ] `ProductController` → `ProductService` 추출
 - [ ] `AdminProductController` → `ProductService` 재사용 또는 별도 추출
 - [ ] `AdminMemberController` → `MemberService` 재사용 또는 별도 추출
