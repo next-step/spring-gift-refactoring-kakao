@@ -121,6 +121,8 @@ Pre-commit 훅이 실패한 경우:
 ## 추가 지시사항
 $ARGUMENTS
 
+
+---
 ## 주의사항
 - 민감한 파일은 절대 커밋하지 않는다. 발견 시 사용자에게 경고한다.
   - 패턴: `.env`, `credentials.json`, `*.pem`, `*.key`, `*secret*`, `application-local.yml`

@@ -20,8 +20,8 @@ class OptionAcceptanceTest extends AcceptanceTest {
             .contentType(MediaType.APPLICATION_JSON_VALUE)
             .body(Map.of(
                 "name", "블루 256GB",
-                "quantity", 30)
-            )
+                "quantity", 30
+            ))
         .when()
             .post("/api/products/{productId}/options", productId)
         .then()
