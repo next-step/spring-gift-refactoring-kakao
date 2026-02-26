@@ -15,6 +15,7 @@ public class ScenarioContext {
     private Long categoryId;
     private Long productId;
     private Long optionId;
+    private Long wishId;
     private Long memberId;
     private String token;
 
@@ -53,6 +54,14 @@ public class ScenarioContext {
 
     public void setOptionId(Long optionId) {
         this.optionId = optionId;
+    }
+
+    public Long getWishId() {
+        return wishId;
+    }
+
+    public void setWishId(Long wishId) {
+        this.wishId = wishId;
     }
 
     public Long getMemberId() {
