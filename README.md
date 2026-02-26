@@ -17,7 +17,7 @@
 
 #### 3. 서비스 계층 추출 (컨트롤러별, 작동 변경 없음)
 - [x] `OrderController` → `OrderService` 추출
-- [ ] `MemberController` → `MemberService` 추출
+- [x] `MemberController` → `MemberService` 추출
 - [ ] `KakaoAuthController` → `KakaoAuthService` 추출
 - [ ] `OptionController` → `OptionService` 추출
 - [ ] `WishController` → `WishService` 추출
