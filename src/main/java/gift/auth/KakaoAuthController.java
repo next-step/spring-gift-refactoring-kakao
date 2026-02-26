@@ -39,7 +39,8 @@ public class KakaoAuthController {
 
     @GetMapping(path = "/login")
     public ResponseEntity<Void> login() {
-        String kakaoAuthUrl = UriComponentsBuilder.fromUriString("https://kauth.kakao.com/oauth/authorize")
+        String kakaoAuthUrl = UriComponentsBuilder
+            .fromUriString("https://kauth.kakao.com/oauth/authorize")
             .queryParam("response_type", "code")
             .queryParam("client_id", properties.clientId())
             .queryParam("redirect_uri", properties.redirectUri())
