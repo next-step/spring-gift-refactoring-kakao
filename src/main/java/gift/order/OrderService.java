@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.NoSuchElementException;
 
 @Service
+@Transactional(readOnly = true)
 public class OrderService {
     private final OrderRepository orderRepository;
     private final OptionRepository optionRepository;

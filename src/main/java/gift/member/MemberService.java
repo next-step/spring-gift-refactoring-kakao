@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
+@Transactional(readOnly = true)
 public class MemberService {
     private final MemberRepository memberRepository;
     private final JwtProvider jwtProvider;
@@ -17,6 +18,7 @@ public class MemberService {
         this.jwtProvider = jwtProvider;
     }
 
+    @Transactional
     public String register(MemberRequest request) {
         if (memberRepository.existsByEmail(request.email())) {
             throw new IllegalArgumentException("Email is already registered.");
