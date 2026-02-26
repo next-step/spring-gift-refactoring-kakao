@@ -1,5 +1,7 @@
 package gift.acceptance;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.When;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +10,8 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import java.util.Map;
 
 public class MemberStepDefinitions {
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     @Autowired
     private TestRestTemplate restTemplate;
 
@@ -41,5 +45,30 @@ public class MemberStepDefinitions {
             String.class
         );
         context.setResponse(response);
+        context.setToken(extractToken(response.getBody()));
+    }
+
+    @Given("이메일 {string}, 비밀번호 {string}로 로그인되어 있고")
+    public void 로그인되어_있고(String email, String password) {
+        var response = restTemplate.postForEntity(
+                "/api/members/login",
+                Map.of("email", email, "password", password),
+                String.class
+        );
+        try {
+            Map<String, Object> body = objectMapper.readValue(response.getBody(), new TypeReference<>() {});
+            context.setToken((String) body.get("token"));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private String extractToken(String body) {
+        try {
+            Map<String, Object> map = objectMapper.readValue(body, new TypeReference<>() {});
+            return (String) map.get("token");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }
