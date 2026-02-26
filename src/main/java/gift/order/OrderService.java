@@ -4,10 +4,7 @@ import gift.member.Member;
 import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
-import gift.product.Product;
 import gift.wish.WishRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,8 +13,6 @@ import java.util.Optional;
 
 @Service
 public class OrderService {
-    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
-
     private final OrderRepository orderRepository;
     private final OptionRepository optionRepository;
     private final WishRepository wishRepository;
@@ -50,25 +45,28 @@ public class OrderService {
     // 5. cleanup wish
     // 6. send kakao notification
     public Optional<OrderResponse> createOrder(Member member, OrderRequest request) {
-        return optionRepository.findById(request.optionId())
-            .map(option -> {
-                // subtract stock
-                option.subtractQuantity(request.quantity());
-                optionRepository.save(option);
+        // validate option
+        Option option = optionRepository.findById(request.optionId()).orElse(null);
+        if (option == null) {
+            return Optional.empty();
+        }
 
-                // deduct points
-                int price = option.getProduct().getPrice() * request.quantity();
-                member.deductPoint(price);
-                memberRepository.save(member);
+        // subtract stock
+        option.subtractQuantity(request.quantity());
+        optionRepository.save(option);
 
-                // save order
-                Order saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
+        // deduct points
+        int price = option.getProduct().getPrice() * request.quantity();
+        member.deductPoint(price);
+        memberRepository.save(member);
 
-                // best-effort kakao notification
-                sendKakaoMessageIfPossible(member, saved, option);
+        // save order
+        Order saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
 
-                return OrderResponse.from(saved);
-            });
+        // best-effort kakao notification
+        sendKakaoMessageIfPossible(member, saved, option);
+
+        return Optional.of(OrderResponse.from(saved));
     }
 
     private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {
@@ -76,10 +74,9 @@ public class OrderService {
             return;
         }
         try {
-            Product product = option.getProduct();
+            var product = option.getProduct();
             kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
-        } catch (Exception e) {
-            log.warn("카카오 메시지 전송 실패: {}", e.getMessage());
+        } catch (Exception ignored) {
         }
     }
 }
