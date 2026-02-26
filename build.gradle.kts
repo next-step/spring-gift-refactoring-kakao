@@ -38,7 +38,13 @@ dependencies {
     runtimeOnly("com.mysql:mysql-connector-j")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+    testImplementation("io.rest-assured:rest-assured:5.4.0")
+    testImplementation("io.cucumber:cucumber-java:7.18.0")
+    testImplementation("io.cucumber:cucumber-spring:7.18.0")
+    testImplementation("io.cucumber:cucumber-junit-platform-engine:7.18.0")
+    testImplementation("org.junit.platform:junit-platform-suite")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testRuntimeOnly("com.mysql:mysql-connector-j")
 }
 
 kotlin {
@@ -59,4 +65,36 @@ ktlint {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+tasks.named<Test>("test") {
+    exclude("gift/acceptance/**")
+}
+
+tasks.register<Exec>("dockerBuild") {
+    description = "Builds the Docker image for the application"
+    group = "docker"
+    commandLine("sh", "-lc", "docker compose build")
+}
+
+tasks.register<Exec>("dockerUp") {
+    description = "Starts all Docker Compose services"
+    group = "docker"
+    dependsOn("dockerBuild")
+    commandLine("sh", "-lc", "docker compose up -d --wait")
+}
+
+tasks.register<Exec>("dockerDown") {
+    description = "Stops and removes all Docker Compose services"
+    group = "docker"
+    commandLine("sh", "-lc", "docker compose down -v")
+}
+
+tasks.register<Test>("cucumberTest") {
+    description = "Runs Cucumber acceptance tests against containerized application"
+    group = "verification"
+    useJUnitPlatform()
+    include("gift/acceptance/CucumberTest.class")
+    dependsOn("dockerUp")
+    finalizedBy("dockerDown")
 }
