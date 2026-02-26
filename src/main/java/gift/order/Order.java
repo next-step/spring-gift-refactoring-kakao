@@ -8,7 +8,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -27,8 +26,7 @@ public class Order {
     private String message;
     private LocalDateTime orderDateTime;
 
-    protected Order() {
-    }
+    protected Order() {}
 
     public Order(Option option, Long memberId, int quantity, String message) {
         this.option = option;
