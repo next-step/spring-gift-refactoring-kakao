@@ -13,7 +13,7 @@
 
 ## Phase 1: 스타일 정리
 
-### 1-1. `@Autowired` 제거 [ ]
+### 1-1. `@Autowired` 제거 [x]
 
 Spring 4.3+ 단일 생성자 자동 주입. 4개 파일에서 `@Autowired` 어노테이션 + import 제거.
 
@@ -24,7 +24,7 @@ Spring 4.3+ 단일 생성자 자동 주입. 4개 파일에서 `@Autowired` 어�
 | `gift/auth/AuthenticationResolver.java` | `@Autowired` + import |
 | `gift/auth/JwtProvider.java` | `@Autowired` + import |
 
-### 1-2. 불필요한 클래스 레벨 주석 제거 [ ]
+### 1-2. 불필요한 클래스 레벨 주석 제거 [x]
 
 Javadoc(`@author`, `@since`)과 블록 주석 제거. 단, `JwtProvider`의 **메서드 레벨** Javadoc은 API 문서 역할이므로 유지.
 
@@ -41,7 +41,7 @@ Javadoc(`@author`, `@since`)과 블록 주석 제거. 단, `JwtProvider`의 **�
 | `gift/auth/KakaoAuthController.java` | 블록 주석 |
 | `gift/option/OptionController.java` | 블록 주석 |
 
-### 1-3. `collect(Collectors.toList())` → `.toList()` 통일 [ ]
+### 1-3. `collect(Collectors.toList())` → `.toList()` 통일 [x]
 
 `gift/option/OptionController.java`:
 - `.collect(Collectors.toList())` → `.toList()`
@@ -49,7 +49,7 @@ Javadoc(`@author`, `@since`)과 블록 주석 제거. 단, `JwtProvider`의 **�
 
 반환값이 응답 직렬화에만 사용되므로 불변 리스트 전환에 문제 없음.
 
-### 1-4. HTTP 상태코드 숫자 → `HttpStatus` 상수 통일 [ ]
+### 1-4. HTTP 상태코드 숫자 → `HttpStatus` 상수 통일 [x]
 
 | 파일 | 변경 |
 |------|------|
@@ -58,7 +58,7 @@ Javadoc(`@author`, `@since`)과 블록 주석 제거. 단, `JwtProvider`의 **�
 
 각 파일에 `import org.springframework.http.HttpStatus` 추가.
 
-### 1-5. `@RequestMapping(path = ...)` → `@RequestMapping("...")` 통일 [ ]
+### 1-5. `@RequestMapping(path = ...)` → `@RequestMapping("...")` 통일 [x]
 
 | 파일 | 변경 |
 |------|------|
