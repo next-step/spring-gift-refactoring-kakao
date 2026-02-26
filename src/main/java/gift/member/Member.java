@@ -3,12 +3,6 @@ package gift.member;
 import jakarta.persistence.*;
 import lombok.Getter;
 
-/**
- * Represents a registered member.
- *
- * @author brian.kim
- * @since 1.0
- */
 @Getter
 @Entity
 @Table(name = "member")
@@ -53,7 +47,10 @@ public class Member {
         this.point += amount;
     }
 
-    // point deduction for order payment
+    /*
+     * Deducts points for order payment.
+     * Throws if amount is non-positive or exceeds the current balance.
+     */
     public void deductPoint(int amount) {
         if (amount <= 0) {
             throw new IllegalArgumentException("차감 금액은 1 이상이어야 합니다.");

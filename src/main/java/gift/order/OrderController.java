@@ -46,14 +46,10 @@ public class OrderController {
         return ResponseEntity.ok(orders);
     }
 
-    // order flow:
-    // 1. auth check
-    // 2. validate option
-    // 3. subtract stock
-    // 4. deduct points
-    // 5. save order
-    // 6. cleanup wish
-    // 7. send kakao notification
+    /*
+     * Creates an order: validates the option, subtracts stock, deducts member points,
+     * persists the order, and sends a best-effort Kakao notification.
+     */
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(
         @RequestHeader("Authorization") String authorization,
@@ -82,6 +78,8 @@ public class OrderController {
 
         // save order
         Order saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
+
+        // Todo: cleanup wish 구현 필요
 
         // best-effort kakao notification
         sendKakaoMessageIfPossible(member, saved, option);

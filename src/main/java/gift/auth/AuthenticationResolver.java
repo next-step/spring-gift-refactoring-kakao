@@ -5,12 +5,6 @@ import gift.member.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/**
- * Resolves the authenticated member from an Authorization header.
- *
- * @author brian.kim
- * @since 1.0
- */
 @RequiredArgsConstructor
 @Component
 public class AuthenticationResolver {
