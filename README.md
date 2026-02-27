@@ -4,16 +4,6 @@
 
 > 구조 변경을 통해 변경 난이도를 낮추되 작동은 유지한다.
 
-## 사용한 Claude 스킬
-
-| 스킬 | 설명 | 결과 |
-|------|------|------|
-| 미사용 코드 탐지 | 전체 소스 파일을 읽고, 각 메서드/필드의 호출처를 검색하여 사용 여부 판별 | `Product.getOptions()`, `Order.getMemberId()`, `OrderController.wishRepository` 발견 |
-| API 엔드포인트 목록 추출 | `@GetMapping`, `@PostMapping` 등 어노테이션을 grep하여 전체 API 목록 도출 | REST 18개 + Admin 13개 = 31개 엔드포인트 정리 |
-| Controller 의존성 분석 | 각 Controller가 주입받는 Repository/Client를 파악하여 Service 계층 부재 확인 | 9개 Controller 모두 Repository 직접 호출 확인 |
-| Repository 커스텀 메서드 사용 확인 | 각 Repository의 커스텀 메서드가 실제 호출되는지 codebase 전체 검색 | 미사용 커스텀 메서드 없음 확인 |
-| Service 메서드 사용 확인 | Service 클래스 존재 여부 확인 | Service 클래스 자체가 0개 |
-
 ## 판단 근거 및 논의 기록
 
 ### 1. 현황 분석
