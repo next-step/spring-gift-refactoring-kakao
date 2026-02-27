@@ -59,6 +59,7 @@ public class OrderController {
         }
 
         OrderResponse response = orderService.create(member, request);
+        orderService.sendKakaoMessageIfPossible(member, response.id());
         return ResponseEntity.created(URI.create("/api/orders/" + response.id()))
             .body(response);
     }

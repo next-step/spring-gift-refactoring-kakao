@@ -59,18 +59,17 @@ public class OrderService {
         // save order
         Order saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
 
-        // best-effort kakao notification
-        sendKakaoMessageIfPossible(member, saved, option);
-
         return OrderResponse.from(saved);
     }
 
-    private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {
+    @Transactional(readOnly = true)
+    public void sendKakaoMessageIfPossible(Member member, Long orderId) {
         if (member.getKakaoAccessToken() == null) {
             return;
         }
         try {
-            Product product = option.getProduct();
+            Order order = orderRepository.findById(orderId).orElseThrow();
+            Product product = order.getOption().getProduct();
             kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
         } catch (Exception ignored) {
         }
