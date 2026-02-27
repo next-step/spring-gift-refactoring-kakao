@@ -1,13 +1,14 @@
 package gift.auth;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.Date;
+
+import javax.crypto.SecretKey;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.SecretKey;
-import java.util.Date;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 
 /**
  * Provides JWT token creation and validation.
@@ -20,7 +21,6 @@ public class JwtProvider {
     private final SecretKey key;
     private final long expiration;
 
-    @Autowired
     public JwtProvider(
         @Value("${jwt.secret}") String secret,
         @Value("${jwt.expiration}") long expiration
@@ -51,8 +51,8 @@ public class JwtProvider {
      * @return the compact JWT token string
      */
     public String createToken(String email) {
-        final Date now = new Date();
-        final Date expiryDate = new Date(now.getTime() + expiration);
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + expiration);
 
         return Jwts.builder()
             .subject(email)
