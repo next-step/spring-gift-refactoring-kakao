@@ -5,12 +5,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
-/**
- * Represents a registered member.
- *
- * @author brian.kim
- * @since 1.0
- */
 @Entity
 public class Member {
     @Id
@@ -48,7 +42,7 @@ public class Member {
 
     public void chargePoint(int amount) {
         if (amount <= 0) {
-            throw new IllegalArgumentException("Amount must be greater than zero.");
+            throw new IllegalArgumentException("충전 금액은 1 이상이어야 합니다.");
         }
         this.point += amount;
     }
