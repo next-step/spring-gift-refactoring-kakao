@@ -10,7 +10,8 @@ import jakarta.validation.constraints.NotBlank;
  * @since 1.0
  */
 public record MemberRequest(
-    @NotBlank @Email String email,
-    @NotBlank String password
+        @NotBlank @Email String email,
+        @NotBlank String password
 ) {
+
 }

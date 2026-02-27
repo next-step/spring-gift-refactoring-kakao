@@ -13,6 +13,7 @@ import jakarta.persistence.Id;
  */
 @Entity
 public class Member {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

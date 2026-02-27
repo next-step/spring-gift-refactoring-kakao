@@ -3,6 +3,9 @@ package gift.option;
 import gift.product.Product;
 import gift.product.ProductRepository;
 import jakarta.validation.Valid;
+import java.net.URI;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -13,10 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.net.URI;
-import java.util.List;
-import java.util.stream.Collectors;
-
 /*
  * Each product must have at least one option at all times.
  * Option names are validated against allowed characters and length constraints.
@@ -24,10 +23,12 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping(path = "/api/products/{productId}/options")
 public class OptionController {
+
     private final OptionRepository optionRepository;
     private final ProductRepository productRepository;
 
-    public OptionController(OptionRepository optionRepository, ProductRepository productRepository) {
+    public OptionController(OptionRepository optionRepository,
+            ProductRepository productRepository) {
         this.optionRepository = optionRepository;
         this.productRepository = productRepository;
     }
@@ -39,15 +40,15 @@ public class OptionController {
             return ResponseEntity.notFound().build();
         }
         List<OptionResponse> options = optionRepository.findByProductId(productId).stream()
-            .map(OptionResponse::from)
-            .collect(Collectors.toList());
+                .map(OptionResponse::from)
+                .collect(Collectors.toList());
         return ResponseEntity.ok(options);
     }
 
     @PostMapping
     public ResponseEntity<OptionResponse> createOption(
-        @PathVariable Long productId,
-        @Valid @RequestBody OptionRequest request
+            @PathVariable Long productId,
+            @Valid @RequestBody OptionRequest request
     ) {
         validateName(request.name());
 
@@ -60,16 +61,24 @@ public class OptionController {
             throw new IllegalArgumentException("이미 존재하는 옵션명입니다.");
         }
 
-        Option saved = optionRepository.save(new Option(product, request.name(), request.quantity()));
+        Option saved = optionRepository.save(
+                new Option(product, request.name(), request.quantity()));
         URI location = URI.create("/api/products/" + productId + "/options/" + saved.getId());
         return ResponseEntity.created(location)
-            .body(OptionResponse.from(saved));
+                .body(OptionResponse.from(saved));
+    }
+
+    private void validateName(String name) {
+        List<String> errors = OptionNameValidator.validate(name);
+        if (!errors.isEmpty()) {
+            throw new IllegalArgumentException(String.join(", ", errors));
+        }
     }
 
     @DeleteMapping(path = "/{optionId}")
     public ResponseEntity<Void> deleteOption(
-        @PathVariable Long productId,
-        @PathVariable Long optionId
+            @PathVariable Long productId,
+            @PathVariable Long optionId
     ) {
         Product product = productRepository.findById(productId).orElse(null);
         if (product == null) {
@@ -88,13 +97,6 @@ public class OptionController {
 
         optionRepository.delete(option);
         return ResponseEntity.noContent().build();
-    }
-
-    private void validateName(String name) {
-        List<String> errors = OptionNameValidator.validate(name);
-        if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(String.join(", ", errors));
-        }
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class AuthenticationResolver {
+
     private final JwtProvider jwtProvider;
     private final MemberRepository memberRepository;
 

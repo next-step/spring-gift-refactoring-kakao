@@ -20,16 +20,17 @@ import org.springframework.web.util.UriComponentsBuilder;
 @RestController
 @RequestMapping(path = "/api/auth/kakao")
 public class KakaoAuthController {
+
     private final KakaoLoginProperties properties;
     private final KakaoLoginClient kakaoLoginClient;
     private final MemberRepository memberRepository;
     private final JwtProvider jwtProvider;
 
     public KakaoAuthController(
-        KakaoLoginProperties properties,
-        KakaoLoginClient kakaoLoginClient,
-        MemberRepository memberRepository,
-        JwtProvider jwtProvider
+            KakaoLoginProperties properties,
+            KakaoLoginClient kakaoLoginClient,
+            MemberRepository memberRepository,
+            JwtProvider jwtProvider
     ) {
         this.properties = properties;
         this.kakaoLoginClient = kakaoLoginClient;
@@ -39,27 +40,29 @@ public class KakaoAuthController {
 
     @GetMapping(path = "/login")
     public ResponseEntity<Void> login() {
-        String kakaoAuthUrl = UriComponentsBuilder.fromUriString("https://kauth.kakao.com/oauth/authorize")
-            .queryParam("response_type", "code")
-            .queryParam("client_id", properties.clientId())
-            .queryParam("redirect_uri", properties.redirectUri())
-            .queryParam("scope", "account_email,talk_message")
-            .build()
-            .toUriString();
+        String kakaoAuthUrl = UriComponentsBuilder.fromUriString(
+                        "https://kauth.kakao.com/oauth/authorize")
+                .queryParam("response_type", "code")
+                .queryParam("client_id", properties.clientId())
+                .queryParam("redirect_uri", properties.redirectUri())
+                .queryParam("scope", "account_email,talk_message")
+                .build()
+                .toUriString();
 
         return ResponseEntity.status(HttpStatus.FOUND)
-            .header(HttpHeaders.LOCATION, kakaoAuthUrl)
-            .build();
+                .header(HttpHeaders.LOCATION, kakaoAuthUrl)
+                .build();
     }
 
     @GetMapping(path = "/callback")
     public ResponseEntity<TokenResponse> callback(@RequestParam("code") String code) {
         KakaoLoginClient.KakaoTokenResponse kakaoToken = kakaoLoginClient.requestAccessToken(code);
-        KakaoLoginClient.KakaoUserResponse kakaoUser = kakaoLoginClient.requestUserInfo(kakaoToken.accessToken());
+        KakaoLoginClient.KakaoUserResponse kakaoUser = kakaoLoginClient.requestUserInfo(
+                kakaoToken.accessToken());
         String email = kakaoUser.email();
 
         Member member = memberRepository.findByEmail(email)
-            .orElseGet(() -> new Member(email));
+                .orElseGet(() -> new Member(email));
         member.updateKakaoAccessToken(kakaoToken.accessToken());
         memberRepository.save(member);
 

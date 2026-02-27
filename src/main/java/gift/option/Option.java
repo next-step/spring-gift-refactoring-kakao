@@ -13,6 +13,7 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "options")
 public class Option {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

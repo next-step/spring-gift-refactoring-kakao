@@ -8,12 +8,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "orders")
 public class Order {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -21,10 +21,14 @@ public class Order {
     @ManyToOne
     @JoinColumn(name = "option_id")
     private Option option;
+
     // primitive FK
     private Long memberId;
+
     private int quantity;
+
     private String message;
+
     private LocalDateTime orderDateTime;
 
     protected Order() {
