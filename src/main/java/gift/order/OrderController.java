@@ -95,7 +95,13 @@ public class OrderController {
 
         // save order
         var saved = orderRepository.save(
-                new Order(option, member.getId(), request.quantity(), request.message()));
+                Order.builder()
+                        .option(option)
+                        .memberId(member.getId())
+                        .quantity(request.quantity())
+                        .message(request.message())
+                        .build()
+        );
 
         // best-effort kakao notification
         sendKakaoMessageIfPossible(member, saved, option);

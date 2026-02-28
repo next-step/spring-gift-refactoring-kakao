@@ -38,7 +38,7 @@ public class Order {
     private LocalDateTime orderDateTime;
 
     @Builder
-    public Order(Option option, Long memberId, int quantity, String message) {
+    private Order(Option option, Long memberId, int quantity, String message) {
         this.option = option;
         this.memberId = memberId;
         this.quantity = quantity;
