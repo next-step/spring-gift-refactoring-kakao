@@ -29,7 +29,7 @@ public class Category {
     private String description;
 
     @Builder
-    public Category(String name, String color, String imageUrl, String description) {
+    private Category(String name, String color, String imageUrl, String description) {
         this.name = name;
         this.color = color;
         this.imageUrl = imageUrl;
