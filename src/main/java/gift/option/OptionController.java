@@ -62,7 +62,12 @@ public class OptionController {
         }
 
         Option saved = optionRepository.save(
-                new Option(product, request.name(), request.quantity()));
+                Option.builder()
+                        .product(product)
+                        .name(request.name())
+                        .quantity(request.quantity())
+                        .build()
+        );
         URI location = URI.create("/api/products/" + productId + "/options/" + saved.getId());
         return ResponseEntity.created(location)
                 .body(OptionResponse.from(saved));
