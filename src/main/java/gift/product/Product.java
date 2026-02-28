@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
@@ -18,6 +19,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
+@Table(name = "product")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Product {
 
