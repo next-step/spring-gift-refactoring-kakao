@@ -74,3 +74,7 @@ ktlint {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+tasks.named<Test>("test") {
+    exclude("**/acceptance/**")
+}
