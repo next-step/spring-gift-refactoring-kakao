@@ -35,20 +35,11 @@ public class Member {
     private int point;
 
     @Builder
-    public Member(String email, String password, String kakaoAccessToken, int point) {
+    private Member(String email, String password, String kakaoAccessToken, int point) {
         this.email = email;
         this.password = password;
         this.kakaoAccessToken = kakaoAccessToken;
         this.point = point;
-    }
-
-    public Member(String email, String password) {
-        this.email = email;
-        this.password = password;
-    }
-
-    public Member(String email) {
-        this.email = email;
     }
 
     public void update(String email, String password) {

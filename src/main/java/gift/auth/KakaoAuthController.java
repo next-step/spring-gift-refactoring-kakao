@@ -62,7 +62,9 @@ public class KakaoAuthController {
         String email = kakaoUser.email();
 
         Member member = memberRepository.findByEmail(email)
-                .orElseGet(() -> new Member(email));
+                .orElseGet(() -> Member.builder()
+                        .email(email)
+                        .build());
         member.updateKakaoAccessToken(kakaoToken.accessToken());
         memberRepository.save(member);
 

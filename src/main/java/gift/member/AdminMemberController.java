@@ -48,7 +48,12 @@ public class AdminMemberController {
             return "member/new";
         }
 
-        memberRepository.save(new Member(email, password));
+        memberRepository.save(
+                Member.builder()
+                        .email(email)
+                        .password(password)
+                        .build()
+        );
         return "redirect:/admin/members";
     }
 

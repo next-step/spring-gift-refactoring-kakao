@@ -38,7 +38,11 @@ public class MemberController {
         }
 
         final Member member = memberRepository.save(
-                new Member(request.email(), request.password()));
+                Member.builder()
+                        .email(request.email())
+                        .password(request.password())
+                        .build()
+        );
         final String token = jwtProvider.createToken(member.getEmail());
         return ResponseEntity.status(HttpStatus.CREATED).body(new TokenResponse(token));
     }
