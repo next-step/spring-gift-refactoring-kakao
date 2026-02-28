@@ -41,3 +41,6 @@ out/
 
 ### Mac OS ###
 .DS_Store
+
+### CLAUDE ###
+.claude/settings.local.json

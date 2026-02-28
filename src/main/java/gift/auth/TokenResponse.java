@@ -6,5 +6,4 @@ package gift.auth;
  * @author brian.kim
  * @since 1.0
  */
-public record TokenResponse(String token) {
-}
+public record TokenResponse(String token) {}
