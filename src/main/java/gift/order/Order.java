@@ -9,7 +9,11 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
+@Getter
 @Entity
 @Table(name = "orders")
 public class Order {
@@ -42,27 +46,4 @@ public class Order {
         this.orderDateTime = LocalDateTime.now();
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public Option getOption() {
-        return option;
-    }
-
-    public Long getMemberId() {
-        return memberId;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public LocalDateTime getOrderDateTime() {
-        return orderDateTime;
-    }
 }
