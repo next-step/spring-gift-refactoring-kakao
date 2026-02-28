@@ -32,13 +32,21 @@ dependencies {
     implementation("org.flywaydb:flyway-mysql")
     implementation(platform("io.jsonwebtoken:jjwt-bom:0.13.0"))
     implementation("io.jsonwebtoken:jjwt-api")
+    implementation("org.projectlombok:lombok")
+
     runtimeOnly("io.jsonwebtoken:jjwt-impl")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson")
     runtimeOnly("com.h2database:h2")
     runtimeOnly("com.mysql:mysql-connector-j")
+
+    annotationProcessor("org.projectlombok:lombok")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    testAnnotationProcessor("org.projectlombok:lombok")
 }
 
 kotlin {
