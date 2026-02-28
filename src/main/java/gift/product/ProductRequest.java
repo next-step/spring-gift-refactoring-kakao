@@ -13,6 +13,11 @@ public record ProductRequest(
 ) {
 
     public Product toEntity(Category category) {
-        return new Product(name, price, imageUrl, category);
+        return Product.builder()
+                .name(name)
+                .price(price)
+                .imageUrl(imageUrl)
+                .category(category)
+                .build();
     }
 }

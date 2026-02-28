@@ -53,7 +53,14 @@ public class AdminProductController {
 
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
-        productRepository.save(new Product(name, price, imageUrl, category));
+        productRepository.save(
+                Product.builder()
+                        .name(name)
+                        .price(price)
+                        .imageUrl(imageUrl)
+                        .category(category)
+                        .build()
+        );
         return "redirect:/admin/products";
     }
 

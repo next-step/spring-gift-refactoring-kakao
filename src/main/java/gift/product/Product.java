@@ -42,7 +42,7 @@ public class Product {
     private List<Option> options = new ArrayList<>();
 
     @Builder
-    public Product(String name, int price, String imageUrl, Category category) {
+    private Product(String name, int price, String imageUrl, Category category) {
         this.name = name;
         this.price = price;
         this.imageUrl = imageUrl;
