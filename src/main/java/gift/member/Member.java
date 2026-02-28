@@ -16,6 +16,7 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member {
 
     @Id
@@ -29,9 +30,6 @@ public class Member {
     private String kakaoAccessToken;
 
     private int point;
-
-    protected Member() {
-    }
 
     public Member(String email, String password) {
         this.email = email;

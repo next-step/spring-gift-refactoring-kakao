@@ -16,6 +16,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Table(name = "orders")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Order {
 
     @Id
@@ -34,9 +35,6 @@ public class Order {
     private String message;
 
     private LocalDateTime orderDateTime;
-
-    protected Order() {
-    }
 
     public Order(Option option, Long memberId, int quantity, String message) {
         this.option = option;

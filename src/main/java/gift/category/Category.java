@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Category {
 
     @Id
@@ -23,9 +24,6 @@ public class Category {
     private String imageUrl;
 
     private String description;
-
-    protected Category() {
-    }
 
     public Category(String name, String color, String imageUrl, String description) {
         this.name = name;

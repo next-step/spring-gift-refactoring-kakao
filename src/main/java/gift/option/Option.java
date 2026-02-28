@@ -16,6 +16,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Table(name = "options")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Option {
 
     @Id
@@ -31,9 +32,6 @@ public class Option {
 
     @Column(nullable = false)
     private int quantity;
-
-    protected Option() {
-    }
 
     public Option(Product product, String name, int quantity) {
         this.product = product;

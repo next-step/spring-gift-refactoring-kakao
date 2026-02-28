@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Wish {
 
     @Id
@@ -25,9 +26,6 @@ public class Wish {
     @ManyToOne
     @JoinColumn(name = "product_id")
     private Product product;
-
-    protected Wish() {
-    }
 
     public Wish(Long memberId, Product product) {
         this.memberId = memberId;
