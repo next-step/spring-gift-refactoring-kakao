@@ -10,6 +10,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -36,6 +37,7 @@ public class Order {
 
     private LocalDateTime orderDateTime;
 
+    @Builder
     public Order(Option option, Long memberId, int quantity, String message) {
         this.option = option;
         this.memberId = memberId;
@@ -43,5 +45,4 @@ public class Order {
         this.message = message;
         this.orderDateTime = LocalDateTime.now();
     }
-
 }

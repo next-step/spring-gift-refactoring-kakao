@@ -14,6 +14,7 @@ import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -40,6 +41,7 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Option> options = new ArrayList<>();
 
+    @Builder
     public Product(String name, int price, String imageUrl, Category category) {
         this.name = name;
         this.price = price;

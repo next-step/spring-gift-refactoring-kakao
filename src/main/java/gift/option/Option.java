@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -33,6 +34,7 @@ public class Option {
     @Column(nullable = false)
     private int quantity;
 
+    @Builder
     public Option(Product product, String name, int quantity) {
         this.product = product;
         this.name = name;

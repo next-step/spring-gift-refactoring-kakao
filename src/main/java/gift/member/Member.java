@@ -6,6 +6,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -32,6 +33,14 @@ public class Member {
     private String kakaoAccessToken;
 
     private int point;
+
+    @Builder
+    public Member(String email, String password, String kakaoAccessToken, int point) {
+        this.email = email;
+        this.password = password;
+        this.kakaoAccessToken = kakaoAccessToken;
+        this.point = point;
+    }
 
     public Member(String email, String password) {
         this.email = email;
