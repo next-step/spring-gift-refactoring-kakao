@@ -31,7 +31,7 @@ public class Wish {
     private Product product;
 
     @Builder
-    public Wish(Long memberId, Product product) {
+    private Wish(Long memberId, Product product) {
         this.memberId = memberId;
         this.product = product;
     }

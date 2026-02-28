@@ -73,7 +73,12 @@ public class WishController {
             return ResponseEntity.ok(WishResponse.from(existing));
         }
 
-        var saved = wishRepository.save(new Wish(member.getId(), product));
+        var saved = wishRepository.save(
+                Wish.builder()
+                        .memberId(member.getId())
+                        .product(product)
+                        .build()
+        );
         return ResponseEntity.created(URI.create("/api/wishes/" + saved.getId()))
                 .body(WishResponse.from(saved));
     }
