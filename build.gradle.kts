@@ -78,3 +78,14 @@ tasks.withType<Test> {
 tasks.named<Test>("test") {
     exclude("**/acceptance/**")
 }
+
+tasks.register<Test>("acceptanceTest") {
+    description = "Runs acceptance tests using Cucumber."
+    group = "verification"
+
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
+
+    include("**/acceptance/**")
+    systemProperty("spring.profiles.active", "acceptance-test")
+}
