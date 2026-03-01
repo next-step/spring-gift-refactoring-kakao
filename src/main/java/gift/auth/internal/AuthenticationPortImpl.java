@@ -1,8 +1,6 @@
 package gift.auth.internal;
 
-import gift.auth.AuthMemberRepository;
 import gift.auth.AuthenticationPort;
-import gift.auth.JwtProvider;
 import gift.member.Member;
 import io.jsonwebtoken.JwtException;
 import java.util.Optional;

@@ -1,7 +1,7 @@
 package gift.acceptance.steps;
 
 import gift.acceptance.client.ApiClient;
-import gift.member.MemberRequest;
+import gift.member.internal.MemberRequest;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.When;
 import java.util.Map;

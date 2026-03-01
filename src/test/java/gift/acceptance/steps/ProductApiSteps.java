@@ -5,7 +5,7 @@ import static gift.acceptance.context.ScenarioContext.NON_EXISTENT_ID;
 import gift.acceptance.client.ApiClient;
 import gift.acceptance.context.ContextKeys;
 import gift.acceptance.context.ScenarioContext;
-import gift.product.ProductRequest;
+import gift.product.internal.ProductRequest;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.When;
 import java.util.Map;

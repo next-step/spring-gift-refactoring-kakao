@@ -3,7 +3,7 @@ package gift.acceptance.steps;
 import gift.acceptance.client.ApiClient;
 import gift.acceptance.context.ContextKeys;
 import gift.acceptance.context.ScenarioContext;
-import gift.auth.JwtProvider;
+import gift.auth.internal.JwtProvider;
 import gift.member.Member;
 import gift.support.DataManipulator;
 import io.cucumber.java.en.Given;

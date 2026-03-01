@@ -3,7 +3,7 @@ package gift.acceptance.steps;
 import gift.acceptance.client.ApiClient;
 import gift.acceptance.context.ContextKeys;
 import gift.acceptance.context.ScenarioContext;
-import gift.order.OrderRequest;
+import gift.order.internal.OrderRequest;
 import io.cucumber.datatable.DataTable;
 import io.cucumber.java.en.When;
 import java.util.Map;

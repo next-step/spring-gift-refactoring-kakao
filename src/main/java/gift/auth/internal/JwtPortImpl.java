@@ -1,8 +1,6 @@
 package gift.auth.internal;
 
-import gift.auth.AuthMemberRepository;
 import gift.auth.JwtPort;
-import gift.auth.JwtProvider;
 import gift.global.NotFoundException;
 import gift.member.Member;
 import lombok.RequiredArgsConstructor;
