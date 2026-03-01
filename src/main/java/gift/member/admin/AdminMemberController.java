@@ -1,6 +1,7 @@
-package gift.member.internal;
+package gift.member.admin;
 
 import gift.member.Member;
+import gift.member.internal.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
