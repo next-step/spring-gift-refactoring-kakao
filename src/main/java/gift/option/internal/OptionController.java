@@ -1,11 +1,8 @@
 package gift.option.internal;
 
-import gift.option.Option;
-import gift.product.Product;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -26,19 +23,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class OptionController {
 
-    private final OptionRepository optionRepository;
-    private final OptionProductRepository productRepository;
+    private final OptionService optionService;
 
     @GetMapping
     public ResponseEntity<List<OptionResponse>> getOptions(@PathVariable Long productId) {
-        Product product = productRepository.findById(productId).orElse(null);
-        if (product == null) {
-            return ResponseEntity.notFound().build();
-        }
-        List<OptionResponse> options = optionRepository.findByProductId(productId).stream()
-                .map(OptionResponse::from)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(options);
+        List<OptionResponse> responses = optionService.getOptions(productId);
+
+        return ResponseEntity
+                .ok(responses);
     }
 
     @PostMapping
@@ -48,25 +40,15 @@ public class OptionController {
     ) {
         validateName(request.name());
 
-        Product product = productRepository.findById(productId).orElse(null);
-        if (product == null) {
-            return ResponseEntity.notFound().build();
-        }
+        OptionResponse response = optionService.createOption(productId, request);
 
-        if (optionRepository.existsByProductIdAndName(productId, request.name())) {
-            throw new IllegalArgumentException("이미 존재하는 옵션명입니다.");
-        }
+        Long optionId = response.id();
 
-        Option saved = optionRepository.save(
-                Option.builder()
-                        .product(product)
-                        .name(request.name())
-                        .quantity(request.quantity())
-                        .build()
-        );
-        URI location = URI.create("/api/products/" + productId + "/options/" + saved.getId());
-        return ResponseEntity.created(location)
-                .body(OptionResponse.from(saved));
+        URI location = URI.create("/api/products/" + productId + "/options/" + optionId);
+
+        return ResponseEntity
+                .created(location)
+                .body(response);
     }
 
     private void validateName(String name) {
@@ -81,23 +63,11 @@ public class OptionController {
             @PathVariable Long productId,
             @PathVariable Long optionId
     ) {
-        Product product = productRepository.findById(productId).orElse(null);
-        if (product == null) {
-            return ResponseEntity.notFound().build();
-        }
+        optionService.deleteOption(productId, optionId);
 
-        List<Option> options = optionRepository.findByProductId(productId);
-        if (options.size() <= 1) {
-            throw new IllegalArgumentException("옵션이 1개인 상품은 옵션을 삭제할 수 없습니다.");
-        }
-
-        Option option = optionRepository.findById(optionId).orElse(null);
-        if (option == null || !option.getProduct().getId().equals(productId)) {
-            return ResponseEntity.notFound().build();
-        }
-
-        optionRepository.delete(option);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity
+                .noContent()
+                .build();
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
