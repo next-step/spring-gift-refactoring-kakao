@@ -1,6 +1,5 @@
 package gift.category.internal;
 
-import gift.category.Category;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
@@ -20,22 +19,29 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class CategoryController {
 
-    private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
 
     @GetMapping
     public ResponseEntity<List<CategoryResponse>> getCategories() {
-        List<CategoryResponse> categories = categoryRepository.findAll().stream()
-                .map(CategoryResponse::from)
-                .toList();
-        return ResponseEntity.ok(categories);
+        List<CategoryResponse> responses = categoryService.getCategories();
+
+        return ResponseEntity
+                .ok(responses);
     }
 
     @PostMapping
     public ResponseEntity<CategoryResponse> createCategory(
-            @Valid @RequestBody CategoryRequest request) {
-        Category saved = categoryRepository.save(request.toEntity());
-        return ResponseEntity.created(URI.create("/api/categories/" + saved.getId()))
-                .body(CategoryResponse.from(saved));
+            @Valid @RequestBody CategoryRequest request
+    ) {
+        CategoryResponse response = categoryService.createCategory(request);
+
+        Long categoryId = response.id();
+
+        return ResponseEntity
+                .created(URI.create(
+                        "/api/categories/" + categoryId
+                ))
+                .body(response);
     }
 
     @PutMapping("/{id}")
@@ -43,19 +49,18 @@ public class CategoryController {
             @PathVariable Long id,
             @Valid @RequestBody CategoryRequest request
     ) {
-        Category category = categoryRepository.findById(id).orElse(null);
-        if (category == null) {
-            return ResponseEntity.notFound().build();
-        }
+        CategoryResponse response = categoryService.updateCategory(id, request);
 
-        category.update(request.name(), request.color(), request.imageUrl(), request.description());
-        categoryRepository.save(category);
-        return ResponseEntity.ok(CategoryResponse.from(category));
+        return ResponseEntity
+                .ok(response);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
-        categoryRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
+        categoryService.deleteCategory(id);
+
+        return ResponseEntity
+                .noContent()
+                .build();
     }
 }
