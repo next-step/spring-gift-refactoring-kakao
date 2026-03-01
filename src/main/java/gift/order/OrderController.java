@@ -2,10 +2,7 @@ package gift.order;
 
 import gift.auth.AuthenticationResolver;
 import gift.member.Member;
-import gift.member.MemberRepository;
 import gift.option.Option;
-import gift.option.OptionRepository;
-import gift.wish.WishRepository;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
@@ -24,9 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class OrderController {
 
     private final OrderRepository orderRepository;
-    private final OptionRepository optionRepository;
-    private final WishRepository wishRepository;
-    private final MemberRepository memberRepository;
+    private final OrderOptionRepository optionRepository;
+    private final OrderWishRepository wishRepository;
+    private final OrderMemberRepository memberRepository;
     private final AuthenticationResolver authenticationResolver;
     private final KakaoMessageClient kakaoMessageClient;
 

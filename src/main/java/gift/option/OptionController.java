@@ -1,7 +1,6 @@
 package gift.option;
 
 import gift.product.Product;
-import gift.product.ProductRepository;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
@@ -27,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class OptionController {
 
     private final OptionRepository optionRepository;
-    private final ProductRepository productRepository;
+    private final OptionProductRepository productRepository;
 
     @GetMapping
     public ResponseEntity<List<OptionResponse>> getOptions(@PathVariable Long productId) {

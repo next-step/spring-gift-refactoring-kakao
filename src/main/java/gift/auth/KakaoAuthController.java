@@ -1,7 +1,6 @@
 package gift.auth;
 
 import gift.member.Member;
-import gift.member.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -25,7 +24,7 @@ public class KakaoAuthController {
 
     private final KakaoLoginProperties properties;
     private final KakaoLoginClient kakaoLoginClient;
-    private final MemberRepository memberRepository;
+    private final AuthMemberRepository memberRepository;
     private final JwtProvider jwtProvider;
 
     @GetMapping(path = "/login")

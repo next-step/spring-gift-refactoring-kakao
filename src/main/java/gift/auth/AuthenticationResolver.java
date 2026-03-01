@@ -1,7 +1,6 @@
 package gift.auth;
 
 import gift.member.Member;
-import gift.member.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +15,7 @@ import org.springframework.stereotype.Component;
 public class AuthenticationResolver {
 
     private final JwtProvider jwtProvider;
-    private final MemberRepository memberRepository;
+    private final AuthMemberRepository memberRepository;
 
     public Member extractMember(String authorization) {
         try {

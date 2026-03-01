@@ -1,7 +1,6 @@
 package gift.wish;
 
 import gift.auth.AuthenticationResolver;
-import gift.product.ProductRepository;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class WishController {
 
     private final WishRepository wishRepository;
-    private final ProductRepository productRepository;
+    private final WishProductRepository productRepository;
     private final AuthenticationResolver authenticationResolver;
 
     @GetMapping

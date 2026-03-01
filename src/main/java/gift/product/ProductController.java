@@ -1,7 +1,6 @@
 package gift.product;
 
 import gift.category.Category;
-import gift.category.CategoryRepository;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
@@ -25,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProductController {
 
     private final ProductRepository productRepository;
-    private final CategoryRepository categoryRepository;
+    private final ProductCategoryRepository categoryRepository;
 
     @GetMapping
     public ResponseEntity<Page<ProductResponse>> getProducts(Pageable pageable) {
