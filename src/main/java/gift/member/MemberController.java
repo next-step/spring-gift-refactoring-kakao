@@ -1,7 +1,6 @@
 package gift.member;
 
 import gift.auth.JwtPort;
-import gift.auth.TokenResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,7 +26,7 @@ public class MemberController {
     private final JwtPort jwtPort;
 
     @PostMapping("/register")
-    public ResponseEntity<TokenResponse> register(@Valid @RequestBody MemberRequest request) {
+    public ResponseEntity<MemberResponse> register(@Valid @RequestBody MemberRequest request) {
         if (memberRepository.existsByEmail(request.email())) {
             throw new IllegalArgumentException("Email is already registered.");
         }
@@ -42,11 +41,11 @@ public class MemberController {
         Long memberId = member.getId();
 
         final String token = jwtPort.issueMemberJwt(memberId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new TokenResponse(token));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new MemberResponse(token));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<TokenResponse> login(@Valid @RequestBody MemberRequest request) {
+    public ResponseEntity<MemberResponse> login(@Valid @RequestBody MemberRequest request) {
         final Member member = memberRepository.findByEmail(request.email())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid email or password."));
 
@@ -57,7 +56,7 @@ public class MemberController {
         Long memberId = member.getId();
 
         final String token = jwtPort.issueMemberJwt(memberId);
-        return ResponseEntity.ok(new TokenResponse(token));
+        return ResponseEntity.ok(new MemberResponse(token));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
