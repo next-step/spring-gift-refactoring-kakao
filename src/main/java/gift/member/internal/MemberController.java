@@ -1,7 +1,6 @@
 package gift.member.internal;
 
 import gift.auth.JwtPort;
-import gift.member.Member;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,41 +22,37 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class MemberController {
 
-    private final MemberRepository memberRepository;
+    private final MemberService memberService;
     private final JwtPort jwtPort;
 
     @PostMapping("/register")
-    public ResponseEntity<MemberResponse> register(@Valid @RequestBody MemberRequest request) {
-        if (memberRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Email is already registered.");
-        }
+    public ResponseEntity<MemberResponse> register(
+            @Valid @RequestBody MemberRequest request
+    ) {
 
-        final Member member = memberRepository.save(
-                Member.builder()
-                        .email(request.email())
-                        .password(request.password())
-                        .build()
-        );
+        Long memberId = memberService.register(request);
 
-        Long memberId = member.getId();
+        String token = jwtPort.issueMemberJwt(memberId);
 
-        final String token = jwtPort.issueMemberJwt(memberId);
-        return ResponseEntity.status(HttpStatus.CREATED).body(new MemberResponse(token));
+        MemberResponse response = new MemberResponse(token);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<MemberResponse> login(@Valid @RequestBody MemberRequest request) {
-        final Member member = memberRepository.findByEmail(request.email())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid email or password."));
+    public ResponseEntity<MemberResponse> login(
+            @Valid @RequestBody MemberRequest request
+    ) {
 
-        if (member.getPassword() == null || !member.getPassword().equals(request.password())) {
-            throw new IllegalArgumentException("Invalid email or password.");
-        }
+        Long memberId = memberService.login(request);
 
-        Long memberId = member.getId();
+        String token = jwtPort.issueMemberJwt(memberId);
 
-        final String token = jwtPort.issueMemberJwt(memberId);
-        return ResponseEntity.ok(new MemberResponse(token));
+        MemberResponse response = new MemberResponse(token);
+
+        return ResponseEntity.ok(response);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
