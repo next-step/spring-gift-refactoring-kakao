@@ -38,8 +38,6 @@ public class OptionController {
             @PathVariable Long productId,
             @Valid @RequestBody OptionRequest request
     ) {
-        validateName(request.name());
-
         OptionResponse response = optionService.createOption(productId, request);
 
         Long optionId = response.id();
@@ -49,13 +47,6 @@ public class OptionController {
         return ResponseEntity
                 .created(location)
                 .body(response);
-    }
-
-    private void validateName(String name) {
-        List<String> errors = OptionNameValidator.validate(name);
-        if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(String.join(", ", errors));
-        }
     }
 
     @DeleteMapping(path = "/{optionId}")
