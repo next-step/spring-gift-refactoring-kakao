@@ -1,6 +1,6 @@
 package gift.member;
 
-import gift.auth.JwtProvider;
+import gift.auth.JwtPort;
 import gift.auth.TokenResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class MemberController {
 
     private final MemberRepository memberRepository;
-    private final JwtProvider jwtProvider;
+    private final JwtPort jwtPort;
 
     @PostMapping("/register")
     public ResponseEntity<TokenResponse> register(@Valid @RequestBody MemberRequest request) {
@@ -38,7 +38,10 @@ public class MemberController {
                         .password(request.password())
                         .build()
         );
-        final String token = jwtProvider.createToken(member.getEmail());
+
+        Long memberId = member.getId();
+
+        final String token = jwtPort.issueMemberJwt(memberId);
         return ResponseEntity.status(HttpStatus.CREATED).body(new TokenResponse(token));
     }
 
@@ -51,7 +54,9 @@ public class MemberController {
             throw new IllegalArgumentException("Invalid email or password.");
         }
 
-        final String token = jwtProvider.createToken(member.getEmail());
+        Long memberId = member.getId();
+
+        final String token = jwtPort.issueMemberJwt(memberId);
         return ResponseEntity.ok(new TokenResponse(token));
     }
 
