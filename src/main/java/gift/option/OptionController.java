@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -22,16 +23,11 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping(path = "/api/products/{productId}/options")
+@RequiredArgsConstructor
 public class OptionController {
 
     private final OptionRepository optionRepository;
     private final ProductRepository productRepository;
-
-    public OptionController(OptionRepository optionRepository,
-            ProductRepository productRepository) {
-        this.optionRepository = optionRepository;
-        this.productRepository = productRepository;
-    }
 
     @GetMapping
     public ResponseEntity<List<OptionResponse>> getOptions(@PathVariable Long productId) {
