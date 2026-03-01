@@ -2,8 +2,8 @@ package gift.product;
 
 import gift.category.Category;
 import gift.option.Option;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -34,12 +34,11 @@ public class Product {
 
     private String imageUrl;
 
-    @ManyToOne
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
+    private final List<Option> options = new ArrayList<>();
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
-
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Option> options = new ArrayList<>();
 
     @Builder
     private Product(String name, int price, String imageUrl, Category category) {
