@@ -1,6 +1,8 @@
 package gift.order;
 
-import gift.auth.AuthenticationResolver;
+import gift.auth.AuthenticationPort;
+import gift.global.NotFoundException;
+import gift.global.UnauthorizedException;
 import gift.member.Member;
 import gift.option.Option;
 import jakarta.validation.Valid;
@@ -24,7 +26,7 @@ public class OrderController {
     private final OrderOptionRepository optionRepository;
     private final OrderWishRepository wishRepository;
     private final OrderMemberRepository memberRepository;
-    private final AuthenticationResolver authenticationResolver;
+    private final AuthenticationPort authenticationPort;
     private final KakaoMessageClient kakaoMessageClient;
 
     @GetMapping
@@ -33,11 +35,10 @@ public class OrderController {
             Pageable pageable
     ) {
         // auth check
-        var member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(401).build();
-        }
-        var orders = orderRepository.findByMemberId(member.getId(), pageable)
+        Long memberId = authenticationPort.getMemberIdFrom(authorization)
+                .orElseThrow(UnauthorizedException::new);
+
+        var orders = orderRepository.findByMemberId(memberId, pageable)
                 .map(OrderResponse::from);
         return ResponseEntity.ok(orders);
     }
@@ -56,10 +57,11 @@ public class OrderController {
             @Valid @RequestBody OrderRequest request
     ) {
         // auth check
-        var member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(401).build();
-        }
+        Long memberId = authenticationPort.getMemberIdFrom(authorization)
+                .orElseThrow(UnauthorizedException::new);
+
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(NotFoundException::memberNotFound);
 
         // validate option
         var option = optionRepository.findById(request.optionId()).orElse(null);
