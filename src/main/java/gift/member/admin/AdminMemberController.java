@@ -25,7 +25,12 @@ public class AdminMemberController {
 
     @GetMapping
     public String list(Model model) {
-        model.addAttribute("members", memberRepository.findAll());
+        model.addAttribute(
+                "members",
+                memberRepository.findAll().stream()
+                        .map(MemberDto::from)
+                        .toList()
+        );
         return "member/list";
     }
 
@@ -63,7 +68,7 @@ public class AdminMemberController {
     public String editForm(@PathVariable Long id, Model model) {
         final Member member = memberRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Member not found. id=" + id));
-        model.addAttribute("member", member);
+        model.addAttribute("member", MemberDto.from(member));
         return "member/edit";
     }
 
