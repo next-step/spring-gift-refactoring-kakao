@@ -1,7 +1,6 @@
 package gift.member.admin;
 
 import gift.member.Member;
-import gift.member.internal.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -22,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RequiredArgsConstructor
 public class AdminMemberController {
 
-    private final MemberRepository memberRepository;
+    private final AdminMemberRepository memberRepository;
 
     @GetMapping
     public String list(Model model) {
