@@ -20,8 +20,7 @@ public class Wish {
     @JoinColumn(name = "product_id")
     private Product product;
 
-    protected Wish() {
-    }
+    protected Wish() {}
 
     public Wish(Long memberId, Product product) {
         this.memberId = memberId;

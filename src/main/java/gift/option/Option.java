@@ -27,8 +27,7 @@ public class Option {
     @Column(nullable = false)
     private int quantity;
 
-    protected Option() {
-    }
+    protected Option() {}
 
     public Option(Product product, String name, int quantity) {
         this.product = product;

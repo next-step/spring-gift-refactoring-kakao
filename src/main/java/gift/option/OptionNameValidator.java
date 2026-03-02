@@ -12,11 +12,9 @@ import java.util.regex.Pattern;
  */
 public class OptionNameValidator {
     private static final int MAX_LENGTH = 50;
-    private static final Pattern ALLOWED_PATTERN =
-        Pattern.compile("^[a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ ()\\[\\]+\\-&/_]*$");
+    private static final Pattern ALLOWED_PATTERN = Pattern.compile("^[a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ ()\\[\\]+\\-&/_]*$");
 
-    private OptionNameValidator() {
-    }
+    private OptionNameValidator() {}
 
     public static List<String> validate(String name) {
         List<String> errors = new ArrayList<>();
