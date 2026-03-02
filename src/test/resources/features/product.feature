@@ -46,6 +46,29 @@ Feature: 상품 관리
     Then 응답 상태 코드는 204
     And 응답 body가 없다
 
+  # --- State Verification ---
+
+  @state
+  Scenario: P-S1 상품 삭제 후 재조회 시 404
+    Given "교환권" 카테고리에 "아메리카노" 상품이 존재한다
+    When 해당 상품 삭제 요청을 보낸다
+    Then 응답 상태 코드는 204
+    When 해당 상품 조회 요청을 보낸다
+    Then 응답 상태 코드는 404
+
+  @state
+  Scenario: P-S2 상품 수정 후 재조회 시 변경 내용이 반영된다
+    Given "교환권" 카테고리에 "아메리카노" 상품이 존재한다
+    When 해당 상품 수정 요청을 보낸다
+      | name | price | imageUrl                   | categoryId   |
+      | 라떼   | 6000  | http://example.com/new.png | {categoryId} |
+    Then 응답 상태 코드는 200
+    When 해당 상품 조회 요청을 보낸다
+    Then 응답 상태 코드는 200
+    And 응답 body의 "name"이 "라떼"이다
+    And 응답 body의 "price"가 6000이다
+    And 응답 body의 "imageUrl"이 "http://example.com/new.png"이다
+
   # --- Error Flow ---
 
   @error

@@ -51,6 +51,28 @@ Feature: 카테고리 관리
     Then 응답 상태 코드는 200
     And 응답 body는 빈 배열이다
 
+  # --- State Verification ---
+
+  @happy @state
+  Scenario: C-S1 카테고리 삭제 후 목록 조회 시 빈 배열
+    Given "교환권" 카테고리가 존재한다
+    When 해당 카테고리 삭제 요청을 보낸다
+    Then 응답 상태 코드는 204
+    When 카테고리 목록 조회 요청을 보낸다
+    Then 응답 body는 빈 배열이다
+
+  @happy @state
+  Scenario: C-S2 카테고리 수정 후 목록에서 변경 내용이 반영된다
+    Given "교환권" 카테고리가 존재한다
+    When 해당 카테고리 수정 요청을 보낸다
+      | name | color   | imageUrl                   | description |
+      | 음료   | #FF0000 | http://example.com/new.png | 음료 카테고리     |
+    Then 응답 상태 코드는 200
+    When 카테고리 목록 조회 요청을 보낸다
+    Then 응답 body는 크기가 1인 배열이다
+    And 응답 body의 "[0].name"이 "음료"이다
+    And 응답 body의 "[0].color"가 "#FF0000"이다
+
   # --- Error Flow ---
 
   @error @validation

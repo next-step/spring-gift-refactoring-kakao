@@ -32,6 +32,28 @@ Feature: 옵션 관리
     Then 응답 상태 코드는 204
     And 응답 body가 없다
 
+  # --- State Verification ---
+
+  @happy @state
+  Scenario: O-S1 옵션 추가 후 목록에 포함된다
+    Given "교환권" 카테고리에 "아메리카노" 상품이 존재한다
+    And 해당 상품에 "기존옵션" 옵션이 존재한다
+    When 해당 상품에 옵션 추가 요청을 보낸다
+      | name | quantity |
+      | 새옵션  | 50       |
+    Then 응답 상태 코드는 201
+    When 해당 상품의 옵션 목록 조회 요청을 보낸다
+    Then 응답 body는 크기가 2인 배열이다
+
+  @happy @state
+  Scenario: O-S2 옵션 삭제 후 목록에서 제거된다
+    Given "교환권" 카테고리에 "아메리카노" 상품이 존재한다
+    And 해당 상품에 "옵션A", "옵션B" 2개의 옵션이 존재한다
+    When 해당 상품에서 "옵션A" 옵션 삭제 요청을 보낸다
+    Then 응답 상태 코드는 204
+    When 해당 상품의 옵션 목록 조회 요청을 보낸다
+    Then 응답 body는 크기가 1인 배열이다
+
   # --- Error Flow ---
 
   @error

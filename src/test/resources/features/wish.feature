@@ -33,6 +33,28 @@ Feature: 위시 관리
     Then 응답 상태 코드는 204
     And 응답 body가 없다
 
+  # --- State Verification ---
+
+  @happy @state
+  Scenario: W-S1 위시 추가 후 목록에 포함된다
+    Given 회원이 존재하고 유효한 토큰을 가진다
+    And "교환권" 카테고리에 "아메리카노" 상품이 존재한다
+    When 인증된 사용자가 위시 추가 요청을 보낸다
+      | productId   |
+      | {productId} |
+    Then 응답 상태 코드는 201
+    When 인증된 사용자가 위시 목록을 페이지 0 사이즈 10로 조회 요청을 보낸다
+    Then 응답 body의 "page.totalElements"가 1이다
+
+  @happy @state
+  Scenario: W-S2 위시 삭제 후 목록에서 제거된다
+    Given 회원이 존재하고 유효한 토큰을 가진다
+    And 해당 회원에게 위시가 등록되어 있다
+    When 인증된 사용자가 해당 위시 삭제 요청을 보낸다
+    Then 응답 상태 코드는 204
+    When 인증된 사용자가 위시 목록을 페이지 0 사이즈 10로 조회 요청을 보낸다
+    Then 응답 body의 "page.totalElements"가 0이다
+
   @happy
   Scenario: W-4 동일 상품 중복 위시 추가 시 기존 위시 반환
     Given 회원이 존재하고 유효한 토큰을 가진다

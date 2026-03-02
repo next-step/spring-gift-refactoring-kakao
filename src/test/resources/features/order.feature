@@ -29,6 +29,7 @@ Feature: 주문 관리
     And 해당 상품의 옵션 목록 조회 요청을 보낸다
     Then 응답 상태 코드는 200
     And 응답 body는 크기가 1인 배열이다
+    And 응답 body의 "[0].quantity"가 97이다
 
   @happy
   Scenario: OR-3 주문 목록 페이지네이션 조회
@@ -99,3 +100,35 @@ Feature: 주문 관리
       | optionId | quantity |
       | 1        | 0        |
     Then 응답 상태 코드는 400
+
+  # --- State Verification ---
+
+  @happy @boundary
+  Scenario: OR-B1 재고를 정확히 소진하는 주문이 성공한다
+    Given 포인트가 충분한 회원이 존재하고 유효한 토큰을 가진다
+    And "교환권" 카테고리에 가격 5000인 "아메리카노" 상품이 존재한다
+    And 해당 상품에 수량 5인 "기본옵션" 옵션이 존재한다
+    When 인증된 사용자가 수량 5으로 주문 생성 요청을 보낸다
+    Then 응답 상태 코드는 201
+    When 해당 상품의 옵션 목록 조회 요청을 보낸다
+    Then 응답 body의 "[0].quantity"가 0이다
+
+  @state @rollback
+  Scenario: OR-R1 포인트 부족으로 주문 실패 시 재고가 원상복구된다
+    Given 포인트가 100인 회원이 존재하고 유효한 토큰을 가진다
+    And "교환권" 카테고리에 가격 5000인 "아메리카노" 상품이 존재한다
+    And 해당 상품에 수량 10인 "기본옵션" 옵션이 존재한다
+    When 인증된 사용자가 수량 1으로 주문 생성 요청을 보낸다
+    Then 응답 상태 코드는 500
+    When 해당 상품의 옵션 목록 조회 요청을 보낸다
+    Then 응답 body의 "[0].quantity"가 10이다
+
+  @state @rollback
+  Scenario: OR-R2 재고 부족으로 주문 실패 시 재고가 변하지 않는다
+    Given 포인트가 충분한 회원이 존재하고 유효한 토큰을 가진다
+    And "교환권" 카테고리에 가격 5000인 "아메리카노" 상품이 존재한다
+    And 해당 상품에 수량 1인 "기본옵션" 옵션이 존재한다
+    When 인증된 사용자가 수량 5으로 주문 생성 요청을 보낸다
+    Then 응답 상태 코드는 500
+    When 해당 상품의 옵션 목록 조회 요청을 보낸다
+    Then 응답 body의 "[0].quantity"가 1이다
