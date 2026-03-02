@@ -1,4 +1,4 @@
-package gift.product.internal;
+package gift.product.admin;
 
 import gift.category.Category;
 import gift.product.Product;
