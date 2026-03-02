@@ -1,6 +1,7 @@
 package gift.wish.internal;
 
-import gift.auth.internal.AuthenticationResolver;
+import gift.auth.AuthenticationPort;
+import gift.global.UnauthorizedException;
 import gift.wish.Wish;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -24,7 +25,7 @@ public class WishController {
 
     private final WishRepository wishRepository;
     private final WishProductRepository productRepository;
-    private final AuthenticationResolver authenticationResolver;
+    private final AuthenticationPort authenticationPort;
 
     @GetMapping
     public ResponseEntity<Page<WishResponse>> getWishes(
@@ -32,11 +33,10 @@ public class WishController {
             Pageable pageable
     ) {
         // check auth
-        var member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(401).build();
-        }
-        var wishes = wishRepository.findByMemberId(member.getId(), pageable)
+        Long memberId = authenticationPort.getMemberIdFrom(authorization)
+                .orElseThrow(UnauthorizedException::new);
+
+        var wishes = wishRepository.findByMemberId(memberId, pageable)
                 .map(WishResponse::from);
         return ResponseEntity.ok(wishes);
     }
@@ -47,10 +47,8 @@ public class WishController {
             @Valid @RequestBody WishRequest request
     ) {
         // check auth
-        var member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(401).build();
-        }
+        Long memberId = authenticationPort.getMemberIdFrom(authorization)
+                .orElseThrow(UnauthorizedException::new);
 
         // check product
         var product = productRepository.findById(request.productId()).orElse(null);
@@ -59,7 +57,7 @@ public class WishController {
         }
 
         // check duplicate
-        var existing = wishRepository.findByMemberIdAndProductId(member.getId(), product.getId())
+        var existing = wishRepository.findByMemberIdAndProductId(memberId, product.getId())
                 .orElse(null);
         if (existing != null) {
             return ResponseEntity.ok(WishResponse.from(existing));
@@ -67,7 +65,7 @@ public class WishController {
 
         var saved = wishRepository.save(
                 Wish.builder()
-                        .memberId(member.getId())
+                        .memberId(memberId)
                         .product(product)
                         .build()
         );
@@ -81,17 +79,15 @@ public class WishController {
             @PathVariable Long id
     ) {
         // check auth
-        var member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(401).build();
-        }
+        Long memberId = authenticationPort.getMemberIdFrom(authorization)
+                .orElseThrow(UnauthorizedException::new);
 
         var wish = wishRepository.findById(id).orElse(null);
         if (wish == null) {
             return ResponseEntity.notFound().build();
         }
 
-        if (!wish.getMemberId().equals(member.getId())) {
+        if (!wish.getMemberId().equals(memberId)) {
             return ResponseEntity.status(403).build();
         }
 
