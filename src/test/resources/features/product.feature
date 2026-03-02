@@ -28,7 +28,7 @@ Feature: 상품 관리
     When 상품 목록을 페이지 0 사이즈 2로 조회 요청을 보낸다
     Then 응답 상태 코드는 200
     And 응답 body의 "content" 배열 크기가 2이다
-    And 응답 body의 "totalElements"가 3이다
+    And 응답 body의 "page.totalElements"가 3이다
 
   Scenario: P-4 상품 수정 성공
     Given "교환권" 카테고리에 "아메리카노" 상품이 존재한다

@@ -1,16 +1,12 @@
 package gift.product.internal;
 
-import gift.category.Category;
-import gift.product.Product;
 import jakarta.validation.Valid;
 import java.net.URI;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,45 +20,42 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class ProductController {
 
-    private final ProductRepository productRepository;
-    private final ProductCategoryRepository categoryRepository;
+    private final ProductService productService;
+    private final RestApiProductNameValidator productNameValidator;
 
     @GetMapping
-    public ResponseEntity<Page<ProductResponse>> getProducts(Pageable pageable) {
-        Page<ProductResponse> products = productRepository.findAll(pageable)
-                .map(ProductResponse::from);
-        return ResponseEntity.ok(products);
+    public ResponseEntity<PagedModel<ProductResponse>> getProducts(
+            Pageable pageable
+    ) {
+        PagedModel<ProductResponse> response = productService.getProducts(pageable);
+
+        return ResponseEntity
+                .ok(response);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProductResponse> getProduct(@PathVariable Long id) {
-        Product product = productRepository.findById(id).orElse(null);
-        if (product == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(ProductResponse.from(product));
+    public ResponseEntity<ProductResponse> getProduct(
+            @PathVariable Long id
+    ) {
+        ProductResponse response = productService.getProduct(id);
+
+        return ResponseEntity
+                .ok(response);
     }
 
     @PostMapping
     public ResponseEntity<ProductResponse> createProduct(
-            @Valid @RequestBody ProductRequest request) {
-        validateName(request.name());
+            @Valid @RequestBody ProductRequest request
+    ) {
+        String productName = request.name();
+        productNameValidator.validateOrThrowException(productName);
 
-        Category category = categoryRepository.findById(request.categoryId()).orElse(null);
-        if (category == null) {
-            return ResponseEntity.notFound().build();
-        }
+        ProductResponse response = productService.createProduct(request);
 
-        Product saved = productRepository.save(request.toEntity(category));
-        return ResponseEntity.created(URI.create("/api/products/" + saved.getId()))
-                .body(ProductResponse.from(saved));
-    }
-
-    private void validateName(String name) {
-        List<String> errors = ProductNameValidator.validate(name);
-        if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(String.join(", ", errors));
-        }
+        Long productId = response.id();
+        return ResponseEntity.created(
+                URI.create("/api/products/" + productId)
+        ).body(response);
     }
 
     @PutMapping("/{id}")
@@ -70,31 +63,24 @@ public class ProductController {
             @PathVariable Long id,
             @Valid @RequestBody ProductRequest request
     ) {
-        validateName(request.name());
+        String productName = request.name();
+        productNameValidator.validateOrThrowException(productName);
 
-        Category category = categoryRepository.findById(request.categoryId()).orElse(null);
-        if (category == null) {
-            return ResponseEntity.notFound().build();
-        }
+        ProductResponse response = productService.updateProduct(id, request);
 
-        Product product = productRepository.findById(id).orElse(null);
-        if (product == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        product.update(request.name(), request.price(), request.imageUrl(), category);
-        Product saved = productRepository.save(product);
-        return ResponseEntity.ok(ProductResponse.from(saved));
+        return ResponseEntity
+                .ok(response);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
-        productRepository.deleteById(id);
-        return ResponseEntity.noContent().build();
-    }
+    public ResponseEntity<Void> deleteProduct(
+            @PathVariable Long id
+    ) {
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
-        return ResponseEntity.badRequest().body(e.getMessage());
+        productService.deleteProduct(id);
+
+        return ResponseEntity
+                .noContent()
+                .build();
     }
 }
