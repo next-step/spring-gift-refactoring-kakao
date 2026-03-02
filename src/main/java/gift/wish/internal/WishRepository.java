@@ -16,7 +16,7 @@ public interface WishRepository extends JpaRepository<Wish, Long> {
                             where w.memberId = :memberId
                     """,
             countQuery = """
-                        select w from Wish w
+                        select count(w) from Wish w
                             where w.memberId = :memberId
                     """
     )
