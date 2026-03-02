@@ -57,6 +57,7 @@ public class WishService {
         return new AddWishResponseDto(wishResponse, true);
     }
 
+    @Transactional
     public void removeWish(Long memberId, Long wishId) {
         Wish find = wishRepo.findById(wishId)
                 .orElseThrow(NotFoundException::wishNotFound);
