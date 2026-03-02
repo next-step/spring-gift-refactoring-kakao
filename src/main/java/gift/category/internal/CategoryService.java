@@ -21,7 +21,19 @@ public class CategoryService {
 
     @Transactional
     public CategoryResponse createCategory(CategoryRequest createRequest) {
-        Category newEntity = categoryRepo.save(createRequest.toEntity());
+        String name = createRequest.name();
+        String color = createRequest.color();
+        String imageUrl = createRequest.imageUrl();
+        String description = createRequest.description();
+
+        Category build = Category.builder()
+                .name(name)
+                .color(color)
+                .imageUrl(imageUrl)
+                .description(description)
+                .build();
+
+        Category newEntity = categoryRepo.save(build);
 
         return CategoryResponse.from(newEntity);
     }

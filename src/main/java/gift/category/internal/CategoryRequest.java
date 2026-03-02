@@ -1,6 +1,5 @@
 package gift.category.internal;
 
-import gift.category.Category;
 import jakarta.validation.constraints.NotBlank;
 
 public record CategoryRequest(
@@ -10,12 +9,4 @@ public record CategoryRequest(
         String description
 ) {
 
-    public Category toEntity() {
-        return Category.builder()
-                .name(name)
-                .color(color)
-                .imageUrl(imageUrl)
-                .description(description)
-                .build();
-    }
 }
