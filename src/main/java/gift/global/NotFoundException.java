@@ -15,4 +15,16 @@ public class NotFoundException extends CustomException {
     public static NotFoundException memberNotFound() {
         return new NotFoundException("Member not found");
     }
+
+    public static NotFoundException optionNotFound() {
+        return new NotFoundException("Option not found");
+    }
+
+    public static NotFoundException orderNotFound() {
+        return new NotFoundException("Order not found");
+    }
+
+    public static NotFoundException productNotFound() {
+        return new NotFoundException("Product not found");
+    }
 }
