@@ -23,7 +23,7 @@ Feature: 위시 관리
     When 인증된 사용자가 위시 목록을 페이지 0 사이즈 2로 조회 요청을 보낸다
     Then 응답 상태 코드는 200
     And 응답 body의 "content" 배열 크기가 2이다
-    And 응답 body의 "totalElements"가 3이다
+    And 응답 body의 "page.totalElements"가 3이다
 
   @happy
   Scenario: W-3 위시 삭제 성공
