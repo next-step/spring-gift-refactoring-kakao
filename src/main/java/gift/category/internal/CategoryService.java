@@ -45,10 +45,10 @@ public class CategoryService {
 
         String name = updateRequest.name();
         String color = updateRequest.color();
-        String imageUlr = updateRequest.imageUrl();
+        String imageUrl = updateRequest.imageUrl();
         String description = updateRequest.description();
 
-        find.update(name, color, imageUlr, description);
+        find.update(name, color, imageUrl, description);
 
         return CategoryResponse.from(find);
     }
