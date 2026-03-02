@@ -1,15 +1,12 @@
 package gift.order.internal;
 
 import gift.auth.AuthenticationPort;
-import gift.global.NotFoundException;
 import gift.global.UnauthorizedException;
-import gift.member.Member;
-import gift.option.Option;
-import gift.order.Order;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,15 +20,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class OrderController {
 
-    private final OrderRepository orderRepository;
-    private final OrderOptionRepository optionRepository;
-    private final OrderWishRepository wishRepository;
-    private final OrderMemberRepository memberRepository;
+
+    private final OrderService orderService;
     private final AuthenticationPort authenticationPort;
-    private final KakaoMessageClient kakaoMessageClient;
+
+    private final OrderMessageBuilder orderMessageBuilder;
+    private final KakaoMessagingService kakaoMessagingService;
 
     @GetMapping
-    public ResponseEntity<?> getOrders(
+    public ResponseEntity<PagedModel<OrderResponse>> getOrders(
             @RequestHeader("Authorization") String authorization,
             Pageable pageable
     ) {
@@ -39,9 +36,10 @@ public class OrderController {
         Long memberId = authenticationPort.getMemberIdFrom(authorization)
                 .orElseThrow(UnauthorizedException::new);
 
-        var orders = orderRepository.findByMemberId(memberId, pageable)
-                .map(OrderResponse::from);
-        return ResponseEntity.ok(orders);
+        PagedModel<OrderResponse> response = orderService.getOrders(memberId, pageable);
+
+        return ResponseEntity
+                .ok(response);
     }
 
     // order flow:
@@ -53,7 +51,7 @@ public class OrderController {
     // 6. cleanup wish
     // 7. send kakao notification
     @PostMapping
-    public ResponseEntity<?> createOrder(
+    public ResponseEntity<OrderResponse> createOrder(
             @RequestHeader("Authorization") String authorization,
             @Valid @RequestBody OrderRequest request
     ) {
@@ -61,48 +59,23 @@ public class OrderController {
         Long memberId = authenticationPort.getMemberIdFrom(authorization)
                 .orElseThrow(UnauthorizedException::new);
 
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(NotFoundException::memberNotFound);
+        OrderResponse response = orderService.createOrder(memberId, request);
 
-        // validate option
-        var option = optionRepository.findById(request.optionId()).orElse(null);
-        if (option == null) {
-            return ResponseEntity.notFound().build();
-        }
+        Long orderId = response.id();
 
-        // subtract stock
-        option.subtractQuantity(request.quantity());
-        optionRepository.save(option);
+        // TODO: cleanup wish
 
-        // deduct points
-        var price = option.getProduct().getPrice() * request.quantity();
-        member.deductPoint(price);
-        memberRepository.save(member);
-
-        // save order
-        var saved = orderRepository.save(
-                Order.builder()
-                        .option(option)
-                        .memberId(member.getId())
-                        .quantity(request.quantity())
-                        .message(request.message())
-                        .build()
-        );
-
-        // best-effort kakao notification
-        sendKakaoMessageIfPossible(member, saved, option);
-        return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
-                .body(OrderResponse.from(saved));
-    }
-
-    private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {
-        if (member.getKakaoAccessToken() == null) {
-            return;
-        }
+        // send kakao notification if possible
         try {
-            var product = option.getProduct();
-            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
+            OrderMessageDto orderMessageDto = orderMessageBuilder.buildFrom(orderId);
+
+            kakaoMessagingService.sendDefaultTemplateMessageTo(memberId, orderMessageDto);
         } catch (Exception ignored) {
+
         }
+
+        return ResponseEntity
+                .created(URI.create("/api/orders/" + orderId))
+                .body(response);
     }
 }

@@ -4,7 +4,13 @@ import org.springframework.http.HttpStatus;
 
 public class UnauthorizedException extends CustomException {
 
-    public UnauthorizedException(String message) {
-        super(HttpStatus.UNAUTHORIZED, message);
+    private static final String DEFAULT_MESSAGE = "Unauthorized request";
+
+    public UnauthorizedException() {
+        this(DEFAULT_MESSAGE);
+    }
+
+    public UnauthorizedException(String responseMessage) {
+        super(HttpStatus.UNAUTHORIZED, responseMessage);
     }
 }
