@@ -27,4 +27,8 @@ public class NotFoundException extends CustomException {
     public static NotFoundException productNotFound() {
         return new NotFoundException("Product not found");
     }
+
+    public static NotFoundException wishNotFound() {
+        return new NotFoundException("Wish not found");
+    }
 }
