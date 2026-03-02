@@ -1,9 +1,7 @@
 package gift.product.admin;
 
-import gift.category.Category;
-import gift.product.Product;
+import gift.product.admin.ProductDto.CategoryDto;
 import java.util.List;
-import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,18 +16,25 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RequiredArgsConstructor
 public class AdminProductController {
 
-    private final ProductRepository productRepository;
-    private final ProductCategoryRepository categoryRepository;
+    private final AdminProductService adminProductService;
+
+    private final AdminProductNameValidator productNameValidator;
 
     @GetMapping
     public String list(Model model) {
-        model.addAttribute("products", productRepository.findAll());
+        List<ProductDto> products = adminProductService.getAllProducts();
+
+        model.addAttribute("products", products);
+
         return "product/list";
     }
 
     @GetMapping("/new")
     public String newForm(Model model) {
-        model.addAttribute("categories", categoryRepository.findAll());
+        List<CategoryDto> categories = adminProductService.getAllCategories();
+
+        model.addAttribute("categories", categories);
+
         return "product/new";
     }
 
@@ -41,22 +46,20 @@ public class AdminProductController {
             @RequestParam Long categoryId,
             Model model
     ) {
-        List<String> errors = ProductNameValidator.validate(name, true);
+        List<String> errors = productNameValidator.validate(name);
+
         if (!errors.isEmpty()) {
-            populateNewForm(model, errors, name, price, imageUrl, categoryId);
+            List<CategoryDto> categories = adminProductService.getAllCategories();
+
+            populateNewForm(model, errors, name, price, imageUrl, categoryId, categories);
+
             return "product/new";
         }
 
-        Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
-        productRepository.save(
-                Product.builder()
-                        .name(name)
-                        .price(price)
-                        .imageUrl(imageUrl)
-                        .category(category)
-                        .build()
+        adminProductService.createProduct(
+                name, price, imageUrl, categoryId
         );
+
         return "redirect:/admin/products";
     }
 
@@ -66,22 +69,25 @@ public class AdminProductController {
             String name,
             int price,
             String imageUrl,
-            Long categoryId
+            Long categoryId,
+            List<CategoryDto> categories
     ) {
         model.addAttribute("errors", errors);
         model.addAttribute("name", name);
         model.addAttribute("price", price);
         model.addAttribute("imageUrl", imageUrl);
         model.addAttribute("categoryId", categoryId);
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("categories", categories);
     }
 
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
+        ProductDto product = adminProductService.getProduct(id);
+        List<CategoryDto> categories = adminProductService.getAllCategories();
+
         model.addAttribute("product", product);
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("categories", categories);
+
         return "product/edit";
     }
 
@@ -94,44 +100,49 @@ public class AdminProductController {
             @RequestParam Long categoryId,
             Model model
     ) {
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
+        ProductDto productDto = adminProductService.getProduct(id);
+        List<String> errors = productNameValidator.validate(name);
 
-        List<String> errors = ProductNameValidator.validate(name, true);
         if (!errors.isEmpty()) {
-            populateEditForm(model, product, errors, name, price, imageUrl, categoryId);
+            List<CategoryDto> categories = adminProductService.getAllCategories();
+
+            populateEditForm(
+                    model, productDto, errors, name,
+                    price, imageUrl, categoryId, categories
+            );
+
             return "product/edit";
         }
 
-        Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
+        adminProductService.updateProduct(id, name, price, imageUrl, categoryId);
 
-        product.update(name, price, imageUrl, category);
-        productRepository.save(product);
         return "redirect:/admin/products";
     }
 
     private void populateEditForm(
             Model model,
-            Product product,
+            ProductDto productDto,
             List<String> errors,
             String name,
             int price,
             String imageUrl,
-            Long categoryId
+            Long categoryId,
+            List<CategoryDto> categories
     ) {
         model.addAttribute("errors", errors);
-        model.addAttribute("product", product);
+        model.addAttribute("product", productDto);
         model.addAttribute("name", name);
         model.addAttribute("price", price);
         model.addAttribute("imageUrl", imageUrl);
         model.addAttribute("categoryId", categoryId);
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("categories", categories);
     }
 
     @PostMapping("/{id}/delete")
     public String delete(@PathVariable Long id) {
-        productRepository.deleteById(id);
+
+        adminProductService.deleteProduct(id);
+
         return "redirect:/admin/products";
     }
 }
