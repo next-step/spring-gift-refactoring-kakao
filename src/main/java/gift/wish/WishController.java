@@ -5,7 +5,6 @@ import gift.member.Member;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -51,14 +50,13 @@ public class WishController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        final Optional<Wish> existing = wishService.findByMemberAndProduct(member.getId(), request.productId());
-        if (existing.isPresent()) {
-            return ResponseEntity.ok(WishResponse.from(existing.get()));
+        final WishCreateResult result = wishService.createWish(member.getId(), request.productId());
+        if (result.created()) {
+            return ResponseEntity.created(
+                            URI.create("/api/wishes/" + result.wish().getId()))
+                    .body(WishResponse.from(result.wish()));
         }
-
-        final Wish saved = wishService.createWish(member.getId(), request.productId());
-        return ResponseEntity.created(URI.create("/api/wishes/" + saved.getId()))
-                .body(WishResponse.from(saved));
+        return ResponseEntity.ok(WishResponse.from(result.wish()));
     }
 
     @DeleteMapping("/{id}")
