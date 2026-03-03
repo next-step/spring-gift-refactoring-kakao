@@ -5,7 +5,6 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 import java.util.Map;
@@ -15,8 +14,11 @@ import static org.hamcrest.Matchers.*;
 
 public class CategorySteps {
 
-    @Autowired
-    private SharedState state;
+    private final SharedState state;
+
+    public CategorySteps(SharedState state) {
+        this.state = state;
+    }
 
     @Given("{string} 카테고리가 등록되어 있다")
     public void 카테고리가_등록되어_있다(String name) {

@@ -5,7 +5,6 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 import java.util.Map;
@@ -15,8 +14,11 @@ import static org.hamcrest.Matchers.*;
 
 public class OptionSteps {
 
-    @Autowired
-    private SharedState state;
+    private final SharedState state;
+
+    public OptionSteps(SharedState state) {
+        this.state = state;
+    }
 
     @Given("{string} 옵션이 {int} 수량으로 등록되어 있다")
     public void 옵션이_등록되어_있다(String name, int quantity) {

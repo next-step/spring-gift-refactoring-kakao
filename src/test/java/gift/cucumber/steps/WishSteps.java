@@ -3,7 +3,6 @@ package gift.cucumber.steps;
 import gift.cucumber.SharedState;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 import java.util.Map;
@@ -13,8 +12,11 @@ import static org.hamcrest.Matchers.hasSize;
 
 public class WishSteps {
 
-    @Autowired
-    private SharedState state;
+    private final SharedState state;
+
+    public WishSteps(SharedState state) {
+        this.state = state;
+    }
 
     @When("해당 상품을 위시리스트에 추가하면")
     public void 상품을_위시리스트에_추가하면() {

@@ -5,7 +5,6 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 import java.util.Map;
@@ -15,8 +14,11 @@ import static org.hamcrest.Matchers.*;
 
 public class ProductSteps {
 
-    @Autowired
-    private SharedState state;
+    private final SharedState state;
+
+    public ProductSteps(SharedState state) {
+        this.state = state;
+    }
 
     @Given("{string} 이름과 {int} 가격의 상품이 등록되어 있다")
     public void 상품이_등록되어_있다(String name, int price) {

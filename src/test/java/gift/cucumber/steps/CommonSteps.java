@@ -5,7 +5,6 @@ import io.cucumber.java.Before;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 import java.util.Map;
@@ -15,8 +14,11 @@ import static org.hamcrest.Matchers.notNullValue;
 
 public class CommonSteps {
 
-    @Autowired
-    private SharedState state;
+    private final SharedState state;
+
+    public CommonSteps(SharedState state) {
+        this.state = state;
+    }
 
     @Before
     public void resetState() {

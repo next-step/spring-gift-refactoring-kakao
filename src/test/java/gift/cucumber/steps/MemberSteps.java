@@ -2,7 +2,6 @@ package gift.cucumber.steps;
 
 import gift.cucumber.SharedState;
 import io.cucumber.java.en.When;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 import java.util.Map;
@@ -11,8 +10,11 @@ import static io.restassured.RestAssured.given;
 
 public class MemberSteps {
 
-    @Autowired
-    private SharedState state;
+    private final SharedState state;
+
+    public MemberSteps(SharedState state) {
+        this.state = state;
+    }
 
     @When("{string} 이메일과 {string} 비밀번호로 회원가입하면")
     public void 회원가입하면(String email, String password) {
