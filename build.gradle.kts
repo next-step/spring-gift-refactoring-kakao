@@ -92,15 +92,15 @@ tasks.withType<Test> {
 }
 
 tasks.register<Exec>("dockerBuild") {
-    commandLine("/opt/homebrew/bin/docker-compose", "-f", "docker-compose.e2e.yml", "build")
+    commandLine("docker-compose", "-f", "docker-compose.e2e.yml", "build")
 }
 
 tasks.register<Exec>("dockerUp") {
-    commandLine("/opt/homebrew/bin/docker-compose", "-f", "docker-compose.e2e.yml", "up", "-d", "--wait")
+    commandLine("docker-compose", "-f", "docker-compose.e2e.yml", "up", "-d", "--wait")
 }
 
 tasks.register<Exec>("dockerDown") {
-    commandLine("/opt/homebrew/bin/docker-compose", "-f", "docker-compose.e2e.yml", "down", "--rmi", "local")
+    commandLine("docker-compose", "-f", "docker-compose.e2e.yml", "down", "--rmi", "local")
 }
 
 tasks.register<Test>("cucumberTest") {
