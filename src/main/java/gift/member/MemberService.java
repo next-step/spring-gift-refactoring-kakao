@@ -48,11 +48,6 @@ public class MemberService {
     }
 
     @Transactional
-    public Member save(Member member) {
-        return memberRepository.save(member);
-    }
-
-    @Transactional
     public Member update(Long id, String email, String password) {
         Member member = memberRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다. id=" + id));
