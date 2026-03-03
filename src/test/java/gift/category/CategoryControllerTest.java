@@ -59,7 +59,7 @@ class CategoryControllerTest {
         @DisplayName("카테고리 목록을 반환한다")
         void returnsCategories() throws Exception {
             given(categoryService.getCategories())
-                .willReturn(List.of(CategoryResponse.from(category)));
+                .willReturn(List.of(category));
 
             mockMvc.perform(get("/api/categories"))
                 .andExpect(status().isOk())

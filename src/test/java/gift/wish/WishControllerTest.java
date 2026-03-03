@@ -82,7 +82,7 @@ class WishControllerTest {
         void returnsWishes() throws Exception {
             given(authenticationResolver.extractMember(anyString())).willReturn(member);
             given(wishService.getWishes(eq(1L), any(Pageable.class)))
-                .willReturn(new PageImpl<>(List.of(WishResponse.from(wish))));
+                .willReturn(new PageImpl<>(List.of(wish)));
 
             mockMvc.perform(get("/api/wishes")
                     .header("Authorization", "Bearer test-token"))

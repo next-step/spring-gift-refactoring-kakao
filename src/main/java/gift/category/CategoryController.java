@@ -26,7 +26,10 @@ public class CategoryController {
 
     @GetMapping
     public ResponseEntity<List<CategoryResponse>> getCategories() {
-        return ResponseEntity.ok(categoryService.getCategories());
+        var categories = categoryService.getCategories().stream()
+            .map(CategoryResponse::from)
+            .toList();
+        return ResponseEntity.ok(categories);
     }
 
     @PostMapping

@@ -34,7 +34,7 @@ public class OrderController {
         if (member == null) {
             return ResponseEntity.status(401).build();
         }
-        var orders = orderService.getOrders(member.getId(), pageable);
+        var orders = orderService.getOrders(member.getId(), pageable).map(OrderResponse::from);
         return ResponseEntity.ok(orders);
     }
 

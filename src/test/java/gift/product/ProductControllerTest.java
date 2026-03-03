@@ -69,7 +69,7 @@ class ProductControllerTest {
         @DisplayName("상품 목록을 반환한다")
         void returnsProducts() throws Exception {
             given(productService.getProducts(any(Pageable.class)))
-                .willReturn(new PageImpl<>(List.of(ProductResponse.from(product))));
+                .willReturn(new PageImpl<>(List.of(product)));
 
             mockMvc.perform(get("/api/products"))
                 .andExpect(status().isOk())

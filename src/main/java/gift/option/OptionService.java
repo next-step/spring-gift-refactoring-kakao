@@ -17,11 +17,9 @@ public class OptionService {
         this.productRepository = productRepository;
     }
 
-    public List<OptionResponse> getOptions(Long productId) {
+    public List<Option> getOptions(Long productId) {
         validateProductExists(productId);
-        return optionRepository.findByProductId(productId).stream()
-            .map(OptionResponse::from)
-            .toList();
+        return optionRepository.findByProductId(productId);
     }
 
     public Option createOption(Long productId, OptionRequest request) {

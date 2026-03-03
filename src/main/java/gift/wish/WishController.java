@@ -37,7 +37,7 @@ public class WishController {
         if (member == null) {
             return ResponseEntity.status(401).build();
         }
-        var wishes = wishService.getWishes(member.getId(), pageable);
+        var wishes = wishService.getWishes(member.getId(), pageable).map(WishResponse::from);
         return ResponseEntity.ok(wishes);
     }
 

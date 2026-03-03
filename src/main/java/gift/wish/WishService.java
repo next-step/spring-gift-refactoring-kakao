@@ -17,8 +17,8 @@ public class WishService {
         this.productRepository = productRepository;
     }
 
-    public Page<WishResponse> getWishes(Long memberId, Pageable pageable) {
-        return wishRepository.findByMemberId(memberId, pageable).map(WishResponse::from);
+    public Page<Wish> getWishes(Long memberId, Pageable pageable) {
+        return wishRepository.findByMemberId(memberId, pageable);
     }
 
     public record AddWishResult(Wish wish, boolean created) {

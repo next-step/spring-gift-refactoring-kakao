@@ -71,7 +71,7 @@ class WishServiceTest {
             var result = wishService.getWishes(1L, pageable);
 
             assertThat(result.getContent()).hasSize(1);
-            assertThat(result.getContent().get(0).productId()).isEqualTo(1L);
+            assertThat(result.getContent().get(0).getProduct().getId()).isEqualTo(1L);
         }
     }
 

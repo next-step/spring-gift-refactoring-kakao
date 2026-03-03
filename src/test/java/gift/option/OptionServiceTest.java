@@ -66,10 +66,10 @@ class OptionServiceTest {
             given(productRepository.findById(1L)).willReturn(Optional.of(product));
             given(optionRepository.findByProductId(1L)).willReturn(List.of(option));
 
-            List<OptionResponse> result = optionService.getOptions(1L);
+            List<Option> result = optionService.getOptions(1L);
 
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).name()).isEqualTo("Tall");
+            assertThat(result.get(0).getName()).isEqualTo("Tall");
         }
 
         @Test

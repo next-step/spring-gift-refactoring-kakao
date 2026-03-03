@@ -27,7 +27,9 @@ public class OptionController {
     @GetMapping
     public ResponseEntity<List<OptionResponse>> getOptions(@PathVariable Long productId) {
         try {
-            List<OptionResponse> options = optionService.getOptions(productId);
+            List<OptionResponse> options = optionService.getOptions(productId).stream()
+                .map(OptionResponse::from)
+                .toList();
             return ResponseEntity.ok(options);
         } catch (NoSuchElementException e) {
             return ResponseEntity.notFound().build();

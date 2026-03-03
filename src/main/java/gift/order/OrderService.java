@@ -29,16 +29,10 @@ public class OrderService {
         this.kakaoMessageClient = kakaoMessageClient;
     }
 
-    public Page<OrderResponse> getOrders(Long memberId, Pageable pageable) {
-        return orderRepository.findByMemberId(memberId, pageable).map(OrderResponse::from);
+    public Page<Order> getOrders(Long memberId, Pageable pageable) {
+        return orderRepository.findByMemberId(memberId, pageable);
     }
 
-    // order flow:
-    // 1. validate option
-    // 2. subtract stock
-    // 3. deduct points
-    // 4. save order
-    // 5. send kakao notification
     public Order createOrder(Member member, OrderRequest request) {
         // validate option
         Option option = optionRepository.findById(request.optionId())

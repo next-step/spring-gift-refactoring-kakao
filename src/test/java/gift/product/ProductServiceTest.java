@@ -92,7 +92,7 @@ class ProductServiceTest {
             var result = productService.getProducts(pageable);
 
             assertThat(result.getContent()).hasSize(1);
-            assertThat(result.getContent().get(0).name()).isEqualTo("아메리카노");
+            assertThat(result.getContent().get(0).getName()).isEqualTo("아메리카노");
         }
     }
 

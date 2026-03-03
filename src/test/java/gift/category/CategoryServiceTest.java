@@ -52,10 +52,10 @@ class CategoryServiceTest {
         void returnsCategories() {
             given(categoryRepository.findAll()).willReturn(List.of(category));
 
-            List<CategoryResponse> result = categoryService.getCategories();
+            List<Category> result = categoryService.getCategories();
 
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).name()).isEqualTo("교환권");
+            assertThat(result.get(0).getName()).isEqualTo("교환권");
         }
     }
 

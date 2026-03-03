@@ -1,6 +1,7 @@
 package gift.product;
 
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -26,8 +27,9 @@ public class ProductController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getProducts(Pageable pageable) {
-        return ResponseEntity.ok(productService.getProducts(pageable));
+    public ResponseEntity<Page<ProductResponse>> getProducts(Pageable pageable) {
+        var products = productService.getProducts(pageable).map(ProductResponse::from);
+        return ResponseEntity.ok(products);
     }
 
     @GetMapping("/{id}")

@@ -85,7 +85,7 @@ class OrderControllerTest {
 
             given(authenticationResolver.extractMember(anyString())).willReturn(member);
             given(orderService.getOrders(eq(member.getId()), any(Pageable.class)))
-                    .willReturn(new PageImpl<>(List.of(OrderResponse.from(order))));
+                    .willReturn(new PageImpl<>(List.of(order)));
 
             mockMvc.perform(get("/api/orders")
                             .header("Authorization", "Bearer test-token"))

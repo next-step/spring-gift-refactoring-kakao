@@ -199,7 +199,7 @@ class OrderServiceTest {
             var result = orderService.getOrders(1L, pageable);
 
             assertThat(result.getContent()).hasSize(1);
-            assertThat(result.getContent().get(0).quantity()).isEqualTo(2);
+            assertThat(result.getContent().get(0).getQuantity()).isEqualTo(2);
         }
     }
 }

@@ -68,7 +68,7 @@ class OptionControllerTest {
         @DisplayName("옵션 목록을 반환한다")
         void returnsOptions() throws Exception {
             given(optionService.getOptions(1L))
-                .willReturn(List.of(new OptionResponse(1L, "Tall", 100)));
+                .willReturn(List.of(option));
 
             mockMvc.perform(get("/api/products/1/options"))
                 .andExpect(status().isOk())
