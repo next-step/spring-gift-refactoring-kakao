@@ -33,3 +33,23 @@
 - 3개 파일(`OrderController`, `KakaoMessageClient`, `WishController`)에서 총 16개의 `var`를 명시적 타입으로 교체
 - `Member`, `Option`, `Order`, `Product`, `Wish`, `Page<T>`, `int`, `String`, `LinkedMultiValueMap` 등 실제 타입 적용
 - `spotlessApply` + `build` 성공 확인
+
+### 프롬프트 6: 미사용 메서드 탐색 및 삭제
+> 전체 소스 코드 돌면서, "사용되고 있지 않은" 메서드가 존재합니다. 예를 들면, Wish.java의 생성자 함수가 그 예시입니다. 모든 소스 코드를 대상으로 사용되고 있지 않은 메서드를 제거하고 싶습니다. 다만, 무조건 삭제하지 않고, 이전 작업자가 남긴, 주석이나 향후 변경 영향도 등을 검토하여 작업합니다. 그런 뒤 실행되는지 테스트합니다.
+
+- Explore 에이전트 2개를 병렬로 실행하여 main/test 소스 전체 분석
+- 미사용 확인된 항목 삭제: `Product.getOptions()`, `SeedMemberController`(전체), `MemberService`(전체), `CreateMemberRequest`(전체)
+- JPA/Thymeleaf 등 프레임워크가 암묵적으로 사용하는 메서드는 보존 (`protected` 기본 생성자, `Member.getPoint()` 등)
+- `./gradlew build` 성공 확인
+
+### 프롬프트 7: protected 생성자 사용 여부 확인
+> protected로 선언된 생성자는 안쓰이는게 아니니? 검토해줘
+
+- JPA 스펙상 엔티티의 `protected` no-arg 생성자는 필수임을 확인
+- 6개 엔티티(`Category`, `Product`, `Option`, `Order`, `Member`, `Wish`) 모두 유지
+
+### 프롬프트 8: 삭제 코드의 출처 확인
+> product의 option 메서드 삭제만, 체리픽 머지 이전의 코드야? 확인해 줘
+
+- `git show`로 확인: `getOptions()`는 초기 커밋(`55ca9e4`, author: `wotjd243`)에서 생성된 코드
+- 체리픽으로 가져온 코드가 아닌, 이전 작업자의 프로젝트 세팅 코드임을 확인
