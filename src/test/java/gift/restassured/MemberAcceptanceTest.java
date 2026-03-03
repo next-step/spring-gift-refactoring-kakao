@@ -1,4 +1,4 @@
-package gift;
+package gift.restassured;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
