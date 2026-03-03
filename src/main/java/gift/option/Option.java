@@ -9,53 +9,39 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "options")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Option {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
+  @ManyToOne
+  @JoinColumn(name = "product_id", nullable = false)
+  private Product product;
 
-    @Column(nullable = false, length = 50)
-    private String name;
+  @Column(nullable = false, length = 50)
+  private String name;
 
-    @Column(nullable = false)
-    private int quantity;
+  @Column(nullable = false)
+  private int quantity;
 
-    protected Option() {
+  public Option(Product product, String name, int quantity) {
+    this.product = product;
+    this.name = name;
+    this.quantity = quantity;
+  }
+
+  public void subtractQuantity(int amount) {
+    if (amount > this.quantity) {
+      throw new IllegalArgumentException("차감할 수량이 현재 재고보다 많습니다.");
     }
-
-    public Option(Product product, String name, int quantity) {
-        this.product = product;
-        this.name = name;
-        this.quantity = quantity;
-    }
-
-    public void subtractQuantity(int amount) {
-        if (amount > this.quantity) {
-            throw new IllegalArgumentException("차감할 수량이 현재 재고보다 많습니다.");
-        }
-        this.quantity -= amount;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public Product getProduct() {
-        return product;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
+    this.quantity -= amount;
+  }
 }
