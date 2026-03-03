@@ -15,6 +15,11 @@ public class CategoryService {
         return categoryRepository.findAll();
     }
 
+    public Category findById(Long id) {
+        return categoryRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("카테고리를 찾을 수 없습니다. id: " + id));
+    }
+
     public Category create(CategoryRequest request) {
         return categoryRepository.save(request.toEntity());
     }
