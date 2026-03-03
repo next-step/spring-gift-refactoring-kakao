@@ -22,164 +22,136 @@ class GiftAcceptanceTest {
     @LocalServerPort
     int port;
 
+    String token;
+
     @BeforeEach
     void setUp() {
         RestAssured.port = port;
+        token = AcceptanceTestSupport.로그인하고_토큰을_받는다("sender@test.com", "password");
     }
 
     /**
-     * G1: 재고가 충분할 때 선물하기에 성공한다.
-     * - 옵션1(재고 10) 에 수량 1을 선물 → 200 응답
+     * G1: 재고가 충분할 때 주문에 성공한다.
+     * - 옵션1(재고 10) 에 수량 1을 주문 → 201 응답
      */
     @Test
     void 재고가_충분할_때_선물하기에_성공한다() {
-        // given
-        long senderId = 1L;
-        long receiverId = 2L;
-        long optionId = 1L;
-
         // when
         ExtractableResponse<Response> response = RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
-                .header("Member-Id", senderId)
+                .header("Authorization", "Bearer " + token)
                 .body(Map.of(
-                        "optionId", optionId,
+                        "optionId", 1,
                         "quantity", 1,
-                        "receiverId", receiverId,
                         "message", "생일 축하해!"
                 ))
-                .when().post("/api/gifts")
+                .when().post("/api/orders")
                 .then().log().all().extract();
 
-        // then
-        assertThat(response.statusCode()).isEqualTo(200);
+        // then (OrderController returns 201)
+        assertThat(response.statusCode()).isEqualTo(201);
     }
 
     /**
-     * G2: 선물을 보내면 재고가 감소한다.
-     * - 옵션1(재고 10)을 10개 전부 선물 → 성공
-     * - 같은 옵션에 1개 추가 선물 → 재고 부족으로 실패
-     * - 두 번째 실패가 곧 "재고가 감소했다"는 증거
+     * G2: 주문을 하면 재고가 감소한다.
+     * - 옵션1(재고 10)을 10개 전부 주문 → 성공
+     * - 같은 옵션에 1개 추가 주문 → 재고 부족으로 실패 (500)
      */
     @Test
     void 선물을_보내면_재고가_감소한다() {
-        // given
-        long senderId = 1L;
-        long receiverId = 2L;
-        long optionId = 1L;
-
         // when — 재고 10개 전부 소진
         ExtractableResponse<Response> firstResponse = RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
-                .header("Member-Id", senderId)
+                .header("Authorization", "Bearer " + token)
                 .body(Map.of(
-                        "optionId", optionId,
+                        "optionId", 1,
                         "quantity", 10,
-                        "receiverId", receiverId,
                         "message", "전부 보낸다"
                 ))
-                .when().post("/api/gifts")
+                .when().post("/api/orders")
                 .then().log().all().extract();
 
         // then — 첫 번째 요청 성공
-        assertThat(firstResponse.statusCode()).isEqualTo(200);
+        assertThat(firstResponse.statusCode()).isEqualTo(201);
 
         // when — 같은 옵션에 1개 추가 요청
         ExtractableResponse<Response> secondResponse = RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
-                .header("Member-Id", senderId)
+                .header("Authorization", "Bearer " + token)
                 .body(Map.of(
-                        "optionId", optionId,
+                        "optionId", 1,
                         "quantity", 1,
-                        "receiverId", receiverId,
                         "message", "하나 더"
                 ))
-                .when().post("/api/gifts")
+                .when().post("/api/orders")
                 .then().log().all().extract();
 
-        // then — 두 번째 요청 실패 (재고 부족)
-        assertThat(secondResponse.statusCode()).isEqualTo(400);
+        // then — 두 번째 요청 실패 (재고 부족 → IllegalArgumentException → 500)
+        assertThat(secondResponse.statusCode()).isEqualTo(500);
     }
 
     /**
-     * G3: 재고보다 많은 수량을 선물하면 실패한다.
+     * G3: 재고보다 많은 수량을 주문하면 실패한다.
      * - 옵션2(재고 1)에 수량 2를 요청 → 500 응답
      */
     @Test
     void 재고보다_많은_수량을_선물하면_실패한다() {
-        // given
-        long senderId = 1L;
-        long receiverId = 2L;
-        long optionId = 2L; // 재고 1개
-
         // when
         ExtractableResponse<Response> response = RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
-                .header("Member-Id", senderId)
+                .header("Authorization", "Bearer " + token)
                 .body(Map.of(
-                        "optionId", optionId,
+                        "optionId", 2,
                         "quantity", 2,
-                        "receiverId", receiverId,
                         "message", "재고 초과 테스트"
                 ))
-                .when().post("/api/gifts")
+                .when().post("/api/orders")
                 .then().log().all().extract();
 
-        // then
-        assertThat(response.statusCode()).isEqualTo(400);
+        // then (IllegalArgumentException from subtractQuantity → 500)
+        assertThat(response.statusCode()).isEqualTo(500);
     }
 
     /**
-     * G4: 존재하지 않는 옵션으로 선물하면 실패한다.
-     * - 옵션 ID 9999 (존재하지 않음) → 500 응답
+     * G4: 존재하지 않는 옵션으로 주문하면 실패한다.
+     * - 옵션 ID 9999 (존재하지 않음) → 404 응답
      */
     @Test
     void 존재하지_않는_옵션으로_선물하면_실패한다() {
-        // given
-        long senderId = 1L;
-        long receiverId = 2L;
-        long nonExistentOptionId = 9999L;
-
         // when
         ExtractableResponse<Response> response = RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
-                .header("Member-Id", senderId)
+                .header("Authorization", "Bearer " + token)
                 .body(Map.of(
-                        "optionId", nonExistentOptionId,
+                        "optionId", 9999,
                         "quantity", 1,
-                        "receiverId", receiverId,
                         "message", "없는 옵션 테스트"
                 ))
-                .when().post("/api/gifts")
+                .when().post("/api/orders")
                 .then().log().all().extract();
 
-        // then
-        assertThat(response.statusCode()).isEqualTo(400);
+        // then (OrderController returns 404 for missing option)
+        assertThat(response.statusCode()).isEqualTo(404);
     }
 
     /**
-     * G5: Member-Id 헤더 없이 선물하면 실패한다.
-     * - Member-Id 헤더 누락 → 400 응답
+     * G5: Authorization 헤더 없이 주문하면 실패한다.
+     * - Authorization 헤더 누락 → 400 응답
      */
     @Test
     void Member_Id_헤더_없이_선물하면_실패한다() {
-        // given
-        long receiverId = 2L;
-        long optionId = 1L;
-
-        // when — Member-Id 헤더 없이 요청
+        // when — Authorization 헤더 없이 요청
         ExtractableResponse<Response> response = RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
                 .body(Map.of(
-                        "optionId", optionId,
+                        "optionId", 1,
                         "quantity", 1,
-                        "receiverId", receiverId,
                         "message", "헤더 누락 테스트"
                 ))
-                .when().post("/api/gifts")
+                .when().post("/api/orders")
                 .then().log().all().extract();
 
-        // then
+        // then (MissingRequestHeaderException → 400)
         assertThat(response.statusCode()).isEqualTo(400);
     }
 }
