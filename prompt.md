@@ -99,3 +99,12 @@
 - 허용된 미세 동작 변경: 존재하지 않는 optionId로 주문 시 404 → 400 (`NoSuchElementException` → `GlobalExceptionHandler`)
 - 테스트 1개 업데이트: `GiftAcceptanceTest.존재하지_않는_옵션으로_선물하면_실패한다()` 기대값 404 → 400
 - `./gradlew spotlessApply build` — 테스트 9개 모두 통과 확인
+
+### 프롬프트 3: 공통 예외 처리 추가
+> 공통 예외 처리를 추가합니다.
+
+- `GlobalExceptionHandler`에 `IllegalArgumentException` 핸들러 추가 (→ 400)
+- 3개 컨트롤러(`MemberController`, `ProductController`, `OptionController`)의 중복 로컬 `@ExceptionHandler` 제거
+- `OrderController`에서 발생하던 `IllegalArgumentException`(재고 부족, 포인트 부족) 응답이 500 → 400으로 정상화
+- 테스트 2개 기대값 업데이트: 재고 부족 시 500 → 400
+- `./gradlew spotlessApply build` — 테스트 9개 모두 통과 확인

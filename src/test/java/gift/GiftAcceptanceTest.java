@@ -98,8 +98,8 @@ class GiftAcceptanceTest {
             .all()
             .extract();
 
-    // then — 두 번째 요청 실패 (재고 부족 → IllegalArgumentException → 500)
-    assertThat(secondResponse.statusCode()).isEqualTo(500);
+    // then — 두 번째 요청 실패 (재고 부족 → IllegalArgumentException → 400)
+    assertThat(secondResponse.statusCode()).isEqualTo(400);
   }
 
   /** G3: 재고보다 많은 수량을 주문하면 실패한다. - 옵션2(재고 1)에 수량 2를 요청 → 500 응답 */
@@ -124,8 +124,8 @@ class GiftAcceptanceTest {
             .all()
             .extract();
 
-    // then (IllegalArgumentException from subtractQuantity → 500)
-    assertThat(response.statusCode()).isEqualTo(500);
+    // then (IllegalArgumentException from subtractQuantity → 400)
+    assertThat(response.statusCode()).isEqualTo(400);
   }
 
   /** G4: 존재하지 않는 옵션으로 주문하면 실패한다. - 옵션 ID 9999 (존재하지 않음) → 404 응답 */

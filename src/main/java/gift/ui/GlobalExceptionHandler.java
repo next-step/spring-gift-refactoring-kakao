@@ -23,4 +23,10 @@ public class GlobalExceptionHandler {
   public Map<String, String> handleNoSuchElement(NoSuchElementException e) {
     return Map.of(ERROR_MESSAGE_KEY, Objects.toString(e.getMessage(), "Bad Request"));
   }
+
+  @ExceptionHandler(IllegalArgumentException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public Map<String, String> handleIllegalArgument(IllegalArgumentException e) {
+    return Map.of(ERROR_MESSAGE_KEY, Objects.toString(e.getMessage(), "Bad Request"));
+  }
 }
