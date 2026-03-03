@@ -11,12 +11,9 @@ disable-model-invocation: true
 ## 실행 절차
 ### 1단계: 변경사항 전체 파악
 아래 명령어를 병렬로 실행하여 현재 상태를 파악한다:
-- `git status` - untracked, modified, staged 파일 전체 목록
-- `git diff` - unstaged 변경 내용
-- `git diff --cached` - staged 변경 내용
-- `git log --oneline -10` - 최근 커밋 히스토리 (스타일 파악용)
-
-- 최근 커밋 메시지의 스타일(언어, scope 표기, 대소문자)을 파악하고, 새 커밋 메시지도 이에 맞춘다.
+- `git status` : untracked, modified, staged 파일 전체 목록
+- `git diff` : unstaged 변경 내용
+- `git diff --cached` : staged 변경 내용
 - 변경사항이 없으면(untracked, modified, staged 파일이 모두 없으면) "커밋할 변경사항이 없습니다"를 출력하고 종료한다.
 
 ### 2단계: 변경사항 분석 및 그룹핑
@@ -129,3 +126,4 @@ $ARGUMENTS
 - 커밋 메시지의 한 줄은 100자를 넘지 않는다.
 - 각 커밋 후 `git status`로 상태를 확인하고, 의도하지 않은 파일이 포함되지 않았는지 검증한다.
 - `git push`는 하지 않는다. 커밋만 생성한다.
+- 커밋 메시지에 `Co-Authored-By` 줄을 포함하지 않는다.
