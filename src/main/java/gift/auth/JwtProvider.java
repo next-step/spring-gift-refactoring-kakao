@@ -21,12 +21,6 @@ public class JwtProvider {
         this.expiration = expiration;
     }
 
-    /**
-     * Extracts the email (subject) from a signed JWT token.
-     *
-     * @param token the JWT token string
-     * @return the email stored in the token's subject claim
-     */
     public String getEmail(String token) {
         return Jwts.parser()
             .verifyWith(key)
@@ -36,12 +30,6 @@ public class JwtProvider {
             .getSubject();
     }
 
-    /**
-     * Creates a new signed JWT token for the given email.
-     *
-     * @param email the email to store as the token's subject
-     * @return the compact JWT token string
-     */
     public String createToken(String email) {
         final Date now = new Date();
         final Date expiryDate = new Date(now.getTime() + expiration);

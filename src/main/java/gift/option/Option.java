@@ -63,7 +63,7 @@ public class Option {
             errors.add("옵션 이름은 공백을 포함하여 최대 50자까지 입력할 수 있습니다.");
         }
         if (!NAME_ALLOWED_PATTERN.matcher(name).matches()) {
-            errors.add("옵션 이름에 허용되지 않는 특수 문자가 포함되어 있습니다. 사용 가능: ( ), [ ], +, -, &, /, _");
+            errors.add("옵션 이름에 허용되지 않는 특수 문자가 포함되어 있습니다.");
         }
         if (!errors.isEmpty()) {
             throw new IllegalArgumentException(String.join(", ", errors));

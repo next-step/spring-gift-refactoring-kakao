@@ -27,7 +27,7 @@ public class ProductService {
 
     public Product getProduct(Long id) {
         return productRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
+            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다."));
     }
 
     public List<Product> getAllProducts() {
@@ -48,10 +48,7 @@ public class ProductService {
 
     @Transactional
     public Product updateProduct(Long id, ProductRequest request) {
-        Category category = findCategory(request.categoryId());
-        Product product = getProduct(id);
-        product.update(request.name(), request.price(), request.imageUrl(), category);
-        return productRepository.save(product);
+        return updateProduct(id, request.name(), request.price(), request.imageUrl(), request.categoryId(), false);
     }
 
     @Transactional
@@ -67,12 +64,8 @@ public class ProductService {
         productRepository.deleteById(id);
     }
 
-    public List<String> validateProductName(String name, boolean allowKakao) {
-        return Product.validateNameErrors(name, allowKakao);
-    }
-
     private Category findCategory(Long categoryId) {
         return categoryRepository.findById(categoryId)
-            .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
+            .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다."));
     }
 }

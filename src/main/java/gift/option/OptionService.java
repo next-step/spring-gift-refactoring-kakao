@@ -45,7 +45,7 @@ public class OptionService {
         }
 
         Option option = optionRepository.findById(optionId)
-            .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다. id=" + optionId));
+            .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다."));
         option.validateBelongsTo(productId);
 
         optionRepository.delete(option);
@@ -53,6 +53,6 @@ public class OptionService {
 
     private Product findProduct(Long productId) {
         return productRepository.findById(productId)
-            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
+            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다."));
     }
 }

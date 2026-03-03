@@ -18,8 +18,7 @@ public class Order {
     @JoinColumn(name = "option_id")
     private Option option;
 
-    // primitive FK
-    private Long memberId;
+    private Long memberId; // Primitive FK
 
     private int quantity;
 

@@ -37,14 +37,14 @@ public class Member {
         this.password = password;
     }
 
+    public void updateKakaoAccessToken(String kakaoAccessToken) {
+        this.kakaoAccessToken = kakaoAccessToken;
+    }
+
     public void verifyPassword(String rawPassword) {
         if (this.password == null || !this.password.equals(rawPassword)) {
             throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
         }
-    }
-
-    public void updateKakaoAccessToken(String kakaoAccessToken) {
-        this.kakaoAccessToken = kakaoAccessToken;
     }
 
     public void chargePoint(int amount) {
@@ -54,7 +54,6 @@ public class Member {
         this.point += amount;
     }
 
-    // point deduction for order payment
     public void deductPoint(int amount) {
         if (amount <= 0) {
             throw new IllegalArgumentException("차감 금액은 1 이상이어야 합니다.");

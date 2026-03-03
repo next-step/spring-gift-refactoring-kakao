@@ -36,25 +36,11 @@ public class Product {
     protected Product() { }
 
     public Product(String name, int price, String imageUrl, Category category) {
-        validateName(name, false);
-        validatePrice(price);
-        this.name = name;
-        this.price = price;
-        this.imageUrl = imageUrl;
-        this.category = category;
+        this(name, price, imageUrl, category, false);
     }
 
     public Product(String name, int price, String imageUrl, Category category, boolean allowKakao) {
         validateName(name, allowKakao);
-        validatePrice(price);
-        this.name = name;
-        this.price = price;
-        this.imageUrl = imageUrl;
-        this.category = category;
-    }
-
-    public void update(String name, int price, String imageUrl, Category category) {
-        validateName(name, false);
         validatePrice(price);
         this.name = name;
         this.price = price;
@@ -81,7 +67,7 @@ public class Product {
             errors.add("상품 이름은 공백을 포함하여 최대 15자까지 입력할 수 있습니다.");
         }
         if (!NAME_ALLOWED_PATTERN.matcher(name).matches()) {
-            errors.add("상품 이름에 허용되지 않는 특수 문자가 포함되어 있습니다. 사용 가능: ( ), [ ], +, -, &, /, _");
+            errors.add("상품 이름에 허용되지 않는 특수 문자가 포함되어 있습니다.");
         }
         if (!allowKakao && name.contains("카카오")) {
             errors.add("\"카카오\"가 포함된 상품명은 담당 MD와 협의한 경우에만 사용할 수 있습니다.");

@@ -28,7 +28,7 @@ public class WishService {
     @Transactional
     public WishResult addWish(Long memberId, WishRequest request) {
         Product product = productRepository.findById(request.productId())
-            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + request.productId()));
+            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다."));
 
         Optional<Wish> existing = wishRepository.findByMemberIdAndProductId(memberId, product.getId());
         if (existing.isPresent()) {
@@ -42,9 +42,11 @@ public class WishService {
     @Transactional
     public void removeWish(Long memberId, Long wishId) {
         Wish wish = wishRepository.findById(wishId)
-            .orElseThrow(() -> new NoSuchElementException("위시가 존재하지 않습니다. id=" + wishId));
+            .orElseThrow(() -> new NoSuchElementException("위시가 존재하지 않습니다."));
 
-        wish.validateOwner(memberId);
+        if (!wish.getMemberId().equals(memberId)) {
+            throw new IllegalStateException("본인의 위시만 삭제할 수 있습니다.");
+        }
 
         wishRepository.delete(wish);
     }

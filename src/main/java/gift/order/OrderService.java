@@ -40,7 +40,7 @@ public class OrderService {
     public Order createOrder(Member member, OrderRequest request) {
         // validate option
         Option option = optionRepository.findById(request.optionId())
-            .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다. id=" + request.optionId()));
+            .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다."));
 
         // subtract stock
         option.subtractQuantity(request.quantity());
