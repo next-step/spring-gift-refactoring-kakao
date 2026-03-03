@@ -27,10 +27,13 @@ public class WishService {
         return wishRepository.findByMemberIdAndProductId(memberId, productId);
     }
 
-    public Wish create(Long memberId, Long productId) {
-        Product product = productRepository.findById(productId)
-            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
-        return wishRepository.save(new Wish(memberId, product));
+    public Wish addWish(Long memberId, Long productId) {
+        return wishRepository.findByMemberIdAndProductId(memberId, productId)
+            .orElseGet(() -> {
+                Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
+                return wishRepository.save(new Wish(memberId, product));
+            });
     }
 
     public void remove(Long memberId, Long wishId) {

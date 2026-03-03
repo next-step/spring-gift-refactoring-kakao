@@ -14,8 +14,6 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.net.URI;
-
 @RestController
 @RequestMapping("/api/wishes")
 public class WishController {
@@ -50,14 +48,8 @@ public class WishController {
             return ResponseEntity.status(401).build();
         }
 
-        var existing = wishService.findByMemberIdAndProductId(member.getId(), request.productId());
-        if (existing.isPresent()) {
-            return ResponseEntity.ok(WishResponse.from(existing.get()));
-        }
-
-        var saved = wishService.create(member.getId(), request.productId());
-        return ResponseEntity.created(URI.create("/api/wishes/" + saved.getId()))
-            .body(WishResponse.from(saved));
+        var wish = wishService.addWish(member.getId(), request.productId());
+        return ResponseEntity.ok(WishResponse.from(wish));
     }
 
     @DeleteMapping("/{id}")
