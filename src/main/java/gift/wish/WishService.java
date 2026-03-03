@@ -27,9 +27,11 @@ public class WishService {
 
     @Transactional
     public WishResult addWish(Long memberId, Long productId) {
+        // check product
         Product product = productRepository.findById(productId)
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
 
+        // check duplicate
         Wish existing = wishRepository.findByMemberIdAndProductId(memberId, product.getId()).orElse(null);
         if (existing != null) {
             return new WishResult(existing, false);
