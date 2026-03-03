@@ -1,0 +1,146 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.9.25'
+    id 'org.jetbrains.kotlin.plugin.spring' version '1.9.25'
+    id 'org.jetbrains.kotlin.plugin.jpa' version '1.9.25'
+    id 'org.springframework.boot' version '3.5.9'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.jlleitschuh.gradle.ktlint' version '14.0.1'
+    id 'org.flywaydb.flyway' version '12.0.1'
+}
+
+group = 'camp.nextstep.edu'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'com.fasterxml.jackson.module:jackson-module-kotlin'
+    implementation 'org.jetbrains.kotlin:kotlin-reflect'
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-mysql'
+    implementation platform('io.jsonwebtoken:jjwt-bom:0.13.0')
+    implementation 'io.jsonwebtoken:jjwt-api'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson'
+    runtimeOnly 'com.h2database:h2'
+    runtimeOnly 'com.mysql:mysql-connector-j'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit5'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Cucumber BDD
+    def cucumberVersion = '7.22.0'
+    testImplementation "io.cucumber:cucumber-java:${cucumberVersion}"
+    testImplementation "io.cucumber:cucumber-spring:${cucumberVersion}"
+    testImplementation "io.cucumber:cucumber-junit-platform-engine:${cucumberVersion}"
+    testImplementation 'org.junit.platform:junit-platform-suite'
+
+    // RestAssured for Cucumber HTTP tests
+    testImplementation 'io.rest-assured:rest-assured'
+}
+
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.addAll('-Xjsr305=strict')
+    }
+}
+
+allOpen {
+    annotation 'jakarta.persistence.Entity'
+    annotation 'jakarta.persistence.MappedSuperclass'
+    annotation 'jakarta.persistence.Embeddable'
+}
+
+ktlint {
+    verbose = true
+}
+
+// .env 파일을 읽어서 bootRun 환경변수로 주입
+tasks.named('bootRun') {
+    def envFile = rootProject.file('.env')
+    if (envFile.exists()) {
+        envFile.readLines().each { line ->
+            def trimmed = line.trim()
+            if (trimmed && !trimmed.startsWith('#')) {
+                def idx = trimmed.indexOf('=')
+                if (idx > 0) {
+                    environment trimmed.substring(0, idx), trimmed.substring(idx + 1)
+                }
+            }
+        }
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+
+    // Cucumber 엔진이 test 태스크에서 실행되지 않도록 제외
+    exclude '**/cucumber/**'
+}
+
+// Cucumber BDD 테스트 태스크 (Docker Compose MySQL 사용)
+tasks.register('cucumberTest', Test) {
+    description = 'Cucumber BDD 테스트 실행'
+    group = 'verification'
+
+    dependsOn 'dockerUp'
+    finalizedBy 'dockerDown'
+
+    useJUnitPlatform()
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+
+    // Cucumber Suite 클래스만 포함
+    include '**/cucumber/CucumberSuite.class'
+
+    // cucumber 프로필 활성화
+    systemProperty 'spring.profiles.active', 'cucumber'
+}
+
+// Colima Docker 소켓 자동 감지 헬퍼
+def colimaDockerHost = {
+    def colimaSocket = file("${System.getProperty('user.home')}/.colima/default/docker.sock")
+    if (colimaSocket.exists() && System.getenv('DOCKER_HOST') == null) {
+        return "unix://${colimaSocket.absolutePath}"
+    }
+    return null
+}
+
+// Docker Compose 태스크
+tasks.register('dockerBuild', Exec) {
+    description = 'Docker 이미지 빌드'
+    group = 'docker'
+    commandLine 'docker', 'compose', 'build'
+    def host = colimaDockerHost()
+    if (host != null) { environment 'DOCKER_HOST', host }
+}
+
+tasks.register('dockerUp', Exec) {
+    description = 'Docker Compose 서비스 시작'
+    group = 'docker'
+    dependsOn 'dockerBuild'
+    commandLine 'docker', 'compose', 'up', '-d', '--wait'
+    def host = colimaDockerHost()
+    if (host != null) { environment 'DOCKER_HOST', host }
+}
+
+tasks.register('dockerDown', Exec) {
+    description = 'Docker Compose 서비스 중지'
+    group = 'docker'
+    commandLine 'docker', 'compose', 'down', '-v'
+    def host = colimaDockerHost()
+    if (host != null) { environment 'DOCKER_HOST', host }
+}

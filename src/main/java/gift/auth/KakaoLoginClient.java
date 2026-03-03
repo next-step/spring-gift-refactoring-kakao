@@ -2,6 +2,7 @@ package gift.auth;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClient;
@@ -11,6 +12,7 @@ public class KakaoLoginClient {
     private final KakaoLoginProperties properties;
     private final RestClient restClient;
 
+    @Autowired
     public KakaoLoginClient(KakaoLoginProperties properties, RestClient.Builder builder) {
         this.properties = properties;
         this.restClient = builder.build();

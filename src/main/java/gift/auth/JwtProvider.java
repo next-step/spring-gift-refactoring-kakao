@@ -9,12 +9,7 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.util.Date;
 
-/**
- * Provides JWT token creation and validation.
- *
- * @author brian.kim
- * @since 1.0
- */
+/* JWT 토큰 생성 및 검증 */
 @Component
 public class JwtProvider {
     private final SecretKey key;
@@ -29,12 +24,7 @@ public class JwtProvider {
         this.expiration = expiration;
     }
 
-    /**
-     * Extracts the email (subject) from a signed JWT token.
-     *
-     * @param token the JWT token string
-     * @return the email stored in the token's subject claim
-     */
+    /* 서명된 JWT 토큰에서 이메일(subject)을 추출한다 */
     public String getEmail(String token) {
         return Jwts.parser()
             .verifyWith(key)
@@ -44,12 +34,7 @@ public class JwtProvider {
             .getSubject();
     }
 
-    /**
-     * Creates a new signed JWT token for the given email.
-     *
-     * @param email the email to store as the token's subject
-     * @return the compact JWT token string
-     */
+    /* 주어진 이메일로 새로운 서명된 JWT 토큰을 생성한다 */
     public String createToken(String email) {
         final Date now = new Date();
         final Date expiryDate = new Date(now.getTime() + expiration);

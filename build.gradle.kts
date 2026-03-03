@@ -57,6 +57,22 @@ ktlint {
     verbose.set(true)
 }
 
+// .env 파일을 읽어서 bootRun 환경변수로 주입
+tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
+    val envFile = rootProject.file(".env")
+    if (envFile.exists()) {
+        envFile.readLines()
+            .map { it.trim() }
+            .filter { it.isNotEmpty() && !it.startsWith("#") }
+            .forEach { line ->
+                val idx = line.indexOf('=')
+                if (idx > 0) {
+                    environment(line.substring(0, idx), line.substring(idx + 1))
+                }
+            }
+    }
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
 }

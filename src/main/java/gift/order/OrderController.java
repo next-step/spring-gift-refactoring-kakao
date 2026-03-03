@@ -1,12 +1,9 @@
 package gift.order;
 
 import gift.auth.AuthenticationResolver;
-import gift.member.Member;
-import gift.member.MemberRepository;
-import gift.option.Option;
-import gift.option.OptionRepository;
-import gift.wish.WishRepository;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,94 +18,38 @@ import java.net.URI;
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
-    private final OrderRepository orderRepository;
-    private final OptionRepository optionRepository;
-    private final WishRepository wishRepository;
-    private final MemberRepository memberRepository;
+    private final OrderService orderService;
     private final AuthenticationResolver authenticationResolver;
-    private final KakaoMessageClient kakaoMessageClient;
 
-    public OrderController(
-        OrderRepository orderRepository,
-        OptionRepository optionRepository,
-        WishRepository wishRepository,
-        MemberRepository memberRepository,
-        AuthenticationResolver authenticationResolver,
-        KakaoMessageClient kakaoMessageClient
-    ) {
-        this.orderRepository = orderRepository;
-        this.optionRepository = optionRepository;
-        this.wishRepository = wishRepository;
-        this.memberRepository = memberRepository;
+    @Autowired
+    public OrderController(OrderService orderService, AuthenticationResolver authenticationResolver) {
+        this.orderService = orderService;
         this.authenticationResolver = authenticationResolver;
-        this.kakaoMessageClient = kakaoMessageClient;
     }
 
     @GetMapping
-    public ResponseEntity<?> getOrders(
+    public ResponseEntity<Page<OrderResponse>> getOrders(
         @RequestHeader("Authorization") String authorization,
         Pageable pageable
     ) {
-        // auth check
         var member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(401).build();
-        }
-        var orders = orderRepository.findByMemberId(member.getId(), pageable).map(OrderResponse::from);
-        return ResponseEntity.ok(orders);
+        return ResponseEntity.ok(orderService.findByMemberId(member.getId(), pageable));
     }
 
-    // order flow:
-    // 1. auth check
-    // 2. validate option
-    // 3. subtract stock
-    // 4. deduct points
-    // 5. save order
-    // 6. cleanup wish
-    // 7. send kakao notification
+    /*
+     * 주문 흐름:
+     * 1. 인증 확인
+     * 2. 옵션 검증 + 재고 차감 + 포인트 차감 + 주문 저장 (트랜잭션)
+     * 3. 카카오 알림 발송
+     */
     @PostMapping
-    public ResponseEntity<?> createOrder(
+    public ResponseEntity<OrderResponse> createOrder(
         @RequestHeader("Authorization") String authorization,
         @Valid @RequestBody OrderRequest request
     ) {
-        // auth check
         var member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(401).build();
-        }
-
-        // validate option
-        var option = optionRepository.findById(request.optionId()).orElse(null);
-        if (option == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        // subtract stock
-        option.subtractQuantity(request.quantity());
-        optionRepository.save(option);
-
-        // deduct points
-        var price = option.getProduct().getPrice() * request.quantity();
-        member.deductPoint(price);
-        memberRepository.save(member);
-
-        // save order
-        var saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
-
-        // best-effort kakao notification
-        sendKakaoMessageIfPossible(member, saved, option);
-        return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
-            .body(OrderResponse.from(saved));
-    }
-
-    private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {
-        if (member.getKakaoAccessToken() == null) {
-            return;
-        }
-        try {
-            var product = option.getProduct();
-            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
-        } catch (Exception ignored) {
-        }
+        OrderResponse response = orderService.createOrder(member.getId(), request);
+        return ResponseEntity.created(URI.create("/api/orders/" + response.id()))
+            .body(response);
     }
 }
