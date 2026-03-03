@@ -31,7 +31,7 @@ public class CategoryController {
 
   @PostMapping
   public ResponseEntity<CategoryResponse> createCategory(
-      @Valid @RequestBody CategoryRequest request) {
+      @Valid @RequestBody CreateCategoryRequest request) {
     Category saved =
         categoryService.create(
             request.name(), request.color(), request.imageUrl(), request.description());
@@ -41,7 +41,7 @@ public class CategoryController {
 
   @PutMapping("/{id}")
   public ResponseEntity<CategoryResponse> updateCategory(
-      @PathVariable Long id, @Valid @RequestBody CategoryRequest request) {
+      @PathVariable Long id, @Valid @RequestBody UpdateCategoryRequest request) {
     return categoryService
         .update(id, request.name(), request.color(), request.imageUrl(), request.description())
         .map(category -> ResponseEntity.ok(CategoryResponse.from(category)))

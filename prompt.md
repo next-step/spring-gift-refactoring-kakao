@@ -108,3 +108,15 @@
 - `OrderController`에서 발생하던 `IllegalArgumentException`(재고 부족, 포인트 부족) 응답이 500 → 400으로 정상화
 - 테스트 2개 기대값 업데이트: 재고 부족 시 500 → 400
 - `./gradlew spotlessApply build` — 테스트 9개 모두 통과 확인
+
+### 프롬프트 4: 요청 DTO 분리 (우발적 중복 제거)
+> dto를 요청마다 분리하고 싶습니다. 타당성 검토를 거친 뒤 리팩터링을 진행합니다.
+
+- 우발적 중복(accidental duplication) 관점에서 타당성 검토 수행
+- 생성/수정이 동일 DTO를 공유하는 3개, 회원가입/로그인이 공유하는 1개를 분리 대상으로 선정
+- `CategoryRequest` → `CreateCategoryRequest` + `UpdateCategoryRequest`
+- `ProductRequest` → `CreateProductRequest` + `UpdateProductRequest`
+- `MemberRequest` → `RegisterMemberRequest` + `LoginMemberRequest`
+- 서비스 추출 이후 미사용 상태이던 `toEntity()` 메서드 함께 제거
+- 단일 용도 DTO(`OptionRequest`, `OrderRequest`, `WishRequest`)는 이미 분리되어 있어 변경 불필요
+- `./gradlew spotlessApply build` — 테스트 9개 모두 통과 확인

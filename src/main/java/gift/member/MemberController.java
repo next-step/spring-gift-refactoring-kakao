@@ -28,14 +28,14 @@ public class MemberController {
   }
 
   @PostMapping("/register")
-  public ResponseEntity<TokenResponse> register(@Valid @RequestBody MemberRequest request) {
+  public ResponseEntity<TokenResponse> register(@Valid @RequestBody RegisterMemberRequest request) {
     Member member = memberService.register(request.email(), request.password());
     String token = jwtProvider.createToken(member.getEmail());
     return ResponseEntity.status(HttpStatus.CREATED).body(new TokenResponse(token));
   }
 
   @PostMapping("/login")
-  public ResponseEntity<TokenResponse> login(@Valid @RequestBody MemberRequest request) {
+  public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginMemberRequest request) {
     Member member = memberService.login(request.email(), request.password());
     String token = jwtProvider.createToken(member.getEmail());
     return ResponseEntity.ok(new TokenResponse(token));
