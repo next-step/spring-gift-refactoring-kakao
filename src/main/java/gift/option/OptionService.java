@@ -24,6 +24,12 @@ public class OptionService {
                 .orElseThrow(() -> new NoSuchElementException("옵션을 찾을 수 없습니다. id: " + id));
     }
 
+    public Option subtractQuantity(Long id, int amount) {
+        Option option = findById(id);
+        option.subtractQuantity(amount);
+        return optionRepository.save(option);
+    }
+
     public Option create(Long productId, String name, int quantity) {
         validateName(name);
         Product product = productService.findById(productId);

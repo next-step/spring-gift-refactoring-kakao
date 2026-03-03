@@ -2,10 +2,6 @@ package gift.order;
 
 import gift.auth.AuthenticationResolver;
 import gift.member.Member;
-import gift.member.MemberRepository;
-import gift.option.Option;
-import gift.option.OptionRepository;
-import gift.product.Product;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -14,80 +10,51 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.NoSuchElementException;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
-    private final OrderRepository orderRepository;
-    private final OptionRepository optionRepository;
-    private final MemberRepository memberRepository;
+    private final OrderService orderService;
     private final AuthenticationResolver authenticationResolver;
-    private final KakaoMessageClient kakaoMessageClient;
 
     @GetMapping
     public ResponseEntity<Page<OrderResponse>> getOrders(
             @RequestHeader("Authorization") String authorization,
             Pageable pageable
     ) {
-        // auth check
-        Member member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(401).build();
-        }
-        Page<OrderResponse> orders = orderRepository.findByMemberId(member.getId(), pageable).map(OrderResponse::from);
+        Member member = authenticate(authorization);
+        Page<OrderResponse> orders = orderService.findByMemberId(member.getId(), pageable).map(OrderResponse::from);
         return ResponseEntity.ok(orders);
     }
 
-    /*
-     * Creates an order: validates the option, subtracts stock, deducts member points,
-     * persists the order, and sends a best-effort Kakao notification.
-     */
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(
             @RequestHeader("Authorization") String authorization,
             @Valid @RequestBody OrderRequest request
     ) {
-        // auth check
-        Member member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(401).build();
-        }
+        Member member = authenticate(authorization);
 
-        // validate option
-        Option option = optionRepository.findById(request.optionId()).orElse(null);
-        if (option == null) {
+        try {
+            Order saved = orderService.createOrder(member.getId(), request.optionId(), request.quantity(), request.message());
+            return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
+                    .body(OrderResponse.from(saved));
+        } catch (NoSuchElementException e) {
             return ResponseEntity.notFound().build();
         }
-
-        // subtract stock
-        option.subtractQuantity(request.quantity());
-        optionRepository.save(option);
-
-        // deduct points
-        int price = option.getProduct().getPrice() * request.quantity();
-        member.deductPoint(price);
-        memberRepository.save(member);
-
-        // save order
-        Order saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
-
-        // Todo: cleanup wish 구현 필요
-
-        // best-effort kakao notification
-        sendKakaoMessageIfPossible(member, saved, option);
-        return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
-                .body(OrderResponse.from(saved));
     }
 
-    private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {
-        if (member.getKakaoAccessToken() == null) {
-            return;
+    private Member authenticate(String authorization) {
+        Member member = authenticationResolver.extractMember(authorization);
+        if (member == null) {
+            throw new IllegalStateException("인증에 실패했습니다.");
         }
-        try {
-            Product product = option.getProduct();
-            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
-        } catch (Exception ignored) {
-        }
+        return member;
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Void> handleUnauthorized(IllegalStateException e) {
+        return ResponseEntity.status(401).build();
     }
 }

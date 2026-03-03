@@ -50,6 +50,12 @@ public class MemberService {
         return memberRepository.save(member);
     }
 
+    public Member deductPoint(Long id, int amount) {
+        Member member = findById(id);
+        member.deductPoint(amount);
+        return memberRepository.save(member);
+    }
+
     public void delete(Long id) {
         memberRepository.deleteById(id);
     }

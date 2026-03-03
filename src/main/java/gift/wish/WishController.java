@@ -71,13 +71,13 @@ public class WishController {
     private Member authenticate(String authorization) {
         Member member = authenticationResolver.extractMember(authorization);
         if (member == null) {
-            throw new IllegalArgumentException("인증에 실패했습니다.");
+            throw new IllegalStateException("인증에 실패했습니다.");
         }
         return member;
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Void> handleUnauthorized(IllegalArgumentException e) {
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Void> handleUnauthorized(IllegalStateException e) {
         return ResponseEntity.status(401).build();
     }
 }
