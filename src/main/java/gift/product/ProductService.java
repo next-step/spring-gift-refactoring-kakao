@@ -65,13 +65,6 @@ public class ProductService {
         }
     }
 
-    public void validateNameWithKakao(String name) {
-        List<String> errors = ProductNameValidator.validate(name, true);
-        if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(String.join(", ", errors));
-        }
-    }
-
     private Category findCategory(Long categoryId) {
         return categoryRepository.findById(categoryId)
             .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
