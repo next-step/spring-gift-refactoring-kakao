@@ -232,7 +232,7 @@ class OrderAcceptanceTest extends AcceptanceTestFixture {
 
         // then
         response.then()
-            .statusCode(500);
+            .statusCode(400);
 
         assertThat(getOptionQuantity(productId, optionId)).isEqualTo(beforeQuantity);
         assertThat(getMemberPoint("stock@test.com")).isEqualTo(beforePoint);
