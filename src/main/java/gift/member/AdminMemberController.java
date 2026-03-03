@@ -34,8 +34,7 @@ public class AdminMemberController {
             populateNewFormError(model, email, "이미 등록된 이메일입니다.");
             return "member/new";
         }
-
-        memberService.createMember(email, password);
+        memberService.register(email, password);
         return "redirect:/admin/members";
     }
 

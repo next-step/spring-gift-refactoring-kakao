@@ -23,39 +23,33 @@ public class MemberService {
 
     @Transactional
     public String register(MemberRequest request) {
-        if (memberRepository.existsByEmail(request.email())) {
+        return register(request.email(), request.password());
+    }
+
+    @Transactional
+    public String register(String email, String password) {
+        if (memberRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("이미 등록된 이메일입니다.");
         }
-        String encodedPassword = passwordEncoder.encode(request.password());
-        Member member = memberRepository.save(new Member(request.email(), encodedPassword));
+        String encodedPassword = passwordEncoder.encode(password);
+        Member member = memberRepository.save(new Member(email, encodedPassword));
         return jwtProvider.createToken(member.getEmail());
     }
 
     public String login(MemberRequest request) {
         Member member = memberRepository.findByEmail(request.email())
             .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다."));
-
         member.verifyPassword(request.password(), passwordEncoder);
-
         return jwtProvider.createToken(member.getEmail());
     }
 
     public Member getMember(Long id) {
         return memberRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다. id=" + id));
+            .orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다."));
     }
 
     public List<Member> getAllMembers() {
         return memberRepository.findAll();
-    }
-
-    @Transactional
-    public Member createMember(String email, String password) {
-        if (memberRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("이미 등록된 이메일입니다.");
-        }
-        String encodedPassword = passwordEncoder.encode(password);
-        return memberRepository.save(new Member(email, encodedPassword));
     }
 
     @Transactional
