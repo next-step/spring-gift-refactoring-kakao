@@ -5,6 +5,7 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 import java.util.Map;
@@ -15,11 +16,8 @@ import static org.hamcrest.Matchers.hasSize;
 
 public class OrderSteps {
 
-    private final SharedState state;
-
-    public OrderSteps(SharedState state) {
-        this.state = state;
-    }
+    @Autowired
+    private SharedState state;
 
     @Given("해당 회원에게 {int} 포인트가 충전되어 있다")
     public void 포인트가_충전되어_있다(int amount) {
@@ -49,10 +47,9 @@ public class OrderSteps {
 
     @When("인증 없이 주문 목록을 조회하면")
     public void 인증_없이_주문_목록을_조회하면() {
-        state.setStatusCode(given()
+        state.setResponse(given()
         .when()
-            .get("/api/orders")
-            .statusCode());
+            .get("/api/orders"));
     }
 
     @Then("주문 목록의 크기는 {int}이다")

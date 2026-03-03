@@ -5,6 +5,7 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 import java.util.Map;
@@ -14,16 +15,12 @@ import static org.hamcrest.Matchers.*;
 
 public class ProductSteps {
 
-    private final SharedState state;
-
-    public ProductSteps(SharedState state) {
-        this.state = state;
-    }
+    @Autowired
+    private SharedState state;
 
     @Given("{string} 이름과 {int} 가격의 상품이 등록되어 있다")
     public void 상품이_등록되어_있다(String name, int price) {
-        Long id =
-        given()
+        Long id = given()
             .contentType(MediaType.APPLICATION_JSON_VALUE)
             .body(Map.of(
                 "name", name,
@@ -36,8 +33,7 @@ public class ProductSteps {
         .then()
             .statusCode(201)
             .extract().jsonPath().getLong("id");
-        state.setProductId(id);
-        state.putProductId(name, id);
+        state.setSavedId(id);
     }
 
     @When("{string} 이름과 {int} 가격으로 상품을 생성하면")
@@ -58,7 +54,6 @@ public class ProductSteps {
 
     @When("상품 목록을 조회하면")
     public void 상품_목록을_조회하면() {
-        // 조회는 그러면 단계에서 수행
     }
 
     @When("해당 상품의 이름을 {string}로 가격을 {int}으로 변경하면")
@@ -72,16 +67,16 @@ public class ProductSteps {
                 "categoryId", state.getCategoryId()
             ))
         .when()
-            .put("/api/products/{id}", state.getProductId())
+            .put("/api/products/{id}", state.getSavedId())
         .then()
             .statusCode(200);
     }
 
-    @When("{string} 상품을 삭제하면")
-    public void 상품을_삭제하면(String name) {
+    @When("해당 상품을 삭제하면")
+    public void 상품을_삭제하면() {
         given()
         .when()
-            .delete("/api/products/{id}", state.getProductIdByName(name))
+            .delete("/api/products/{id}", state.getSavedId())
         .then()
             .statusCode(204);
     }
@@ -126,7 +121,7 @@ public class ProductSteps {
     public void 상품의_이름은(String expectedName) {
         given()
         .when()
-            .get("/api/products/{id}", state.getProductId())
+            .get("/api/products/{id}", state.getSavedId())
         .then()
             .statusCode(200)
             .body("name", equalTo(expectedName));
@@ -136,7 +131,7 @@ public class ProductSteps {
     public void 상품의_가격은(int expectedPrice) {
         given()
         .when()
-            .get("/api/products/{id}", state.getProductId())
+            .get("/api/products/{id}", state.getSavedId())
         .then()
             .statusCode(200)
             .body("price", equalTo(expectedPrice));

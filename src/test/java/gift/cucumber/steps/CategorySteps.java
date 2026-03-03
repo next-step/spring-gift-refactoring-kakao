@@ -5,6 +5,7 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 import java.util.Map;
@@ -14,16 +15,12 @@ import static org.hamcrest.Matchers.*;
 
 public class CategorySteps {
 
-    private final SharedState state;
-
-    public CategorySteps(SharedState state) {
-        this.state = state;
-    }
+    @Autowired
+    private SharedState state;
 
     @Given("{string} 카테고리가 등록되어 있다")
     public void 카테고리가_등록되어_있다(String name) {
-        Long id =
-        given()
+        Long id = given()
             .contentType(MediaType.APPLICATION_JSON_VALUE)
             .body(Map.of(
                 "name", name,
@@ -36,8 +33,8 @@ public class CategorySteps {
         .then()
             .statusCode(201)
             .extract().jsonPath().getLong("id");
+        state.setSavedId(id);
         state.setCategoryId(id);
-        state.putCategoryId(name, id);
     }
 
     @When("{string} 이름으로 카테고리를 생성하면")
@@ -58,7 +55,6 @@ public class CategorySteps {
 
     @When("카테고리 목록을 조회하면")
     public void 카테고리_목록을_조회하면() {
-        // 조회는 그러면 단계에서 수행
     }
 
     @When("해당 카테고리의 이름을 {string}로 변경하면")
@@ -72,16 +68,16 @@ public class CategorySteps {
                 "description", "수정된 설명"
             ))
         .when()
-            .put("/api/categories/{id}", state.getCategoryId())
+            .put("/api/categories/{id}", state.getSavedId())
         .then()
             .statusCode(200);
     }
 
-    @When("{string} 카테고리를 삭제하면")
-    public void 카테고리를_삭제하면(String name) {
+    @When("해당 카테고리를 삭제하면")
+    public void 카테고리를_삭제하면() {
         given()
         .when()
-            .delete("/api/categories/{id}", state.getCategoryIdByName(name))
+            .delete("/api/categories/{id}", state.getSavedId())
         .then()
             .statusCode(204);
     }
