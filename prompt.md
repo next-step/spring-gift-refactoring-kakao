@@ -65,3 +65,16 @@
 - 비즈니스 메서드(`update()`, `subtractQuantity()`, `chargePoint()`, `deductPoint()` 등)와 public 생성자는 그대로 보존
 - Record 클래스(Request/Response)는 이미 최적이므로 변경 불필요로 판단하여 제외
 - `./gradlew spotlessApply build` — 포매팅 + 컴파일 + 테스트 9개 모두 통과 확인
+
+### 프롬프트 2: 매직넘버/URL 등 의미 불명 리터럴 상수화
+> url이나, 매직넘버 등 의미를 알 수 없는 값들이 있는지 모두 찾습니다. 있다면 상수 변수로 선언합니다.
+
+- HTTP 상태 코드 `401`, `403` → `HttpStatus.UNAUTHORIZED`, `HttpStatus.FORBIDDEN` (WishController, OrderController)
+- 카카오 API URL 4개 → 각 클래스에 `private static final` 상수 추출 (KakaoAuthController, KakaoLoginClient, KakaoMessageClient)
+- `"Bearer "` 접두사 → `BEARER_PREFIX` 상수 (AuthenticationResolver, KakaoLoginClient, KakaoMessageClient)
+- `"Content-Type"`, `"Authorization"` → Spring `HttpHeaders` 상수 사용
+- `"application/x-www-form-urlencoded"` → `MediaType.APPLICATION_FORM_URLENCODED_VALUE`
+- OAuth 스코프 `"account_email,talk_message"` → `OAUTH_SCOPE` 상수 (KakaoAuthController)
+- 에러 응답 `"message"` 키 → `ERROR_MESSAGE_KEY` 상수 (GlobalExceptionHandler)
+- 최소 옵션 수 `1` → `MIN_OPTION_COUNT` 상수 (OptionController)
+- `./gradlew spotlessApply build` — 테스트 9개 모두 통과 확인

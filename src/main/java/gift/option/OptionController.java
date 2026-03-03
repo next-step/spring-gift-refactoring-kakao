@@ -23,6 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(path = "/api/products/{productId}/options")
 public class OptionController {
+  private static final int MIN_OPTION_COUNT = 1;
+
   private final OptionRepository optionRepository;
   private final ProductRepository productRepository;
 
@@ -72,7 +74,7 @@ public class OptionController {
     }
 
     List<Option> options = optionRepository.findByProductId(productId);
-    if (options.size() <= 1) {
+    if (options.size() <= MIN_OPTION_COUNT) {
       throw new IllegalArgumentException("옵션이 1개인 상품은 옵션을 삭제할 수 없습니다.");
     }
 

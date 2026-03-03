@@ -2,12 +2,18 @@ package gift.auth;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClient;
 
 @Component
 public class KakaoLoginClient {
+  private static final String KAKAO_TOKEN_URL = "https://kauth.kakao.com/oauth/token";
+  private static final String KAKAO_USER_INFO_URL = "https://kapi.kakao.com/v2/user/me";
+  private static final String BEARER_PREFIX = "Bearer ";
+
   private final KakaoLoginProperties properties;
   private final RestClient restClient;
 
@@ -26,8 +32,8 @@ public class KakaoLoginClient {
 
     return restClient
         .post()
-        .uri("https://kauth.kakao.com/oauth/token")
-        .header("Content-Type", "application/x-www-form-urlencoded")
+        .uri(KAKAO_TOKEN_URL)
+        .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
         .body(params)
         .retrieve()
         .body(KakaoTokenResponse.class);
@@ -36,8 +42,8 @@ public class KakaoLoginClient {
   public KakaoUserResponse requestUserInfo(String accessToken) {
     return restClient
         .get()
-        .uri("https://kapi.kakao.com/v2/user/me")
-        .header("Authorization", "Bearer " + accessToken)
+        .uri(KAKAO_USER_INFO_URL)
+        .header(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + accessToken)
         .retrieve()
         .body(KakaoUserResponse.class);
   }
