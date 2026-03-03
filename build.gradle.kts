@@ -68,6 +68,9 @@ tasks.withType<Test> {
 }
 
 tasks.named<Test>("test") {
+    useJUnitPlatform {
+        excludeEngines("cucumber")
+    }
     exclude("gift/acceptance/**")
 }
 
