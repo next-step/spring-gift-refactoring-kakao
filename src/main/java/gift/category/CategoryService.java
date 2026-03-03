@@ -20,14 +20,13 @@ public class CategoryService {
                 .orElseThrow(() -> new NoSuchElementException("카테고리를 찾을 수 없습니다. id: " + id));
     }
 
-    public Category create(CategoryRequest request) {
-        return categoryRepository.save(request.toEntity());
+    public Category create(String name, String color, String imageUrl, String description) {
+        return categoryRepository.save(new Category(name, color, imageUrl, description));
     }
 
-    public Category update(Long id, CategoryRequest request) {
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("카테고리를 찾을 수 없습니다. id: " + id));
-        category.update(request.name(), request.color(), request.imageUrl(), request.description());
+    public Category update(Long id, String name, String color, String imageUrl, String description) {
+        Category category = findById(id);
+        category.update(name, color, imageUrl, description);
         return categoryRepository.save(category);
     }
 

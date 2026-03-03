@@ -25,7 +25,7 @@ public class CategoryController {
 
     @PostMapping
     public ResponseEntity<CategoryResponse> createCategory(@Valid @RequestBody CategoryRequest request) {
-        Category saved = categoryService.create(request);
+        Category saved = categoryService.create(request.name(), request.color(), request.imageUrl(), request.description());
         return ResponseEntity.created(URI.create("/api/categories/" + saved.getId()))
                 .body(CategoryResponse.from(saved));
     }
@@ -36,7 +36,7 @@ public class CategoryController {
             @Valid @RequestBody CategoryRequest request
     ) {
         try {
-            Category category = categoryService.update(id, request);
+            Category category = categoryService.update(id, request.name(), request.color(), request.imageUrl(), request.description());
             return ResponseEntity.ok(CategoryResponse.from(category));
         } catch (NoSuchElementException e) {
             return ResponseEntity.notFound().build();
