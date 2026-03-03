@@ -12,29 +12,19 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/members")
 public class MemberController {
-    private final MemberRepository memberRepository;
+    private final MemberService memberService;
     private final JwtProvider jwtProvider;
 
     @PostMapping("/register")
     public ResponseEntity<TokenResponse> register(@Valid @RequestBody MemberRequest request) {
-        if (memberRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Email is already registered.");
-        }
-
-        Member member = memberRepository.save(new Member(request.email(), request.password()));
+        Member member = memberService.create(request.email(), request.password());
         String token = jwtProvider.createToken(member.getEmail());
         return ResponseEntity.status(HttpStatus.CREATED).body(new TokenResponse(token));
     }
 
     @PostMapping("/login")
     public ResponseEntity<TokenResponse> login(@Valid @RequestBody MemberRequest request) {
-        Member member = memberRepository.findByEmail(request.email())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid email or password."));
-
-        if (member.getPassword() == null || !member.getPassword().equals(request.password())) {
-            throw new IllegalArgumentException("Invalid email or password.");
-        }
-
+        Member member = memberService.login(request.email(), request.password());
         String token = jwtProvider.createToken(member.getEmail());
         return ResponseEntity.ok(new TokenResponse(token));
     }
