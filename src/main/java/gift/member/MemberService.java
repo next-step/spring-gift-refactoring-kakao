@@ -56,6 +56,13 @@ public class MemberService {
         return memberRepository.save(member);
     }
 
+    public Member registerOrUpdateKakaoMember(String email, String kakaoAccessToken) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseGet(() -> new Member(email));
+        member.updateKakaoAccessToken(kakaoAccessToken);
+        return memberRepository.save(member);
+    }
+
     public void delete(Long id) {
         memberRepository.deleteById(id);
     }
