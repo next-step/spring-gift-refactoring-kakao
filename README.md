@@ -35,6 +35,15 @@
 - [x] Controller의 비즈니스 로직을 Service로 이동한다.
 - [x] Controller는 요청 검증과 위임만 담당하도록 얇게 만든다.
 
+## 추후 진행할 작업 (작동 변경)
+
+이번 단계에서는 구조 변경만 수행했다. 아래 항목은 작동 변경에 해당하므로 별도 단계에서 진행한다.
+
+- [ ] **`@Transactional` 적용** — Service 메서드에 트랜잭션 경계 설정 (쓰기: `@Transactional`, 읽기: `@Transactional(readOnly = true)`)
+- [ ] **`@RestControllerAdvice` 도입** — REST API(`/api/...`)의 예외 처리를 일원화하고, View 컨트롤러(`/admin/...`)만 개별 try-catch 유지
+- [ ] **주문 시 위시리스트 정리** — `OrderService.createOrder()`의 `// TODO: cleanup wish` 구현
+- [ ] **서비스 단위 테스트 추가** — 트랜잭션 롤백 등 서비스 레벨 동작 검증
+
 ---
 
 ## AI 활용 방식
@@ -58,6 +67,7 @@
 
 - **단위 테스트** — `Member.chargePoint/deductPoint`, `Option.subtractQuantity`, `ProductNameValidator`, `OptionNameValidator`의 정상/에러 케이스
 - **통합 테스트** — RestAssured + `@Sql`(setup-data.sql, cleanup.sql) 기반 Given/When/Then 스타일로 6개 컨트롤러(Member, Category, Product, Option, Wish, Order) 엔드포인트 검증
+- **경계 조건 테스트** — 재고 부족 주문, 포인트 부족 주문, "카카오" 포함 상품명, 존재하지 않는 리소스(상품/카테고리/옵션/위시) 접근 등 실패 케이스
 
 ### 1단계: 스타일 정리
 
@@ -93,7 +103,18 @@
 | `WishService` | WishController | 위시 조회/추가(중복 검증)/삭제(소유권 확인) |
 | `OrderService` | OrderController | 재고 차감 + 포인트 차감 + 주문 저장 + 카카오 알림 |
 
-Controller에는 HTTP 매핑, 요청 바인딩, `ResponseEntity` 생성만 남기고, Repository 호출과 비즈니스 검증은 모두 Service로 이동했다. 변경 작업을 수행하는 Service 메서드에는 `@Transactional`을, 조회 메서드에는 `@Transactional(readOnly = true)`를 부여했다.
+Controller에는 HTTP 매핑, 요청 바인딩, `ResponseEntity` 생성만 남기고, Repository 호출과 비즈니스 검증은 모두 Service로 이동했다. `@Transactional`은 작동 변경에 해당하므로 이번 단계에서는 추가하지 않았다.
+
+### 코드 리뷰 반영
+
+| 항목 | 내용 |
+|------|------|
+| `@Transactional` 제거 | 서비스 추출 시 임의로 추가한 `@Transactional`을 제거 — 작동 변경 없는 구조 정리 원칙 준수 |
+| `@Valid` 복원 | WishController에서 서비스 추출 시 누락된 `@Valid` 애노테이션 복원 |
+| 미사용 의존성 제거 | OrderService의 `WishRepository`, ProductService의 `validateNameWithKakao()` 제거 |
+| 주석 복원 | 원본 컨트롤러의 주석(order flow, check product 등)을 서비스 계층에 복원 |
+| 카카오 설정 기본값 | `${KAKAO_CLIENT_ID:}` 형태로 빈 기본값 추가 — `.env` 없는 환경에서도 부팅 보장 |
+| 경계 조건 테스트 추가 | 재고 부족, 포인트 부족, 카카오 상품명, 존재하지 않는 리소스 등 실패 케이스 테스트 보강 |
 
 ## 학습한 점
 
@@ -103,7 +124,7 @@ Controller에는 HTTP 매핑, 요청 바인딩, `ResponseEntity` 생성만 남�
 
 ### 구조 변경과 작동 변경의 분리
 
-스타일 정리 → 불필요한 코드 제거 → 서비스 추출 순서로 진행하면서, 각 단계가 **작동을 바꾸지 않는다**는 원칙을 지켰다. 매 변경 후 `./gradlew build`로 전체 테스트를 돌려 기존 작동이 유지됨을 확인했다. 테스트를 먼저 작성해두었기 때문에 구조 변경 시 안전망 역할을 했다.
+스타일 정리 → 불필요한 코드 제거 → 서비스 추출 순서로 진행하면서, 각 단계가 **작동을 바꾸지 않는다**는 원칙을 지켰다. 매 변경 후 `./gradlew build`로 전체 테스트를 돌려 기존 작동이 유지됨을 확인했다. 코드 리뷰에서 `@Transactional` 추가가 작동 변경에 해당한다는 지적을 받고 제거했고, 에러 메시지 한글화도 스타일이 아닌 작동 변경이었음을 인지했다. 구조 변경과 작동 변경을 한 커밋에 섞지 않는 것이 중요하다는 점을 체감했다.
 
 ### 테스트가 리팩터링의 전제 조건
 
