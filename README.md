@@ -23,6 +23,30 @@ Spring Boot 기반 선물 관리 e-commerce 애플리케이션의 리팩터링 �
 
 ---
 
+## 아키텍처 설계 방향
+
+리팩터링 과정은 이번 과제의 핵심이라 판단해 직접 설계하고 구현했다. 아래 세 가지 아키텍처 결정은 모두 기존에 접했던 방식을 이 프로젝트에 맞게 적용한 것이다.
+
+### internal 패키지 구조
+
+**배경**: 이전에 동료가 도메인 패키지 안에서 공개 계약과 내부 구현을 분리하는 방식으로 작업하는 것을 보았다. 이 구조가 도메인 간 경계를 명확하게 만들어 준다고 판단해 도입했다.
+
+**이 프로젝트에 적절한 이유**: 원본 코드는 한 패키지 안에 Entity, Controller, Repository, DTO가 평면적으로 놓여 있어서, 어떤 클래스가 외부에 공개된 계약이고 어떤 것이 내부 구현인지 구분할 수 없었다. 서비스 추출 후 도메인당 클래스 수가 늘어나면서 이 문제가 더 심해졌다. Entity와 Port 인터페이스만 패키지 최상위에 두고, Controller·Service·Repository·DTO는 `internal/`에 배치해 의존 규칙을 패키지 구조 자체로 표현했다.
+
+### Port 패턴
+
+**배경**: internal 패키지 분리 후 자연스럽게 필요해진 패턴이다. 다른 도메인이 `internal/` 안의 구현체를 직접 의존하면 패키지 분리의 의미가 없어진다.
+
+**이 프로젝트에 적절한 이유**: 실제로 원본 코드에서 `WishController`와 `OrderController`가 `auth/internal/`의 `AuthenticationResolver`를 직접 참조하고 있었다. 인증 구현(JWT, Kakao OAuth)은 변경 가능성이 높은 영역인데, 여러 도메인이 직접 의존하면 구현 변경 시 모든 의존 도메인을 함께 수정해야 한다. 인터페이스를 패키지 최상위에 두고 구현체는 `internal/`에 배치해, 인증 방식이 바뀌어도 다른 도메인 코드는 수정할 필요가 없도록 했다. 현재는 `auth` 패키지의 `AuthenticationPort`, `JwtPort`와 `member` 패키지의 `MemberPort`에 적용되어 있다.
+
+### 전략 패턴 (ProductNameRule)
+
+**배경**: 상품 이름 검증 로직을 Service로 추출하면서, REST API와 Admin에서 검증 규칙 조합이 달라야 하는 문제가 있었다. 이를 해결할 디자인 패턴을 찾다가 전략 패턴을 발견해 적용했다.
+
+**이 프로젝트에 적절한 이유**: REST API는 "카카오" 포함을 금지하지만 Admin은 허용해야 한다. 전략 패턴 없이 이를 해결하려면 조건 분기(`if (isAdmin) skip`)로 처리하거나 검증 로직을 통째로 복사해야 한다. `ProductNameRule` 인터페이스에 4개 Rule 구현체를 두고, 각 Validator가 필요한 Rule만 조합하는 방식으로 분기 없이 서로 다른 검증 동작을 구성했다. 새로운 규칙이 추가되어도 기존 Validator 코드를 수정하지 않고 Rule 구현체를 추가한 뒤 조합만 변경하면 된다.
+
+---
+
 ## Phase 1: 무엇을 했고, 왜 그렇게 했는가
 
 Phase 1 목표: **변경하기 쉬운 상태 만들기.** 구조 변경만 수행한다.
@@ -253,6 +277,7 @@ gift/
 
 #### 다음 작업 (미완료)
 
+- [ ] **도메인별 Port 인터페이스 확장** — 현재 다른 도메인의 Repository를 직접 참조하는 곳이 많다. `MemberPort`처럼 각 도메인 경계에 Port를 구성해, 다른 도메인은 Repository가 아닌 Port를 통해 접근하도록 개선한다. 이를 통해 internal 패키지 분리의 의도를 완성한다.
 - [ ] 크로스 도메인 중복 Repository 정리
 - [ ] Controller에 남은 비즈니스 로직 Service로 이동 (Member JWT, Order 알림)
 - [ ] Admin/Internal 서비스 로직 통합 (Product)
