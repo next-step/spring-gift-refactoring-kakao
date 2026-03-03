@@ -29,7 +29,7 @@ public class MemberService {
     public TokenResponse login(MemberRequest request) {
         Member member = memberRepository.findByEmail(request.email())
             .orElseThrow(() -> new IllegalArgumentException("Invalid email or password."));
-        if (member.getPassword() == null || !member.getPassword().equals(request.password())) {
+        if (!member.checkPassword(request.password())) {
             throw new IllegalArgumentException("Invalid email or password.");
         }
         String token = jwtProvider.createToken(member.getEmail());

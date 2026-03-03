@@ -31,6 +31,10 @@ public class Member {
         this.email = email;
     }
 
+    public boolean checkPassword(String rawPassword) {
+        return this.password != null && this.password.equals(rawPassword);
+    }
+
     public void update(String email, String password) {
         this.email = email;
         this.password = password;
