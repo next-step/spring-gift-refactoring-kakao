@@ -27,6 +27,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: gift
       SPRING_JPA_HIBERNATE_DDL_AUTO: create
       SPRING_JPA_OPEN_IN_VIEW: "false"
+      SPRING_FLYWAY_ENABLED: "false"
       KAKAO_MESSAGE_TOKEN: ACCESS_TOKEN
       KAKAO_MESSAGE_URL: https://kapi.kakao.com/v1/api/talk
       KAKAO_SOCIAL_TOKEN: ACCESS_TOKEN
