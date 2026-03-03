@@ -36,21 +36,18 @@ public class ProductService {
 
     @Transactional
     public Product createProduct(ProductRequest request) {
-        validateName(request.name());
         Category category = findCategory(request.categoryId());
         return productRepository.save(request.toEntity(category));
     }
 
     @Transactional
     public Product createProduct(String name, int price, String imageUrl, Long categoryId, boolean allowKakao) {
-        validateName(name, allowKakao);
         Category category = findCategory(categoryId);
-        return productRepository.save(new Product(name, price, imageUrl, category));
+        return productRepository.save(new Product(name, price, imageUrl, category, allowKakao));
     }
 
     @Transactional
     public Product updateProduct(Long id, ProductRequest request) {
-        validateName(request.name());
         Category category = findCategory(request.categoryId());
         Product product = getProduct(id);
         product.update(request.name(), request.price(), request.imageUrl(), category);
@@ -59,10 +56,9 @@ public class ProductService {
 
     @Transactional
     public Product updateProduct(Long id, String name, int price, String imageUrl, Long categoryId, boolean allowKakao) {
-        validateName(name, allowKakao);
         Category category = findCategory(categoryId);
         Product product = getProduct(id);
-        product.update(name, price, imageUrl, category);
+        product.update(name, price, imageUrl, category, allowKakao);
         return productRepository.save(product);
     }
 
@@ -72,21 +68,7 @@ public class ProductService {
     }
 
     public List<String> validateProductName(String name, boolean allowKakao) {
-        return ProductNameValidator.validate(name, allowKakao);
-    }
-
-    private void validateName(String name) {
-        List<String> errors = ProductNameValidator.validate(name);
-        if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(String.join(", ", errors));
-        }
-    }
-
-    private void validateName(String name, boolean allowKakao) {
-        List<String> errors = ProductNameValidator.validate(name, allowKakao);
-        if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(String.join(", ", errors));
-        }
+        return Product.validateNameErrors(name, allowKakao);
     }
 
     private Category findCategory(Long categoryId) {

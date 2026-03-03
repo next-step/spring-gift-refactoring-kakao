@@ -31,9 +31,7 @@ public class MemberService {
         Member member = memberRepository.findByEmail(request.email())
             .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다."));
 
-        if (member.getPassword() == null || !member.getPassword().equals(request.password())) {
-            throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
-        }
+        member.verifyPassword(request.password());
 
         return jwtProvider.createToken(member.getEmail());
     }

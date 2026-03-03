@@ -26,7 +26,6 @@ public class OptionService {
 
     @Transactional
     public Option createOption(Long productId, OptionRequest request) {
-        validateName(request.name());
         Product product = findProduct(productId);
 
         if (optionRepository.existsByProductIdAndName(productId, request.name())) {
@@ -47,9 +46,7 @@ public class OptionService {
 
         Option option = optionRepository.findById(optionId)
             .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다. id=" + optionId));
-        if (!option.getProduct().getId().equals(productId)) {
-            throw new NoSuchElementException("해당 상품에 속한 옵션이 아닙니다.");
-        }
+        option.validateBelongsTo(productId);
 
         optionRepository.delete(option);
     }
@@ -57,12 +54,5 @@ public class OptionService {
     private Product findProduct(Long productId) {
         return productRepository.findById(productId)
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
-    }
-
-    private void validateName(String name) {
-        List<String> errors = OptionNameValidator.validate(name);
-        if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(String.join(", ", errors));
-        }
     }
 }
