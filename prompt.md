@@ -120,3 +120,16 @@
 - 서비스 추출 이후 미사용 상태이던 `toEntity()` 메서드 함께 제거
 - 단일 용도 DTO(`OptionRequest`, `OrderRequest`, `WishRequest`)는 이미 분리되어 있어 변경 불필요
 - `./gradlew spotlessApply build` — 테스트 9개 모두 통과 확인
+
+### 프롬프트 5: 주석-코드 불일치 검토
+> 소스 코드 전반을 살펴 보면서, 주석과 실제 코드가 일치하지 않는 부분은 없는지 검토합니다.
+
+- 전체 Java 파일 51개 검토 수행
+- 내용 불일치 없음 확인. 스타일 차원 불일치 4건(영어/한국어 혼용) + @author 태그 7건 보고
+
+### 프롬프트 6: 외부 API 클라이언트 패키지 분리
+> 외부 api 호출하는 관련 코드들을 패키지 분리
+
+- `gift.auth.KakaoLoginClient`, `gift.auth.KakaoLoginProperties`, `gift.order.KakaoMessageClient` → `gift.infrastructure.kakao` 패키지로 이동
+- `KakaoAuthService`, `OrderService`의 import 경로 업데이트
+- `./gradlew spotlessApply build` — 테스트 9개 모두 통과 확인

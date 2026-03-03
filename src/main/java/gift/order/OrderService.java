@@ -1,5 +1,6 @@
 package gift.order;
 
+import gift.infrastructure.kakao.KakaoMessageClient;
 import gift.member.Member;
 import gift.member.MemberRepository;
 import gift.option.Option;

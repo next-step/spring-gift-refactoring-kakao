@@ -1,5 +1,6 @@
-package gift.order;
+package gift.infrastructure.kakao;
 
+import gift.order.Order;
 import gift.product.Product;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
