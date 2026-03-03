@@ -1,7 +1,7 @@
 package gift.application;
 
-import gift.model.Member;
-import gift.model.MemberRepository;
+import gift.member.Member;
+import gift.member.MemberRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +15,6 @@ public class MemberService {
     }
 
     public Member create(final CreateMemberRequest request) {
-        return memberRepository.save(new Member(request.getName(), request.getEmail()));
+        return memberRepository.save(new Member(request.getEmail()));
     }
 }

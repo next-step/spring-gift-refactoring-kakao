@@ -2,7 +2,7 @@ package gift.ui.seed;
 
 import gift.application.CreateMemberRequest;
 import gift.application.MemberService;
-import gift.model.Member;
+import gift.member.Member;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
