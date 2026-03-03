@@ -44,3 +44,6 @@
 
 ## 프롬프트 11
 4단계 서비스 계층 추출 — Controller 9개에 포함된 비즈니스 로직을 도메인 단위 Service 6개(CategoryService, ProductService, MemberService, OptionService, WishService, OrderService)로 추출한다. 단순한 것부터 복잡한 것 순서로 진행하며, 각 도메인별로 작업 후 사용자 검토를 받는다. 신규 기능 추가 없이 구조만 변경하고, 인수 테스트 17개 시나리오가 변경 전후 모두 통과해야 한다.
+
+## 프롬프트 12
+DatabaseCleaner 리뷰 반영 — 테이블명 하드코딩 방식을 information_schema 동적 조회 방식으로 변경. 테이블 추가/삭제 시 자동 대응되도록 개선. SKILL 문서도 동기화.
