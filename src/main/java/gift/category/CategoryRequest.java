@@ -8,7 +8,4 @@ public record CategoryRequest(
         @NotBlank String imageUrl,
         String description
 ) {
-    public Category toEntity() {
-        return new Category(name, color, imageUrl, description);
-    }
 }
