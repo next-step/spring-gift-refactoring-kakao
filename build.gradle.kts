@@ -44,6 +44,10 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("io.rest-assured:rest-assured")
+    testImplementation("io.cucumber:cucumber-java:7.22.0")
+    testImplementation("io.cucumber:cucumber-spring:7.22.0")
+    testImplementation("io.cucumber:cucumber-junit-platform-engine:7.22.0")
+    testImplementation("org.junit.platform:junit-platform-suite")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
