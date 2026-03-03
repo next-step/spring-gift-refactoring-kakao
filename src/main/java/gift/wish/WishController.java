@@ -25,7 +25,7 @@ public class WishController {
             @RequestHeader("Authorization") String authorization,
             Pageable pageable
     ) {
-        Member member = authenticate(authorization);
+        Member member = authenticationResolver.extractMember(authorization);
         Page<WishResponse> wishes = wishService.findByMemberId(member.getId(), pageable).map(WishResponse::from);
         return ResponseEntity.ok(wishes);
     }
@@ -35,7 +35,7 @@ public class WishController {
             @RequestHeader("Authorization") String authorization,
             @Valid @RequestBody WishRequest request
     ) {
-        Member member = authenticate(authorization);
+        Member member = authenticationResolver.extractMember(authorization);
 
         try {
             Optional<Wish> existing = wishService.findByMemberIdAndProductId(member.getId(), request.productId());
@@ -56,7 +56,7 @@ public class WishController {
             @RequestHeader("Authorization") String authorization,
             @PathVariable Long id
     ) {
-        Member member = authenticate(authorization);
+        Member member = authenticationResolver.extractMember(authorization);
 
         try {
             wishService.removeWish(id, member.getId());
@@ -66,14 +66,6 @@ public class WishController {
         } catch (IllegalStateException e) {
             return ResponseEntity.status(403).build();
         }
-    }
-
-    private Member authenticate(String authorization) {
-        Member member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            throw new IllegalStateException("인증에 실패했습니다.");
-        }
-        return member;
     }
 
     @ExceptionHandler(IllegalStateException.class)

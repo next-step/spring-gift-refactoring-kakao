@@ -15,9 +15,12 @@ public class AuthenticationResolver {
         try {
             String token = authorization.replace("Bearer ", "");
             String email = jwtProvider.getEmail(token);
-            return memberRepository.findByEmail(email).orElse(null);
+            return memberRepository.findByEmail(email)
+                    .orElseThrow(() -> new IllegalStateException("인증에 실패했습니다."));
+        } catch (IllegalStateException e) {
+            throw e;
         } catch (Exception e) {
-            return null;
+            throw new IllegalStateException("인증에 실패했습니다.");
         }
     }
 }

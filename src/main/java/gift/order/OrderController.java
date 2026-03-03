@@ -24,7 +24,7 @@ public class OrderController {
             @RequestHeader("Authorization") String authorization,
             Pageable pageable
     ) {
-        Member member = authenticate(authorization);
+        Member member = authenticationResolver.extractMember(authorization);
         Page<OrderResponse> orders = orderService.findByMemberId(member.getId(), pageable).map(OrderResponse::from);
         return ResponseEntity.ok(orders);
     }
@@ -34,7 +34,7 @@ public class OrderController {
             @RequestHeader("Authorization") String authorization,
             @Valid @RequestBody OrderRequest request
     ) {
-        Member member = authenticate(authorization);
+        Member member = authenticationResolver.extractMember(authorization);
 
         try {
             Order saved = orderService.createOrder(member.getId(), request.optionId(), request.quantity(), request.message());
@@ -43,14 +43,6 @@ public class OrderController {
         } catch (NoSuchElementException e) {
             return ResponseEntity.notFound().build();
         }
-    }
-
-    private Member authenticate(String authorization) {
-        Member member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            throw new IllegalStateException("인증에 실패했습니다.");
-        }
-        return member;
     }
 
     @ExceptionHandler(IllegalStateException.class)
