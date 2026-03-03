@@ -5,14 +5,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build & Test Commands
 
 ```bash
-./gradlew build          # 빌드 (테스트 포함)
-./gradlew test           # 전체 테스트 실행
+./gradlew build            # 빌드 (단위 테스트 포함, 인수 테스트 제외)
+./gradlew test             # 단위 테스트 실행 (acceptance 제외)
+./gradlew acceptanceTest   # 인수 테스트 실행 (Cucumber, profile: acceptance-test)
 ./gradlew test --tests "gift.acceptance.suite.CategoryCucumberFeatureTest"  # 단일 feature 테스트
-./gradlew bootRun        # 로컬 실행 (H2, profile: local)
-./gradlew ktlintCheck    # Kotlin lint 검사
+./gradlew bootRun          # 로컬 실행 (H2)
 ```
 
-테스트는 Cucumber + RestAssured 기반 인수 테스트. `src/test/resources/features/*.feature`에 Gherkin 시나리오, `src/test/java/gift/acceptance/steps/`에 step definitions.
+테스트는 Cucumber + RestAssured 기반 인수 테스트 (75개 시나리오). `src/test/resources/features/*.feature`에 Gherkin 시나리오, `src/test/java/gift/acceptance/steps/`에 step definitions. `test`와 `acceptanceTest`는 Gradle task가 분리되어 있음 (`test`는 `**/acceptance/**` 제외).
 
 ## Architecture
 
@@ -20,26 +20,29 @@ Spring Boot 3.5.9 / Java 21 선물 관리 e-commerce 애플리케이션.
 
 ### 패키지 구조 (`src/main/java/gift/`)
 
-도메인별로 패키지를 분리. 각 패키지에 Controller, Entity, Repository, DTO(record)가 위치한다.
+도메인별 패키지 안에서 **외부 공개**(Entity, Port 인터페이스)와 **내부 구현**(`internal/`)을 분리한다. 관리자 UI는 `admin/` 패키지에 별도 배치.
 
-| 패키지         | 설명                                                                                                          |
-|-------------|-------------------------------------------------------------------------------------------------------------|
-| `auth/`     | JWT 인증 (`JwtProvider`, `AuthenticationResolver`) + Kakao OAuth2 (`KakaoAuthController`, `KakaoLoginClient`) |
-| `category/` | 카테고리 CRUD                                                                                                   |
-| `product/`  | 상품 CRUD + 관리자 Thymeleaf UI (`AdminProductController`)                                                       |
-| `member/`   | 회원 등록/로그인 + 관리자 UI (`AdminMemberController`)                                                                |
-| `option/`   | 상품 옵션 (Product 하위 리소스, `/api/products/{productId}/options`)                                                 |
-| `wish/`     | 위시리스트 (인증 필요)                                                                                               |
-| `order/`    | 주문 (인증 필요, 재고 차감 + 포인트 차감 + 카카오 알림)                                                                         |
+| 패키지              | 설명                                                                                                    |
+|------------------|-------------------------------------------------------------------------------------------------------|
+| `auth/`          | `AuthenticationPort`, `JwtPort` 인터페이스 (외부 공개)                                                         |
+| `auth/internal/` | JWT 구현(`JwtProvider`, `JwtPortImpl`), Kakao OAuth(`KakaoAuthService`, `KakaoLoginClient`)             |
+| `category/`      | `Category` Entity (외부 공개) + `internal/`에 Controller, Service, Repository, DTO                         |
+| `product/`       | `Product` Entity + `internal/`(REST API), `admin/`(관리자 UI), `common/`(ProductNameRule 전략 패턴)          |
+| `member/`        | `Member` Entity + `internal/`(REST API), `admin/`(관리자 UI)                                             |
+| `option/`        | `Option` Entity + `internal/`(Controller, Service, Repository, DTO)                                   |
+| `wish/`          | `Wish` Entity + `internal/`(Controller, Service, Repository, DTO)                                     |
+| `order/`         | `Order` Entity + `internal/`(Service, MessageBuilder, KakaoMessagingService)                          |
+| `global/`        | 커스텀 예외 계층(`CustomException`, `NotFoundException`, `BadRequestException` 등) + `CustomExceptionHandler` |
 
 ### 핵심 설계 특성
 
-- **서비스 계층 없음**: 현재 모든 비즈니스 로직이 Controller에 있다. Phase 1 리팩터링 대상.
-- **인증**: `Authorization: Bearer <JWT>` 헤더 → `AuthenticationResolver`가 Member 조회. 실패 시 null 반환 → 컨트롤러에서 401.
+- **계층 구조**: Controller → Service → Repository. Controller는 검증과 위임만 담당.
+- **인증**: `Authorization: Bearer <JWT>` 헤더 → `AuthenticationPort` 인터페이스로 Member 조회. 구현체는 `auth/internal/`에 격리.
+- **Port 패턴**: `AuthenticationPort`, `JwtPort` — 다른 도메인은 인터페이스에만 의존. 인증 구현 변경 시 다른 도메인 코드 수정 불필요.
 - **Entity 관계**: Category(1) → Product(N) → Option(N) → Order(N). Wish와 Order의 memberId는 primitive FK(엔티티 참조 아님).
 - **DTO**: 모든 요청/응답이 Java record. `from(Entity)` 팩토리 메서드로 변환.
-- **커스텀 Validator**: `ProductNameValidator`, `OptionNameValidator` — static 유틸리티. 컨트롤러에서 직접 호출.
-- **예외 처리**: 글로벌 핸들러 없음. 각 컨트롤러에 `@ExceptionHandler(IllegalArgumentException.class)` → 400.
+- **Validator**: `ProductNameValidator`는 전략 패턴(`ProductNameRule` 인터페이스 + Rule 구현체). REST API는 "카카오" 포함 금지, Admin은 미적용. Option은 Bean Validation 사용.
+- **예외 처리**: `CustomException` 기반 예외 계층 + `@RestControllerAdvice` 글로벌 핸들러(`CustomExceptionHandler`).
 - **DB**: Flyway 마이그레이션 (`src/main/resources/db/migration/`). 로컬/테스트는 H2, 운영은 MySQL.
 
 ### 테스트 구조 (`src/test/java/gift/acceptance/`)
@@ -49,7 +52,7 @@ Spring Boot 3.5.9 / Java 21 선물 관리 e-commerce 애플리케이션.
 - `suite/` — Cucumber runner 클래스 (feature별 1개)
 - `support/` — `DataManipulator`(테스트 데이터 정리), test repository 인터페이스
 
-외부 의존성(`KakaoLoginClient`, `KakaoMessageClient`)은 `@MockBean`으로 격리.
+외부 의존성(`KakaoLoginClient`, `KakaoMessageClient`)은 `@MockBean`으로 격리. 테스트 프로필은 `acceptance-test`.
 
 ---
 
