@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @Component
 public class KakaoLoginClient {
@@ -14,6 +15,16 @@ public class KakaoLoginClient {
     public KakaoLoginClient(KakaoLoginProperties properties, RestClient.Builder builder) {
         this.properties = properties;
         this.restClient = builder.build();
+    }
+
+    public String buildAuthorizationUrl() {
+        return UriComponentsBuilder.fromUriString("https://kauth.kakao.com/oauth/authorize")
+                .queryParam("response_type", "code")
+                .queryParam("client_id", properties.clientId())
+                .queryParam("redirect_uri", properties.redirectUri())
+                .queryParam("scope", "account_email,talk_message")
+                .build()
+                .toUriString();
     }
 
     public KakaoTokenResponse requestAccessToken(String code) {

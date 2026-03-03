@@ -47,3 +47,6 @@
 
 ## 프롬프트 12
 DatabaseCleaner 리뷰 반영 — 테이블명 하드코딩 방식을 information_schema 동적 조회 방식으로 변경. 테이블 추가/삭제 시 자동 대응되도록 개선. SKILL 문서도 동기화.
+
+## 프롬프트 13
+KakaoAuthService 추출 — KakaoAuthController에 남아있는 비즈니스 로직(OAuth 흐름 오케스트레이션, 인가 URL 조립)을 KakaoAuthService로 추출. 컨트롤러는 HTTP 관심사만 담당하도록 변경.
