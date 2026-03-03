@@ -12,8 +12,13 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Product {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,8 +35,6 @@ public class Product {
   @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<Option> options = new ArrayList<>();
 
-  protected Product() {}
-
   public Product(String name, int price, String imageUrl, Category category) {
     this.name = name;
     this.price = price;
@@ -44,25 +47,5 @@ public class Product {
     this.price = price;
     this.imageUrl = imageUrl;
     this.category = category;
-  }
-
-  public Long getId() {
-    return id;
-  }
-
-  public String getName() {
-    return name;
-  }
-
-  public int getPrice() {
-    return price;
-  }
-
-  public String getImageUrl() {
-    return imageUrl;
-  }
-
-  public Category getCategory() {
-    return category;
   }
 }

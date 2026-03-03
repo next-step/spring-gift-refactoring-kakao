@@ -53,3 +53,15 @@
 
 - `git show`로 확인: `getOptions()`는 초기 커밋(`55ca9e4`, author: `wotjd243`)에서 생성된 코드
 - 체리픽으로 가져온 코드가 아닌, 이전 작업자의 프로젝트 세팅 코드임을 확인
+
+## 세션: 2026-03-03 — Lombok 적용 리팩토링
+
+### 프롬프트 1: Lombok 적용 계획 수립 및 실행
+> Lombok 적용 리팩토링 계획 (Plan 모드에서 수립 후 실행)
+
+- JPA 엔티티 6개(Category, Product, Option, Member, Wish, Order)에 반복되는 getter 메서드(28개)와 protected 기본 생성자(6개)를 Lombok 어노테이션으로 대체
+- `build.gradle.kts`에 `compileOnly("org.projectlombok:lombok")` + `annotationProcessor("org.projectlombok:lombok")` 추가
+- 각 엔티티에 `@Getter` + `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 적용, 수동 getter/protected 생성자 삭제
+- 비즈니스 메서드(`update()`, `subtractQuantity()`, `chargePoint()`, `deductPoint()` 등)와 public 생성자는 그대로 보존
+- Record 클래스(Request/Response)는 이미 최적이므로 변경 불필요로 판단하여 제외
+- `./gradlew spotlessApply build` — 포매팅 + 컴파일 + 테스트 9개 모두 통과 확인
