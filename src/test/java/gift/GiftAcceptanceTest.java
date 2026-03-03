@@ -150,8 +150,8 @@ class GiftAcceptanceTest {
             .all()
             .extract();
 
-    // then (OrderController returns 404 for missing option)
-    assertThat(response.statusCode()).isEqualTo(404);
+    // then (NoSuchElementException → GlobalExceptionHandler → 400)
+    assertThat(response.statusCode()).isEqualTo(400);
   }
 
   /** G5: Authorization 헤더 없이 주문하면 실패한다. - Authorization 헤더 누락 → 400 응답 */

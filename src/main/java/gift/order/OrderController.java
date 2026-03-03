@@ -2,11 +2,6 @@ package gift.order;
 
 import gift.auth.AuthenticationResolver;
 import gift.member.Member;
-import gift.member.MemberRepository;
-import gift.option.Option;
-import gift.option.OptionRepository;
-import gift.product.Product;
-import gift.wish.WishRepository;
 import jakarta.validation.Valid;
 import java.net.URI;
 import org.springframework.data.domain.Page;
@@ -23,93 +18,39 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
-  private final OrderRepository orderRepository;
-  private final OptionRepository optionRepository;
-  private final WishRepository wishRepository;
-  private final MemberRepository memberRepository;
+  private final OrderService orderService;
   private final AuthenticationResolver authenticationResolver;
-  private final KakaoMessageClient kakaoMessageClient;
 
-  public OrderController(
-      OrderRepository orderRepository,
-      OptionRepository optionRepository,
-      WishRepository wishRepository,
-      MemberRepository memberRepository,
-      AuthenticationResolver authenticationResolver,
-      KakaoMessageClient kakaoMessageClient) {
-    this.orderRepository = orderRepository;
-    this.optionRepository = optionRepository;
-    this.wishRepository = wishRepository;
-    this.memberRepository = memberRepository;
+  public OrderController(OrderService orderService, AuthenticationResolver authenticationResolver) {
+    this.orderService = orderService;
     this.authenticationResolver = authenticationResolver;
-    this.kakaoMessageClient = kakaoMessageClient;
   }
 
   @GetMapping
   public ResponseEntity<?> getOrders(
       @RequestHeader("Authorization") String authorization, Pageable pageable) {
-    // auth check
     Member member = authenticationResolver.extractMember(authorization);
     if (member == null) {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
     Page<OrderResponse> orders =
-        orderRepository.findByMemberId(member.getId(), pageable).map(OrderResponse::from);
+        orderService.findByMemberId(member.getId(), pageable).map(OrderResponse::from);
     return ResponseEntity.ok(orders);
   }
 
-  // order flow:
-  // 1. auth check
-  // 2. validate option
-  // 3. subtract stock
-  // 4. deduct points
-  // 5. save order
-  // 6. cleanup wish
-  // 7. send kakao notification
   @PostMapping
   public ResponseEntity<?> createOrder(
       @RequestHeader("Authorization") String authorization,
       @Valid @RequestBody OrderRequest request) {
-    // auth check
     Member member = authenticationResolver.extractMember(authorization);
     if (member == null) {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
-    // validate option
-    Option option = optionRepository.findById(request.optionId()).orElse(null);
-    if (option == null) {
-      return ResponseEntity.notFound().build();
-    }
-
-    // subtract stock
-    option.subtractQuantity(request.quantity());
-    optionRepository.save(option);
-
-    // deduct points
-    int price = option.getProduct().getPrice() * request.quantity();
-    member.deductPoint(price);
-    memberRepository.save(member);
-
-    // save order
     Order saved =
-        orderRepository.save(
-            new Order(option, member.getId(), request.quantity(), request.message()));
-
-    // best-effort kakao notification
-    sendKakaoMessageIfPossible(member, saved, option);
+        orderService.placeOrder(
+            member.getId(), request.optionId(), request.quantity(), request.message());
     return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
         .body(OrderResponse.from(saved));
-  }
-
-  private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {
-    if (member.getKakaoAccessToken() == null) {
-      return;
-    }
-    try {
-      Product product = option.getProduct();
-      kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
-    } catch (Exception ignored) {
-    }
   }
 }

@@ -1,7 +1,6 @@
 package gift.auth;
 
 import gift.member.Member;
-import gift.member.MemberRepository;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,7 +8,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.util.UriComponentsBuilder;
 
 /*
  * Handles the Kakao OAuth2 login flow.
@@ -20,36 +18,17 @@ import org.springframework.web.util.UriComponentsBuilder;
 @RestController
 @RequestMapping(path = "/api/auth/kakao")
 public class KakaoAuthController {
-  private static final String KAKAO_AUTHORIZE_URL = "https://kauth.kakao.com/oauth/authorize";
-  private static final String OAUTH_SCOPE = "account_email,talk_message";
-
-  private final KakaoLoginProperties properties;
-  private final KakaoLoginClient kakaoLoginClient;
-  private final MemberRepository memberRepository;
+  private final KakaoAuthService kakaoAuthService;
   private final JwtProvider jwtProvider;
 
-  public KakaoAuthController(
-      KakaoLoginProperties properties,
-      KakaoLoginClient kakaoLoginClient,
-      MemberRepository memberRepository,
-      JwtProvider jwtProvider) {
-    this.properties = properties;
-    this.kakaoLoginClient = kakaoLoginClient;
-    this.memberRepository = memberRepository;
+  public KakaoAuthController(KakaoAuthService kakaoAuthService, JwtProvider jwtProvider) {
+    this.kakaoAuthService = kakaoAuthService;
     this.jwtProvider = jwtProvider;
   }
 
   @GetMapping(path = "/login")
   public ResponseEntity<Void> login() {
-    String kakaoAuthUrl =
-        UriComponentsBuilder.fromUriString(KAKAO_AUTHORIZE_URL)
-            .queryParam("response_type", "code")
-            .queryParam("client_id", properties.clientId())
-            .queryParam("redirect_uri", properties.redirectUri())
-            .queryParam("scope", OAUTH_SCOPE)
-            .build()
-            .toUriString();
-
+    String kakaoAuthUrl = kakaoAuthService.buildAuthorizationUrl();
     return ResponseEntity.status(HttpStatus.FOUND)
         .header(HttpHeaders.LOCATION, kakaoAuthUrl)
         .build();
@@ -57,15 +36,7 @@ public class KakaoAuthController {
 
   @GetMapping(path = "/callback")
   public ResponseEntity<TokenResponse> callback(@RequestParam("code") String code) {
-    KakaoLoginClient.KakaoTokenResponse kakaoToken = kakaoLoginClient.requestAccessToken(code);
-    KakaoLoginClient.KakaoUserResponse kakaoUser =
-        kakaoLoginClient.requestUserInfo(kakaoToken.accessToken());
-    String email = kakaoUser.email();
-
-    Member member = memberRepository.findByEmail(email).orElseGet(() -> new Member(email));
-    member.updateKakaoAccessToken(kakaoToken.accessToken());
-    memberRepository.save(member);
-
+    Member member = kakaoAuthService.processCallback(code);
     String token = jwtProvider.createToken(member.getEmail());
     return ResponseEntity.ok(new TokenResponse(token));
   }

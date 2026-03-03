@@ -78,3 +78,24 @@
 - 에러 응답 `"message"` 키 → `ERROR_MESSAGE_KEY` 상수 (GlobalExceptionHandler)
 - 최소 옵션 수 `1` → `MIN_OPTION_COUNT` 상수 (OptionController)
 - `./gradlew spotlessApply build` — 테스트 9개 모두 통과 확인
+
+## 세션: 2026-03-03 — 서비스 레이어 추출 리팩토링
+
+### 프롬프트 1: 서비스 레이어 추출 계획 수립
+> 컨트롤러에 직접 구현된 비즈니스 로직을 서비스 레이어로 분리하는 계획 수립 (Plan 모드)
+
+- 현재 모든 비즈니스 로직이 컨트롤러에 직접 구현되어 있어 서비스 클래스가 하나도 없는 상태를 분석
+- 7개 서비스(CategoryService, MemberService, ProductService, OptionService, WishService, OrderService, KakaoAuthService) 추출 계획 수립
+- 10개 컨트롤러 수정 범위 식별
+- 설계 원칙 정의: 서비스는 엔티티 반환, 컨트롤러가 DTO 변환, Auth는 컨트롤러에 유지, @Transactional로 트랜잭션 보장
+
+### 프롬프트 2: 서비스 레이어 추출 실행
+> Implement the following plan: (서비스 레이어 추출 계획 전체 실행)
+
+- 7개 서비스 클래스 신규 생성: `CategoryService`, `MemberService`, `ProductService`, `OptionService`, `WishService`, `OrderService`, `KakaoAuthService`
+- 10개 컨트롤러에서 리포지토리 직접 호출을 서비스 호출로 교체
+- `OrderController` 의존성 6개 → `OrderService` + `AuthenticationResolver` 2개로 축소, `@Transactional` 단일 트랜잭션으로 원자성 버그 수정
+- `OrderService`에서 미사용이던 `WishRepository` 의존성 제거
+- 허용된 미세 동작 변경: 존재하지 않는 optionId로 주문 시 404 → 400 (`NoSuchElementException` → `GlobalExceptionHandler`)
+- 테스트 1개 업데이트: `GiftAcceptanceTest.존재하지_않는_옵션으로_선물하면_실패한다()` 기대값 404 → 400
+- `./gradlew spotlessApply build` — 테스트 9개 모두 통과 확인
