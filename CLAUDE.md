@@ -18,7 +18,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 커밋 메시지 포맷: `<type>(<scope>): <subject>`
 - 허용 type: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 - 커밋 메시지(subject, body)는 **한국어**로 작성한다. (예: `feat(product): 재고 수량 검증 추가`)
-- 커밋은 **목적 1개**로 구성한다. `git diff`를 보고 의도를 30초 안에 설명할 수 없으면 더 쪼갠다.
+- 커밋은 **목적 1개**로 구성한다. `git diff`를 보고 **subject 한 줄로 변경 의도를 요약할 수 없으면** 더 쪼갠다.
 - **파일 변경 후 커밋 확인**: 코드를 수정·생성·삭제한 뒤에는 반드시 변경 사항을 확인하고, 커밋 단위에 부합하면 사용자에게 커밋 여부를 물어본다. 커밋하지 않고 다음 작업으로 넘어가지 않는다.
 
 ## Prompt 문서화
