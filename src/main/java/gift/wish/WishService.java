@@ -6,7 +6,6 @@ import gift.product.ProductRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.NoSuchElementException;
 
@@ -20,12 +19,10 @@ public class WishService {
         this.productRepository = productRepository;
     }
 
-    @Transactional(readOnly = true)
     public Page<Wish> findByMemberId(Long memberId, Pageable pageable) {
         return wishRepository.findByMemberId(memberId, pageable);
     }
 
-    @Transactional
     public WishResult addWish(Long memberId, Long productId) {
         // check product
         Product product = productRepository.findById(productId)
@@ -41,7 +38,6 @@ public class WishService {
         return new WishResult(saved, true);
     }
 
-    @Transactional
     public void removeWish(Long memberId, Long wishId) {
         Wish wish = wishRepository.findById(wishId)
             .orElseThrow(() -> new NoSuchElementException("위시를 찾을 수 없습니다. id=" + wishId));

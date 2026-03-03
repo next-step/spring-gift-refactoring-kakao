@@ -9,7 +9,6 @@ import gift.product.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.NoSuchElementException;
 
@@ -32,7 +31,6 @@ public class OrderService {
         this.kakaoMessageClient = kakaoMessageClient;
     }
 
-    @Transactional(readOnly = true)
     public Page<Order> findByMemberId(Long memberId, Pageable pageable) {
         return orderRepository.findByMemberId(memberId, pageable);
     }
@@ -44,7 +42,6 @@ public class OrderService {
     // 4. save order
     // 5. cleanup wish (TODO)
     // 6. send kakao notification
-    @Transactional
     public Order createOrder(Member member, Long optionId, int quantity, String message) {
         // validate option
         Option option = optionRepository.findById(optionId)
