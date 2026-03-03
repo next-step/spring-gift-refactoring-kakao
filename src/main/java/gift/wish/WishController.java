@@ -2,8 +2,6 @@ package gift.wish;
 
 import gift.auth.AuthenticationResolver;
 import gift.member.Member;
-import gift.product.Product;
-import gift.product.ProductRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -12,13 +10,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/wishes")
 public class WishController {
-    private final WishRepository wishRepository;
-    private final ProductRepository productRepository;
+    private final WishService wishService;
     private final AuthenticationResolver authenticationResolver;
 
     @GetMapping
@@ -26,12 +25,8 @@ public class WishController {
             @RequestHeader("Authorization") String authorization,
             Pageable pageable
     ) {
-        // check auth
-        Member member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(401).build();
-        }
-        Page<WishResponse> wishes = wishRepository.findByMemberId(member.getId(), pageable).map(WishResponse::from);
+        Member member = authenticate(authorization);
+        Page<WishResponse> wishes = wishService.findByMemberId(member.getId(), pageable).map(WishResponse::from);
         return ResponseEntity.ok(wishes);
     }
 
@@ -40,27 +35,20 @@ public class WishController {
             @RequestHeader("Authorization") String authorization,
             @Valid @RequestBody WishRequest request
     ) {
-        // check auth
-        Member member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(401).build();
-        }
+        Member member = authenticate(authorization);
 
-        // check product
-        Product product = productRepository.findById(request.productId()).orElse(null);
-        if (product == null) {
+        try {
+            Optional<Wish> existing = wishService.findByMemberIdAndProductId(member.getId(), request.productId());
+            if (existing.isPresent()) {
+                return ResponseEntity.ok(WishResponse.from(existing.get()));
+            }
+
+            Wish saved = wishService.create(member.getId(), request.productId());
+            return ResponseEntity.created(URI.create("/api/wishes/" + saved.getId()))
+                    .body(WishResponse.from(saved));
+        } catch (NoSuchElementException e) {
             return ResponseEntity.notFound().build();
         }
-
-        // check duplicate
-        Wish existing = wishRepository.findByMemberIdAndProductId(member.getId(), product.getId()).orElse(null);
-        if (existing != null) {
-            return ResponseEntity.ok(WishResponse.from(existing));
-        }
-
-        Wish saved = wishRepository.save(new Wish(member.getId(), product));
-        return ResponseEntity.created(URI.create("/api/wishes/" + saved.getId()))
-                .body(WishResponse.from(saved));
     }
 
     @DeleteMapping("/{id}")
@@ -68,22 +56,28 @@ public class WishController {
             @RequestHeader("Authorization") String authorization,
             @PathVariable Long id
     ) {
-        // check auth
-        Member member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(401).build();
-        }
+        Member member = authenticate(authorization);
 
-        Wish wish = wishRepository.findById(id).orElse(null);
-        if (wish == null) {
+        try {
+            wishService.removeWish(id, member.getId());
+            return ResponseEntity.noContent().build();
+        } catch (NoSuchElementException e) {
             return ResponseEntity.notFound().build();
-        }
-
-        if (!wish.getMemberId().equals(member.getId())) {
+        } catch (IllegalStateException e) {
             return ResponseEntity.status(403).build();
         }
+    }
 
-        wishRepository.delete(wish);
-        return ResponseEntity.noContent().build();
+    private Member authenticate(String authorization) {
+        Member member = authenticationResolver.extractMember(authorization);
+        if (member == null) {
+            throw new IllegalArgumentException("인증에 실패했습니다.");
+        }
+        return member;
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Void> handleUnauthorized(IllegalArgumentException e) {
+        return ResponseEntity.status(401).build();
     }
 }
