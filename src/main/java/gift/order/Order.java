@@ -17,7 +17,7 @@ public class Order {
     @ManyToOne
     @JoinColumn(name = "option_id")
     private Option option;
-    // Member entity를 직접 참조하지 않고 ID만 저장하여 느슨한 결합 유지
+    // Member 엔티티를 직접 참조하지 않고 ID만 저장하여 느슨한 결합 유지
     private Long memberId;
     private int quantity;
     private String message;

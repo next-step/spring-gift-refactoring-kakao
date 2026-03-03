@@ -22,10 +22,7 @@ public class JwtProvider {
     }
 
     /**
-     * Extracts the email (subject) from a signed JWT token.
-     *
-     * @param token the JWT token string
-     * @return the email stored in the token's subject claim
+     * 서명된 JWT 토큰에서 이메일(subject)을 추출한다.
      */
     public String getEmail(String token) {
         return Jwts.parser()
@@ -37,10 +34,7 @@ public class JwtProvider {
     }
 
     /**
-     * Creates a new signed JWT token for the given email.
-     *
-     * @param email the email to store as the token's subject
-     * @return the compact JWT token string
+     * 주어진 이메일로 서명된 JWT 토큰을 생성한다.
      */
     public String createToken(String email) {
         Date now = new Date();

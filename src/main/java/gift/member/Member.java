@@ -42,14 +42,14 @@ public class Member {
 
     public void chargePoint(int amount) {
         if (amount <= 0) {
-            throw new IllegalArgumentException("Amount must be greater than zero.");
+            throw new IllegalArgumentException("충전 금액은 1 이상이어야 합니다.");
         }
         this.point += amount;
     }
 
     /*
-     * Deducts points for order payment.
-     * Throws if amount is non-positive or exceeds the current balance.
+     * 주문 결제를 위한 포인트 차감.
+     * 금액이 0 이하이거나 잔액을 초과하면 예외를 던진다.
      */
     public void deductPoint(int amount) {
         if (amount <= 0) {

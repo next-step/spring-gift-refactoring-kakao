@@ -30,7 +30,7 @@ public class OrderService {
 
         Order saved = orderRepository.save(new Order(option, memberId, quantity, message));
 
-        // Todo: cleanup wish 구현 필요
+        // TODO: 위시 정리 구현 필요
 
         sendKakaoMessageIfPossible(member, saved, option);
         return saved;

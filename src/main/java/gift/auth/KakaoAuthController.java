@@ -12,12 +12,12 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /*
- * Handles the Kakao OAuth2 login flow.
- * 1. /login redirects the user to Kakao's authorization page
- * 2. /callback receives the authorization code, exchanges it for tokens,
- *    fetches user info, auto-registers if new, and issues a service JWT
+ * 카카오 OAuth2 로그인 플로우를 처리한다.
+ * 1. /login - 카카오 인가 페이지로 리다이렉트
+ * 2. /callback - 인가 코드를 받아 토큰 교환, 사용자 정보 조회,
+ *    신규 회원 자동 가입 후 서비스 JWT 발급
  *
- * The issued JWT is used for subsequent API authentication via Authorization header.
+ * 발급된 JWT는 이후 API 인증에 Authorization 헤더로 사용된다.
  */
 @RequiredArgsConstructor
 @RestController

@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 /*
- * Each product must have at least one option at all times.
- * Option names are validated against allowed characters and length constraints.
+ * 각 상품은 항상 최소 하나의 옵션을 가져야 한다.
+ * 옵션명은 허용된 문자와 길이 제약에 따라 검증된다.
  */
 @RequiredArgsConstructor
 @RestController
