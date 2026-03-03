@@ -4,6 +4,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 /**
  * Represents a registered member.
@@ -11,8 +16,12 @@ import jakarta.persistence.Id;
  * @author brian.kim
  * @since 1.0
  */
+@Getter
 @Entity
+@Table(name = "member")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -25,16 +34,12 @@ public class Member {
 
     private int point;
 
-    protected Member() {
-    }
-
-    public Member(String email, String password) {
+    @Builder
+    private Member(String email, String password, String kakaoAccessToken, int point) {
         this.email = email;
         this.password = password;
-    }
-
-    public Member(String email) {
-        this.email = email;
+        this.kakaoAccessToken = kakaoAccessToken;
+        this.point = point;
     }
 
     public void update(String email, String password) {
@@ -64,23 +69,4 @@ public class Member {
         this.point -= amount;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public String getKakaoAccessToken() {
-        return kakaoAccessToken;
-    }
-
-    public int getPoint() {
-        return point;
-    }
 }
