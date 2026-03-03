@@ -48,11 +48,13 @@ public class ProductService {
     }
 
     public Product saveProduct(String name, int price, String imageUrl, Long categoryId) {
+        validateNameForAdmin(name);
         Category category = findCategoryById(categoryId);
         return productRepository.save(new Product(name, price, imageUrl, category));
     }
 
     public Product updateProduct(Long id, String name, int price, String imageUrl, Long categoryId) {
+        validateNameForAdmin(name);
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
         Category category = findCategoryById(categoryId);
@@ -74,6 +76,13 @@ public class ProductService {
 
     private void validateName(String name) {
         List<String> errors = ProductNameValidator.validate(name);
+        if (!errors.isEmpty()) {
+            throw new IllegalArgumentException(String.join(", ", errors));
+        }
+    }
+
+    private void validateNameForAdmin(String name) {
+        List<String> errors = ProductNameValidator.validate(name, true);
         if (!errors.isEmpty()) {
             throw new IllegalArgumentException(String.join(", ", errors));
         }
