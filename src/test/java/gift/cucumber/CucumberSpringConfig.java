@@ -10,9 +10,9 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles("cucumber")
 public class CucumberSpringConfig {
 
-    @io.cucumber.java.Before(order = 1)
-    public void setUp() {
-        RestAssured.baseURI = "http://localhost";
-        RestAssured.port = 28080;
-    }
+  @io.cucumber.java.Before(order = 1)
+  public void setUp() {
+    RestAssured.baseURI = "http://localhost";
+    RestAssured.port = 28080;
+  }
 }

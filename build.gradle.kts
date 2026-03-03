@@ -6,6 +6,7 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"
     id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
     id("org.flywaydb.flyway") version "12.0.1"
+    id("com.diffplug.spotless") version "7.0.2"
 }
 
 group = "camp.nextstep.edu"
@@ -63,6 +64,16 @@ ktlint {
     verbose.set(true)
 }
 
+spotless {
+    java {
+        target("src/**/*.java")
+        googleJavaFormat()
+        removeUnusedImports()
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
     testLogging {
@@ -80,14 +91,15 @@ fun detectDockerHost(): String? {
     if (!dockerHost.isNullOrBlank()) return dockerHost
 
     val home = System.getProperty("user.home")
-    val candidates = listOf(
-        "$home/.docker/run/docker.sock",       // Docker Desktop (macOS)
-        "$home/.docker/desktop/docker.sock",    // Docker Desktop (Linux)
-        "$home/.colima/default/docker.sock",    // Colima
-        "$home/.orbstack/run/docker.sock",      // OrbStack
-        "$home/.rd/docker.sock",                // Rancher Desktop
-        "/var/run/docker.sock",                 // Linux native / symlink
-    )
+    val candidates =
+        listOf(
+            "$home/.docker/run/docker.sock", // Docker Desktop (macOS)
+            "$home/.docker/desktop/docker.sock", // Docker Desktop (Linux)
+            "$home/.colima/default/docker.sock", // Colima
+            "$home/.orbstack/run/docker.sock", // OrbStack
+            "$home/.rd/docker.sock", // Rancher Desktop
+            "/var/run/docker.sock", // Linux native / symlink
+        )
     val found = candidates.firstOrNull { File(it).exists() }
     return found?.let { "unix://$it" }
 }

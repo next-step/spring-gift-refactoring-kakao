@@ -6,11 +6,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 public class DatabaseCleanup {
 
-    @Autowired
-    private JdbcTemplate jdbcTemplate;
+  @Autowired private JdbcTemplate jdbcTemplate;
 
-    @Before(order = 0)
-    public void cleanDatabase() {
-        jdbcTemplate.execute("TRUNCATE TABLE orders, wish, options, product, member, category CASCADE");
-    }
+  @Before(order = 0)
+  public void cleanDatabase() {
+    jdbcTemplate.execute("TRUNCATE TABLE orders, wish, options, product, member, category CASCADE");
+  }
 }

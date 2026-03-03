@@ -8,57 +8,56 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "orders")
 public class Order {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "option_id")
-    private Option option;
-    // primitive FK
-    private Long memberId;
-    private int quantity;
-    private String message;
-    private LocalDateTime orderDateTime;
+  @ManyToOne
+  @JoinColumn(name = "option_id")
+  private Option option;
 
-    protected Order() {
-    }
+  // primitive FK
+  private Long memberId;
+  private int quantity;
+  private String message;
+  private LocalDateTime orderDateTime;
 
-    public Order(Option option, Long memberId, int quantity, String message) {
-        this.option = option;
-        this.memberId = memberId;
-        this.quantity = quantity;
-        this.message = message;
-        this.orderDateTime = LocalDateTime.now();
-    }
+  protected Order() {}
 
-    public Long getId() {
-        return id;
-    }
+  public Order(Option option, Long memberId, int quantity, String message) {
+    this.option = option;
+    this.memberId = memberId;
+    this.quantity = quantity;
+    this.message = message;
+    this.orderDateTime = LocalDateTime.now();
+  }
 
-    public Option getOption() {
-        return option;
-    }
+  public Long getId() {
+    return id;
+  }
 
-    public Long getMemberId() {
-        return memberId;
-    }
+  public Option getOption() {
+    return option;
+  }
 
-    public int getQuantity() {
-        return quantity;
-    }
+  public Long getMemberId() {
+    return memberId;
+  }
 
-    public String getMessage() {
-        return message;
-    }
+  public int getQuantity() {
+    return quantity;
+  }
 
-    public LocalDateTime getOrderDateTime() {
-        return orderDateTime;
-    }
+  public String getMessage() {
+    return message;
+  }
+
+  public LocalDateTime getOrderDateTime() {
+    return orderDateTime;
+  }
 }

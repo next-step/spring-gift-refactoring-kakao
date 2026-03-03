@@ -7,48 +7,48 @@ import jakarta.persistence.Id;
 
 @Entity
 public class Category {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    private String name;
-    private String color;
-    private String imageUrl;
-    private String description;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    protected Category() {
-    }
+  private String name;
+  private String color;
+  private String imageUrl;
+  private String description;
 
-    public Category(String name, String color, String imageUrl, String description) {
-        this.name = name;
-        this.color = color;
-        this.imageUrl = imageUrl;
-        this.description = description;
-    }
+  protected Category() {}
 
-    public void update(String name, String color, String imageUrl, String description) {
-        this.name = name;
-        this.color = color;
-        this.imageUrl = imageUrl;
-        this.description = description;
-    }
+  public Category(String name, String color, String imageUrl, String description) {
+    this.name = name;
+    this.color = color;
+    this.imageUrl = imageUrl;
+    this.description = description;
+  }
 
-    public Long getId() {
-        return id;
-    }
+  public void update(String name, String color, String imageUrl, String description) {
+    this.name = name;
+    this.color = color;
+    this.imageUrl = imageUrl;
+    this.description = description;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public Long getId() {
+    return id;
+  }
 
-    public String getColor() {
-        return color;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public String getImageUrl() {
-        return imageUrl;
-    }
+  public String getColor() {
+    return color;
+  }
 
-    public String getDescription() {
-        return description;
-    }
+  public String getImageUrl() {
+    return imageUrl;
+  }
+
+  public String getDescription() {
+    return description;
+  }
 }

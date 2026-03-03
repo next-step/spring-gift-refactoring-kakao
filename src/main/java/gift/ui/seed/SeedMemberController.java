@@ -13,14 +13,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/seed/members")
 public class SeedMemberController {
-    private final MemberService memberService;
+  private final MemberService memberService;
 
-    public SeedMemberController(MemberService memberService) {
-        this.memberService = memberService;
-    }
+  public SeedMemberController(MemberService memberService) {
+    this.memberService = memberService;
+  }
 
-    @PostMapping
-    public Member create(@RequestBody final CreateMemberRequest request) {
-        return memberService.create(request);
-    }
+  @PostMapping
+  public Member create(@RequestBody final CreateMemberRequest request) {
+    return memberService.create(request);
+  }
 }

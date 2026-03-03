@@ -8,13 +8,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 @Service
 public class MemberService {
-    private final MemberRepository memberRepository;
+  private final MemberRepository memberRepository;
 
-    public MemberService(MemberRepository memberRepository) {
-        this.memberRepository = memberRepository;
-    }
+  public MemberService(MemberRepository memberRepository) {
+    this.memberRepository = memberRepository;
+  }
 
-    public Member create(final CreateMemberRequest request) {
-        return memberRepository.save(new Member(request.getEmail()));
-    }
+  public Member create(final CreateMemberRequest request) {
+    return memberRepository.save(new Member(request.getEmail()));
+  }
 }
