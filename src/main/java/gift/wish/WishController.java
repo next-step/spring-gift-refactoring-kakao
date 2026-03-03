@@ -3,6 +3,8 @@ package gift.wish;
 import gift.auth.AuthenticationResolver;
 import gift.member.Member;
 
+import jakarta.validation.Valid;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -46,7 +48,7 @@ public class WishController {
     @PostMapping
     public ResponseEntity<WishResponse> addWish(
         @RequestHeader("Authorization") String authorization,
-        @RequestBody WishRequest request
+        @Valid @RequestBody WishRequest request
     ) {
         // check auth
         Member member = authenticationResolver.extractMember(authorization);
