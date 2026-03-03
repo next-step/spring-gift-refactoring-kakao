@@ -32,6 +32,10 @@ public class Member {
         this.password = password;
     }
 
+    public boolean matchesPassword(String rawPassword) {
+        return this.password != null && this.password.equals(rawPassword);
+    }
+
     public void updateKakaoAccessToken(String kakaoAccessToken) {
         this.kakaoAccessToken = kakaoAccessToken;
     }
