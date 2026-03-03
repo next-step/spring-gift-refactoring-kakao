@@ -41,15 +41,6 @@ public class MemberService {
         return memberRepository.findById(id).orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다. id=" + id));
     }
 
-    public boolean existsByEmail(String email) {
-        return memberRepository.existsByEmail(email);
-    }
-
-    @Transactional
-    public Member createMember(String email, String password) {
-        return memberRepository.save(new Member(email, password));
-    }
-
     @Transactional
     public Member updateMember(Long id, String email, String password) {
         final Member member = findById(id);
