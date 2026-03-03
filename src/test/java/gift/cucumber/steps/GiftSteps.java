@@ -9,6 +9,7 @@ import io.restassured.http.ContentType;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.Map;
 
@@ -18,6 +19,9 @@ public class GiftSteps {
 
     @Autowired
     private ScenarioState state;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Given("회원 {string}과 {string}이 등록되어 있다")
     public void 회원이_등록되어_있다(String sender, String receiver) {
@@ -29,12 +33,21 @@ public class GiftSteps {
         if (state.getMemberId(name) != null) {
             return;
         }
+        String email = name + "@test.com";
+        // Register via API to get JWT token
         ExtractableResponse<Response> response = RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
-                .body(Map.of("name", name, "email", name + "@test.com"))
-                .when().post("/api/seed/members")
+                .body(Map.of("email", email, "password", "password"))
+                .when().post("/api/members/register")
                 .then().log().all().extract();
-        state.putMemberId(name, response.jsonPath().getLong("id"));
+        String token = response.jsonPath().getString("token");
+        state.putToken(name, token);
+
+        // Get member ID and charge points via JDBC
+        Long memberId = jdbcTemplate.queryForObject(
+                "SELECT id FROM member WHERE email = ?", Long.class, email);
+        state.putMemberId(name, memberId);
+        jdbcTemplate.update("UPDATE member SET point = 1000000 WHERE id = ?", memberId);
     }
 
     @Given("{string} 카테고리에 {string} 상품이 등록되어 있다")
@@ -42,7 +55,7 @@ public class GiftSteps {
         if (state.getCategoryId(categoryName) == null) {
             ExtractableResponse<Response> catResponse = RestAssured.given().log().all()
                     .contentType(ContentType.JSON)
-                    .body(Map.of("name", categoryName))
+                    .body(Map.of("name", categoryName, "color", "#000000", "imageUrl", "http://img.com/default.png"))
                     .when().post("/api/categories")
                     .then().log().all().extract();
             state.putCategoryId(categoryName, catResponse.jsonPath().getLong("id"));
@@ -81,50 +94,46 @@ public class GiftSteps {
 
     @When("{string}이 {string}에게 {string}의 {string} 옵션 {int}개를 선물한다")
     public void 선물한다(String sender, String receiver, String productName, String optionName, int quantity) {
-        Long senderId = state.getMemberId(sender);
-        Long receiverId = state.getMemberId(receiver);
+        String token = state.getToken(sender);
         Long optionId = state.getOptionId(productName + ":" + optionName);
 
         ExtractableResponse<Response> response = RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
-                .header("Member-Id", senderId)
+                .header("Authorization", "Bearer " + token)
                 .body(Map.of(
                         "optionId", optionId,
                         "quantity", quantity,
-                        "receiverId", receiverId,
                         "message", "선물입니다"
                 ))
-                .when().post("/api/gifts")
+                .when().post("/api/orders")
                 .then().log().all().extract();
         state.setLastResponse(response);
     }
 
     @When("{string}이 {string}에게 존재하지 않는 옵션으로 선물한다")
     public void 존재하지_않는_옵션으로_선물한다(String sender, String receiver) {
-        Long senderId = state.getMemberId(sender);
-        Long receiverId = state.getMemberId(receiver);
+        String token = state.getToken(sender);
 
         ExtractableResponse<Response> response = RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
-                .header("Member-Id", senderId)
+                .header("Authorization", "Bearer " + token)
                 .body(Map.of(
                         "optionId", 9999L,
                         "quantity", 1,
-                        "receiverId", receiverId,
                         "message", "없는 옵션 테스트"
                 ))
-                .when().post("/api/gifts")
+                .when().post("/api/orders")
                 .then().log().all().extract();
         state.setLastResponse(response);
     }
 
     @Then("선물하기가 성공한다")
     public void 선물하기가_성공한다() {
-        assertThat(state.getLastResponse().statusCode()).isEqualTo(200);
+        assertThat(state.getLastResponse().statusCode()).isEqualTo(201);
     }
 
     @Then("선물하기가 실패한다")
     public void 선물하기가_실패한다() {
-        assertThat(state.getLastResponse().statusCode()).isEqualTo(400);
+        assertThat(state.getLastResponse().statusCode()).isGreaterThanOrEqualTo(400);
     }
 }

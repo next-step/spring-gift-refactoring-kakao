@@ -11,6 +11,6 @@ public class DatabaseCleanup {
 
     @Before(order = 0)
     public void cleanDatabase() {
-        jdbcTemplate.execute("TRUNCATE TABLE wish, option, product, member, category CASCADE");
+        jdbcTemplate.execute("TRUNCATE TABLE orders, wish, options, product, member, category CASCADE");
     }
 }

@@ -17,6 +17,7 @@ public class ScenarioState {
     private final Map<String, Long> productIds = new HashMap<>();
     private final Map<String, Long> optionIds = new HashMap<>();
     private final Map<String, Long> memberIds = new HashMap<>();
+    private final Map<String, String> tokens = new HashMap<>();
     private ExtractableResponse<Response> lastResponse;
 
     public void putCategoryId(String name, Long id) {
@@ -49,6 +50,14 @@ public class ScenarioState {
 
     public Long getMemberId(String name) {
         return memberIds.get(name);
+    }
+
+    public void putToken(String name, String token) {
+        tokens.put(name, token);
+    }
+
+    public String getToken(String name) {
+        return tokens.get(name);
     }
 
     public ExtractableResponse<Response> getLastResponse() {

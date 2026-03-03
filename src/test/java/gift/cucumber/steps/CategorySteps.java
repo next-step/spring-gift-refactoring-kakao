@@ -23,11 +23,11 @@ public class CategorySteps {
     public void 카테고리를_생성한다(String name) {
         ExtractableResponse<Response> response = RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
-                .body(Map.of("name", name))
+                .body(Map.of("name", name, "color", "#000000", "imageUrl", "http://img.com/default.png"))
                 .when().post("/api/categories")
                 .then().log().all().extract();
         state.setLastResponse(response);
-        if (response.statusCode() == 200) {
+        if (response.statusCode() == 201) {
             state.putCategoryId(name, response.jsonPath().getLong("id"));
         }
     }
@@ -36,7 +36,7 @@ public class CategorySteps {
     public void 이름_없이_카테고리를_생성한다() {
         ExtractableResponse<Response> response = RestAssured.given().log().all()
                 .contentType(ContentType.JSON)
-                .body(Map.of())
+                .body(Map.of("color", "#000000", "imageUrl", "http://img.com/default.png"))
                 .when().post("/api/categories")
                 .then().log().all().extract();
         state.setLastResponse(response);
@@ -45,7 +45,7 @@ public class CategorySteps {
     @Then("카테고리가 정상적으로 생성된다")
     public void 카테고리가_정상적으로_생성된다() {
         ExtractableResponse<Response> response = state.getLastResponse();
-        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.statusCode()).isEqualTo(201);
         assertThat(response.jsonPath().getLong("id")).isNotNull();
         assertThat(response.jsonPath().getString("name")).isNotBlank();
     }
@@ -65,7 +65,7 @@ public class CategorySteps {
         if (state.getCategoryId(name) == null) {
             ExtractableResponse<Response> response = RestAssured.given().log().all()
                     .contentType(ContentType.JSON)
-                    .body(Map.of("name", name))
+                    .body(Map.of("name", name, "color", "#000000", "imageUrl", "http://img.com/default.png"))
                     .when().post("/api/categories")
                     .then().log().all().extract();
             state.putCategoryId(name, response.jsonPath().getLong("id"));

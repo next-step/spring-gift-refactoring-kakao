@@ -33,7 +33,7 @@ public class ProductSteps {
                 .when().post("/api/products")
                 .then().log().all().extract();
         state.setLastResponse(response);
-        if (response.statusCode() == 200) {
+        if (response.statusCode() == 201) {
             state.putProductId(productName, response.jsonPath().getLong("id"));
         }
     }
@@ -71,7 +71,7 @@ public class ProductSteps {
     @Then("상품이 정상적으로 생성된다")
     public void 상품이_정상적으로_생성된다() {
         ExtractableResponse<Response> response = state.getLastResponse();
-        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.statusCode()).isEqualTo(201);
         assertThat(response.jsonPath().getLong("id")).isNotNull();
         assertThat(response.jsonPath().getString("name")).isNotBlank();
     }
@@ -79,7 +79,8 @@ public class ProductSteps {
     @Then("상품의 카테고리가 {string}이다")
     public void 상품의_카테고리가_이다(String categoryName) {
         ExtractableResponse<Response> response = state.getLastResponse();
-        assertThat(response.jsonPath().getString("category.name")).isEqualTo(categoryName);
+        Long expectedCategoryId = state.getCategoryId(categoryName);
+        assertThat(response.jsonPath().getLong("categoryId")).isEqualTo(expectedCategoryId);
     }
 
     @Then("상품 목록을 조회하면 {string}이 포함되어 있다")
@@ -89,7 +90,7 @@ public class ProductSteps {
                 .then().log().all().extract();
 
         assertThat(listResponse.statusCode()).isEqualTo(200);
-        assertThat(listResponse.jsonPath().getList("name", String.class)).contains(productName);
+        assertThat(listResponse.jsonPath().getList("content.name", String.class)).contains(productName);
     }
 
     @Given("{string} 카테고리에 가격이 {int}원인 {string} 상품이 등록되어 있다")
@@ -110,7 +111,7 @@ public class ProductSteps {
     public void 상품_목록에_포함되어_있다(String name1, String name2) {
         ExtractableResponse<Response> response = state.getLastResponse();
         assertThat(response.statusCode()).isEqualTo(200);
-        assertThat(response.jsonPath().getList("name", String.class))
+        assertThat(response.jsonPath().getList("content.name", String.class))
                 .contains(name1, name2);
     }
 }
