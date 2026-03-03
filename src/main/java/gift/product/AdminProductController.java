@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Controller
 @RequestMapping("/admin/products")
@@ -53,7 +54,7 @@ public class AdminProductController {
     public String editForm(@PathVariable Long id, Model model) {
         var product = productService.findById(id);
         if (product == null) {
-            throw new java.util.NoSuchElementException("상품이 존재하지 않습니다. id=" + id);
+            throw new NoSuchElementException("상품이 존재하지 않습니다. id=" + id);
         }
         model.addAttribute("product", product);
         model.addAttribute("categories", productService.findAllCategories());
