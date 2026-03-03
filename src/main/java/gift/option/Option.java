@@ -1,6 +1,9 @@
 package gift.option;
 
 import gift.product.Product;
+
+import java.util.List;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -31,9 +34,17 @@ public class Option {
     }
 
     public Option(Product product, String name, int quantity) {
+        validateName(name);
         this.product = product;
         this.name = name;
         this.quantity = quantity;
+    }
+
+    private void validateName(String name) {
+        List<String> errors = OptionNameValidator.validate(name);
+        if (!errors.isEmpty()) {
+            throw new IllegalArgumentException(String.join(", ", errors));
+        }
     }
 
     public void subtractQuantity(int amount) {
