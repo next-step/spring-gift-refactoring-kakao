@@ -10,7 +10,8 @@
 | URL | 메서드 | 기능 | 설명 |
 |-----|--------|------|------|
 | `/api/categories` | POST | 카테고리 생성 | 새 카테고리를 등록한다. |
-| `/api/categories/{categoryId}` | PUT | 카테고리 수정 | 기존 카테고리를 수정한다. |
+| `/api/categories/{id}` | PUT | 카테고리 수정 | 기존 카테고리를 수정한다. |
+| `/api/categories/{id}` | DELETE | 카테고리 삭제 | 특정 카테고리를 삭제한다. |
 | `/api/categories` | GET | 카테고리 목록 조회 | 모든 카테고리의 목록을 조회한다. |
 
 ## 상품 API
@@ -42,3 +43,9 @@
 |-----|--------|------|------|
 | `/api/orders` | POST | 주문하기 | 새 주문을 생성한다. |
 | `/api/orders?page=0&size=10&sort=orderDateTime,desc` | GET | 주문 목록 조회 (페이지네이션 적용) | 주문 목록을 페이지 단위로 조회한다. |
+
+## 카카오 인증 API
+| URL | 메서드 | 기능 | 설명 |
+|-----|--------|------|------|
+| `/api/auth/kakao/login` | GET | 카카오 로그인 | 카카오 OAuth 인증 페이지로 리다이렉트한다. |
+| `/api/auth/kakao/callback` | GET | 카카오 콜백 | 카카오 인증 코드를 받아 토큰을 발급한다. |
