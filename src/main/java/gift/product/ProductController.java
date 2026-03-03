@@ -2,6 +2,7 @@ package gift.product;
 
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.util.List;
 import java.util.NoSuchElementException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,8 +41,9 @@ public class ProductController {
 
     @PostMapping
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductRequest request) {
-        final Product saved = productService.createProduct(
-                request.name(), request.price(), request.imageUrl(), request.categoryId(), false);
+        validateName(request.name());
+        final Product saved =
+                productService.createProduct(request.name(), request.price(), request.imageUrl(), request.categoryId());
         return ResponseEntity.created(URI.create("/api/products/" + saved.getId()))
                 .body(ProductResponse.from(saved));
     }
@@ -49,9 +51,17 @@ public class ProductController {
     @PutMapping("/{id}")
     public ResponseEntity<ProductResponse> updateProduct(
             @PathVariable Long id, @Valid @RequestBody ProductRequest request) {
+        validateName(request.name());
         final Product saved = productService.updateProduct(
-                id, request.name(), request.price(), request.imageUrl(), request.categoryId(), false);
+                id, request.name(), request.price(), request.imageUrl(), request.categoryId());
         return ResponseEntity.ok(ProductResponse.from(saved));
+    }
+
+    private void validateName(String name) {
+        final List<String> errors = ProductNameValidator.validate(name);
+        if (!errors.isEmpty()) {
+            throw new IllegalArgumentException(String.join(", ", errors));
+        }
     }
 
     @DeleteMapping("/{id}")

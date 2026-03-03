@@ -33,8 +33,7 @@ public class ProductService {
     }
 
     @Transactional
-    public Product createProduct(String name, int price, String imageUrl, Long categoryId, boolean allowKakao) {
-        validateName(name, allowKakao);
+    public Product createProduct(String name, int price, String imageUrl, Long categoryId) {
         final Category category = categoryRepository
                 .findById(categoryId)
                 .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다."));
@@ -42,9 +41,7 @@ public class ProductService {
     }
 
     @Transactional
-    public Product updateProduct(
-            Long id, String name, int price, String imageUrl, Long categoryId, boolean allowKakao) {
-        validateName(name, allowKakao);
+    public Product updateProduct(Long id, String name, int price, String imageUrl, Long categoryId) {
         final Product product =
                 productRepository.findById(id).orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다."));
         final Category category = categoryRepository
@@ -57,12 +54,5 @@ public class ProductService {
     @Transactional
     public void deleteProduct(Long id) {
         productRepository.deleteById(id);
-    }
-
-    private void validateName(String name, boolean allowKakao) {
-        final List<String> errors = ProductNameValidator.validate(name, allowKakao);
-        if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(String.join(", ", errors));
-        }
     }
 }
