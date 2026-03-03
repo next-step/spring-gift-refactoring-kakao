@@ -6,11 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 public record ProductRequest(
-    @NotBlank String name,
-    @Positive int price,
-    @NotBlank String imageUrl,
-    @NotNull Long categoryId
-) {
+        @NotBlank String name, @Positive int price, @NotBlank String imageUrl, @NotNull Long categoryId) {
     public Product toEntity(Category category) {
         return new Product(name, price, imageUrl, category);
     }

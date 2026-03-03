@@ -13,15 +13,14 @@ public class Wish {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    // primitive FK - no entity reference
+    // 엔티티 참조 없이 FK만 저장
     private Long memberId;
 
     @ManyToOne
     @JoinColumn(name = "product_id")
     private Product product;
 
-    protected Wish() {
-    }
+    protected Wish() {}
 
     public Wish(Long memberId, Product product) {
         this.memberId = memberId;

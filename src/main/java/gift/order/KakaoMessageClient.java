@@ -14,25 +14,25 @@ public class KakaoMessageClient {
     }
 
     public void sendToMe(String accessToken, Order order, Product product) {
-        var templateObject = buildTemplate(order, product);
+        final String templateObject = buildTemplate(order, product);
 
-        var params = new LinkedMultiValueMap<String, String>();
+        final LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("template_object", templateObject);
 
-        restClient.post()
-            .uri("https://kapi.kakao.com/v2/api/talk/memo/default/send")
-            .header("Authorization", "Bearer " + accessToken)
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .body(params)
-            .retrieve()
-            .toBodilessEntity();
+        restClient
+                .post()
+                .uri("https://kapi.kakao.com/v2/api/talk/memo/default/send")
+                .header("Authorization", "Bearer " + accessToken)
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .body(params)
+                .retrieve()
+                .toBodilessEntity();
     }
 
     private String buildTemplate(Order order, Product product) {
-        var totalPrice = String.format("%,d", product.getPrice() * order.getQuantity());
-        var message = order.getMessage() != null && !order.getMessage().isBlank()
-            ? "\\n\\n💌 " + order.getMessage()
-            : "";
+        final String totalPrice = String.format("%,d", product.getPrice() * order.getQuantity());
+        final String message =
+                order.getMessage() != null && !order.getMessage().isBlank() ? "\\n\\n💌 " + order.getMessage() : "";
         return """
             {
                 "object_type": "text",
@@ -40,12 +40,7 @@ public class KakaoMessageClient {
                 "link": {},
                 "button_title": "선물 확인하기"
             }
-            """.formatted(
-            product.getName(),
-            order.getOption().getName(),
-            order.getQuantity(),
-            totalPrice,
-            message
-        );
+            """
+                .formatted(product.getName(), order.getOption().getName(), order.getQuantity(), totalPrice, message);
     }
 }

@@ -6,18 +6,16 @@ import java.util.regex.Pattern;
 
 public class ProductNameValidator {
     private static final int MAX_LENGTH = 15;
-    private static final Pattern ALLOWED_PATTERN =
-        Pattern.compile("^[a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ ()\\[\\]+\\-&/_]*$");
+    private static final Pattern ALLOWED_PATTERN = Pattern.compile("^[a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ ()\\[\\]+\\-&/_]*$");
 
-    private ProductNameValidator() {
-    }
+    private ProductNameValidator() {}
 
     public static List<String> validate(String name) {
         return validate(name, false);
     }
 
     public static List<String> validate(String name, boolean allowKakao) {
-        List<String> errors = new ArrayList<>();
+        final List<String> errors = new ArrayList<>();
 
         if (name == null || name.isBlank()) {
             errors.add("상품 이름은 필수입니다.");

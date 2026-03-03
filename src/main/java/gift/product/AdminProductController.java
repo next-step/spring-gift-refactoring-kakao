@@ -1,7 +1,7 @@
 package gift.product;
 
-import gift.category.Category;
-import gift.category.CategoryRepository;
+import gift.category.CategoryService;
+import java.util.List;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,124 +10,103 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.List;
-import java.util.NoSuchElementException;
-
 @Controller
 @RequestMapping("/admin/products")
 public class AdminProductController {
-    private final ProductRepository productRepository;
-    private final CategoryRepository categoryRepository;
+    private final ProductService productService;
+    private final CategoryService categoryService;
 
-    public AdminProductController(ProductRepository productRepository, CategoryRepository categoryRepository) {
-        this.productRepository = productRepository;
-        this.categoryRepository = categoryRepository;
+    public AdminProductController(ProductService productService, CategoryService categoryService) {
+        this.productService = productService;
+        this.categoryService = categoryService;
     }
 
     @GetMapping
     public String list(Model model) {
-        model.addAttribute("products", productRepository.findAll());
+        model.addAttribute("products", productService.findAll());
         return "product/list";
     }
 
     @GetMapping("/new")
     public String newForm(Model model) {
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("categories", categoryService.getCategories());
         return "product/new";
     }
 
     @PostMapping
     public String create(
-        @RequestParam String name,
-        @RequestParam int price,
-        @RequestParam String imageUrl,
-        @RequestParam Long categoryId,
-        Model model
-    ) {
-        List<String> errors = ProductNameValidator.validate(name, true);
+            @RequestParam String name,
+            @RequestParam int price,
+            @RequestParam String imageUrl,
+            @RequestParam Long categoryId,
+            Model model) {
+        final List<String> errors = ProductNameValidator.validate(name, true);
         if (!errors.isEmpty()) {
             populateNewForm(model, errors, name, price, imageUrl, categoryId);
             return "product/new";
         }
 
-        Category category = categoryRepository.findById(categoryId)
-            .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
-        productRepository.save(new Product(name, price, imageUrl, category));
+        productService.createProduct(name, price, imageUrl, categoryId, true);
         return "redirect:/admin/products";
     }
 
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
-        Product product = productRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
-        model.addAttribute("product", product);
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("product", productService.getProduct(id));
+        model.addAttribute("categories", categoryService.getCategories());
         return "product/edit";
     }
 
     @PostMapping("/{id}/edit")
     public String update(
-        @PathVariable Long id,
-        @RequestParam String name,
-        @RequestParam int price,
-        @RequestParam String imageUrl,
-        @RequestParam Long categoryId,
-        Model model
-    ) {
-        Product product = productRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
+            @PathVariable Long id,
+            @RequestParam String name,
+            @RequestParam int price,
+            @RequestParam String imageUrl,
+            @RequestParam Long categoryId,
+            Model model) {
+        final Product product = productService.getProduct(id);
 
-        List<String> errors = ProductNameValidator.validate(name, true);
+        final List<String> errors = ProductNameValidator.validate(name, true);
         if (!errors.isEmpty()) {
             populateEditForm(model, product, errors, name, price, imageUrl, categoryId);
             return "product/edit";
         }
 
-        Category category = categoryRepository.findById(categoryId)
-            .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
-
-        product.update(name, price, imageUrl, category);
-        productRepository.save(product);
+        productService.updateProduct(id, name, price, imageUrl, categoryId, true);
         return "redirect:/admin/products";
     }
 
     @PostMapping("/{id}/delete")
     public String delete(@PathVariable Long id) {
-        productRepository.deleteById(id);
+        productService.deleteProduct(id);
         return "redirect:/admin/products";
     }
 
     private void populateNewForm(
-        Model model,
-        List<String> errors,
-        String name,
-        int price,
-        String imageUrl,
-        Long categoryId
-    ) {
+            Model model, List<String> errors, String name, int price, String imageUrl, Long categoryId) {
         model.addAttribute("errors", errors);
         model.addAttribute("name", name);
         model.addAttribute("price", price);
         model.addAttribute("imageUrl", imageUrl);
         model.addAttribute("categoryId", categoryId);
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("categories", categoryService.getCategories());
     }
 
     private void populateEditForm(
-        Model model,
-        Product product,
-        List<String> errors,
-        String name,
-        int price,
-        String imageUrl,
-        Long categoryId
-    ) {
+            Model model,
+            Product product,
+            List<String> errors,
+            String name,
+            int price,
+            String imageUrl,
+            Long categoryId) {
         model.addAttribute("errors", errors);
         model.addAttribute("product", product);
         model.addAttribute("name", name);
         model.addAttribute("price", price);
         model.addAttribute("imageUrl", imageUrl);
         model.addAttribute("categoryId", categoryId);
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("categories", categoryService.getCategories());
     }
 }
