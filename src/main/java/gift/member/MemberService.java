@@ -1,6 +1,7 @@
 package gift.member;
 
 import gift.auth.JwtProvider;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,10 +13,12 @@ import java.util.NoSuchElementException;
 public class MemberService {
     private final MemberRepository memberRepository;
     private final JwtProvider jwtProvider;
+    private final PasswordEncoder passwordEncoder;
 
-    public MemberService(MemberRepository memberRepository, JwtProvider jwtProvider) {
+    public MemberService(MemberRepository memberRepository, JwtProvider jwtProvider, PasswordEncoder passwordEncoder) {
         this.memberRepository = memberRepository;
         this.jwtProvider = jwtProvider;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional
@@ -23,7 +26,8 @@ public class MemberService {
         if (memberRepository.existsByEmail(request.email())) {
             throw new IllegalArgumentException("이미 등록된 이메일입니다.");
         }
-        Member member = memberRepository.save(new Member(request.email(), request.password()));
+        String encodedPassword = passwordEncoder.encode(request.password());
+        Member member = memberRepository.save(new Member(request.email(), encodedPassword));
         return jwtProvider.createToken(member.getEmail());
     }
 
@@ -31,7 +35,7 @@ public class MemberService {
         Member member = memberRepository.findByEmail(request.email())
             .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다."));
 
-        member.verifyPassword(request.password());
+        member.verifyPassword(request.password(), passwordEncoder);
 
         return jwtProvider.createToken(member.getEmail());
     }
@@ -50,13 +54,15 @@ public class MemberService {
         if (memberRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("이미 등록된 이메일입니다.");
         }
-        return memberRepository.save(new Member(email, password));
+        String encodedPassword = passwordEncoder.encode(password);
+        return memberRepository.save(new Member(email, encodedPassword));
     }
 
     @Transactional
     public Member updateMember(Long id, String email, String password) {
         Member member = getMember(id);
-        member.update(email, password);
+        String encodedPassword = passwordEncoder.encode(password);
+        member.update(email, encodedPassword);
         return memberRepository.save(member);
     }
 

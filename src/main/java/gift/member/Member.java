@@ -5,6 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.Getter;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Entity
 @Getter
@@ -41,8 +42,8 @@ public class Member {
         this.kakaoAccessToken = kakaoAccessToken;
     }
 
-    public void verifyPassword(String rawPassword) {
-        if (this.password == null || !this.password.equals(rawPassword)) {
+    public void verifyPassword(String rawPassword, PasswordEncoder passwordEncoder) {
+        if (this.password == null || !passwordEncoder.matches(rawPassword, this.password)) {
             throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
         }
     }
