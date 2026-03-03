@@ -8,8 +8,8 @@ plugins {
     id("org.flywaydb.flyway") version "12.0.1"
 }
 
-group = "camp.nextstep.edu"
-version = "0.0.1-SNAPSHOT"
+group = "com.deunlee.gift"
+version = "0.0.1"
 
 java {
     toolchain {
