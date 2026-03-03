@@ -18,14 +18,14 @@ public class OptionService {
     }
 
     public List<Option> getOptions(Long productId) {
-        validateProductExists(productId);
+        getProduct(productId);
         return optionRepository.findByProductId(productId);
     }
 
     public Option createOption(Long productId, OptionRequest request) {
         validateName(request.name());
 
-        Product product = validateProductExists(productId);
+        Product product = getProduct(productId);
 
         if (optionRepository.existsByProductIdAndName(productId, request.name())) {
             throw new IllegalArgumentException("이미 존재하는 옵션명입니다.");
@@ -35,7 +35,7 @@ public class OptionService {
     }
 
     public void deleteOption(Long productId, Long optionId) {
-        validateProductExists(productId);
+        getProduct(productId);
 
         List<Option> options = optionRepository.findByProductId(productId);
         if (options.size() <= 1) {
@@ -50,7 +50,7 @@ public class OptionService {
         optionRepository.delete(option);
     }
 
-    private Product validateProductExists(Long productId) {
+    private Product getProduct(Long productId) {
         return productRepository.findById(productId)
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
     }
