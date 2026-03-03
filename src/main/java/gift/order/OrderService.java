@@ -1,32 +1,30 @@
 package gift.order;
 
 import gift.member.Member;
-import gift.member.MemberRepository;
+import gift.member.MemberService;
 import gift.option.Option;
-import gift.option.OptionRepository;
+import gift.option.OptionService;
 import gift.product.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.NoSuchElementException;
-
 @Service
 public class OrderService {
     private final OrderRepository orderRepository;
-    private final OptionRepository optionRepository;
-    private final MemberRepository memberRepository;
+    private final OptionService optionService;
+    private final MemberService memberService;
     private final KakaoMessageClient kakaoMessageClient;
 
     public OrderService(
         OrderRepository orderRepository,
-        OptionRepository optionRepository,
-        MemberRepository memberRepository,
+        OptionService optionService,
+        MemberService memberService,
         KakaoMessageClient kakaoMessageClient
     ) {
         this.orderRepository = orderRepository;
-        this.optionRepository = optionRepository;
-        this.memberRepository = memberRepository;
+        this.optionService = optionService;
+        this.memberService = memberService;
         this.kakaoMessageClient = kakaoMessageClient;
     }
 
@@ -35,15 +33,10 @@ public class OrderService {
     }
 
     public Order createOrder(Member member, OrderRequest request) {
-        Option option = optionRepository.findById(request.optionId())
-            .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다. id=" + request.optionId()));
-
-        option.subtractQuantity(request.quantity());
-        optionRepository.save(option);
+        Option option = optionService.subtractQuantity(request.optionId(), request.quantity());
 
         int price = option.getProduct().getPrice() * request.quantity();
-        member.deductPoint(price);
-        memberRepository.save(member);
+        memberService.deductPoint(member.getId(), price);
 
         Order saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
 
