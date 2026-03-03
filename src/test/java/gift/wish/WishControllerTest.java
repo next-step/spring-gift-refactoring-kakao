@@ -90,6 +90,30 @@ class WishControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/wishes - 존재하지 않는 상품이면 404를 반환한다")
+    void addWishProductNotFound() {
+        given()
+            .header("Authorization", token)
+            .contentType(ContentType.JSON)
+            .body(Map.of("productId", 99999))
+        .when()
+            .post("/api/wishes")
+        .then()
+            .statusCode(404);
+    }
+
+    @Test
+    @DisplayName("DELETE /api/wishes/{id} - 존재하지 않는 위시면 404를 반환한다")
+    void removeWishNotFound() {
+        given()
+            .header("Authorization", token)
+        .when()
+            .delete("/api/wishes/99999")
+        .then()
+            .statusCode(404);
+    }
+
+    @Test
     @DisplayName("DELETE /api/wishes/{id} - 본인 위시를 삭제하면 204를 반환한다")
     void removeOwnWish() {
         // setup-data.sql에 wish id=1 (member=1, product=1) 존재

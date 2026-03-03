@@ -106,4 +106,37 @@ class OrderControllerTest {
         .then()
             .statusCode(404);
     }
+
+    @Test
+    @DisplayName("POST /api/orders - 재고보다 많은 수량을 주문하면 500을 반환한다")
+    void createOrderInsufficientStock() {
+        // setup-data.sql: option id=1, quantity=100
+        given()
+            .header("Authorization", token)
+            .contentType(ContentType.JSON)
+            .body(Map.of("optionId", 1, "quantity", 101, "message", "선물"))
+        .when()
+            .post("/api/orders")
+        .then()
+            .statusCode(500);
+    }
+
+    @Test
+    @DisplayName("POST /api/orders - 포인트가 부족하면 500을 반환한다")
+    @Sql(scripts = "/cleanup.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(scripts = "/setup-low-point.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(scripts = "/cleanup.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    void createOrderInsufficientPoints() {
+        // setup-low-point.sql: member point=500, product price=1000
+        // 1개 주문 → 1000원 > 500 포인트
+        String lowPointToken = "Bearer " + jwtProvider.createToken("lowpoint@test.com");
+        given()
+            .header("Authorization", lowPointToken)
+            .contentType(ContentType.JSON)
+            .body(Map.of("optionId", 1, "quantity", 1, "message", "선물"))
+        .when()
+            .post("/api/orders")
+        .then()
+            .statusCode(500);
+    }
 }

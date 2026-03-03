@@ -75,6 +75,18 @@ class OptionControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/products/{productId}/options - 존재하지 않는 상품이면 404를 반환한다")
+    void createOptionProductNotFound() {
+        given()
+            .contentType(ContentType.JSON)
+            .body(Map.of("name", "새 옵션", "quantity", 5))
+        .when()
+            .post("/api/products/99999/options")
+        .then()
+            .statusCode(404);
+    }
+
+    @Test
     @DisplayName("DELETE - 옵션이 2개 이상이면 삭제 후 204를 반환한다")
     void deleteOption() {
         // setup-data.sql에 옵션 2개 (id=1, id=2) 존재

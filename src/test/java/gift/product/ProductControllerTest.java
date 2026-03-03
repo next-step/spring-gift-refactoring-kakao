@@ -115,6 +115,57 @@ class ProductControllerTest {
     }
 
     @Test
+    @DisplayName("POST /api/products - 카카오가 포함된 이름이면 400을 반환한다")
+    void createProductWithKakaoName() {
+        given()
+            .contentType(ContentType.JSON)
+            .body(Map.of(
+                "name", "카카오 상품",
+                "price", 2000,
+                "imageUrl", "http://img.test/p.png",
+                "categoryId", 1
+            ))
+        .when()
+            .post("/api/products")
+        .then()
+            .statusCode(400);
+    }
+
+    @Test
+    @DisplayName("POST /api/products - 존재하지 않는 카테고리면 404를 반환한다")
+    void createProductCategoryNotFound() {
+        given()
+            .contentType(ContentType.JSON)
+            .body(Map.of(
+                "name", "새 상품",
+                "price", 2000,
+                "imageUrl", "http://img.test/p.png",
+                "categoryId", 99999
+            ))
+        .when()
+            .post("/api/products")
+        .then()
+            .statusCode(404);
+    }
+
+    @Test
+    @DisplayName("PUT /api/products/{id} - 존재하지 않는 상품이면 404를 반환한다")
+    void updateProductNotFound() {
+        given()
+            .contentType(ContentType.JSON)
+            .body(Map.of(
+                "name", "수정 상품",
+                "price", 3000,
+                "imageUrl", "http://img.test/p2.png",
+                "categoryId", 1
+            ))
+        .when()
+            .put("/api/products/99999")
+        .then()
+            .statusCode(404);
+    }
+
+    @Test
     @DisplayName("DELETE /api/products/{id} - 상품을 삭제하면 204를 반환한다")
     void deleteProduct() {
         // FK 제약 없는 상품을 생성 후 삭제
