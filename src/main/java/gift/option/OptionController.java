@@ -49,6 +49,20 @@ public class OptionController {
         }
     }
 
+    @PutMapping(path = "/{optionId}")
+    public ResponseEntity<OptionResponse> updateOption(
+        @PathVariable Long productId,
+        @PathVariable Long optionId,
+        @Valid @RequestBody OptionRequest request
+    ) {
+        try {
+            Option updated = optionService.updateOption(productId, optionId, request);
+            return ResponseEntity.ok(OptionResponse.from(updated));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @DeleteMapping(path = "/{optionId}")
     public ResponseEntity<Void> deleteOption(
         @PathVariable Long productId,

@@ -51,6 +51,22 @@ public class OptionService {
         optionRepository.delete(option);
     }
 
+    @Transactional
+    public Option updateOption(Long productId, Long optionId, OptionRequest request) {
+        findProduct(productId);
+
+        Option option = optionRepository.findById(optionId)
+            .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다."));
+        option.validateBelongsTo(productId);
+
+        if (optionRepository.existsByProductIdAndNameAndIdNot(productId, request.name(), optionId)) {
+            throw new IllegalArgumentException("이미 존재하는 옵션명입니다.");
+        }
+
+        option.update(request.name(), request.quantity());
+        return option;
+    }
+
     private Product findProduct(Long productId) {
         return productRepository.findById(productId)
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다."));

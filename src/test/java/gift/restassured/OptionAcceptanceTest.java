@@ -75,6 +75,35 @@ class OptionAcceptanceTest extends AcceptanceTest {
     }
 
     @Test
+    void 옵션을_수정하면_변경된_내용이_조회된다() {
+        Long categoryId = createCategory("전자기기");
+        Long productId = createProduct("아이폰 16", 1350000, categoryId);
+        Long optionId = createOption(productId, "블루 256GB", 30);
+
+        given()
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .body(Map.of(
+                "name", "블랙 512GB",
+                "quantity", 50
+            ))
+        .when()
+            .put("/api/products/{productId}/options/{optionId}", productId, optionId)
+        .then()
+            .statusCode(200)
+            .body("name", equalTo("블랙 512GB"))
+            .body("quantity", equalTo(50));
+
+        given()
+        .when()
+            .get("/api/products/{productId}/options", productId)
+        .then()
+            .statusCode(200)
+            .body(".", hasSize(1))
+            .body("[0].name", equalTo("블랙 512GB"))
+            .body("[0].quantity", equalTo(50));
+    }
+
+    @Test
     void 마지막_옵션은_삭제할_수_없다() {
         Long categoryId = createCategory("전자기기");
         Long productId = createProduct("아이폰 16", 1350000, categoryId);
