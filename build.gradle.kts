@@ -38,6 +38,10 @@ dependencies {
     runtimeOnly("com.mysql:mysql-connector-j")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.rest-assured:rest-assured")
+    testImplementation("io.cucumber:cucumber-java:7.20.1")
+    testImplementation("io.cucumber:cucumber-spring:7.20.1")
+    testImplementation("io.cucumber:cucumber-junit-platform-engine:7.20.1")
+    testImplementation("org.junit.platform:junit-platform-suite")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
