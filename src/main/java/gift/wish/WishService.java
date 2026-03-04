@@ -44,7 +44,7 @@ public class WishService {
         var wish = wishRepository.findById(wishId)
             .orElseThrow(() -> new NoSuchElementException("위시를 찾을 수 없습니다. id=" + wishId));
 
-        if (!wish.getMemberId().equals(memberId)) {
+        if (!wish.belongsToMember(memberId)) {
             throw new ForbiddenException("다른 회원의 위시를 삭제할 수 없습니다.");
         }
 
