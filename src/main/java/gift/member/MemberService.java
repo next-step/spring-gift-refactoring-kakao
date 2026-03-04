@@ -4,6 +4,8 @@ import gift.auth.JwtProvider;
 import gift.auth.TokenResponse;
 import org.springframework.stereotype.Service;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -55,12 +57,14 @@ public class MemberService {
         return memberRepository.save(member);
     }
 
+    @Transactional
     public void chargePoint(Long id, int amount) {
         Member member = findById(id);
         member.chargePoint(amount);
         memberRepository.save(member);
     }
 
+    @Transactional
     public void deductPoint(Long id, int amount) {
         Member member = findById(id);
         member.deductPoint(amount);
@@ -71,6 +75,7 @@ public class MemberService {
         memberRepository.deleteById(id);
     }
 
+    @Transactional
     public Member registerOrUpdateKakaoMember(String email, String kakaoAccessToken) {
         Member member = memberRepository.findByEmail(email)
             .orElseGet(() -> new Member(email));
