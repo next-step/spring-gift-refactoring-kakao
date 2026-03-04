@@ -1,5 +1,6 @@
 package gift.infrastructure.kakao;
 
+import gift.auth.AuthConstants;
 import gift.order.Order;
 import gift.product.Product;
 import org.springframework.http.HttpHeaders;
@@ -10,8 +11,6 @@ import org.springframework.web.client.RestClient;
 
 @Component
 public class KakaoMessageClient {
-  private static final String BEARER_PREFIX = "Bearer ";
-
   private final KakaoMessageProperties properties;
   private final RestClient restClient;
 
@@ -29,7 +28,7 @@ public class KakaoMessageClient {
     restClient
         .post()
         .uri(properties.sendUrl())
-        .header(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + accessToken)
+        .header(HttpHeaders.AUTHORIZATION, AuthConstants.BEARER_PREFIX + accessToken)
         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
         .body(params)
         .retrieve()

@@ -13,8 +13,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class AuthenticationResolver {
-  private static final String BEARER_PREFIX = "Bearer ";
-
   private final JwtProvider jwtProvider;
   private final MemberRepository memberRepository;
 
@@ -26,7 +24,7 @@ public class AuthenticationResolver {
 
   public Member extractMember(String authorization) {
     try {
-      final String token = authorization.replace(BEARER_PREFIX, "");
+      final String token = authorization.replace(AuthConstants.BEARER_PREFIX, "");
       final String email = jwtProvider.getEmail(token);
       return memberRepository.findByEmail(email).orElse(null);
     } catch (Exception e) {

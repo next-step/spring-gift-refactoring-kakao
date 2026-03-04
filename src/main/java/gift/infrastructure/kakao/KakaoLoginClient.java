@@ -2,6 +2,7 @@ package gift.infrastructure.kakao;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import gift.auth.AuthConstants;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -10,8 +11,6 @@ import org.springframework.web.client.RestClient;
 
 @Component
 public class KakaoLoginClient {
-  private static final String BEARER_PREFIX = "Bearer ";
-
   private final KakaoLoginProperties properties;
   private final RestClient restClient;
 
@@ -41,7 +40,7 @@ public class KakaoLoginClient {
     return restClient
         .get()
         .uri(properties.userInfoUrl())
-        .header(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + accessToken)
+        .header(HttpHeaders.AUTHORIZATION, AuthConstants.BEARER_PREFIX + accessToken)
         .retrieve()
         .body(KakaoUserResponse.class);
   }
