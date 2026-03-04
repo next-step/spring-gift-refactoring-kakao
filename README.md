@@ -60,6 +60,9 @@
 - [x] 가격 계산 로직을 `Order` 생성자로 이동 — `OrderService`와 `KakaoMessageClient`의 중복 계산 제거
 - [x] `KakaoMessageClient.sendToMe()`에서 `Product` 파라미터 제거 — 호출부 단순화
 - [x] 인증 중복 코드 제거 — `@LoginMember` + `HandlerMethodArgumentResolver`로 5개 메서드의 null 체크 패턴 제거
+- [x] Tell Don't Ask 원칙 적용 — `Wish.validateOwnership()`, `Member.canReceiveKakaoMessage()`, `Option.validateBelongsTo()` 3개 도메인 메서드 추가
+- [x] 메서드 이름 개선 — `handleCallback()` → `authenticateWithKakao()`, `buildKakaoAuthUrl()` → `getKakaoAuthorizationUrl()`, `validateProductName()` → `getProductNameErrors()`
+- [x] Law of Demeter 위반 해소 — `Product.getCategoryId()`, `Order.getOptionId()/getOptionName()/getProductName()` 위임 메서드 추가
 
 ### 구현 전략
 1. TDD: 테스트 먼저 작성 → 구현 → 리팩터
@@ -69,4 +72,8 @@
 5. 인터페이스 활용 가능성을 매 단계마다 검토
 
 ### AI 활용 기록
-- (작업 진행에 따라 기록)
+- Claude Code로 코드베이스 전체 분석 (Tell Don't Ask 위반, 메서드 이름 부적합, Demeter 위반 탐색)
+- 리팩터링 계획 및 ADR 초안 작성에 활용
+- TDD 테스트 코드 생성 후 직접 검토/수정
+- Spring Data JPA 파생 쿼리와 엔티티 위임 메서드 충돌 문제 발견 및 해결 (ADR-005 참고)
+- 매 단계마다 전체 테스트(107개) 통과 확인
