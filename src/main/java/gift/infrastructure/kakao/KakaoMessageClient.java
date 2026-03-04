@@ -15,8 +15,6 @@ import org.springframework.web.client.RestClient;
 @Slf4j
 @Component
 public class KakaoMessageClient {
-  private static final String KAKAO_SEND_MESSAGE_URL =
-      "https://kapi.kakao.com/v2/api/talk/memo/default/send";
   private static final String BEARER_PREFIX = "Bearer ";
 
   private final RestClient restClient;
@@ -34,7 +32,7 @@ public class KakaoMessageClient {
 
     restClient
         .post()
-        .uri(KAKAO_SEND_MESSAGE_URL)
+        .uri(KakaoUrls.SEND_MESSAGE)
         .header(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + accessToken)
         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
         .body(params)
