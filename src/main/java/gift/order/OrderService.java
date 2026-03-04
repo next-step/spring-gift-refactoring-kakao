@@ -5,8 +5,9 @@ import gift.member.Member;
 import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
-import gift.product.Product;
 import java.util.NoSuchElementException;
+
+import gift.product.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -63,10 +64,7 @@ public class OrderService {
     if (member.getKakaoAccessToken() == null) {
       return;
     }
-    try {
-      Product product = option.getProduct();
-      kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
-    } catch (Exception ignored) {
-    }
+    Product product = option.getProduct();
+    kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
   }
 }

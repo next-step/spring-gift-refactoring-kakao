@@ -2,12 +2,17 @@ package gift.infrastructure.kakao;
 
 import gift.order.Order;
 import gift.product.Product;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClient;
 
+@Slf4j
 @Component
 public class KakaoMessageClient {
   private static final String KAKAO_SEND_MESSAGE_URL =
@@ -20,6 +25,7 @@ public class KakaoMessageClient {
     this.restClient = builder.build();
   }
 
+  @Retryable(retryFor = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 500))
   public void sendToMe(String accessToken, Order order, Product product) {
     String templateObject = buildTemplate(order, product);
 
@@ -34,6 +40,12 @@ public class KakaoMessageClient {
         .body(params)
         .retrieve()
         .toBodilessEntity();
+  }
+
+  @Recover
+  public void recover(Exception e, String accessToken, Order order, Product product) {
+    log.error("카카오 메시지 전송 실패 (3회 재시도 소진) orderId={}", order.getId(), e);
+    throw new KakaoMessageException("카카오 메시지 전송에 실패했습니다.", e);
   }
 
   private String buildTemplate(Order order, Product product) {
