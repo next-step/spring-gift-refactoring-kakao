@@ -1,5 +1,6 @@
 package gift.wish;
 
+import gift.ForbiddenException;
 import gift.product.Product;
 import gift.product.ProductRepository;
 import java.util.NoSuchElementException;
@@ -24,23 +25,24 @@ public class WishService {
         return wishRepository.findByMemberId(memberId, pageable);
     }
 
-    public Optional<Wish> findByMemberAndProduct(Long memberId, Long productId) {
-        return wishRepository.findByMemberIdAndProductId(memberId, productId);
-    }
-
     @Transactional
-    public Wish createWish(Long memberId, Long productId) {
+    public Wish addWish(Long memberId, Long productId) {
+        final Optional<Wish> existing = wishRepository.findByMemberIdAndProductId(memberId, productId);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
         final Product product =
                 productRepository.findById(productId).orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다."));
         return wishRepository.save(new Wish(memberId, product));
     }
 
-    public Wish findById(Long id) {
-        return wishRepository.findById(id).orElseThrow(() -> new NoSuchElementException("위시가 존재하지 않습니다."));
-    }
-
     @Transactional
-    public void removeWish(Long id) {
-        wishRepository.deleteById(id);
+    public void removeWish(Long wishId, Long memberId) {
+        final Wish wish =
+                wishRepository.findById(wishId).orElseThrow(() -> new NoSuchElementException("위시가 존재하지 않습니다."));
+        if (!wish.isOwnedBy(memberId)) {
+            throw new ForbiddenException("본인의 위시만 삭제할 수 있습니다.");
+        }
+        wishRepository.deleteById(wishId);
     }
 }

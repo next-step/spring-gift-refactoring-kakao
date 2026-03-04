@@ -4,10 +4,8 @@ import gift.auth.AuthMember;
 import gift.member.Member;
 import jakarta.validation.Valid;
 import java.net.URI;
-import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,24 +33,13 @@ public class WishController {
 
     @PostMapping
     public ResponseEntity<WishResponse> addWish(@AuthMember Member member, @Valid @RequestBody WishRequest request) {
-        final Optional<Wish> existing = wishService.findByMemberAndProduct(member.getId(), request.productId());
-        if (existing.isPresent()) {
-            return ResponseEntity.ok(WishResponse.from(existing.get()));
-        }
-
-        final Wish saved = wishService.createWish(member.getId(), request.productId());
-        return ResponseEntity.created(URI.create("/api/wishes/" + saved.getId()))
-                .body(WishResponse.from(saved));
+        final Wish wish = wishService.addWish(member.getId(), request.productId());
+        return ResponseEntity.created(URI.create("/api/wishes/" + wish.getId())).body(WishResponse.from(wish));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> removeWish(@AuthMember Member member, @PathVariable Long id) {
-        final Wish wish = wishService.findById(id);
-        if (!wish.isOwnedBy(member.getId())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-
-        wishService.removeWish(id);
+        wishService.removeWish(id, member.getId());
         return ResponseEntity.noContent().build();
     }
 }
