@@ -46,10 +46,6 @@ public class Order {
         return option;
     }
 
-    public Long getMemberId() {
-        return memberId;
-    }
-
     public int getQuantity() {
         return quantity;
     }

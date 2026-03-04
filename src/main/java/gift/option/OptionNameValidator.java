@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
  * - Maximum length of 50 characters (including spaces)
  * - Only Korean, English, digits, spaces, and selected special characters are allowed: ( ) [ ] + - & / _
  */
-public class OptionNameValidator {
+class OptionNameValidator {
     private static final int MAX_LENGTH = 50;
     private static final Pattern ALLOWED_PATTERN =
         Pattern.compile("^[a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ ()\\[\\]+\\-&/_]*$");

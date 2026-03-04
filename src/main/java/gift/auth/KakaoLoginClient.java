@@ -7,7 +7,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClient;
 
 @Component
-public class KakaoLoginClient {
+class KakaoLoginClient {
     private final KakaoLoginProperties properties;
     private final RestClient restClient;
 

@@ -2,7 +2,8 @@ package gift.auth;
 
 import gift.member.Member;
 import gift.member.MemberRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
@@ -13,10 +14,11 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class AuthenticationResolver {
+    private static final Logger log = LoggerFactory.getLogger(AuthenticationResolver.class);
+
     private final JwtProvider jwtProvider;
     private final MemberRepository memberRepository;
 
-    @Autowired
     public AuthenticationResolver(JwtProvider jwtProvider, MemberRepository memberRepository) {
         this.jwtProvider = jwtProvider;
         this.memberRepository = memberRepository;
@@ -28,6 +30,7 @@ public class AuthenticationResolver {
             final String email = jwtProvider.getEmail(token);
             return memberRepository.findByEmail(email).orElse(null);
         } catch (Exception e) {
+            log.debug("인증 토큰 파싱 실패: {}", e.getMessage());
             return null;
         }
     }
