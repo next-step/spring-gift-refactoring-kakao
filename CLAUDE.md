@@ -4,7 +4,7 @@
 
 ## 현재 작업
 
-**Step 2: 작동 변경** 진행 중. 상세 계획은 `docs/step2-plan.md`, 체크리스트는 `README.md`, ADR은 `docs/step2-adr.md` 참조.
+**Step 2: 작동 변경** 완료, 리뷰 반영 대기 중. 상세 계획은 `docs/step2-plan.md`, 체크리스트는 `README.md`, ADR은 `docs/step2-adr.md` 참조.
 
 ## Step 2 목표
 
@@ -65,7 +65,7 @@
 
 **데이터베이스:** H2 (개발/테스트), MySQL (운영). Flyway로 마이그레이션 관리 (`src/main/resources/db/migration/`)
 
-**인증:** JWT 토큰 (jjwt) + 카카오 OAuth2. `AuthenticationResolver`가 `Authorization` 헤더에서 회원 정보를 추출한다.
+**인증:** JWT 토큰 (jjwt) + 카카오 OAuth2. `AuthenticationResolver`(`HandlerMethodArgumentResolver`)가 `Authorization` 헤더에서 회원 정보를 추출하여 컨트롤러 `Member` 파라미터에 주입한다.
 
 ### 레이어 구조
 
