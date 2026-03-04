@@ -396,6 +396,148 @@ REST API(`/api/...`)의 예외 처리를 일원화한다. View 컨트롤러(`/ad
 
 ---
 
+## 7단계: KakaoMessageClient가 Option을 받도록 변경 (구조 변경 — 도메인 책임)
+
+`KakaoMessageClient.sendToMe(accessToken, order, product)` → `sendToMe(accessToken, order, option)`으로 시그니처를 변경한다.
+
+**개선 효과:**
+1. **가격 계산 중복 제거** — `product.getPrice() * order.getQuantity()` → `option.calculateTotalPrice(order.getQuantity())` (4단계에서 만든 도메인 메서드 재사용)
+2. **디미터 법칙 개선** — `order.getOption().getName()` → `option.getName()` (Order를 거치지 않고 직접 접근)
+3. **호출부 단순화** — `OrderService.sendKakaoMessageIfPossible`에서 `Product product = option.getProduct();` 라인 제거
+
+**변경 전:**
+```java
+// OrderService
+Product product = option.getProduct();
+kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
+
+// KakaoMessageClient
+public void sendToMe(String accessToken, Order order, Product product) { ... }
+private String buildTemplate(Order order, Product product) {
+    String totalPrice = String.format("%,d", product.getPrice() * order.getQuantity());  // 중복 계산
+    ...order.getOption().getName()...  // 디미터 법칙 위반
+}
+```
+
+**변경 후:**
+```java
+// OrderService
+kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, option);
+
+// KakaoMessageClient
+public void sendToMe(String accessToken, Order order, Option option) { ... }
+private String buildTemplate(Order order, Option option) {
+    String totalPrice = String.format("%,d", option.calculateTotalPrice(order.getQuantity()));  // 도메인 메서드 재사용
+    ...option.getName()...  // 직접 접근
+}
+```
+
+**변경 파일:**
+- `src/main/java/gift/order/KakaoMessageClient.java` — 시그니처 변경 + 내부 로직 수정
+- `src/main/java/gift/order/OrderService.java` — `Product` 추출 라인 제거, `option` 직접 전달
+
+**검증:** 기존 테스트 전체 통과. 외부 관찰 가능한 작동 변화 없음 (순수 구조 변경).
+
+---
+
+## 8단계: 인증 null 체크 반복 제거 — HandlerMethodArgumentResolver 도입 (구조 변경 — 도메인 책임)
+
+`OrderController`(2곳) + `WishController`(3곳)에서 동일한 인증 패턴이 5회 반복된다:
+
+```java
+Member member = authenticationResolver.extractMember(authorization);
+if (member == null) {
+    return ResponseEntity.status(401).build();
+}
+```
+
+Spring의 `HandlerMethodArgumentResolver`를 구현해 컨트롤러 메서드가 `Member`를 직접 파라미터로 받도록 변경한다.
+
+**변경:**
+- `AuthenticationResolver`를 `HandlerMethodArgumentResolver`로 전환 — `Member` 타입 파라미터를 자동 주입
+- 인증 실패 시 예외를 던져 `GlobalExceptionHandler`가 401을 반환하도록 처리
+- `WebMvcConfigurer`에 resolver 등록
+- `OrderController`, `WishController`에서 `@RequestHeader("Authorization")` + null 체크 제거, `Member` 파라미터로 교체
+
+**변경 전:**
+```java
+// OrderController, WishController (5곳 반복)
+@GetMapping
+public ResponseEntity<?> getOrders(
+    @RequestHeader("Authorization") String authorization,
+    Pageable pageable
+) {
+    Member member = authenticationResolver.extractMember(authorization);
+    if (member == null) {
+        return ResponseEntity.status(401).build();
+    }
+    // ...
+}
+```
+
+**변경 후:**
+```java
+// OrderController, WishController
+@GetMapping
+public ResponseEntity<?> getOrders(Member member, Pageable pageable) {
+    // member는 ArgumentResolver가 주입, 인증 실패 시 예외 → 401
+    // ...
+}
+```
+
+**변경 파일:**
+- `src/main/java/gift/auth/AuthenticationResolver.java` — `HandlerMethodArgumentResolver` 구현
+- `src/main/java/gift/config/WebMvcConfig.java` (신규 또는 기존) — resolver 등록
+- `src/main/java/gift/order/OrderController.java` — 인증 코드 제거, `Member` 파라미터
+- `src/main/java/gift/wish/WishController.java` — 인증 코드 제거, `Member` 파라미터
+
+**검증:** 기존 인증 테스트(`getOrdersUnauthenticated` → 401, `createOrderUnauthenticated` → 401 등) 전체 통과.
+
+---
+
+## 9단계: AdminProductController 상품명 검증 중복 제거 (구조 변경 — 도메인 책임)
+
+`AdminProductController`의 `create()`과 `update()`에서 `ProductNameValidator.validate(name, true)`를 직접 호출한 뒤, `ProductService.create()`/`update()`가 다시 `validateName(name)`을 호출한다. 검증이 **2회 중복 실행**되며, `allowKakao` 파라미터도 불일치한다:
+
+- **컨트롤러:** `ProductNameValidator.validate(name, true)` — 카카오 허용
+- **서비스:** `ProductNameValidator.validate(name)` → `validate(name, false)` — 카카오 불허
+
+컨트롤러에서 검증을 제거하고 서비스에 `allowKakao` 파라미터를 전달하도록 변경한다.
+
+**변경 전:**
+```java
+// AdminProductController.create()
+List<String> errors = ProductNameValidator.validate(name, true);  // 컨트롤러에서 검증
+if (!errors.isEmpty()) { ... }
+productService.create(name, price, imageUrl, categoryId);  // 서비스에서 또 검증
+
+// ProductService
+public Product create(String name, ...) {
+    validateName(name);  // allowKakao=false로 중복 검증
+    ...
+}
+```
+
+**변경 후:**
+```java
+// AdminProductController.create()
+productService.create(name, price, imageUrl, categoryId, true);  // allowKakao 전달
+
+// ProductService
+public Product create(String name, ..., boolean allowKakao) {
+    validateName(name, allowKakao);  // 한 번만 검증
+    ...
+}
+```
+
+**변경 파일:**
+- `src/main/java/gift/product/ProductService.java` — `validateName`에 `allowKakao` 파라미터 추가, `create`/`update` 시그니처 변경
+- `src/main/java/gift/product/AdminProductController.java` — 컨트롤러 레벨 검증 제거, 서비스에 `allowKakao` 전달
+
+**검증:** 기존 테스트 전체 통과. admin에서 "카카오" 포함 상품명 생성 가능 여부 확인.
+
+---
+
 ## 검증
 
 매 단계 완료 후 `./gradlew test` 전체 통과 확인.
