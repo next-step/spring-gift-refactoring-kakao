@@ -191,3 +191,30 @@
 - **커밋 6**: BEARER_PREFIX 3곳 중복 → AuthConstants 공통 상수 클래스로 통합
 - **커밋 7**: OptionService.createRaw() 제거, SeedOptionController에서 create() 사용
 - 매 커밋마다 `./gradlew spotlessApply build` 성공 확인
+
+## 세션: 2026-03-04 — Step2 리팩터링 완성하기
+
+### 프롬프트 1: Step2 구현 계획 수립 (Plan 모드)
+> Step2 과제 요구사항(트랜잭션 경계, 누락 기능, 도메인 책임)에 대한 구현 계획 수립
+
+- 구조 변경 4건(S8~S11) + 작동 변경 3건(B1~B3) + ADR 2건 계획
+- 각 커밋의 파일, 코드 변경, 검증 방법을 상세 설계
+- "구조 변경은 refactor:, 작동 변경은 fix:/feat:/test:" 라벨 분리 원칙 적용
+
+### 프롬프트 2: Step2 구현 실행
+> Implement the following plan: (Step2 전체 실행)
+
+**구조 변경 (작동 불변):**
+- **S8**: `Option.calculateTotalPrice(quantity)` 추가, `OrderService`에서 `option.getProduct().getPrice() * quantity` → `option.calculateTotalPrice(quantity)` (디미터 법칙 해소)
+- **S9**: `WishService.removeByMemberAndProduct(memberId, productId)` 추가 (B2 준비)
+- **S10**: `OrderService`의 `MemberRepository` → `MemberService` 전환 (계층 의존 정리)
+- **S11**: `catch (Exception ignored)` → `log.warn()` 경고 로깅 추가 (운영 가시성)
+
+**작동 변경 (증거 포함):**
+- **B1**: `NoSuchElementException` → 404 변경, G4 테스트 기대값 수정, ADR-001 작성
+- **B2**: 주문 시 위시 자동 정리 (`OrderService`에 `WishService` 연동), G6 테스트 + Cucumber 시나리오 + GiftSteps 3개 추가, ADR-002 작성
+- **B3**: 트랜잭션 경계 검증 (포인트 부족 시 재고 rollback), G7 테스트 + Cucumber 시나리오 + GiftSteps 2개 추가, test-data.sql에 poor 회원 추가
+
+**문서:**
+- `PLAN.md` 생성 및 완료 상태 업데이트
+- 매 커밋마다 `./gradlew spotlessApply build` 성공 확인
