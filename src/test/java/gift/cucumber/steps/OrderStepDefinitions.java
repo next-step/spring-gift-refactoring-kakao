@@ -43,6 +43,15 @@ public class OrderStepDefinitions {
         token = jwtProvider.createToken(TEST_EMAIL);
     }
 
+    @조건("유효하지 않은 카카오 토큰이 있고 포인트가 {int}인 회원이 존재한다")
+    public void 유효하지_않은_카카오_토큰이_있고_포인트가_n인_회원이_존재한다(int point) {
+        jdbcTemplate.update(
+            "INSERT INTO member (email, password, point, kakao_access_token) VALUES (?, ?, ?, ?)",
+            TEST_EMAIL, TEST_PASSWORD, point, "invalid-token"
+        );
+        token = jwtProvider.createToken(TEST_EMAIL);
+    }
+
     @조건("{string} 옵션의 가격이 {int}원이고 재고가 {int}개 있다")
     public void 옵션의_가격이_n원이고_재고가_n개_있다(String optionName, int price, int stock) {
         jdbcTemplate.update(
@@ -115,5 +124,13 @@ public class OrderStepDefinitions {
             "SELECT quantity FROM options WHERE id = ?", Integer.class, optionId
         );
         assertThat(actual).isEqualTo(expectedStock);
+    }
+
+    @그러면("회원의 포인트가 {int}이다")
+    public void 회원의_포인트가_n이다(int expectedPoint) {
+        Integer actual = jdbcTemplate.queryForObject(
+            "SELECT point FROM member WHERE email = ?", Integer.class, TEST_EMAIL
+        );
+        assertThat(actual).isEqualTo(expectedPoint);
     }
 }

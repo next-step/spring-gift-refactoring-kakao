@@ -57,10 +57,7 @@ public class OrderService {
         if (!member.canSendKakaoMessage()) {
             return;
         }
-        try {
-            var product = option.getProduct();
-            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
-        } catch (Exception ignored) {
-        }
+        var product = option.getProduct();
+        kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
     }
 }
