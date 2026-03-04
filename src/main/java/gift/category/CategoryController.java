@@ -24,6 +24,12 @@ public class CategoryController {
         return ResponseEntity.ok(categories);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<CategoryResponse> getCategory(@PathVariable Long id) {
+        Category category = categoryService.getCategory(id);
+        return ResponseEntity.ok(CategoryResponse.from(category));
+    }
+
     @PostMapping
     public ResponseEntity<CategoryResponse> createCategory(@Valid @RequestBody CategoryRequest request) {
         Category saved = categoryService.createCategory(request);

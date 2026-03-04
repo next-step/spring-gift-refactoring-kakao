@@ -19,6 +19,11 @@ public class CategoryService {
         return categoryRepository.findAll();
     }
 
+    public Category getCategory(Long id) {
+        return categoryRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("카테고리가 존재하지 않습니다."));
+    }
+
     @Transactional
     public Category createCategory(CategoryRequest request) {
         return categoryRepository.save(request.toEntity());
@@ -26,14 +31,14 @@ public class CategoryService {
 
     @Transactional
     public Category updateCategory(Long id, CategoryRequest request) {
-        Category category = categoryRepository.findById(id)
-            .orElseThrow(() -> new EntityNotFoundException("카테고리가 존재하지 않습니다."));
+        Category category = getCategory(id);
         category.update(request.name(), request.color(), request.imageUrl(), request.description());
         return categoryRepository.save(category);
     }
 
     @Transactional
     public void deleteCategory(Long id) {
+        getCategory(id);
         categoryRepository.deleteById(id);
     }
 }
