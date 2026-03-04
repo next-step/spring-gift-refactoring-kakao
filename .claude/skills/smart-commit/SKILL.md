@@ -63,7 +63,8 @@ Pre-commit 훅이 실패한 경우:
 ## 커밋 메시지 형식
 - Conventional Commits 스펙을 따른다.
 - `<type>(<scope>): <subject>`
-- body는 작성하지 않는다. subject만으로 변경 내용을 충분히 전달한다.
+- subject는 간결하게 핵심만 작성한다.
+- body에 변경 내용의 상세 설명을 작성한다.
 
 ### type
 | type | 이모지 | 용도 |
@@ -92,10 +93,18 @@ Pre-commit 훅이 실패한 경우:
 - 명령형 현재 시제 사용: "추가" (O) / "추가함" (X) / "추가했음" (X)
 - 첫 글자 소문자 (type과 scope는 영어, subject는 한국어)
 - 끝에 마침표 없음
+- 간결하게 핵심 변경사항만 한 줄로 요약
+
+### body
+- subject와 한 줄 빈 줄로 구분
+- 한국어로 작성
+- 무엇을 왜 변경했는지 설명
+- 필요시 여러 줄로 작성 가능 (각 항목은 `-`로 시작)
+- 구현 세부사항이나 변경 이유를 포함
 
 ### Breaking Change
 기존 API나 동작을 깨뜨리는 변경이 있으면:
-- type 뒤에 `!`를 붙인다: `feat(api)!: 상품 응답 필드명 변경`
+- type 뒤에 `!`를 붙인다: `feat(api)! 상품 응답 필드명 변경`
 - 필요시 커밋 메시지 푸터에 `BREAKING CHANGE: 설명`을 추가한다
 
 ### 이슈 참조
@@ -104,14 +113,26 @@ Pre-commit 훅이 실패한 경우:
 - `Closes #123` — 해당 커밋으로 이슈가 해결되는 경우
 
 ### 메시지 예시
-- feat(product): 상품 엔티티 및 레포지토리 추가
-- feat(auth): JWT 토큰 생성 및 검증 기능 추가
-- fix(order): 포인트 차감 시 동시성 문제 수정
-- perf(product): 상품 목록 조회 N+1 쿼리 개선
-- refactor(wish): 위시리스트 서비스 계층 분리
-- build: Gradle 의존성 설정
-- feat(api)!: 상품 응답 필드명 변경
-- docs: 프로젝트 문서 작성
+```
+feat(product): 상품 엔티티 및 레포지토리 추가
+
+- Product 엔티티와 JpaRepository 기반 레포지토리 생성
+- 상품명, 가격, 이미지URL 필드 정의
+```
+
+```
+fix(order): 포인트 차감 시 동시성 문제 수정
+
+- 비관적 락을 적용하여 동시 차감 시 데이터 정합성 보장
+- 기존 단순 조회 후 업데이트 방식에서 SELECT FOR UPDATE로 변경
+```
+
+```
+refactor(wish): 위시리스트 서비스 계층 분리
+
+- Controller에서 직접 처리하던 비즈니스 로직을 Service로 이동
+- 단일 책임 원칙에 따라 계층 분리
+```
 
 
 ---
