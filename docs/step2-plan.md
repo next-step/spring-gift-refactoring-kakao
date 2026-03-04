@@ -117,9 +117,11 @@ void createOrderDeletesWish() {
 
 **Red 이유:** 현재 `OrderService`에 `// TODO: cleanup wish` 주석만 있고 구현이 없다.
 
-### 0-4: Option.calculateTotalPrice 단위 테스트 (→ 4단계)
+### 0-4: Option.calculateTotalPrice 단위 테스트 (→ 4단계에서 메서드와 함께 작성)
 
-`OptionTest.java` 신규 생성.
+메서드가 존재하지 않으면 컴파일 에러로 전체 테스트 빌드가 깨지므로, 4단계에서 `Option.calculateTotalPrice()` 구현과 함께 작성한다.
+
+기존 `OptionTest.java`에 추가.
 
 ```java
 package gift.option;

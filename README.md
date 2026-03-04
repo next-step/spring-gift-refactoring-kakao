@@ -137,12 +137,12 @@ Step 1에서 정리한 구조 위에 작동 변경을 수행한다. 모든 변�
 **테스트 전략:** Mock 기반 서비스 단위 테스트(`@Mock` + `@InjectMocks`)는 사용하지 않는다. Mock 테스트는 "메서드가 호출됐는지"만 확인할 뿐, "실제로 DB 상태가 바뀌었는지"는 알 수 없다. 이 프로젝트의 검증 원칙은 **"상태를 재조회하여 검증"**이므로, 실제 DB를 사용하는 통합 테스트(`@SpringBootTest` + `@Sql`)와 외부 의존성 없는 도메인 단위 테스트로 구성한다. 단, 외부 API(`KakaoLoginClient`)처럼 테스트 환경에서 호출할 수 없는 의존성은 `@MockBean`으로 대체한다.
 
 **통합 테스트:**
-- [ ] `OrderControllerTest` — 포인트 부족 시 재고 롤백 검증 (→ 1단계)
-- [ ] `KakaoAuthServiceTest` — 신규/기존 회원 카카오 로그인 검증, `KakaoLoginClient`만 `@MockBean` (→ 1단계)
-- [ ] `OrderControllerTest` — 주문 생성 후 위시 자동 삭제 검증 (→ 2단계)
+- [x] `OrderControllerTest` — 포인트 부족 시 재고 롤백 검증 (→ 1단계) — Red: `@Transactional` 없어 재고 롤백 안 됨
+- [x] `KakaoAuthServiceTest` — 신규/기존 회원 카카오 로그인 검증, `KakaoLoginClient`만 `@MockitoBean` (→ 1단계) — Green: 기존 기능 검증 안전망
+- [x] `OrderControllerTest` — 주문 생성 후 위시 자동 삭제 검증 (→ 2단계) — Red: `// TODO: cleanup wish` 미구현
 
 **도메인 단위 테스트:**
-- [ ] `OptionTest` — `calculateTotalPrice` 단위 테스트 (→ 4단계)
+- [ ] `OptionTest` — `calculateTotalPrice` 단위 테스트 (→ 4단계) — 메서드 미존재로 컴파일 에러, 4단계에서 작성
 
 #### 1단계: @Transactional 적용
 
