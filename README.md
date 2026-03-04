@@ -65,6 +65,12 @@
   - AuthenticationResolver: MemberRepository → MemberService
 - ProductService에 getById(), MemberService에 findByEmail() 추가
 
+#### Commit 10 [구조] 가격 계산을 Order 도메인으로 이동
+
+- OrderService, KakaoMessageClient에 중복된 `price * quantity` 계산 → Order.getTotalPrice()로 통합
+- KakaoMessageClient.sendToMe()에서 Product 파라미터 제거 (Order를 통해 접근)
+- 호출부 단순화: OrderService.sendKakaoMessageIfPossible() 파라미터 3개 → 2개
+
 ---
 
 ## AI 활용 과정

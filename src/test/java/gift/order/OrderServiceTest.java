@@ -96,7 +96,7 @@ class OrderServiceTest {
         given(optionService.subtractQuantity(1L, 1)).willReturn(option);
         given(orderRepository.save(any(Order.class))).willAnswer(invocation -> invocation.getArgument(0));
         willThrow(new RuntimeException("카카오 API 오류"))
-            .given(kakaoMessageClient).sendToMe(any(), any(), any());
+            .given(kakaoMessageClient).sendToMe(any(), any());
 
         OrderRequest request = new OrderRequest(1L, 1, null);
 

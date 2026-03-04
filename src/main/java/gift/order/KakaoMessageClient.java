@@ -1,6 +1,5 @@
 package gift.order;
 
-import gift.product.Product;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClient;
@@ -13,8 +12,8 @@ public class KakaoMessageClient {
         this.restClient = builder.build();
     }
 
-    public void sendToMe(String accessToken, Order order, Product product) {
-        var templateObject = buildTemplate(order, product);
+    public void sendToMe(String accessToken, Order order) {
+        var templateObject = buildTemplate(order);
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("template_object", templateObject);
@@ -28,8 +27,9 @@ public class KakaoMessageClient {
             .toBodilessEntity();
     }
 
-    private String buildTemplate(Order order, Product product) {
-        var totalPrice = String.format("%,d", product.getPrice() * order.getQuantity());
+    private String buildTemplate(Order order) {
+        var product = order.getOption().getProduct();
+        var totalPrice = String.format("%,d", order.getTotalPrice());
         var message = order.getMessage() != null && !order.getMessage().isBlank()
             ? "\\n\\n💌 " + order.getMessage()
             : "";

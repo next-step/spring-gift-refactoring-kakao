@@ -4,7 +4,6 @@ import gift.member.Member;
 import gift.member.MemberService;
 import gift.option.Option;
 import gift.option.OptionService;
-import gift.product.Product;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -41,22 +40,21 @@ public class OrderService {
     public Order createOrder(Member member, OrderRequest request) {
         Option option = optionService.subtractQuantity(request.optionId(), request.quantity());
 
-        int price = option.getProduct().getPrice() * request.quantity();
-        memberService.deductPoint(member.getId(), price);
+        Order order = new Order(option, member.getId(), request.quantity(), request.message());
+        memberService.deductPoint(member.getId(), order.getTotalPrice());
 
-        Order saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
+        Order saved = orderRepository.save(order);
 
-        sendKakaoMessageIfPossible(member, saved, option);
+        sendKakaoMessageIfPossible(member, saved);
         return saved;
     }
 
-    private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {
+    private void sendKakaoMessageIfPossible(Member member, Order order) {
         if (member.getKakaoAccessToken() == null) {
             return;
         }
         try {
-            Product product = option.getProduct();
-            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
+            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order);
         } catch (Exception e) {
             log.warn("카카오 메시지 전송 실패: orderId={}, memberId={}", order.getId(), member.getId(), e);
         }
