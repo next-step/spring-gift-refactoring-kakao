@@ -61,7 +61,7 @@
 - [x] refactor: 전체 Service @Transactional 현황 검증 및 누락 확인
 - [x] refactor: 클래스 레벨 vs 메서드 레벨 @Transactional 전략 결정 및 적용
 #### 작동 변경 (feat 커밋 — 상태 재조회 테스트 필수)
-- [ ] feat: 복합 쓰기 연산(OrderService.createOrder 등)에 원자적 트랜잭션 적용
+- [x] test: 복합 쓰기 연산(OrderService.createOrder)의 원자적 트랜잭션 검증
 
 ## 구현 전략
 
