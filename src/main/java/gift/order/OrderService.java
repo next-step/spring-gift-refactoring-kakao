@@ -5,7 +5,6 @@ import gift.member.Member;
 import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
-import gift.product.Product;
 import java.util.NoSuchElementException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -54,16 +53,8 @@ public class OrderService {
 
     Order saved = orderRepository.save(new Order(option, memberId, quantity, message));
 
-    sendKakaoMessageIfPossible(member, saved, option);
+    kakaoMessageClient.send(member, saved, option);
 
     return saved;
-  }
-
-  private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {
-    if (member.getKakaoAccessToken() == null) {
-      return;
-    }
-    Product product = option.getProduct();
-    kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
   }
 }
