@@ -3,10 +3,12 @@ package gift.error;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -34,6 +36,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<String> handleDataIntegrity(DataIntegrityViolationException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body("연관된 데이터가 존재하여 삭제할 수 없습니다.");
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<String> handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
+        String message = e.getBindingResult().getFieldErrors().stream()
+            .map(error -> error.getDefaultMessage())
+            .collect(Collectors.joining(", "));
+        return ResponseEntity.badRequest().body(message);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
