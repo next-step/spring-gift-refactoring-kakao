@@ -1,12 +1,13 @@
 package gift.member;
 
 import gift.auth.JwtProvider;
+import gift.common.DuplicateException;
+import gift.common.EntityNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @Service
 @Transactional(readOnly = true)
@@ -29,7 +30,7 @@ public class MemberService {
     @Transactional
     public String register(String email, String password) {
         if (memberRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("이미 등록된 이메일입니다.");
+            throw new DuplicateException("이미 등록된 이메일입니다.");
         }
         String encodedPassword = passwordEncoder.encode(password);
         Member member = memberRepository.save(new Member(email, encodedPassword));
@@ -45,7 +46,7 @@ public class MemberService {
 
     public Member getMember(Long id) {
         return memberRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다."));
+            .orElseThrow(() -> new EntityNotFoundException("회원이 존재하지 않습니다."));
     }
 
     public List<Member> getAllMembers() {

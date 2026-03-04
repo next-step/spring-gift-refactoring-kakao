@@ -46,7 +46,7 @@ class MemberAcceptanceTest extends AcceptanceTest {
         .when()
             .post("/api/members/register")
         .then()
-            .statusCode(400);
+            .statusCode(409);
     }
 
     @Test

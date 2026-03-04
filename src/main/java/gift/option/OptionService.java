@@ -1,12 +1,13 @@
 package gift.option;
 
+import gift.common.DuplicateException;
+import gift.common.EntityNotFoundException;
 import gift.product.Product;
 import gift.product.ProductRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @Service
 @Transactional(readOnly = true)
@@ -29,7 +30,7 @@ public class OptionService {
         Product product = findProduct(productId);
 
         if (optionRepository.existsByProductIdAndName(productId, request.name())) {
-            throw new IllegalArgumentException("이미 존재하는 옵션명입니다.");
+            throw new DuplicateException("이미 존재하는 옵션명입니다.");
         }
 
         return optionRepository.save(new Option(product, request.name(), request.quantity()));
@@ -45,7 +46,7 @@ public class OptionService {
         }
 
         Option option = optionRepository.findById(optionId)
-            .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다."));
+            .orElseThrow(() -> new EntityNotFoundException("옵션이 존재하지 않습니다."));
         option.validateBelongsTo(productId);
 
         optionRepository.delete(option);
@@ -56,11 +57,11 @@ public class OptionService {
         findProduct(productId);
 
         Option option = optionRepository.findById(optionId)
-            .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다."));
+            .orElseThrow(() -> new EntityNotFoundException("옵션이 존재하지 않습니다."));
         option.validateBelongsTo(productId);
 
         if (optionRepository.existsByProductIdAndNameAndIdNot(productId, request.name(), optionId)) {
-            throw new IllegalArgumentException("이미 존재하는 옵션명입니다.");
+            throw new DuplicateException("이미 존재하는 옵션명입니다.");
         }
 
         option.update(request.name(), request.quantity());
@@ -69,6 +70,6 @@ public class OptionService {
 
     private Product findProduct(Long productId) {
         return productRepository.findById(productId)
-            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다."));
+            .orElseThrow(() -> new EntityNotFoundException("상품이 존재하지 않습니다."));
     }
 }

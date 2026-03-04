@@ -1,5 +1,6 @@
 package gift.order;
 
+import gift.common.EntityNotFoundException;
 import gift.member.Member;
 import gift.member.MemberRepository;
 import gift.option.Option;
@@ -9,8 +10,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.NoSuchElementException;
 
 @Service
 @Transactional(readOnly = true)
@@ -40,7 +39,7 @@ public class OrderService {
     public Order createOrder(Member member, OrderRequest request) {
         // validate option
         Option option = optionRepository.findById(request.optionId())
-            .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다."));
+            .orElseThrow(() -> new EntityNotFoundException("옵션이 존재하지 않습니다."));
 
         // subtract stock
         option.subtractQuantity(request.quantity());
