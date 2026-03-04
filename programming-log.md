@@ -332,3 +332,32 @@ public JwtProvider(JwtProperties properties) {
 ```
 
 `KakaoLoginProperties`가 이미 동일한 패턴(`@ConfigurationProperties` + record)을 사용하고 있어 이에 맞춰 통일했다. `Application`에 `@ConfigurationPropertiesScan`이 선언되어 있어 별도 등록 없이 자동 스캔된다.
+
+---
+
+## [step1 코드 리뷰 후] 추가 변경사항
+
+## 12. 미사용 의존성 제거
+
+`OrderService`에서 실제로 사용하지 않던 `WishRepository` 의존성을 제거했다.
+
+| 항목 | 내용 |
+|---|---|
+| 파일 | `OrderService.java` |
+| 제거 대상 | `WishRepository` 필드, 생성자 파라미터, import |
+| 이유 | 서비스 내부에서 참조되지 않는 의존성으로, 책임과 의존 관계를 불필요하게 확장하고 있었음 |
+| 효과 | 생성자 시그니처 단순화, 서비스 책임 명확화, 불필요한 결합도 감소 |
+
+---
+
+## 13. AdminMemberController 의존성 분리 (동작/예외 처리 변경 없음)
+
+`AdminMemberController`가 `MemberRepository`를 직접 참조하던 구조를 `AdminMemberService` 경유 구조로 분리했다.
+
+| 항목 | 내용 |
+|---|---|
+| 파일 | `AdminMemberController.java`, `AdminMemberService.java`(신규) |
+| 변경 내용 | Controller의 Repository 직접 호출(`findAll`, `existsByEmail`, `save`, `findById`, `deleteById`)을 Service 호출로 치환 |
+| 예외 처리 | 기존 컨트롤러의 `orElseThrow(() -> new IllegalArgumentException(...))` 및 중복 이메일 분기 로직 유지 |
+| 제외한 변경 | 새 예외 타입 추가, `@ExceptionHandler` 추가/변경, 응답/리다이렉트 경로 변경 없음 |
+| 목적 | step1 리뷰 기준에 맞춰 “작동 변경 없이 구조만 분리” 원칙을 충족 |
