@@ -10,64 +10,42 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-
 import java.util.ArrayList;
 import java.util.List;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Product {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    private String name;
-    private int price;
-    private String imageUrl;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "category_id")
-    private Category category;
+  private String name;
+  private int price;
+  private String imageUrl;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Option> options = new ArrayList<>();
+  @ManyToOne
+  @JoinColumn(name = "category_id")
+  private Category category;
 
-    protected Product() {
-    }
+  @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<Option> options = new ArrayList<>();
 
-    public Product(String name, int price, String imageUrl, Category category) {
-        this.name = name;
-        this.price = price;
-        this.imageUrl = imageUrl;
-        this.category = category;
-    }
+  public Product(String name, int price, String imageUrl, Category category) {
+    this.name = name;
+    this.price = price;
+    this.imageUrl = imageUrl;
+    this.category = category;
+  }
 
-    public void update(String name, int price, String imageUrl, Category category) {
-        this.name = name;
-        this.price = price;
-        this.imageUrl = imageUrl;
-        this.category = category;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public int getPrice() {
-        return price;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public Category getCategory() {
-        return category;
-    }
-
-    public List<Option> getOptions() {
-        return options;
-    }
+  public void update(String name, int price, String imageUrl, Category category) {
+    this.name = name;
+    this.price = price;
+    this.imageUrl = imageUrl;
+    this.category = category;
+  }
 }

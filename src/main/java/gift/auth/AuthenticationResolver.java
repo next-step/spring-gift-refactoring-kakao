@@ -13,22 +13,24 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class AuthenticationResolver {
-    private final JwtProvider jwtProvider;
-    private final MemberRepository memberRepository;
+  private static final String BEARER_PREFIX = "Bearer ";
 
-    @Autowired
-    public AuthenticationResolver(JwtProvider jwtProvider, MemberRepository memberRepository) {
-        this.jwtProvider = jwtProvider;
-        this.memberRepository = memberRepository;
-    }
+  private final JwtProvider jwtProvider;
+  private final MemberRepository memberRepository;
 
-    public Member extractMember(String authorization) {
-        try {
-            final String token = authorization.replace("Bearer ", "");
-            final String email = jwtProvider.getEmail(token);
-            return memberRepository.findByEmail(email).orElse(null);
-        } catch (Exception e) {
-            return null;
-        }
+  @Autowired
+  public AuthenticationResolver(JwtProvider jwtProvider, MemberRepository memberRepository) {
+    this.jwtProvider = jwtProvider;
+    this.memberRepository = memberRepository;
+  }
+
+  public Member extractMember(String authorization) {
+    try {
+      final String token = authorization.replace(BEARER_PREFIX, "");
+      final String email = jwtProvider.getEmail(token);
+      return memberRepository.findByEmail(email).orElse(null);
+    } catch (Exception e) {
+      return null;
     }
+  }
 }
