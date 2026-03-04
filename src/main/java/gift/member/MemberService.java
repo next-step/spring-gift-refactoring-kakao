@@ -1,7 +1,6 @@
 package gift.member;
 
 import java.util.List;
-import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,12 +17,10 @@ public class MemberService {
     return memberRepository.findAll();
   }
 
-  public Optional<Member> findById(Long id) {
-    return memberRepository.findById(id);
-  }
-
-  public boolean existsByEmail(String email) {
-    return memberRepository.existsByEmail(email);
+  public Member getById(Long id) {
+    return memberRepository
+        .findById(id)
+        .orElseThrow(() -> new IllegalArgumentException("Member not found. id=" + id));
   }
 
   @Transactional
