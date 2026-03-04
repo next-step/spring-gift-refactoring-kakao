@@ -34,13 +34,21 @@ public class ProductService {
     }
 
     public Product create(String name, int price, String imageUrl, Long categoryId) {
-        validateName(name);
+        return create(name, price, imageUrl, categoryId, false);
+    }
+
+    public Product create(String name, int price, String imageUrl, Long categoryId, boolean allowKakao) {
+        validateName(name, allowKakao);
         Category category = findCategory(categoryId);
         return productRepository.save(new Product(name, price, imageUrl, category));
     }
 
     public Product update(Long id, String name, int price, String imageUrl, Long categoryId) {
-        validateName(name);
+        return update(id, name, price, imageUrl, categoryId, false);
+    }
+
+    public Product update(Long id, String name, int price, String imageUrl, Long categoryId, boolean allowKakao) {
+        validateName(name, allowKakao);
         Category category = findCategory(categoryId);
         Product product = findById(id);
         product.update(name, price, imageUrl, category);
@@ -51,8 +59,8 @@ public class ProductService {
         productRepository.deleteById(id);
     }
 
-    public void validateName(String name) {
-        List<String> errors = ProductNameValidator.validate(name);
+    private void validateName(String name, boolean allowKakao) {
+        List<String> errors = ProductNameValidator.validate(name, allowKakao);
         if (!errors.isEmpty()) {
             throw new IllegalArgumentException(String.join(", ", errors));
         }
