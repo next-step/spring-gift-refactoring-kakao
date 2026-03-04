@@ -12,21 +12,21 @@
 
 ## Step2 구조 변경 (작동 불변, `refactor:` 커밋)
 
-- [ ] S8: Option에 calculateTotalPrice 추가 및 OrderService에서 사용
-- [ ] S9: WishService에 removeByMemberAndProduct 메서드 추가
-- [ ] S10: OrderService의 MemberRepository를 MemberService로 전환
-- [ ] S11: 카카오 메시지 전송 실패 시 경고 로깅 추가
+- [x] S8: Option에 calculateTotalPrice 추가 및 OrderService에서 사용
+- [x] S9: WishService에 removeByMemberAndProduct 메서드 추가
+- [x] S10: OrderService의 MemberRepository를 MemberService로 전환
+- [x] S11: 카카오 메시지 전송 실패 시 경고 로깅 추가
 
 ## Step2 작동 변경 (증거 필수, `fix:`/`feat:`/`test:` 커밋)
 
-- [ ] B1: NoSuchElementException 응답 코드를 404로 변경
-- [ ] B2: 주문 시 위시 자동 정리 기능 구현
-- [ ] B3: 트랜잭션 경계 검증 — 포인트 부족 시 재고 원복 확인
+- [x] B1: NoSuchElementException 응답 코드를 404로 변경
+- [x] B2: 주문 시 위시 자동 정리 기능 구현
+- [x] B3: 트랜잭션 경계 검증 — 포인트 부족 시 재고 원복 확인
 
 ## ADR (Architecture Decision Records)
 
-- [ ] ADR-001: NoSuchElementException → 404 변경 근거
-- [ ] ADR-002: 주문 시 위시 정리 전략 (동기 vs 비동기)
+- [x] ADR-001: NoSuchElementException → 404 변경 근거
+- [x] ADR-002: 주문 시 위시 정리 전략 (동기 vs 비동기)
 
 ## 과제 요구사항 대응표
 
