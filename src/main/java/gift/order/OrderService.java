@@ -4,7 +4,6 @@ import gift.member.Member;
 import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
-import gift.product.Product;
 import gift.wish.WishRepository;
 
 import org.slf4j.Logger;
@@ -83,8 +82,7 @@ public class OrderService {
             return;
         }
         try {
-            Product product = option.getProduct();
-            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
+            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, option);
         } catch (Exception e) {
             log.warn("카카오 메시지 전송 실패: memberId={}, orderId={}", member.getId(), order.getId(), e);
         }
