@@ -7,7 +7,6 @@ import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class WishService {
@@ -40,7 +39,6 @@ public class WishService {
         return wishRepository.findById(id).orElseThrow(() -> new NoSuchElementException("위시가 존재하지 않습니다."));
     }
 
-    @Transactional
     public void removeWish(Long id) {
         wishRepository.deleteById(id);
     }
