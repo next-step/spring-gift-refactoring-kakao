@@ -198,6 +198,12 @@ Step 1에서 정리한 구조 위에 작동 변경을 수행한다. 모든 변�
 - [x] `WebMvcConfig` 생성 — resolver 등록
 - [x] `OrderController`(2곳), `WishController`(3곳)에서 `@RequestHeader` + null 체크 제거, `Member` 직접 파라미터로 변경
 
+#### 9단계: AdminProductController 상품명 검증 중복 제거
+
+- [x] `AdminProductController`의 `ProductNameValidator` 직접 호출 제거, 서비스에 `allowKakao=true` 위임
+- [x] `ProductService.create/update`에 `allowKakao` 오버로드 추가, `validateName` private으로 변경
+- [x] `ProductServiceTest` — `allowKakao=true`이면 "카카오" 허용, `false`이면 거부 검증
+
 ### 코드 수정 내역
 
 #### 0단계: 테스트 코드 작성
@@ -273,6 +279,14 @@ Step 1에서 정리한 구조 위에 작동 변경을 수행한다. 모든 변�
 | `WebMvcConfig` (신규) | `WebMvcConfigurer`로 resolver 등록 |
 | `OrderController` | `AuthenticationResolver` 의존성 + null 체크 2곳 제거, `Member` 직접 파라미터 |
 | `WishController` | 같은 방식으로 null 체크 3곳 제거 |
+
+#### 9단계: AdminProductController 상품명 검증 중복 제거
+
+| 항목 | 내용 |
+|------|------|
+| `AdminProductController` | `ProductNameValidator` 직접 호출 제거, `productService.create/update(... , true)` 위임 + try-catch로 폼 에러 UX 유지 |
+| `ProductService` | `create/update`에 `allowKakao` 오버로드 추가, `validateName` private 변경 |
+| `ProductServiceTest` (신규) | `allowKakao=true` → "카카오" 허용, `allowKakao=false` → 거부 검증 |
 
 ### 학습한 점
 

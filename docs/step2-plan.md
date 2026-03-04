@@ -533,8 +533,9 @@ public Product create(String name, ..., boolean allowKakao) {
 **변경 파일:**
 - `src/main/java/gift/product/ProductService.java` — `validateName`에 `allowKakao` 파라미터 추가, `create`/`update` 시그니처 변경
 - `src/main/java/gift/product/AdminProductController.java` — 컨트롤러 레벨 검증 제거, 서비스에 `allowKakao` 전달
+- `src/test/java/gift/product/ProductServiceTest.java` — `allowKakao` 동작 검증 테스트
 
-**검증:** 기존 테스트 전체 통과. admin에서 "카카오" 포함 상품명 생성 가능 여부 확인.
+**검증:** `ProductServiceTest` — `allowKakao=true`이면 "카카오" 상품 생성 허용, `false`이면 거부. 기존 테스트 전체 통과.
 
 ---
 
