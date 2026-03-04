@@ -44,4 +44,8 @@ public class Option {
     }
     this.quantity -= amount;
   }
+
+  public int calculateTotalPrice(int quantity) {
+    return this.product.getPrice() * quantity;
+  }
 }
