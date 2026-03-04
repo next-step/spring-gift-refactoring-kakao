@@ -146,8 +146,9 @@ Step 1에서 정리한 구조 위에 작동 변경을 수행한다. 모든 변�
 
 #### 1단계: @Transactional 적용
 
-- [ ] `OrderService.createOrder()`에 `@Transactional` 추가 → 재고 롤백 테스트 Green
-- [ ] `KakaoAuthService.loginWithKakao()`에 `@Transactional` 추가 → 카카오 로그인 테스트 Green
+- [x] `OrderService.createOrder()`에 `@Transactional` 추가 → `createOrderInsufficientPointsRollsBackStock` Green
+- [x] `KakaoAuthService.loginWithKakao()`에 `@Transactional` 추가 → `KakaoAuthServiceTest` Green 유지
+- 나머지 서비스는 모두 단일 저장/삭제 작업이라 `@Transactional` 불필요 확인
 
 #### 2단계: 주문 시 위시리스트 자동 삭제
 
