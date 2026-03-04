@@ -9,7 +9,7 @@ public record OrderRequest(
     @Min(1) int quantity,
     String message
 ) {
-    public Order toEntity(Option option, Long memberId) {
-        return new Order(option, memberId, quantity, message);
+    public Order toEntity(Option option, Long memberId, int totalPrice) {
+        return new Order(option, memberId, quantity, totalPrice, message);
     }
 }
