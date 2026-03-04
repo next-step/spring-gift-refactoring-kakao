@@ -44,6 +44,18 @@ public class Order {
         return id;
     }
 
+    public Long getOptionId() {
+        return option.getId();
+    }
+
+    public String getOptionName() {
+        return option.getName();
+    }
+
+    public String getProductName() {
+        return option.getProduct().getName();
+    }
+
     public Option getOption() {
         return option;
     }
