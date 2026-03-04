@@ -5,6 +5,7 @@ import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
 import gift.product.Product;
+import gift.wish.WishRepository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,17 +20,20 @@ public class OrderService {
     private final OptionRepository optionRepository;
     private final MemberRepository memberRepository;
     private final KakaoMessageClient kakaoMessageClient;
+    private final WishRepository wishRepository;
 
     public OrderService(
         OrderRepository orderRepository,
         OptionRepository optionRepository,
         MemberRepository memberRepository,
-        KakaoMessageClient kakaoMessageClient
+        KakaoMessageClient kakaoMessageClient,
+        WishRepository wishRepository
     ) {
         this.orderRepository = orderRepository;
         this.optionRepository = optionRepository;
         this.memberRepository = memberRepository;
         this.kakaoMessageClient = kakaoMessageClient;
+        this.wishRepository = wishRepository;
     }
 
     public Page<Order> findByMemberId(Long memberId, Pageable pageable) {
@@ -61,7 +65,8 @@ public class OrderService {
         // save order
         Order saved = orderRepository.save(new Order(option, member.getId(), quantity, message));
 
-        // TODO: cleanup wish
+        // cleanup wish
+        wishRepository.deleteByMemberIdAndProductId(member.getId(), option.getProduct().getId());
 
         // best-effort kakao notification
         sendKakaoMessageIfPossible(member, saved, option);
