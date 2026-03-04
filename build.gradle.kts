@@ -7,6 +7,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") version "14.0.1"
     id("org.flywaydb.flyway") version "12.0.1"
     id("com.diffplug.spotless") version "7.0.2"
+    id("checkstyle")
 }
 
 group = "camp.nextstep.edu"
@@ -64,6 +65,11 @@ allOpen {
 
 ktlint {
     verbose.set(true)
+}
+
+checkstyle {
+    toolVersion = "10.21.4"
+    configFile = file("config/checkstyle/checkstyle.xml")
 }
 
 spotless {
