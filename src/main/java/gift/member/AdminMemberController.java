@@ -51,7 +51,7 @@ public class AdminMemberController {
 
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
-        model.addAttribute("member", memberService.findById(id));
+        model.addAttribute("member", memberService.getById(id));
         return "member/edit";
     }
 

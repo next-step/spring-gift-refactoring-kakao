@@ -31,7 +31,7 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public ProductResponse findById(Long id) {
+    public ProductResponse getById(Long id) {
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
         return ProductResponse.from(product);

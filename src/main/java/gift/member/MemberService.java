@@ -46,8 +46,8 @@ public class MemberService {
             .toList();
     }
 
-    public MemberResponse findById(Long id) {
-        return MemberResponse.from(findEntityById(id));
+    public MemberResponse getById(Long id) {
+        return MemberResponse.from(getEntityById(id));
     }
 
     @Transactional
@@ -61,17 +61,17 @@ public class MemberService {
 
     @Transactional
     public void update(Long id, String email, String password) {
-        Member member = findEntityById(id);
+        Member member = getEntityById(id);
         member.update(email, password);
     }
 
     @Transactional
     public void chargePoint(Long id, int amount) {
-        Member member = findEntityById(id);
+        Member member = getEntityById(id);
         member.chargePoint(amount);
     }
 
-    private Member findEntityById(Long id) {
+    private Member getEntityById(Long id) {
         return memberRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Member not found. id=" + id));
     }
