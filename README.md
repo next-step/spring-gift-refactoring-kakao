@@ -152,8 +152,8 @@ Step 1에서 정리한 구조 위에 작동 변경을 수행한다. 모든 변�
 
 #### 2단계: 주문 시 위시리스트 자동 삭제
 
-- [ ] `WishRepository.deleteByMemberIdAndProductId` 추가
-- [ ] `OrderService`에서 주문 저장 후 위시 삭제 호출 → 위시 삭제 테스트 Green
+- [x] `WishRepository.deleteByMemberIdAndProductId` 추가
+- [x] `OrderService`에서 주문 저장 후 위시 삭제 호출 → `createOrderDeletesWish` Green
 
 #### 3단계: 예외 삼킴(swallow) 로그 추가
 
