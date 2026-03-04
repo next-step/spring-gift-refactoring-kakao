@@ -56,6 +56,6 @@ class OrderAcceptanceTest extends AcceptanceTest {
         .when()
             .get("/api/orders")
         .then()
-            .statusCode(400);
+            .statusCode(401);
     }
 }

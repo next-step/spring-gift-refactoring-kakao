@@ -88,6 +88,6 @@ class WishAcceptanceTest extends AcceptanceTest {
         .when()
             .get("/api/wishes")
         .then()
-            .statusCode(400);
+            .statusCode(401);
     }
 }

@@ -1,6 +1,6 @@
 package gift.order;
 
-import gift.auth.AuthenticationResolver;
+import gift.auth.Authenticated;
 import gift.member.Member;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -14,29 +14,25 @@ import java.net.URI;
 @RequestMapping("/api/orders")
 public class OrderController {
     private final OrderService orderService;
-    private final AuthenticationResolver authenticationResolver;
 
-    public OrderController(OrderService orderService, AuthenticationResolver authenticationResolver) {
+    public OrderController(OrderService orderService) {
         this.orderService = orderService;
-        this.authenticationResolver = authenticationResolver;
     }
 
     @GetMapping
     public ResponseEntity<Page<OrderResponse>> getOrders(
-        @RequestHeader("Authorization") String authorization,
+        @Authenticated Member member,
         Pageable pageable
     ) {
-        Member member = authenticationResolver.extractMember(authorization);
         Page<OrderResponse> orders = orderService.getOrders(member.getId(), pageable).map(OrderResponse::from);
         return ResponseEntity.ok(orders);
     }
 
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(
-        @RequestHeader("Authorization") String authorization,
+        @Authenticated Member member,
         @Valid @RequestBody OrderRequest request
     ) {
-        Member member = authenticationResolver.extractMember(authorization);
         Order saved = orderService.createOrder(member, request);
         return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
             .body(OrderResponse.from(saved));
