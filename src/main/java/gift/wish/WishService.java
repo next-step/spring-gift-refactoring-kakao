@@ -33,8 +33,6 @@ public class WishService {
             });
     }
 
-    public record AddWishResult(WishResponse response, boolean created) {}
-
     public Optional<DeleteResult> removeWish(Long memberId, Long wishId) {
         Optional<Wish> wishOpt = wishRepository.findById(wishId);
         if (wishOpt.isEmpty()) {
@@ -50,7 +48,4 @@ public class WishService {
         return Optional.of(DeleteResult.SUCCESS);
     }
 
-    public enum DeleteResult {
-        SUCCESS, NOT_FOUND, FORBIDDEN
-    }
 }
