@@ -26,5 +26,4 @@ public class MemberController {
         String token = memberService.login(request);
         return ResponseEntity.ok(new TokenResponse(token));
     }
-
 }
