@@ -181,36 +181,33 @@
     - `Wish.isOwnedBy(Long memberId)` — 소유권 판단 (← `WishController:73`의 비교 대체)
 
 - [ ] 24. `refactor: replace manual auth check with HandlerMethodArgumentResolver`
-  - **생성:** `@AuthMember` 어노테이션, `AuthMemberArgumentResolver`
-  - **수정:** WishController, OrderController, WebMvcConfigurer 구현체
+  - **생성:** `@AuthMember` 어노테이션, `AuthMemberArgumentResolver`, `WebConfig`
+  - **수정:** WishController, OrderController
   - **변경 내용:**
     - `AuthenticationResolver.extractMember()` + null 체크 보일러플레이트 5곳 제거
     - `@AuthMember Member member` 파라미터 선언만으로 인증된 회원 자동 주입
     - 미인증 시 `ArgumentResolver`에서 `UNAUTHORIZED` 응답 처리
-
-- [ ] 25. `refactor: replace ResponseEntity<?> wildcards with concrete types`
-  - **수정:** OrderController, WishController
-  - **변경 내용:**
     - `ResponseEntity<?>` → `ResponseEntity<Page<OrderResponse>>`, `ResponseEntity<OrderResponse>` 등 구체 타입으로 변경
-    - API 응답 계약 명확화
 
 ### Phase 6 — 작동 변경
 
-- [ ] 26. `fix: add logging for Kakao message send failure in OrderEventListener`
+- [ ] 25. `fix: add logging for Kakao message send failure in OrderEventListener`
   - **수정:** OrderEventListener
   - **변경 내용:**
     - `catch (Exception ignored)` → `catch (Exception e) { log.warn(..., e); }` 로 변경
     - 카카오 메시지 전송 실패 시 원인 추적 가능하도록 경고 로그 기록
 
-- [ ] 27. `fix: move wish business logic to WishService and make atomic`
-  - **수정:** WishService, WishController
+- [ ] 26. `fix: move wish business logic to WishService and make atomic`
+  - **생성:** ForbiddenException
+  - **수정:** WishService, WishController, GlobalExceptionHandler
   - **변경 내용:**
     - 중복 체크 + 생성 → `WishService.addWish(Long memberId, Long productId)`로 통합 (단일 `@Transactional`)
     - 소유권 체크 + 삭제 → `WishService.removeWish(Long wishId, Long memberId)`로 통합 (단일 `@Transactional`)
+    - 소유권 위반 시 `ForbiddenException` → `GlobalExceptionHandler`에서 403 응답
     - Controller는 Service에 위임만 수행
   - **검증:** 위시 중복 추가 시 기존 위시 반환, 타인 위시 삭제 시 403 응답 확인
 
-- [ ] 28. `fix: reload member inside transaction in OrderService`
+- [ ] 27. `fix: reload member inside transaction in OrderService`
   - **수정:** OrderService, OrderController
   - **변경 내용:**
     - `createOrder(Member, OrderRequest)` → `createOrder(Long memberId, OrderRequest)`
@@ -218,7 +215,7 @@
     - detached 엔티티로 인한 포인트 덮어쓰기 방지
   - **검증:** 주문 후 회원 포인트 잔액 재조회로 정확한 차감 확인
 
-- [ ] 29. `feat: remove wish on order placement`
+- [ ] 28. `feat: remove wish on order placement`
   - **수정:** OrderService
   - **변경 내용:**
     - `OrderService`에 `WishRepository` 주입
