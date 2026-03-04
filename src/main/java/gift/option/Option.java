@@ -1,15 +1,13 @@
 package gift.option;
 
 import gift.product.Product;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "options")
 public class Option {
@@ -27,9 +25,6 @@ public class Option {
     @Column(nullable = false)
     private int quantity;
 
-    protected Option() {
-    }
-
     public Option(Product product, String name, int quantity) {
         this.product = product;
         this.name = name;
@@ -43,19 +38,4 @@ public class Option {
         this.quantity -= amount;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public Product getProduct() {
-        return product;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
 }

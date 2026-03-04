@@ -1,16 +1,15 @@
 package gift.order;
 
 import gift.option.Option;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "orders")
 public class Order {
@@ -21,14 +20,11 @@ public class Order {
     @ManyToOne
     @JoinColumn(name = "option_id")
     private Option option;
-    // primitive FK
+    // Member 엔티티를 직접 참조하지 않고 ID만 저장하여 느슨한 결합 유지
     private Long memberId;
     private int quantity;
     private String message;
     private LocalDateTime orderDateTime;
-
-    protected Order() {
-    }
 
     public Order(Option option, Long memberId, int quantity, String message) {
         this.option = option;
@@ -38,27 +34,4 @@ public class Order {
         this.orderDateTime = LocalDateTime.now();
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public Option getOption() {
-        return option;
-    }
-
-    public Long getMemberId() {
-        return memberId;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public LocalDateTime getOrderDateTime() {
-        return orderDateTime;
-    }
 }

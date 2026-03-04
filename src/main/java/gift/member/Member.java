@@ -1,17 +1,14 @@
 package gift.member;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
-/**
- * Represents a registered member.
- *
- * @author brian.kim
- * @since 1.0
- */
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
+@Table(name = "member")
 public class Member {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,9 +21,6 @@ public class Member {
     private String kakaoAccessToken;
 
     private int point;
-
-    protected Member() {
-    }
 
     public Member(String email, String password) {
         this.email = email;
@@ -48,12 +42,15 @@ public class Member {
 
     public void chargePoint(int amount) {
         if (amount <= 0) {
-            throw new IllegalArgumentException("Amount must be greater than zero.");
+            throw new IllegalArgumentException("충전 금액은 1 이상이어야 합니다.");
         }
         this.point += amount;
     }
 
-    // point deduction for order payment
+    /*
+     * 주문 결제를 위한 포인트 차감.
+     * 금액이 0 이하이거나 잔액을 초과하면 예외를 던진다.
+     */
     public void deductPoint(int amount) {
         if (amount <= 0) {
             throw new IllegalArgumentException("차감 금액은 1 이상이어야 합니다.");
@@ -64,23 +61,4 @@ public class Member {
         this.point -= amount;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public String getKakaoAccessToken() {
-        return kakaoAccessToken;
-    }
-
-    public int getPoint() {
-        return point;
-    }
 }
