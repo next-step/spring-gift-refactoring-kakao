@@ -96,15 +96,51 @@ Step 1에서 Controller → Service로 비즈니스 로직을 추출했지만 `@
 
 ### 결정
 
-**(A) REST API만 적용** — `@RestControllerAdvice(basePackages = ...)`로 `/api/...` 컨트롤러만 대상으로 한다.
+**(A) REST API만 적용** — `@RestControllerAdvice(annotations = RestController.class)`로 `@RestController`가 붙은 컨트롤러만 대상으로 한다.
 
 ### 근거
 
 - REST API는 JSON 에러 응답이 필요하고, 관리자 MVC는 에러 페이지나 리다이렉트가 필요하다. 성격이 다르므로 같은 핸들러로 처리하면 안 된다.
-- 관리자 컨트롤러는 개별 try-catch 또는 별도 `@ControllerAdvice`로 처리할 수 있다.
+- 처음에는 `basePackages = "gift"`로 구현했으나, 이 경우 같은 패키지의 `@Controller`(admin 컨트롤러)에도 적용되어 Thymeleaf 뷰 대신 JSON 에러가 반환되는 문제가 있었다.
+- `annotations = RestController.class`로 변경하여 `@RestController`만 대상으로 제한했다.
 
 ### 영향
 
-- `GlobalExceptionHandler` 클래스가 추가되어 `NoSuchElementException` → 404, `IllegalArgumentException` → 400 등을 매핑한다.
-- REST 컨트롤러의 개별 try-catch가 제거되어 코드가 단순해진다.
-- 관리자 컨트롤러는 기존 방식을 유지한다.
+- `GlobalExceptionHandler` 클래스가 추가되어 `NoSuchElementException` → 404, `IllegalArgumentException` → 400, `IllegalStateException` → 403을 매핑한다.
+- REST 컨트롤러의 개별 try-catch와 `@ExceptionHandler`가 제거되어 코드가 단순해진다.
+- 관리자 컨트롤러(`@Controller`)는 `annotations` 필터에 해당하지 않아 기존 방식을 유지한다.
+
+---
+
+## ADR-004: 테스트 전략 — Mock 서비스 테스트 vs 통합 테스트
+
+### 상태
+
+결정됨
+
+### 맥락
+
+Step 2의 작동 변경을 검증할 테스트를 작성해야 한다. 서비스 계층을 어떤 방식으로 테스트할지 결정이 필요했다.
+
+### 선택지
+
+| 선택지 | 장점 | 단점 |
+|--------|------|------|
+| (A) Mock 기반 서비스 단위 테스트 (`@Mock` + `@InjectMocks`) | 빠른 실행, 서비스 로직 격리 | 호출 여부만 확인, 실제 DB 상태 변화 검증 불가 |
+| **(B) 통합 테스트 (`@SpringBootTest` + `@Sql`) + 도메인 단위 테스트** | 실제 DB 상태를 재조회하여 검증 가능 | 실행 속도 느림, 테스트 데이터 관리 필요 |
+
+### 결정
+
+**(B) 통합 테스트 + 도메인 단위 테스트** — Mock 기반 서비스 단위 테스트는 사용하지 않는다.
+
+### 근거
+
+- 이 프로젝트의 검증 원칙은 **"상태를 재조회하여 검증"**이다. Mock 테스트는 `then(repository).should().deleteByMemberIdAndProductId(...)`처럼 메서드 호출 여부만 확인할 뿐, 실제로 DB에서 삭제되었는지는 알 수 없다.
+- 통합 테스트는 API 호출 후 DB 상태를 재조회(`GET /api/wishes` → 0개)하여 실제 작동을 검증한다.
+- 외부 API(`KakaoLoginClient`)처럼 테스트 환경에서 호출할 수 없는 의존성만 `@MockitoBean`으로 대체한다.
+- 도메인 단위 테스트(`OptionTest`, `MemberTest`)는 외부 의존성 없이 순수 로직을 검증하므로 별도로 유지한다.
+
+### 영향
+
+- 컴파일 에러를 일으키는 Red 테스트(존재하지 않는 메서드 호출)는 0단계에서 선행 작성할 수 없다. 해당 메서드 구현 단계에서 함께 작성한다.
+- 테스트 데이터는 `@Sql`로 관리하며, `setup-data.sql` / `cleanup.sql` 패턴을 따른다.
