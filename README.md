@@ -142,7 +142,7 @@ Step 1에서 정리한 구조 위에 작동 변경을 수행한다. 모든 변�
 - [x] `OrderControllerTest` — 주문 생성 후 위시 자동 삭제 검증 (→ 2단계) — Red: `// TODO: cleanup wish` 미구현
 
 **도메인 단위 테스트:**
-- [ ] `OptionTest` — `calculateTotalPrice` 단위 테스트 (→ 4단계) — 메서드 미존재로 컴파일 에러, 4단계에서 작성
+- [x] `OptionTest` — `calculateTotalPrice` 단위 테스트 — 4단계에서 메서드와 함께 작성, Green
 
 #### 1단계: @Transactional 적용
 
@@ -162,8 +162,8 @@ Step 1에서 정리한 구조 위에 작동 변경을 수행한다. 모든 변�
 
 #### 4단계: 가격 계산 도메인 메서드 추가
 
-- [ ] `Option.calculateTotalPrice(int quantity)` 메서드 추가 → OptionTest Green (작동 변경)
-- [ ] `OrderService`의 가격 계산을 `Option.calculateTotalPrice`로 위임 (구조 변경)
+- [x] `Option.calculateTotalPrice(int quantity)` 메서드 추가 + `OptionTest` Green (작동 변경)
+- [x] `OrderService`의 가격 계산을 `Option.calculateTotalPrice`로 위임 (구조 변경)
 
 #### 5단계: 이메일 중복 검증 로직 통합
 
