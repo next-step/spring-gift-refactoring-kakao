@@ -71,7 +71,7 @@ public class OptionService {
     return true;
   }
 
-  public void validateNameOrThrow(String name) {
+  private void validateNameOrThrow(String name) {
     List<String> errors = OptionNameValidator.validate(name);
     if (!errors.isEmpty()) {
       throw new IllegalArgumentException(String.join(", ", errors));
