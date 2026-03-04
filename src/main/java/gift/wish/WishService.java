@@ -4,6 +4,7 @@ import gift.product.ProductRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.NoSuchElementException;
 
@@ -24,6 +25,7 @@ public class WishService {
     public record AddWishResult(Wish wish, boolean created) {
     }
 
+    @Transactional
     public AddWishResult addWish(Long memberId, WishRequest request) {
         var product = productRepository.findById(request.productId())
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + request.productId()));

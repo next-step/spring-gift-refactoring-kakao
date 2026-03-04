@@ -5,6 +5,7 @@ import gift.category.CategoryRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -28,12 +29,14 @@ public class ProductService {
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
     }
 
+    @Transactional
     public Product createProduct(String name, int price, String imageUrl, Long categoryId, boolean allowKakao) {
         validateName(name, allowKakao);
         Category category = findCategory(categoryId);
         return productRepository.save(new Product(name, price, imageUrl, category));
     }
 
+    @Transactional
     public Product updateProduct(Long id, String name, int price, String imageUrl, Long categoryId, boolean allowKakao) {
         validateName(name, allowKakao);
         Product product = getProduct(id);

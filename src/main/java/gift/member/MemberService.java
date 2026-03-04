@@ -3,6 +3,7 @@ package gift.member;
 import gift.auth.JwtProvider;
 import gift.auth.TokenResponse;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -17,6 +18,7 @@ public class MemberService {
         this.jwtProvider = jwtProvider;
     }
 
+    @Transactional
     public TokenResponse register(MemberRequest request) {
         if (memberRepository.existsByEmail(request.email())) {
             throw new IllegalArgumentException("Email is already registered.");
@@ -56,12 +58,14 @@ public class MemberService {
         return memberRepository.save(new Member(email, password));
     }
 
+    @Transactional
     public Member updateMember(Long id, String email, String password) {
         Member member = getMember(id);
         member.update(email, password);
         return memberRepository.save(member);
     }
 
+    @Transactional
     public void chargePoint(Long id, int amount) {
         Member member = getMember(id);
         member.chargePoint(amount);
