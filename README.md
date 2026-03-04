@@ -43,6 +43,7 @@
 - [ ] **`@RestControllerAdvice` 도입** — REST API(`/api/...`)의 예외 처리를 일원화하고, View 컨트롤러(`/admin/...`)만 개별 try-catch 유지
 - [ ] **주문 시 위시리스트 정리** — `OrderService.createOrder()`의 `// TODO: cleanup wish` 구현
 - [ ] **서비스 단위 테스트 추가** — 트랜잭션 롤백 등 서비스 레벨 동작 검증
+- [ ] **외부 연동 실패 로그 추가** — 카카오 알림 전송 실패 시 warn 로그 기록 (회원 ID, 주문 ID 포함)
 
 ---
 
