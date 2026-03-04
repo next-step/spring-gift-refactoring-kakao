@@ -39,6 +39,14 @@ public class Member {
         this.kakaoAccessToken = kakaoAccessToken;
     }
 
+    public boolean matchesPassword(String password) {
+        return this.password != null && this.password.equals(password);
+    }
+
+    public boolean isKakaoLinked() {
+        return kakaoAccessToken != null;
+    }
+
     public void chargePoint(int amount) {
         if (amount <= 0) {
             throw new IllegalArgumentException("충전 금액은 1 이상이어야 합니다.");

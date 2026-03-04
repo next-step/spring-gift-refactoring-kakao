@@ -68,7 +68,7 @@ public class WishController {
         }
 
         final Wish wish = wishService.findById(id);
-        if (!wish.getMemberId().equals(member.getId())) {
+        if (!wish.isOwnedBy(member.getId())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 

@@ -43,14 +43,13 @@ public class OrderService {
         option.subtractQuantity(request.quantity());
         optionRepository.save(option);
 
-        final int price = option.getProduct().getPrice() * request.quantity();
-        member.deductPoint(price);
-        memberRepository.save(member);
-
         final Order saved =
                 orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
 
-        if (member.getKakaoAccessToken() != null) {
+        member.deductPoint(saved.getTotalPrice());
+        memberRepository.save(member);
+
+        if (member.isKakaoLinked()) {
             eventPublisher.publishEvent(
                     new OrderCompletedEvent(member.getKakaoAccessToken(), saved, option.getProduct()));
         }
