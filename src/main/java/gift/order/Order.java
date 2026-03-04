@@ -31,11 +31,11 @@ public class Order {
     protected Order() {
     }
 
-    public Order(Option option, Long memberId, int quantity, int totalPrice, String message) {
+    public Order(Option option, Long memberId, int quantity, String message) {
         this.option = option;
         this.memberId = memberId;
         this.quantity = quantity;
-        this.totalPrice = totalPrice;
+        this.totalPrice = option.getProduct().getPrice() * quantity;
         this.message = message;
         this.orderDateTime = LocalDateTime.now();
     }

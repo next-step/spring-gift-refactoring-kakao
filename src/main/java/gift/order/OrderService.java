@@ -48,27 +48,25 @@ public class OrderService {
         option.subtractQuantity(request.quantity());
         optionRepository.save(option);
 
+        // save order
+        Order saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
+
         // deduct points
-        int price = option.getProduct().getPrice() * request.quantity();
-        member.deductPoint(price);
+        member.deductPoint(saved.getTotalPrice());
         memberRepository.save(member);
 
-        // save order
-        Order saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), price, request.message()));
-
         // best-effort kakao notification
-        sendKakaoMessageIfPossible(member, saved, option);
+        sendKakaoMessageIfPossible(member, saved);
 
         return saved;
     }
 
-    private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {
+    private void sendKakaoMessageIfPossible(Member member, Order order) {
         if (member.getKakaoAccessToken() == null) {
             return;
         }
         try {
-            var product = option.getProduct();
-            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
+            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order);
         } catch (Exception e) {
             log.warn("카카오 알림 전송 실패: orderId={}, memberId={}", order.getId(), member.getId(), e);
         }

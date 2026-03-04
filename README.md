@@ -57,7 +57,8 @@
 - [x] `EntityManager.flush()` + `clear()` 후 DB 재조회로 검증하는 통합 테스트 작성
 
 #### 도메인 책임 되찾기 (구조 변경, 최소 2개)
-- [ ] 가격 계산 로직을 도메인 엔티티로 이동 — `OrderService`와 `KakaoMessageClient`에 산재된 계산 통합
+- [x] 가격 계산 로직을 `Order` 생성자로 이동 — `OrderService`와 `KakaoMessageClient`의 중복 계산 제거
+- [x] `KakaoMessageClient.sendToMe()`에서 `Product` 파라미터 제거 — 호출부 단순화
 - [ ] 인증 중복 코드 제거 — Controller 8곳에 반복되는 null 체크 패턴 통합
 
 ### 구현 전략
