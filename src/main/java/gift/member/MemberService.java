@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class MemberService {
     private final MemberRepository memberRepository;
 
@@ -12,12 +13,10 @@ public class MemberService {
         this.memberRepository = memberRepository;
     }
 
-    @Transactional(readOnly = true)
     public List<Member> findAll() {
         return memberRepository.findAll();
     }
 
-    @Transactional(readOnly = true)
     public Member findById(Long id) {
         return memberRepository.findById(id)
             .orElseThrow(() -> new MemberException(MemberErrorCode.MEMBER_NOT_FOUND));
@@ -31,7 +30,6 @@ public class MemberService {
         return memberRepository.save(new Member(email, password));
     }
 
-    @Transactional(readOnly = true)
     public Member login(String email, String password) {
         Member member = memberRepository.findByEmail(email)
             .orElseThrow(() -> new MemberException(MemberErrorCode.INVALID_CREDENTIALS));
@@ -42,7 +40,6 @@ public class MemberService {
         return member;
     }
 
-    @Transactional(readOnly = true)
     public boolean existsByEmail(String email) {
         return memberRepository.existsByEmail(email);
     }
