@@ -67,6 +67,10 @@
 - [x] test(order): 주문 완료 시 위시리스트 항목 제거 검증 테스트 작성
 - [x] feat(order): 주문 완료 시 해당 상품의 위시리스트 항목 자동 제거
 
+### Phase 8: 도메인 책임 되찾기
+- [x] refactor(option): 주문 금액 계산 로직을 Option 엔티티로 이동
+- [x] refactor(member): 비밀번호 검증 로직을 Member 엔티티로 이동
+
 ## 구현 전략
 
 ### Phase 0: 테스트 코드 작성
@@ -116,6 +120,14 @@
 - **현황**: TODO 1건 — `OrderController:51` 주문 완료 시 위시리스트 정리 (cleanup wish)
 - **접근**: 작동 변경이므로 변경 전 3줄 명세 작성 → 실패 테스트 → 구현 → 테스트 통과 → TODO 제거
 - **검증**: 주문 후 위시리스트 조회 API로 해당 상품이 제거되었는지 상태 재조회
+
+### Phase 8: 도메인 책임 되찾기
+- **목적**: Service에 위치한 도메인 로직을 Entity로 이동하여 응집도 향상
+- **대상 식별 결과**:
+  - `OrderService:49` `option.getProduct().getPrice() * quantity` → getter 조합 산술 연산 → `Option.calculatePrice(quantity)`로 이동
+  - `MemberService:37-39` `member.getPassword() == null || !...equals(password)` → getter 비교 검증 → `Member.verifyPassword(password)`로 이동
+- **원칙**: 구조 변경(`refactor`)이므로 외부 동작 불변. 기존 테스트 통과로 검증
+- **검증**: 각 커밋마다 `./gradlew test` 통과
 
 ## 진행 기록
 
