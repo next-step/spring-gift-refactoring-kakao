@@ -76,6 +76,12 @@
 - OptionController, ProductController, MemberController에 중복된 @ExceptionHandler 3건 제거
 - GlobalExceptionHandler에 IllegalArgumentException → 400 Bad Request 핸들러 1건 추가
 
+#### Commit 12 [구조] 인증 실패 시 예외 기반 처리로 전환하여 컨트롤러 null 체크 제거
+
+- AuthenticationResolver.extractMember()가 null 대신 UnauthorizedException을 던지도록 변경
+- GlobalExceptionHandler에 UnauthorizedException → 401 핸들러 추가
+- OrderController(2건), WishController(3건)의 null 체크 분기 총 5건 제거
+
 ---
 
 ## AI 활용 과정
