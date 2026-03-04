@@ -1,8 +1,10 @@
 package gift.wish;
 
 import gift.auth.AuthenticationResolver;
-import gift.product.ProductRepository;
+import gift.error.CommonErrorCode;
+import gift.error.CommonException;
 import jakarta.validation.Valid;
+import java.net.URI;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -15,22 +17,17 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.net.URI;
-
 @RestController
 @RequestMapping("/api/wishes")
 public class WishController {
-    private final WishRepository wishRepository;
-    private final ProductRepository productRepository;
+    private final WishService wishService;
     private final AuthenticationResolver authenticationResolver;
 
     public WishController(
-        WishRepository wishRepository,
-        ProductRepository productRepository,
+        WishService wishService,
         AuthenticationResolver authenticationResolver
     ) {
-        this.wishRepository = wishRepository;
-        this.productRepository = productRepository;
+        this.wishService = wishService;
         this.authenticationResolver = authenticationResolver;
     }
 
@@ -39,12 +36,11 @@ public class WishController {
         @RequestHeader("Authorization") String authorization,
         Pageable pageable
     ) {
-        // check auth
         var member = authenticationResolver.extractMember(authorization);
         if (member == null) {
-            return ResponseEntity.status(401).build();
+            throw new CommonException(CommonErrorCode.UNAUTHORIZED);
         }
-        var wishes = wishRepository.findByMemberId(member.getId(), pageable).map(WishResponse::from);
+        var wishes = wishService.findByMemberId(member.getId(), pageable).map(WishResponse::from);
         return ResponseEntity.ok(wishes);
     }
 
@@ -53,25 +49,17 @@ public class WishController {
         @RequestHeader("Authorization") String authorization,
         @Valid @RequestBody WishRequest request
     ) {
-        // check auth
         var member = authenticationResolver.extractMember(authorization);
         if (member == null) {
-            return ResponseEntity.status(401).build();
+            throw new CommonException(CommonErrorCode.UNAUTHORIZED);
         }
 
-        // check product
-        var product = productRepository.findById(request.productId()).orElse(null);
-        if (product == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        // check duplicate
-        var existing = wishRepository.findByMemberIdAndProductId(member.getId(), product.getId()).orElse(null);
+        var existing = wishService.findByMemberIdAndProductId(member.getId(), request.productId());
         if (existing != null) {
             return ResponseEntity.ok(WishResponse.from(existing));
         }
 
-        var saved = wishRepository.save(new Wish(member.getId(), product));
+        var saved = wishService.addWish(member.getId(), request.productId());
         return ResponseEntity.created(URI.create("/api/wishes/" + saved.getId()))
             .body(WishResponse.from(saved));
     }
@@ -81,22 +69,17 @@ public class WishController {
         @RequestHeader("Authorization") String authorization,
         @PathVariable Long id
     ) {
-        // check auth
         var member = authenticationResolver.extractMember(authorization);
         if (member == null) {
-            return ResponseEntity.status(401).build();
+            throw new CommonException(CommonErrorCode.UNAUTHORIZED);
         }
 
-        var wish = wishRepository.findById(id).orElse(null);
-        if (wish == null) {
-            return ResponseEntity.notFound().build();
-        }
-
+        var wish = wishService.findById(id);
         if (!wish.getMemberId().equals(member.getId())) {
-            return ResponseEntity.status(403).build();
+            throw new CommonException(CommonErrorCode.FORBIDDEN);
         }
 
-        wishRepository.delete(wish);
+        wishService.delete(wish);
         return ResponseEntity.noContent().build();
     }
 }
