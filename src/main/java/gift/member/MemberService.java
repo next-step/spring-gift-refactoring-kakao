@@ -26,7 +26,7 @@ public class MemberService {
                 .findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다."));
 
-        if (member.getPassword() == null || !member.getPassword().equals(password)) {
+        if (!member.checkPassword(password)) {
             throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 

@@ -46,6 +46,10 @@ public class Member {
         this.point += amount;
     }
 
+    public boolean checkPassword(String password) {
+        return this.password != null && this.password.equals(password);
+    }
+
     // 주문 결제를 위한 포인트 차감
     public void deductPoint(int amount) {
         if (amount <= 0) {
