@@ -167,7 +167,7 @@ Step 1에서 정리한 구조 위에 작동 변경을 수행한다. 모든 변�
 
 #### 5단계: 이메일 중복 검증 로직 통합
 
-- [ ] `MemberService`의 `register()`와 `create()`에 중복된 이메일 체크를 private 메서드로 추출 (구조 변경)
+- [x] `MemberService`의 `register()`와 `create()`에 중복된 이메일 체크를 `validateEmailNotDuplicated`로 추출 (구조 변경)
 
 #### 6단계: @RestControllerAdvice 도입
 
