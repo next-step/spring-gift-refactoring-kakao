@@ -64,7 +64,7 @@ public class OptionService {
         }
 
         option.update(request.name(), request.quantity());
-        return option;
+        return optionRepository.save(option);
     }
 
     private Product findProduct(Long productId) {
