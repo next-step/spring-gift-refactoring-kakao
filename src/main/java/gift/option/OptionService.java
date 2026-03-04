@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class OptionService {
     private final OptionRepository optionRepository;
     private final ProductRepository productRepository;
@@ -18,7 +19,6 @@ public class OptionService {
         this.productRepository = productRepository;
     }
 
-    @Transactional(readOnly = true)
     public List<Option> findByProductId(Long productId) {
         productRepository.findById(productId)
             .orElseThrow(() -> new ProductException(ProductErrorCode.PRODUCT_NOT_FOUND));
