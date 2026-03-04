@@ -20,7 +20,7 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(NoSuchElementException.class)
-  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  @ResponseStatus(HttpStatus.NOT_FOUND)
   public Map<String, String> handleNoSuchElement(NoSuchElementException e) {
     return Map.of(ERROR_MESSAGE_KEY, Objects.toString(e.getMessage(), "Bad Request"));
   }

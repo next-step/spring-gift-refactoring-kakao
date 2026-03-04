@@ -20,13 +20,13 @@ public class MemberService {
   public Member getById(Long id) {
     return memberRepository
         .findById(id)
-        .orElseThrow(() -> new IllegalArgumentException("Member not found. id=" + id));
+        .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다. id=" + id));
   }
 
   @Transactional
   public Member register(String email, String password) {
     if (memberRepository.existsByEmail(email)) {
-      throw new IllegalArgumentException("Email is already registered.");
+      throw new IllegalArgumentException("이미 등록된 이메일입니다.");
     }
     return memberRepository.save(new Member(email, password));
   }
@@ -35,10 +35,10 @@ public class MemberService {
     Member member =
         memberRepository
             .findByEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid email or password."));
+            .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다."));
 
     if (member.getPassword() == null || !member.getPassword().equals(password)) {
-      throw new IllegalArgumentException("Invalid email or password.");
+      throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
     }
 
     return member;
@@ -49,7 +49,7 @@ public class MemberService {
     Member member =
         memberRepository
             .findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Member not found. id=" + id));
+            .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다. id=" + id));
     member.update(email, password);
     return member;
   }
@@ -59,7 +59,7 @@ public class MemberService {
     Member member =
         memberRepository
             .findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Member not found. id=" + id));
+            .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다. id=" + id));
     member.chargePoint(amount);
     return member;
   }
