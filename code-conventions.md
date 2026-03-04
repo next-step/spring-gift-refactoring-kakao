@@ -9,7 +9,7 @@
 
 ### 2. 선언 및 명명 규칙 (Naming & Declaration)
 - **파일 구조:** 소스 파일당 1개의 탑레벨 클래스만 작성합니다.
-- **Import:** 와일드카드(`*`) 사용을 금지합니다. 단, `static import` 시에는 예외적으로 허용합니다.
+- **Import:** IntelliJ의 Optimize Import 기능을 사용합니다.
 - **수정자 순서:** `public protected private abstract static final transient volatile synchronized native strictfp` 순을 준수합니다.
 - **명명:** - 클래스: UpperCamelCase (명사/형용사)
     - 메서드/변수: lowerCamelCase (메서드는 동사로 시작)
