@@ -132,3 +132,119 @@
 ```
 
 44개 E2E 시나리오 전체 통과 시 해당 커밋의 리팩터링이 기존 동작을 깨뜨리지 않음을 보장한다.
+
+---
+
+## 2단계 리팩터링 개요
+
+**목표:** 작동 변경을 안전하게 수행하고, 그 결과를 증거로 보여준다.
+
+1단계에서 서비스 계층을 추출했지만, 비즈니스 로직 일부가 Controller에 남아 있다.
+위시 중복 체크·소유권 검증은 Controller에서 직접 수행하고,
+`OrderService`는 트랜잭션 밖에서 조회된 `Member`를 받아 포인트를 차감하므로 동시 요청에 취약하다.
+주문 후 위시 삭제(`// TODO: cleanup wish`)는 의도만 남긴 채 구현되지 않았다.
+예외 핸들러 8개가 6개 Controller에 동일하게 반복되고,
+가격 계산(`price × quantity`)이 `OrderService`와 `KakaoMessageClient`에 중복된다.
+
+이번 단계에서는 도메인 책임을 올바른 위치로 이동(구조 변경)한 뒤,
+트랜잭션 경계를 바로잡고 누락된 기능을 완성(작동 변경)한다.
+구조 변경 커밋과 작동 변경 커밋은 분리한다.
+
+---
+
+### Phase 5 — 도메인 책임 이동 (구조 변경)
+
+- [ ] 21. `refactor: extract GlobalExceptionHandler via @ControllerAdvice`
+  - **생성:** GlobalExceptionHandler
+  - **수정:** ProductController, OptionController, CategoryController, WishController, OrderController, MemberController
+  - **변경 내용:**
+    - `@ExceptionHandler(NoSuchElementException.class)` 5곳 → 전역 핸들러로 통합
+    - `@ExceptionHandler(IllegalArgumentException.class)` 3곳 → 전역 핸들러로 통합
+    - 각 Controller에서 해당 메서드 제거
+
+- [ ] 22. `refactor: move Kakao authorization URL building to KakaoLoginClient`
+  - **수정:** KakaoLoginClient, KakaoAuthController
+  - **변경 내용:**
+    - `KakaoLoginClient.buildAuthorizationUrl()` 메서드 추가 (인가 URL 조립 책임 이동)
+    - `KakaoAuthController`에서 URL 조립 코드 제거, `KakaoLoginClient` 호출로 대체
+    - Controller에서 `KakaoLoginProperties` 의존성 제거
+
+- [ ] 23. `refactor: add behavior methods to domain entities`
+  - **수정:** Member, Order, Wish, MemberService, OrderService, KakaoMessageClient, WishController
+  - **변경 내용:**
+    - `Member.matchesPassword(String)` — 비밀번호 비교 캡슐화 (← `MemberService:30`의 getter 비교 대체)
+    - `Member.isKakaoLinked()` — 카카오 토큰 존재 여부 (← `OrderService:53`의 null 체크 대체)
+    - `Order.getTotalPrice()` — 가격 × 수량 (← `OrderService:46`, `KakaoMessageClient:33` 중복 계산 제거)
+    - `Wish.isOwnedBy(Long memberId)` — 소유권 판단 (← `WishController:73`의 비교 대체)
+
+- [ ] 24. `refactor: replace manual auth check with HandlerMethodArgumentResolver`
+  - **생성:** `@AuthMember` 어노테이션, `AuthMemberArgumentResolver`
+  - **수정:** WishController, OrderController, WebMvcConfigurer 구현체
+  - **변경 내용:**
+    - `AuthenticationResolver.extractMember()` + null 체크 보일러플레이트 5곳 제거
+    - `@AuthMember Member member` 파라미터 선언만으로 인증된 회원 자동 주입
+    - 미인증 시 `ArgumentResolver`에서 `UNAUTHORIZED` 응답 처리
+
+- [ ] 25. `refactor: replace ResponseEntity<?> wildcards with concrete types`
+  - **수정:** OrderController, WishController
+  - **변경 내용:**
+    - `ResponseEntity<?>` → `ResponseEntity<Page<OrderResponse>>`, `ResponseEntity<OrderResponse>` 등 구체 타입으로 변경
+    - API 응답 계약 명확화
+
+### Phase 6 — 작동 변경
+
+- [ ] 26. `fix: add logging for Kakao message send failure in OrderEventListener`
+  - **수정:** OrderEventListener
+  - **변경 내용:**
+    - `catch (Exception ignored)` → `catch (Exception e) { log.warn(..., e); }` 로 변경
+    - 카카오 메시지 전송 실패 시 원인 추적 가능하도록 경고 로그 기록
+
+- [ ] 27. `fix: move wish business logic to WishService and make atomic`
+  - **수정:** WishService, WishController
+  - **변경 내용:**
+    - 중복 체크 + 생성 → `WishService.addWish(Long memberId, Long productId)`로 통합 (단일 `@Transactional`)
+    - 소유권 체크 + 삭제 → `WishService.removeWish(Long wishId, Long memberId)`로 통합 (단일 `@Transactional`)
+    - Controller는 Service에 위임만 수행
+  - **검증:** 위시 중복 추가 시 기존 위시 반환, 타인 위시 삭제 시 403 응답 확인
+
+- [ ] 28. `fix: reload member inside transaction in OrderService`
+  - **수정:** OrderService, OrderController
+  - **변경 내용:**
+    - `createOrder(Member, OrderRequest)` → `createOrder(Long memberId, OrderRequest)`
+    - 트랜잭션 내에서 `memberRepository.findById(memberId)`로 managed 엔티티 조회
+    - detached 엔티티로 인한 포인트 덮어쓰기 방지
+  - **검증:** 주문 후 회원 포인트 잔액 재조회로 정확한 차감 확인
+
+- [ ] 29. `feat: remove wish on order placement`
+  - **수정:** OrderService
+  - **변경 내용:**
+    - `OrderService`에 `WishRepository` 주입
+    - 주문 저장 후 해당 회원·상품의 위시를 조회, 존재하면 삭제
+  - **검증:** 위시 등록 → 주문 → 위시 목록 재조회 시 해당 위시 부재 확인
+
+---
+
+## 작동 변경 원칙
+
+- **구조 변경과 작동 변경을 섞지 않는다:** Phase 5(구조)와 Phase 6(작동)의 커밋을 분리한다. 단, 코드 이동이 트랜잭션 경계를 필연적으로 변경하는 경우 작동 변경으로 분류한다.
+- **작동 변경은 증거와 함께:** 예외 발생 여부가 아니라, 상태를 재조회하여 관찰 가능한 방식으로 검증한다.
+- **트랜잭션 경계:** 하나의 논리 작업(조회 → 검증 → 저장)은 같은 `@Transactional` 안에서 수행한다.
+- **엔티티 행위:** 판단과 계산은 엔티티 메서드로 캡슐화한다. Service가 getter로 상태를 꺼내 비교하지 않는다.
+- **ADR:** 선택지가 2개 이상이고 트레이드오프가 있었거나, 팀이 따라야 할 규칙을 정한 경우 `docs/adr/`에 기록한다.
+
+---
+
+## 검증 방법 (2단계)
+
+매 커밋마다 기존 E2E 테스트를 확인한다.
+
+```bash
+./gradlew cucumberE2eTest
+```
+
+작동 변경(Phase 6)은 추가로 E2E 시나리오를 작성하여 검증한다.
+추가될 시나리오는 기존 시나리오의 톤앤매너 및 기조에 맞추어 설계한다.
+
+```bash
+./gradlew test
+```
