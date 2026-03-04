@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class WishService {
     private final WishRepository wishRepository;
     private final ProductRepository productRepository;
@@ -17,12 +18,10 @@ public class WishService {
         this.productRepository = productRepository;
     }
 
-    @Transactional(readOnly = true)
     public Page<Wish> findByMemberId(Long memberId, Pageable pageable) {
         return wishRepository.findByMemberId(memberId, pageable);
     }
 
-    @Transactional(readOnly = true)
     public Wish findByMemberIdAndProductId(Long memberId, Long productId) {
         return wishRepository.findByMemberIdAndProductId(memberId, productId).orElse(null);
     }
@@ -34,7 +33,6 @@ public class WishService {
         return wishRepository.save(new Wish(memberId, product));
     }
 
-    @Transactional(readOnly = true)
     public Wish findById(Long id) {
         return wishRepository.findById(id)
             .orElseThrow(() -> new WishException(WishErrorCode.WISH_NOT_FOUND));
