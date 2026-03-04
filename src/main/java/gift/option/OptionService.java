@@ -62,8 +62,11 @@ public class OptionService {
       throw new IllegalArgumentException("옵션이 1개인 상품은 옵션을 삭제할 수 없습니다.");
     }
 
-    Option option = optionRepository.findById(optionId).orElse(null);
-    if (option == null || !option.getProduct().getId().equals(productId)) {
+    Option option =
+        optionRepository
+            .findById(optionId)
+            .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다. id=" + optionId));
+    if (!option.getProduct().getId().equals(productId)) {
       return false;
     }
 

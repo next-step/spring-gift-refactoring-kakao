@@ -2,7 +2,7 @@ package gift.wish;
 
 import gift.product.Product;
 import gift.product.ProductRepository;
-import java.util.Optional;
+import java.util.NoSuchElementException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -24,27 +24,24 @@ public class WishService {
   }
 
   @Transactional
-  public Optional<AddWishResult> addWish(Long memberId, Long productId) {
-    Product product = productRepository.findById(productId).orElse(null);
-    if (product == null) {
-      return Optional.empty();
-    }
+  public AddWishResult addWish(Long memberId, Long productId) {
+    Product product =
+        productRepository
+            .findById(productId)
+            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
 
-    Wish existing = wishRepository.findByMemberIdAndProductId(memberId, productId).orElse(null);
-    if (existing != null) {
-      return Optional.of(new AddWishResult(existing, false));
-    }
-
-    Wish saved = wishRepository.save(new Wish(memberId, product));
-    return Optional.of(new AddWishResult(saved, true));
+    return wishRepository
+        .findByMemberIdAndProductId(memberId, productId)
+        .map(existing -> new AddWishResult(existing, false))
+        .orElseGet(() -> new AddWishResult(wishRepository.save(new Wish(memberId, product)), true));
   }
 
   @Transactional
   public RemoveWishResult removeWish(Long memberId, Long wishId) {
-    Wish wish = wishRepository.findById(wishId).orElse(null);
-    if (wish == null) {
-      return RemoveWishResult.NOT_FOUND;
-    }
+    Wish wish =
+        wishRepository
+            .findById(wishId)
+            .orElseThrow(() -> new NoSuchElementException("위시가 존재하지 않습니다. id=" + wishId));
 
     if (!wish.getMemberId().equals(memberId)) {
       return RemoveWishResult.FORBIDDEN;
@@ -58,7 +55,6 @@ public class WishService {
 
   public enum RemoveWishResult {
     DELETED,
-    NOT_FOUND,
     FORBIDDEN
   }
 }
