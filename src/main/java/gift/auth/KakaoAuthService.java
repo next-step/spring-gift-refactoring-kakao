@@ -11,7 +11,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Service
 @Transactional(readOnly = true)
 public class KakaoAuthService {
-  private static final String KAKAO_AUTHORIZE_URL = "https://kauth.kakao.com/oauth/authorize";
   private static final String OAUTH_SCOPE = "account_email,talk_message";
 
   private final KakaoLoginProperties properties;
@@ -28,7 +27,7 @@ public class KakaoAuthService {
   }
 
   public String buildAuthorizationUrl() {
-    return UriComponentsBuilder.fromUriString(KAKAO_AUTHORIZE_URL)
+    return UriComponentsBuilder.fromUriString(properties.authorizeUrl())
         .queryParam("response_type", "code")
         .queryParam("client_id", properties.clientId())
         .queryParam("redirect_uri", properties.redirectUri())

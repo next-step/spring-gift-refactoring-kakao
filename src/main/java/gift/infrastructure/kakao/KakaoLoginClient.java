@@ -10,8 +10,6 @@ import org.springframework.web.client.RestClient;
 
 @Component
 public class KakaoLoginClient {
-  private static final String KAKAO_TOKEN_URL = "https://kauth.kakao.com/oauth/token";
-  private static final String KAKAO_USER_INFO_URL = "https://kapi.kakao.com/v2/user/me";
   private static final String BEARER_PREFIX = "Bearer ";
 
   private final KakaoLoginProperties properties;
@@ -32,7 +30,7 @@ public class KakaoLoginClient {
 
     return restClient
         .post()
-        .uri(KAKAO_TOKEN_URL)
+        .uri(properties.tokenUrl())
         .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE)
         .body(params)
         .retrieve()
@@ -42,7 +40,7 @@ public class KakaoLoginClient {
   public KakaoUserResponse requestUserInfo(String accessToken) {
     return restClient
         .get()
-        .uri(KAKAO_USER_INFO_URL)
+        .uri(properties.userInfoUrl())
         .header(HttpHeaders.AUTHORIZATION, BEARER_PREFIX + accessToken)
         .retrieve()
         .body(KakaoUserResponse.class);
