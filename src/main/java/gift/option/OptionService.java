@@ -58,7 +58,7 @@ public class OptionService {
         Option option = optionRepository.findById(optionId)
             .orElseThrow(() -> new NoSuchElementException("옵션을 찾을 수 없습니다. id=" + optionId));
 
-        if (!option.getProduct().getId().equals(productId)) {
+        if (!option.belongsToProduct(productId)) {
             throw new NoSuchElementException("해당 상품의 옵션이 아닙니다. optionId=" + optionId);
         }
 
