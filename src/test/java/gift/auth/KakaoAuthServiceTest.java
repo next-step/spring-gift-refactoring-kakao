@@ -36,7 +36,7 @@ class KakaoAuthServiceTest {
     private KakaoAuthService kakaoAuthService;
 
     @Nested
-    @DisplayName("buildKakaoAuthUrl")
+    @DisplayName("getKakaoAuthorizationUrl")
     class BuildKakaoAuthUrl {
 
         @Test
@@ -45,7 +45,7 @@ class KakaoAuthServiceTest {
             given(properties.clientId()).willReturn("test-client-id");
             given(properties.redirectUri()).willReturn("http://localhost/callback");
 
-            String url = kakaoAuthService.buildKakaoAuthUrl();
+            String url = kakaoAuthService.getKakaoAuthorizationUrl();
 
             assertThat(url).startsWith("https://kauth.kakao.com/oauth/authorize");
             assertThat(url).contains("client_id=test-client-id");
@@ -56,7 +56,7 @@ class KakaoAuthServiceTest {
     }
 
     @Nested
-    @DisplayName("handleCallback")
+    @DisplayName("authenticateWithKakao")
     class HandleCallback {
 
         @Test
@@ -73,7 +73,7 @@ class KakaoAuthServiceTest {
             given(memberRepository.save(any(Member.class))).willAnswer(inv -> inv.getArgument(0));
             given(jwtProvider.createToken("existing@test.com")).willReturn("jwt-token");
 
-            TokenResponse result = kakaoAuthService.handleCallback("auth-code");
+            TokenResponse result = kakaoAuthService.authenticateWithKakao("auth-code");
 
             assertThat(result.token()).isEqualTo("jwt-token");
             assertThat(existingMember.getKakaoAccessToken()).isEqualTo("kakao-access-token");
@@ -92,7 +92,7 @@ class KakaoAuthServiceTest {
             given(memberRepository.save(any(Member.class))).willAnswer(inv -> inv.getArgument(0));
             given(jwtProvider.createToken("new@test.com")).willReturn("jwt-token");
 
-            TokenResponse result = kakaoAuthService.handleCallback("auth-code");
+            TokenResponse result = kakaoAuthService.authenticateWithKakao("auth-code");
 
             assertThat(result.token()).isEqualTo("jwt-token");
             then(memberRepository).should().save(any(Member.class));

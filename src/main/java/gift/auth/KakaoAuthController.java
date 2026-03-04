@@ -19,7 +19,7 @@ public class KakaoAuthController {
 
     @GetMapping(path = "/login")
     public ResponseEntity<Void> login() {
-        String kakaoAuthUrl = kakaoAuthService.buildKakaoAuthUrl();
+        String kakaoAuthUrl = kakaoAuthService.getKakaoAuthorizationUrl();
         return ResponseEntity.status(HttpStatus.FOUND)
             .header(HttpHeaders.LOCATION, kakaoAuthUrl)
             .build();
@@ -27,7 +27,7 @@ public class KakaoAuthController {
 
     @GetMapping(path = "/callback")
     public ResponseEntity<TokenResponse> callback(@RequestParam("code") String code) {
-        TokenResponse token = kakaoAuthService.handleCallback(code);
+        TokenResponse token = kakaoAuthService.authenticateWithKakao(code);
         return ResponseEntity.ok(token);
     }
 }

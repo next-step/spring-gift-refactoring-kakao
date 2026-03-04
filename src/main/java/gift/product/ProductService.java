@@ -53,7 +53,7 @@ public class ProductService {
         return productRepository.findAll();
     }
 
-    public List<String> validateProductName(String name, boolean allowKakao) {
+    public List<String> getProductNameErrors(String name, boolean allowKakao) {
         return ProductNameValidator.validate(name, allowKakao);
     }
 

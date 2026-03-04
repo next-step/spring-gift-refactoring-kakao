@@ -25,7 +25,7 @@ public class KakaoAuthService {
         this.jwtProvider = jwtProvider;
     }
 
-    public String buildKakaoAuthUrl() {
+    public String getKakaoAuthorizationUrl() {
         return UriComponentsBuilder.fromUriString("https://kauth.kakao.com/oauth/authorize")
             .queryParam("response_type", "code")
             .queryParam("client_id", properties.clientId())
@@ -36,7 +36,7 @@ public class KakaoAuthService {
     }
 
     @Transactional
-    public TokenResponse handleCallback(String code) {
+    public TokenResponse authenticateWithKakao(String code) {
         KakaoLoginClient.KakaoTokenResponse kakaoToken = kakaoLoginClient.requestAccessToken(code);
         KakaoLoginClient.KakaoUserResponse kakaoUser = kakaoLoginClient.requestUserInfo(kakaoToken.accessToken());
         String email = kakaoUser.email();
