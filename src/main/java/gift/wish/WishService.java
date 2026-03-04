@@ -1,7 +1,7 @@
 package gift.wish;
 
-import gift.common.EntityNotFoundException;
-import gift.common.ForbiddenException;
+import gift.error.EntityNotFoundException;
+import gift.error.ForbiddenException;
 import gift.product.Product;
 import gift.product.ProductRepository;
 import org.springframework.data.domain.Page;

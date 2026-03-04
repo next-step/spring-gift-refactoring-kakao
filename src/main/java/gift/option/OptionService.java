@@ -1,7 +1,7 @@
 package gift.option;
 
-import gift.common.DuplicateException;
-import gift.common.EntityNotFoundException;
+import gift.error.DuplicateException;
+import gift.error.EntityNotFoundException;
 import gift.product.Product;
 import gift.product.ProductRepository;
 import org.springframework.stereotype.Service;

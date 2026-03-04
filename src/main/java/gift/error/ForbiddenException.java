@@ -1,4 +1,4 @@
-package gift.common;
+package gift.error;
 
 public class ForbiddenException extends RuntimeException {
     public ForbiddenException(String message) {

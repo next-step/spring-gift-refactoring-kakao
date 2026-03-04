@@ -1,4 +1,4 @@
-package gift.common;
+package gift.error;
 
 public class DuplicateException extends RuntimeException {
     public DuplicateException(String message) {

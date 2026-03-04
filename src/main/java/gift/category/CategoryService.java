@@ -1,6 +1,6 @@
 package gift.category;
 
-import gift.common.EntityNotFoundException;
+import gift.error.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

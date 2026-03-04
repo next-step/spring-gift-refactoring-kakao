@@ -1,4 +1,4 @@
-package gift.auth;
+package gift.error;
 
 public class UnauthorizedException extends RuntimeException {
     public UnauthorizedException(String message) {

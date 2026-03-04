@@ -1,6 +1,5 @@
-package gift.common;
+package gift.error;
 
-import gift.auth.UnauthorizedException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

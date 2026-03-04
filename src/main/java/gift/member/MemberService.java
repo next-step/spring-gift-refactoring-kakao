@@ -1,8 +1,8 @@
 package gift.member;
 
 import gift.auth.JwtProvider;
-import gift.common.DuplicateException;
-import gift.common.EntityNotFoundException;
+import gift.error.DuplicateException;
+import gift.error.EntityNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

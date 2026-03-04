@@ -2,7 +2,7 @@ package gift.product;
 
 import gift.category.Category;
 import gift.category.CategoryRepository;
-import gift.common.EntityNotFoundException;
+import gift.error.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;

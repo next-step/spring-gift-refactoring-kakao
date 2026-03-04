@@ -1,6 +1,6 @@
 package gift.order;
 
-import gift.common.EntityNotFoundException;
+import gift.error.EntityNotFoundException;
 import gift.member.Member;
 import gift.member.MemberRepository;
 import gift.option.Option;
