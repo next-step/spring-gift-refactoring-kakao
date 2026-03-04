@@ -156,6 +156,11 @@ public class GiftStepDefinitions {
         assertThat(context.getStatusCode()).isGreaterThanOrEqualTo(400);
     }
 
+    @그러면("옵션을 찾을 수 없어 주문이 실패한다")
+    public void 옵션을_찾을_수_없어_주문이_실패한다() {
+        assertThat(context.getStatusCode()).isEqualTo(404);
+    }
+
     @조건("회원의 포인트가 {int}이다")
     public void 회원의_포인트가_n이다(int point) {
         jdbcTemplate.update("UPDATE member SET point = ? WHERE id = ?", point, context.getMemberId());

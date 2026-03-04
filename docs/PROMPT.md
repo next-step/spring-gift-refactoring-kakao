@@ -53,3 +53,9 @@ KakaoAuthService 추출 — KakaoAuthController에 남아있는 비즈니스 로
 
 ## 프롬프트 14
 구조 변경 - 의존성 정리(외부 인프라 의존, 순환 참조, 크로스 패키지 의존)와 도메인 책임(객체지향 설계, 중복 제거, 호출부 단순화) 분석.
+
+## 프롬프트 15
+예외 처리 중앙화 — 5개 REST 컨트롤러에 분산된 @ExceptionHandler 10개를 @RestControllerAdvice(annotations = RestController.class) 1개로 통합. @Controller(Admin 뷰 컨트롤러)는 적용 범위에서 제외.
+
+## 프롬프트 16
+인수 테스트 커버리지 검토: GlobalExceptionHandler — NoSuchElementException→404 매핑의 단언문 정밀도 개선. "상품 등록이 실패한다" 스텝을 `≥400`에서 `=404`로 변경. "존재하지 않는 옵션으로 주문" 시나리오에 `=404` 전용 스텝 추가.

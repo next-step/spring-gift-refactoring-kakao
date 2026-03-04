@@ -85,9 +85,9 @@ public class ProductStepDefinitions {
         assertThat(context.getStatusCode()).isEqualTo(201);
     }
 
-    @그러면("상품 등록이 실패한다")
-    public void 상품_등록이_실패한다() {
-        assertThat(context.getStatusCode()).isGreaterThanOrEqualTo(400);
+    @그러면("카테고리를 찾을 수 없어 상품 등록이 실패한다")
+    public void 카테고리를_찾을_수_없어_상품_등록이_실패한다() {
+        assertThat(context.getStatusCode()).isEqualTo(404);
     }
 
     @조건("{string} {int}원 상품이 해당 카테고리에 등록되어 있다")

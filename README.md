@@ -95,9 +95,10 @@
 > 근거: 동일한 @ExceptionHandler가 5개 컨트롤러에 10회 중복되어 있다.
 > 예외 응답 형식 변경 시 5곳을 수정해야 하며, 누락 시 컨트롤러마다 다른 응답을 반환하게 된다.
 
-- [ ] @ControllerAdvice 클래스 생성 (NoSuchElementException→404, IllegalArgumentException→400, IllegalStateException→403)
-- [ ] 5개 컨트롤러에서 @ExceptionHandler 메서드 10개 제거
-- [ ] 전체 테스트 실행 → 통과 확인
+- [x] @ControllerAdvice 클래스 생성 (NoSuchElementException→404, IllegalArgumentException→400, IllegalStateException→403)
+- [x] 5개 컨트롤러에서 @ExceptionHandler 메서드 10개 제거
+- [x] 인수 테스트 단언문 정밀화 — 404 매핑 검증이 `≥400`으로 느슨했던 2개 시나리오를 `=404`로 정밀화
+- [x] 전체 테스트 실행 → 통과 확인
 
 #### 5-2. 인증 처리 추출 — HandlerMethodArgumentResolver 도입
 
