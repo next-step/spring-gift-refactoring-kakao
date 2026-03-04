@@ -5,6 +5,156 @@ Step 1에서 구조만 정리했다. Step 2에서는 작동 변경을 수행하�
 
 ---
 
+## 0단계: 테스트 코드 작성 (모든 단계 선행)
+
+작동 변경 전 기대 동작을 테스트로 먼저 정의한다. 모든 테스트는 **Red 상태**에서 시작하며, 이후 단계에서 구현하면서 Green으로 전환한다.
+
+### 0-1: 포인트 부족 시 재고 롤백 통합 테스트 (→ 1단계)
+
+`OrderControllerTest`에 추가. 포인트가 부족하면 예외가 발생하고, `@Transactional` 덕분에 재고가 원래대로 유지되어야 한다.
+
+```java
+@Test
+@DisplayName("POST /api/orders - 포인트 부족 시 재고가 롤백된다")
+void createOrderInsufficientPointsRollsBackStock() {
+    // 포인트 부족으로 주문 실패
+    given()
+        .header("Authorization", token)
+        .contentType(ContentType.JSON)
+        .body(Map.of("optionId", 1, "quantity", 1, "message", "선물"))
+    .when()
+        .post("/api/orders")
+    .then()
+        .statusCode(400);
+
+    // @Transactional 덕분에 재고가 원래대로 유지되어야 한다
+    given()
+    .when()
+        .get("/api/products/1/options")
+    .then()
+        .body("[0].quantity", equalTo(100));
+}
+```
+
+**Red 이유:** 현재 `@Transactional`이 없어 재고 차감 후 포인트 차감 실패 시 재고가 롤백되지 않는다.
+
+### 0-2: 카카오 로그인 서비스 통합 테스트 (→ 1단계)
+
+`KakaoAuthServiceTest.java` 신규 생성. `KakaoLoginClient`를 `@MockBean`으로 모킹.
+
+- **테스트 1: 신규 회원** — `requestAccessToken` → `requestUserInfo` 스텁 → `loginWithKakao` 호출 → 회원 저장 확인 + JWT 반환 검증
+- **테스트 2: 기존 회원** — 이미 존재하는 이메일로 로그인 → 카카오 토큰 갱신 확인 + JWT 반환 검증
+
+```java
+@SpringBootTest
+class KakaoAuthServiceTest {
+    @Autowired KakaoAuthService kakaoAuthService;
+    @MockBean KakaoLoginClient kakaoLoginClient;
+    @Autowired MemberRepository memberRepository;
+
+    @Test
+    @DisplayName("신규 회원 카카오 로그인 시 회원이 생성되고 JWT가 반환된다")
+    void loginWithKakao_newMember() {
+        given(kakaoLoginClient.requestAccessToken(anyString()))
+            .willReturn(new KakaoTokenResponse("access-token", ...));
+        given(kakaoLoginClient.requestUserInfo(anyString()))
+            .willReturn(new KakaoUserInfoResponse("new@kakao.com", ...));
+
+        TokenResponse response = kakaoAuthService.loginWithKakao("auth-code");
+
+        assertThat(response.token()).isNotBlank();
+        assertThat(memberRepository.findByEmail("new@kakao.com")).isPresent();
+    }
+
+    @Test
+    @DisplayName("기존 회원 카카오 로그인 시 토큰이 갱신되고 JWT가 반환된다")
+    void loginWithKakao_existingMember() {
+        // 기존 회원 생성
+        memberRepository.save(new Member("existing@kakao.com", "pw"));
+
+        given(kakaoLoginClient.requestAccessToken(anyString()))
+            .willReturn(new KakaoTokenResponse("new-access-token", ...));
+        given(kakaoLoginClient.requestUserInfo(anyString()))
+            .willReturn(new KakaoUserInfoResponse("existing@kakao.com", ...));
+
+        TokenResponse response = kakaoAuthService.loginWithKakao("auth-code");
+
+        assertThat(response.token()).isNotBlank();
+        Member member = memberRepository.findByEmail("existing@kakao.com").orElseThrow();
+        assertThat(member.getKakaoAccessToken()).isEqualTo("new-access-token");
+    }
+}
+```
+
+### 0-3: 주문 생성 후 위시 자동 삭제 통합 테스트 (→ 2단계)
+
+`OrderControllerTest`에 추가. 주문 전 위시가 존재하면 주문 후 자동 삭제되어야 한다.
+
+```java
+@Test
+@DisplayName("POST /api/orders - 주문 생성 후 해당 상품의 위시가 삭제된다")
+void createOrderDeletesWish() {
+    // setup-data.sql: wish (member_id=1, product_id=1) 존재
+    given()
+        .header("Authorization", token)
+        .contentType(ContentType.JSON)
+        .body(Map.of("optionId", 1, "quantity", 1, "message", "선물"))
+    .when()
+        .post("/api/orders")
+    .then()
+        .statusCode(201);
+
+    // 위시 목록 재조회 → 0개
+    given()
+        .header("Authorization", token)
+    .when()
+        .get("/api/wishes")
+    .then()
+        .statusCode(200)
+        .body("content.size()", equalTo(0));
+}
+```
+
+**Red 이유:** 현재 `OrderService`에 `// TODO: cleanup wish` 주석만 있고 구현이 없다.
+
+### 0-4: Option.calculateTotalPrice 단위 테스트 (→ 4단계)
+
+`OptionTest.java` 신규 생성.
+
+```java
+package gift.option;
+
+import gift.category.Category;
+import gift.product.Product;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+class OptionTest {
+
+    @Test
+    @DisplayName("calculateTotalPrice는 상품 가격 × 수량을 반환한다")
+    void calculateTotalPrice() {
+        Category category = new Category("카테고리", "#000000", "http://img.test/c.png", "설명");
+        Product product = new Product("상품", 1000, "http://img.test/p.png", category);
+        Option option = new Option(product, "옵션", 100);
+
+        assertThat(option.calculateTotalPrice(3)).isEqualTo(3000);
+    }
+}
+```
+
+**Red 이유:** `Option.calculateTotalPrice()` 메서드가 아직 존재하지 않아 컴파일 에러.
+
+### 테스트가 불필요한 단계
+
+- **3단계 (로그 추가):** 외부 관찰 가능한 작동이 바뀌지 않음. 기존 테스트로 커버.
+- **5단계 (이메일 중복 추출):** 순수 구조 변경. 기존 테스트로 커버.
+- **6단계 (@RestControllerAdvice):** 기존 에러 케이스 통합 테스트가 예외 매핑을 이미 검증.
+
+---
+
 ## 1단계: @Transactional 적용 (작동 변경)
 
 다중 저장소를 사용하는 서비스 메서드에 트랜잭션 경계를 설정한다.
@@ -18,7 +168,6 @@ Step 1에서 구조만 정리했다. Step 2에서는 작동 변경을 수행하�
 
 **변경 파일:**
 - `src/main/java/gift/order/OrderService.java`
-- `src/test/java/gift/order/OrderControllerTest.java`
 
 **코드:**
 
@@ -32,15 +181,7 @@ public Order createOrder(Member member, Long optionId, int quantity, String mess
 }
 ```
 
-**테스트:** `createOrderInsufficientPoints` 테스트 끝에 재고 롤백 검증 추가:
-```java
-// @Transactional 덕분에 재고가 원래대로 유지되어야 한다
-given()
-.when()
-    .get("/api/products/1/options")
-.then()
-    .body("[0].quantity", equalTo(100));
-```
+**검증:** `OrderControllerTest.createOrderInsufficientPointsRollsBackStock` 테스트가 Green으로 전환되어야 한다.
 
 ### KakaoAuthService.loginWithKakao()
 
@@ -65,9 +206,7 @@ public TokenResponse loginWithKakao(String code) {
 }
 ```
 
-`KakaoAuthServiceTest.java` — `KakaoLoginClient`를 `@MockBean`으로 모킹:
-- 테스트 1: 신규 회원 — `requestAccessToken` → `requestUserInfo` 스텁 → `loginWithKakao` 호출 → 회원 저장 확인 + JWT 반환 검증
-- 테스트 2: 기존 회원 — 이미 존재하는 이메일로 로그인 → 카카오 토큰 갱신 확인 + JWT 반환 검증
+**검증:** 0단계에서 작성한 `KakaoAuthServiceTest`의 신규/기존 회원 테스트가 Green으로 전환되어야 한다.
 
 ---
 
@@ -102,31 +241,7 @@ private final WishRepository wishRepository;
 wishRepository.deleteByMemberIdAndProductId(member.getId(), option.getProduct().getId());
 ```
 
-**테스트:** 주문 전 위시 1개 존재 → 주문 후 `/api/wishes` 재조회 → 위시 0개 확인:
-```java
-@Test
-@DisplayName("POST /api/orders - 주문 생성 후 해당 상품의 위시가 삭제된다")
-void createOrderDeletesWish() {
-    // setup-data.sql: wish (member_id=1, product_id=1) 존재
-    given()
-        .header("Authorization", token)
-        .contentType(ContentType.JSON)
-        .body(Map.of("optionId", 1, "quantity", 1, "message", "선물"))
-    .when()
-        .post("/api/orders")
-    .then()
-        .statusCode(201);
-
-    // 위시 목록 재조회 → 0개
-    given()
-        .header("Authorization", token)
-    .when()
-        .get("/api/wishes")
-    .then()
-        .statusCode(200)
-        .body("content.size()", equalTo(0));
-}
-```
+**검증:** `OrderControllerTest.createOrderDeletesWish` 테스트가 Green으로 전환되어야 한다.
 
 ---
 
@@ -207,7 +322,6 @@ public class AuthenticationResolver {
 
 **변경 파일:**
 - `src/main/java/gift/option/Option.java`
-- `src/test/java/gift/option/OptionTest.java` (신규)
 
 **코드:**
 
@@ -218,30 +332,7 @@ public int calculateTotalPrice(int quantity) {
 }
 ```
 
-`OptionTest.java`:
-```java
-package gift.option;
-
-import gift.category.Category;
-import gift.product.Product;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-class OptionTest {
-
-    @Test
-    @DisplayName("calculateTotalPrice는 상품 가격 × 수량을 반환한다")
-    void calculateTotalPrice() {
-        Category category = new Category("카테고리", "#000000", "http://img.test/c.png", "설명");
-        Product product = new Product("상품", 1000, "http://img.test/p.png", category);
-        Option option = new Option(product, "옵션", 100);
-
-        assertThat(option.calculateTotalPrice(3)).isEqualTo(3000);
-    }
-}
-```
+**검증:** 0단계에서 작성한 `OptionTest.calculateTotalPrice` 테스트가 Green으로 전환되어야 한다.
 
 ### 4-2: OrderService에서 calculateTotalPrice로 위임 (구조 변경)
 
@@ -288,22 +379,7 @@ public void create(String email, String password) {
 
 ---
 
-## 6단계: 서비스 단위 테스트 추가
-
-Step 1에서 작성한 통합 테스트(RestAssured 기반)와 별개로, 서비스 계층의 비즈니스 로직을 단위 테스트로 보강한다. 트랜잭션 롤백 등 서비스 레벨 동작을 검증한다.
-
-**대상:**
-- 1단계에서 추가한 `@Transactional`의 롤백 동작
-- 서비스 메서드의 비즈니스 검증 로직 (예외 케이스 등)
-
-**변경 파일:**
-- `src/test/java/gift/order/OrderServiceTest.java` (신규)
-- `src/test/java/gift/auth/KakaoAuthServiceTest.java` (1단계에서 생성, 필요 시 보강)
-- 기타 서비스 테스트 필요 시 추가
-
----
-
-## 7단계: @RestControllerAdvice 도입 (작동 변경)
+## 6단계: @RestControllerAdvice 도입 (작동 변경)
 
 REST API(`/api/...`)의 예외 처리를 일원화한다. View 컨트롤러(`/admin/...`)만 개별 try-catch를 유지한다.
 

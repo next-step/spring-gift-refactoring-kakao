@@ -130,16 +130,29 @@ Step 1에서 정리한 구조 위에 작동 변경을 수행한다. 모든 변�
 
 ### 기능 요구 사항
 
+#### 0단계: 테스트 코드 작성 (모든 단계 선행)
+
+모든 단계의 기대 동작을 테스트로 먼저 정의한다. 테스트는 Red 상태에서 시작하고, 이후 단계에서 구현하면서 Green으로 전환한다.
+
+**테스트 전략:** Mock 기반 서비스 단위 테스트(`@Mock` + `@InjectMocks`)는 사용하지 않는다. Mock 테스트는 "메서드가 호출됐는지"만 확인할 뿐, "실제로 DB 상태가 바뀌었는지"는 알 수 없다. 이 프로젝트의 검증 원칙은 **"상태를 재조회하여 검증"**이므로, 실제 DB를 사용하는 통합 테스트(`@SpringBootTest` + `@Sql`)와 외부 의존성 없는 도메인 단위 테스트로 구성한다. 단, 외부 API(`KakaoLoginClient`)처럼 테스트 환경에서 호출할 수 없는 의존성은 `@MockBean`으로 대체한다.
+
+**통합 테스트:**
+- [ ] `OrderControllerTest` — 포인트 부족 시 재고 롤백 검증 (→ 1단계)
+- [ ] `KakaoAuthServiceTest` — 신규/기존 회원 카카오 로그인 검증, `KakaoLoginClient`만 `@MockBean` (→ 1단계)
+- [ ] `OrderControllerTest` — 주문 생성 후 위시 자동 삭제 검증 (→ 2단계)
+
+**도메인 단위 테스트:**
+- [ ] `OptionTest` — `calculateTotalPrice` 단위 테스트 (→ 4단계)
+
 #### 1단계: @Transactional 적용
 
-- [ ] `OrderService.createOrder()`에 `@Transactional` 추가 — 포인트 부족 시 재고 롤백 검증
-- [ ] `KakaoAuthService.loginWithKakao()`에 `@Transactional` 추가 — 모킹 기반 단위 테스트 신규 생성
+- [ ] `OrderService.createOrder()`에 `@Transactional` 추가 → 재고 롤백 테스트 Green
+- [ ] `KakaoAuthService.loginWithKakao()`에 `@Transactional` 추가 → 카카오 로그인 테스트 Green
 
 #### 2단계: 주문 시 위시리스트 자동 삭제
 
 - [ ] `WishRepository.deleteByMemberIdAndProductId` 추가
-- [ ] `OrderService`에서 주문 저장 후 위시 삭제 호출
-- [ ] 테스트: 주문 전 위시 존재 → 주문 후 위시 0개 확인
+- [ ] `OrderService`에서 주문 저장 후 위시 삭제 호출 → 위시 삭제 테스트 Green
 
 #### 3단계: 예외 삼킴(swallow) 로그 추가
 
@@ -148,19 +161,14 @@ Step 1에서 정리한 구조 위에 작동 변경을 수행한다. 모든 변�
 
 #### 4단계: 가격 계산 도메인 메서드 추가
 
-- [ ] `Option.calculateTotalPrice(int quantity)` 메서드 + 단위 테스트 추가 (작동 변경)
+- [ ] `Option.calculateTotalPrice(int quantity)` 메서드 추가 → OptionTest Green (작동 변경)
 - [ ] `OrderService`의 가격 계산을 `Option.calculateTotalPrice`로 위임 (구조 변경)
 
 #### 5단계: 이메일 중복 검증 로직 통합
 
 - [ ] `MemberService`의 `register()`와 `create()`에 중복된 이메일 체크를 private 메서드로 추출 (구조 변경)
 
-#### 6단계: 서비스 단위 테스트 추가
-
-- [ ] 트랜잭션 롤백 등 서비스 레벨 동작 검증
-- [ ] Step 1에서 작성한 통합 테스트와 별개로 서비스 계층의 비즈니스 로직을 단위 테스트로 보강
-
-#### 7단계: @RestControllerAdvice 도입
+#### 6단계: @RestControllerAdvice 도입
 
 - [ ] REST API(`/api/...`)의 예외 처리를 일원화
 - [ ] View 컨트롤러(`/admin/...`)만 개별 try-catch 유지
