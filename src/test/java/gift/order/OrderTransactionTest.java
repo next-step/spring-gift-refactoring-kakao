@@ -10,7 +10,11 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -62,5 +66,39 @@ class OrderTransactionTest {
         mockMvc.perform(get("/api/products/{productId}/options", productId))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].quantity").value(beforeQuantity));
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("주문 완료 시 해당 상품이 위시리스트에서 제거된다")
+    void createOrder_RemovesWishForOrderedProduct() throws Exception {
+        String token = obtainAccessToken();
+        long productId = 3L;
+
+        // Given: 위시리스트에 상품 추가 (시드 데이터에 user1-product3 위시 존재)
+        mockMvc.perform(get("/api/wishes")
+                .header("Authorization", "Bearer " + token)
+                .param("page", "0")
+                .param("size", "10"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content[?(@.productId == 3)]").exists());
+
+        // When: 해당 상품의 옵션으로 주문
+        // 나이키 에어맥스 옵션5 (270mm, 가격 179,000, 재고 15)
+        var request = new OrderRequest(5L, 1, "위시 정리 테스트");
+
+        mockMvc.perform(post("/api/orders")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isCreated());
+
+        // Then: 위시리스트에서 해당 상품이 제거되었음을 재조회로 확인
+        mockMvc.perform(get("/api/wishes")
+                .header("Authorization", "Bearer " + token)
+                .param("page", "0")
+                .param("size", "10"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content[*].productId", everyItem(not(is(3)))));
     }
 }
