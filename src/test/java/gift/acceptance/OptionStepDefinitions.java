@@ -32,7 +32,7 @@ public class OptionStepDefinitions {
     public void 옵션이_등록되어_있고(String productName, String optionName, int quantity) {
         Long productId = jdbcTemplate.queryForObject("SELECT id FROM product WHERE name = ?", Long.class, productName);
         new SimpleJdbcInsert(jdbcTemplate)
-            .withTableName("options")
+            .withTableName("option")
             .usingGeneratedKeyColumns("id")
             .execute(Map.of("product_id", productId, "name", optionName, "quantity", quantity));
     }
@@ -62,7 +62,7 @@ public class OptionStepDefinitions {
     public void 옵션_삭제를_요청하면(String productName, String optionName) {
         Long productId = jdbcTemplate.queryForObject("SELECT id FROM product WHERE name = ?", Long.class, productName);
         Long optionId = jdbcTemplate.queryForObject(
-            "SELECT id FROM options WHERE product_id = ? AND name = ?", Long.class, productId, optionName
+            "SELECT id FROM option WHERE product_id = ? AND name = ?", Long.class, productId, optionName
         );
         var response = restTemplate.exchange(
             "/api/products/" + productId + "/options/" + optionId,

@@ -43,7 +43,7 @@ public class OrderStepDefinitions {
 
     @Given("옵션 {string}를 {int}개 주문이 등록되어 있고")
     public void 주문이_등록되어_있고(String optionName, int quantity) {
-        Long optionId = jdbcTemplate.queryForObject("SELECT id FROM options WHERE name = ?", Long.class, optionName);
+        Long optionId = jdbcTemplate.queryForObject("SELECT id FROM option WHERE name = ?", Long.class, optionName);
         String email = jwtProvider.getEmail(context.getToken());
         Long memberId = jdbcTemplate.queryForObject("SELECT id FROM member WHERE email = ?", Long.class, email);
         Map<String, Object> params = new HashMap<>();
@@ -113,6 +113,6 @@ public class OrderStepDefinitions {
     }
 
     private Long getOptionId(String optionName) {
-        return jdbcTemplate.queryForObject("SELECT id FROM options WHERE name = ?", Long.class, optionName);
+        return jdbcTemplate.queryForObject("SELECT id FROM option WHERE name = ?", Long.class, optionName);
     }
 }
