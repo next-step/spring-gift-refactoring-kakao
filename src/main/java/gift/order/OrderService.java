@@ -49,7 +49,7 @@ public class OrderService {
             .findById(memberId)
             .orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다. id=" + memberId));
 
-    int price = option.getProduct().getPrice() * quantity;
+    int price = option.calculateTotalPrice(quantity);
     member.deductPoint(price);
 
     Order saved = orderRepository.save(new Order(option, memberId, quantity, message));
