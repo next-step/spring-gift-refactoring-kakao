@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 @Service
 public class MemberService {
@@ -42,6 +43,10 @@ public class MemberService {
     public Member findById(Long id) {
         return memberRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("Member not found. id=" + id));
+    }
+
+    public Optional<Member> findByEmail(String email) {
+        return memberRepository.findByEmail(email);
     }
 
     public Member create(String email, String password) {

@@ -2,7 +2,7 @@ package gift.wish;
 
 import gift.category.Category;
 import gift.product.Product;
-import gift.product.ProductRepository;
+import gift.product.ProductService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,7 +25,7 @@ class WishServiceTest {
     private WishRepository wishRepository;
 
     @Mock
-    private ProductRepository productRepository;
+    private ProductService productService;
 
     @InjectMocks
     private WishService wishService;
@@ -37,7 +37,7 @@ class WishServiceTest {
         Product product = new Product("상품", 1000, "img", category);
 
         given(wishRepository.findByMemberIdAndProductId(1L, 1L)).willReturn(Optional.empty());
-        given(productRepository.findById(1L)).willReturn(Optional.of(product));
+        given(productService.getById(1L)).willReturn(product);
         given(wishRepository.save(any(Wish.class))).willAnswer(inv -> inv.getArgument(0));
 
         // when

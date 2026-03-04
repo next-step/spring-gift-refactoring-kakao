@@ -57,6 +57,14 @@
   - MemberService: deductPoint(), chargePoint(), registerOrUpdateKakaoMember()
 - Cucumber 시나리오에 실패 후 재고 재조회 검증 추가 (롤백 증거)
 
+#### Commit 9 [구조] OptionService, WishService, AuthenticationResolver cross-domain Repository 제거
+
+- Commit 1에서 OrderService에 적용한 원칙을 나머지에도 일관 적용
+  - OptionService: ProductRepository → ProductService
+  - WishService: ProductRepository → ProductService
+  - AuthenticationResolver: MemberRepository → MemberService
+- ProductService에 getById(), MemberService에 findByEmail() 추가
+
 ---
 
 ## AI 활용 과정

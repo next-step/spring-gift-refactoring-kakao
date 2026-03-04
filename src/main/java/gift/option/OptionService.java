@@ -1,7 +1,7 @@
 package gift.option;
 
 import gift.product.Product;
-import gift.product.ProductRepository;
+import gift.product.ProductService;
 import org.springframework.stereotype.Service;
 
 import org.springframework.transaction.annotation.Transactional;
@@ -12,21 +12,21 @@ import java.util.NoSuchElementException;
 @Service
 public class OptionService {
     private final OptionRepository optionRepository;
-    private final ProductRepository productRepository;
+    private final ProductService productService;
 
-    public OptionService(OptionRepository optionRepository, ProductRepository productRepository) {
+    public OptionService(OptionRepository optionRepository, ProductService productService) {
         this.optionRepository = optionRepository;
-        this.productRepository = productRepository;
+        this.productService = productService;
     }
 
     public List<Option> findByProductId(Long productId) {
-        findProductById(productId);
+        productService.getById(productId);
         return optionRepository.findByProductId(productId);
     }
 
     public Option create(Long productId, OptionRequest request) {
         validateName(request.name());
-        Product product = findProductById(productId);
+        Product product = productService.getById(productId);
 
         if (optionRepository.existsByProductIdAndName(productId, request.name())) {
             throw new IllegalArgumentException("이미 존재하는 옵션명입니다.");
@@ -37,7 +37,7 @@ public class OptionService {
 
     @Transactional
     public void delete(Long productId, Long optionId) {
-        findProductById(productId);
+        productService.getById(productId);
 
         List<Option> options = optionRepository.findByProductId(productId);
         if (options.size() <= 1) {
@@ -57,11 +57,6 @@ public class OptionService {
             .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다. id=" + optionId));
         option.subtractQuantity(quantity);
         return optionRepository.save(option);
-    }
-
-    private Product findProductById(Long productId) {
-        return productRepository.findById(productId)
-            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
     }
 
     private void validateName(String name) {

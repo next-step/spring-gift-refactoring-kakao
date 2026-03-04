@@ -32,6 +32,11 @@ public class ProductService {
         return productRepository.findById(id);
     }
 
+    public Product getById(Long id) {
+        return productRepository.findById(id)
+            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
+    }
+
     public Product create(ProductRequest request) {
         validateName(request.name());
         Category category = findCategoryById(request.categoryId());
