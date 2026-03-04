@@ -2,6 +2,7 @@ package gift.order;
 
 import gift.option.Option;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -18,15 +19,15 @@ public class Order {
     @JoinColumn(name = "option_id")
     private Option option;
 
-    @Column(nullable = false)
+    @NotNull
     private Long memberId; // Primitive FK
 
-    @Column(nullable = false)
+    @NotNull
     private int quantity;
 
     private String message;
 
-    @Column(nullable = false)
+    @NotNull
     private LocalDateTime orderDateTime;
 
     protected Order() { }

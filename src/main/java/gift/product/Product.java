@@ -3,6 +3,7 @@ package gift.product;
 import gift.category.Category;
 import gift.option.Option;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 
 import java.util.ArrayList;
@@ -20,13 +21,14 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 15)
+    @NotNull
+    @Column(length = 15)
     private String name;
 
-    @Column(nullable = false)
+    @NotNull
     private int price;
 
-    @Column(nullable = false)
+    @NotNull
     private String imageUrl;
 
     @ManyToOne

@@ -2,6 +2,7 @@ package gift.option;
 
 import gift.product.Product;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 
 import java.util.ArrayList;
@@ -21,14 +22,16 @@ public class Option {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotNull
     @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false)
+    @JoinColumn(name = "product_id")
     private Product product;
 
-    @Column(nullable = false, length = 50)
+    @NotNull
+    @Column(length = 50)
     private String name;
 
-    @Column(nullable = false)
+    @NotNull
     private int quantity;
 
     protected Option() { }

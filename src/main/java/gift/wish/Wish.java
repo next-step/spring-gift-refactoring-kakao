@@ -2,6 +2,7 @@ package gift.wish;
 
 import gift.product.Product;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 
 @Entity
@@ -11,7 +12,7 @@ public class Wish {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @NotNull
     private Long memberId; // Primitive FK (no entity reference)
 
     @ManyToOne

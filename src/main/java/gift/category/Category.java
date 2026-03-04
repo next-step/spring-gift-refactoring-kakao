@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 
 @Entity
@@ -14,13 +15,15 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @NotNull
+    @Column(unique = true)
     private String name;
 
-    @Column(nullable = false, length = 7)
+    @NotNull
+    @Column(length = 7)
     private String color;
 
-    @Column(nullable = false)
+    @NotNull
     private String imageUrl;
 
     private String description;
