@@ -238,6 +238,36 @@ public class GiftSteps {
     assertThat(productIds).doesNotContain(productId);
   }
 
+  @Given("{string}의 포인트가 {int}이다")
+  public void 포인트를_설정한다(String memberName, int point) {
+    Long memberId = state.getMemberId(memberName);
+    jdbcTemplate.update("UPDATE member SET point = ? WHERE id = ?", point, memberId);
+  }
+
+  @Then("{string}의 {string} 옵션 재고가 {int}개이다")
+  public void 옵션_재고를_확인한다(String productName, String optionName, int expectedQuantity) {
+    Long productId = state.getProductId(productName);
+
+    io.restassured.path.json.JsonPath json =
+        RestAssured.given()
+            .log()
+            .all()
+            .when()
+            .get("/api/products/" + productId + "/options")
+            .then()
+            .log()
+            .all()
+            .extract()
+            .jsonPath();
+
+    List<String> names = json.getList("name", String.class);
+    List<Integer> quantities = json.getList("quantity", Integer.class);
+
+    int index = names.indexOf(optionName);
+    assertThat(index).as("옵션을 찾을 수 없습니다: " + optionName).isGreaterThanOrEqualTo(0);
+    assertThat(quantities.get(index)).isEqualTo(expectedQuantity);
+  }
+
   @Then("선물하기가 성공한다")
   public void 선물하기가_성공한다() {
     assertThat(state.getLastResponse().statusCode()).isEqualTo(201);
