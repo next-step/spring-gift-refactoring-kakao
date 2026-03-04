@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/categories")
@@ -37,12 +36,8 @@ public class CategoryController {
         @PathVariable Long id,
         @Valid @RequestBody CategoryRequest request
     ) {
-        try {
-            Category updated = categoryService.updateCategory(id, request);
-            return ResponseEntity.ok(CategoryResponse.from(updated));
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        }
+        Category updated = categoryService.updateCategory(id, request);
+        return ResponseEntity.ok(CategoryResponse.from(updated));
     }
 
     @DeleteMapping("/{id}")

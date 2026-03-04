@@ -26,9 +26,6 @@ public class OrderController {
         Pageable pageable
     ) {
         var member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(401).build();
-        }
         var orders = orderService.getOrders(member.getId(), pageable).map(OrderResponse::from);
         return ResponseEntity.ok(orders);
     }
@@ -39,21 +36,8 @@ public class OrderController {
         @Valid @RequestBody OrderRequest request
     ) {
         var member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(401).build();
-        }
-
-        try {
-            Order saved = orderService.createOrder(member, request);
-            return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
-                .body(OrderResponse.from(saved));
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
-        return ResponseEntity.badRequest().body(e.getMessage());
+        Order saved = orderService.createOrder(member, request);
+        return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
+            .body(OrderResponse.from(saved));
     }
 }

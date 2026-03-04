@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/products")
@@ -26,23 +25,15 @@ public class ProductController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> getProduct(@PathVariable Long id) {
-        try {
-            Product product = productService.getProduct(id);
-            return ResponseEntity.ok(ProductResponse.from(product));
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        }
+        Product product = productService.getProduct(id);
+        return ResponseEntity.ok(ProductResponse.from(product));
     }
 
     @PostMapping
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductRequest request) {
-        try {
-            Product saved = productService.createProduct(request);
-            return ResponseEntity.created(URI.create("/api/products/" + saved.getId()))
-                .body(ProductResponse.from(saved));
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        }
+        Product saved = productService.createProduct(request);
+        return ResponseEntity.created(URI.create("/api/products/" + saved.getId()))
+            .body(ProductResponse.from(saved));
     }
 
     @PutMapping("/{id}")
@@ -50,22 +41,13 @@ public class ProductController {
         @PathVariable Long id,
         @Valid @RequestBody ProductRequest request
     ) {
-        try {
-            Product saved = productService.updateProduct(id, request);
-            return ResponseEntity.ok(ProductResponse.from(saved));
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        }
+        Product saved = productService.updateProduct(id, request);
+        return ResponseEntity.ok(ProductResponse.from(saved));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
-        return ResponseEntity.badRequest().body(e.getMessage());
     }
 }

@@ -6,8 +6,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.stream.Collectors;
 
 /*
  * Each product must have at least one option at all times.
@@ -24,14 +22,10 @@ public class OptionController {
 
     @GetMapping
     public ResponseEntity<List<OptionResponse>> getOptions(@PathVariable Long productId) {
-        try {
-            List<OptionResponse> options = optionService.getOptions(productId).stream()
-                .map(OptionResponse::from)
-                .collect(Collectors.toList());
-            return ResponseEntity.ok(options);
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        }
+        List<OptionResponse> options = optionService.getOptions(productId).stream()
+            .map(OptionResponse::from)
+            .toList();
+        return ResponseEntity.ok(options);
     }
 
     @PostMapping
@@ -39,14 +33,10 @@ public class OptionController {
         @PathVariable Long productId,
         @Valid @RequestBody OptionRequest request
     ) {
-        try {
-            Option saved = optionService.createOption(productId, request);
-            URI location = URI.create("/api/products/" + productId + "/options/" + saved.getId());
-            return ResponseEntity.created(location)
-                .body(OptionResponse.from(saved));
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        }
+        Option saved = optionService.createOption(productId, request);
+        URI location = URI.create("/api/products/" + productId + "/options/" + saved.getId());
+        return ResponseEntity.created(location)
+            .body(OptionResponse.from(saved));
     }
 
     @PutMapping("/{optionId}")
@@ -55,12 +45,8 @@ public class OptionController {
         @PathVariable Long optionId,
         @Valid @RequestBody OptionRequest request
     ) {
-        try {
-            Option updated = optionService.updateOption(productId, optionId, request);
-            return ResponseEntity.ok(OptionResponse.from(updated));
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        }
+        Option updated = optionService.updateOption(productId, optionId, request);
+        return ResponseEntity.ok(OptionResponse.from(updated));
     }
 
     @DeleteMapping("/{optionId}")
@@ -68,16 +54,7 @@ public class OptionController {
         @PathVariable Long productId,
         @PathVariable Long optionId
     ) {
-        try {
-            optionService.deleteOption(productId, optionId);
-            return ResponseEntity.noContent().build();
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
-        return ResponseEntity.badRequest().body(e.getMessage());
+        optionService.deleteOption(productId, optionId);
+        return ResponseEntity.noContent().build();
     }
 }

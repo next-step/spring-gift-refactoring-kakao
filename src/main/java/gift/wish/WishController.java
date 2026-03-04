@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/wishes")
@@ -27,9 +26,6 @@ public class WishController {
         Pageable pageable
     ) {
         var member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(401).build();
-        }
         var wishes = wishService.getWishes(member.getId(), pageable).map(WishResponse::from);
         return ResponseEntity.ok(wishes);
     }
@@ -40,20 +36,12 @@ public class WishController {
         @Valid @RequestBody WishRequest request
     ) {
         var member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(401).build();
+        var result = wishService.addWish(member.getId(), request);
+        if (!result.created()) {
+            return ResponseEntity.ok(WishResponse.from(result.wish()));
         }
-
-        try {
-            var result = wishService.addWish(member.getId(), request);
-            if (!result.created()) {
-                return ResponseEntity.ok(WishResponse.from(result.wish()));
-            }
-            return ResponseEntity.created(URI.create("/api/wishes/" + result.wish().getId()))
-                .body(WishResponse.from(result.wish()));
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        }
+        return ResponseEntity.created(URI.create("/api/wishes/" + result.wish().getId()))
+            .body(WishResponse.from(result.wish()));
     }
 
     @DeleteMapping("/{id}")
@@ -62,17 +50,7 @@ public class WishController {
         @PathVariable Long id
     ) {
         var member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(401).build();
-        }
-
-        try {
-            wishService.removeWish(member.getId(), id);
-            return ResponseEntity.noContent().build();
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(403).build();
-        }
+        wishService.removeWish(member.getId(), id);
+        return ResponseEntity.noContent().build();
     }
 }
