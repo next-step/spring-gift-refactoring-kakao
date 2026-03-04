@@ -1,6 +1,7 @@
 package gift.order;
 
 import gift.error.EntityNotFoundException;
+import gift.error.ForbiddenException;
 import gift.member.Member;
 import gift.member.MemberRepository;
 import gift.option.Option;
@@ -33,6 +34,15 @@ public class OrderService {
 
     public Page<Order> getOrders(Long memberId, Pageable pageable) {
         return orderRepository.findByMemberId(memberId, pageable);
+    }
+
+    public Order getOrder(Long memberId, Long orderId) {
+        Order order = orderRepository.findById(orderId)
+            .orElseThrow(() -> new EntityNotFoundException("주문이 존재하지 않습니다."));
+        if (!order.getMemberId().equals(memberId)) {
+            throw new ForbiddenException("해당 주문에 접근할 수 없습니다.");
+        }
+        return order;
     }
 
     @Transactional

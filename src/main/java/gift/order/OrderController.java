@@ -28,6 +28,15 @@ public class OrderController {
         return ResponseEntity.ok(orders);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<OrderResponse> getOrder(
+        @Authenticated Member member,
+        @PathVariable Long id
+    ) {
+        Order order = orderService.getOrder(member.getId(), id);
+        return ResponseEntity.ok(OrderResponse.from(order));
+    }
+
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(
         @Authenticated Member member,
