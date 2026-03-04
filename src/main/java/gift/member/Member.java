@@ -32,6 +32,14 @@ public class Member {
         this.email = email;
     }
 
+    public boolean authenticate(String password) {
+        return this.password != null && this.password.equals(password);
+    }
+
+    public boolean canSendKakaoMessage() {
+        return this.kakaoAccessToken != null;
+    }
+
     public void update(String email, String password) {
         this.email = email;
         this.password = password;
