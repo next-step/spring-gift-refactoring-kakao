@@ -1,6 +1,7 @@
 package gift.wish;
 
 import gift.auth.AuthenticationResolver;
+import gift.member.Member;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,8 +26,8 @@ public class WishController {
         @RequestHeader("Authorization") String authorization,
         Pageable pageable
     ) {
-        var member = authenticationResolver.extractMember(authorization);
-        var wishes = wishService.getWishes(member.getId(), pageable).map(WishResponse::from);
+        Member member = authenticationResolver.extractMember(authorization);
+        Page<WishResponse> wishes = wishService.getWishes(member.getId(), pageable).map(WishResponse::from);
         return ResponseEntity.ok(wishes);
     }
 
@@ -35,8 +36,8 @@ public class WishController {
         @RequestHeader("Authorization") String authorization,
         @Valid @RequestBody WishRequest request
     ) {
-        var member = authenticationResolver.extractMember(authorization);
-        var result = wishService.addWish(member.getId(), request);
+        Member member = authenticationResolver.extractMember(authorization);
+        WishService.WishResult result = wishService.addWish(member.getId(), request);
         if (!result.created()) {
             return ResponseEntity.ok(WishResponse.from(result.wish()));
         }
@@ -49,7 +50,7 @@ public class WishController {
         @RequestHeader("Authorization") String authorization,
         @PathVariable Long id
     ) {
-        var member = authenticationResolver.extractMember(authorization);
+        Member member = authenticationResolver.extractMember(authorization);
         wishService.removeWish(member.getId(), id);
         return ResponseEntity.noContent().build();
     }
