@@ -1,5 +1,6 @@
 # spring-gift-refactoring
 
+
 ## 리팩터링 전략
 
 ### 1. 미사용 코드 정리
