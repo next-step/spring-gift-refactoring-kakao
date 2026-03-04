@@ -388,3 +388,16 @@ public JwtProvider(JwtProperties properties) {
 | 변경 내용 | `request.toEntity(...)` 호출 제거 후 `new Order(...)`를 Service에서 직접 생성 |
 | 이유 | `OrderRequest`가 `Option` 엔티티를 파라미터로 받아 도메인 의존이 생기는 결합도를 낮추기 위해 |
 | 동작 영향 | 없음 (주문 처리 흐름/응답/예외 처리 동일) |
+
+---
+
+## 16. CategoryController 의존성 분리 (예외 응답 결과 유지)
+
+`CategoryController`의 `CategoryRepository` 직접 의존을 제거하고 `CategoryService`를 통해 접근하도록 분리했다.
+
+| 항목 | 내용 |
+|---|---|
+| 파일 | `CategoryController.java`, `CategoryService.java`(신규) |
+| 변경 내용 | Controller의 Repository 직접 호출(`findAll`, `save`, `findById`, `deleteById`)을 Service 호출로 치환 |
+| 예외/응답 유지 | `update`의 `findById(...).orElse(null)` + `null` 체크 후 `404 Not Found` 반환 흐름 그대로 유지 |
+| 제외한 변경 | 새 예외 타입 추가, `@ExceptionHandler` 추가/변경, 응답 바디 포맷 변경 없음 |
