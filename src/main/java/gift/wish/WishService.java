@@ -3,7 +3,6 @@ package gift.wish;
 import gift.error.ForbiddenException;
 import gift.product.Product;
 import gift.product.ProductRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,7 +15,6 @@ public class WishService {
     private final WishRepository wishRepository;
     private final ProductRepository productRepository;
 
-    @Autowired
     public WishService(WishRepository wishRepository, ProductRepository productRepository) {
         this.wishRepository = wishRepository;
         this.productRepository = productRepository;

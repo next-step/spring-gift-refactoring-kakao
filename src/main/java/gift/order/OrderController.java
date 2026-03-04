@@ -2,7 +2,6 @@ package gift.order;
 
 import gift.auth.AuthenticationResolver;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +20,6 @@ public class OrderController {
     private final OrderService orderService;
     private final AuthenticationResolver authenticationResolver;
 
-    @Autowired
     public OrderController(OrderService orderService, AuthenticationResolver authenticationResolver) {
         this.orderService = orderService;
         this.authenticationResolver = authenticationResolver;

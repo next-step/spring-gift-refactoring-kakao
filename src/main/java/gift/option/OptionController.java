@@ -1,7 +1,6 @@
 package gift.option;
 
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,7 +22,6 @@ import java.util.List;
 public class OptionController {
     private final OptionService optionService;
 
-    @Autowired
     public OptionController(OptionService optionService) {
         this.optionService = optionService;
     }

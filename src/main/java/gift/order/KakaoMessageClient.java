@@ -1,7 +1,6 @@
 package gift.order;
 
 import gift.product.Product;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClient;
@@ -10,7 +9,6 @@ import org.springframework.web.client.RestClient;
 public class KakaoMessageClient {
     private final RestClient restClient;
 
-    @Autowired
     public KakaoMessageClient(RestClient.Builder builder) {
         this.restClient = builder.build();
     }

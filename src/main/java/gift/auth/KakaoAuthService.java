@@ -2,7 +2,6 @@ package gift.auth;
 
 import gift.member.Member;
 import gift.member.MemberRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -14,7 +13,6 @@ public class KakaoAuthService {
     private final MemberRepository memberRepository;
     private final JwtProvider jwtProvider;
 
-    @Autowired
     public KakaoAuthService(
         KakaoLoginProperties properties,
         KakaoLoginClient kakaoLoginClient,

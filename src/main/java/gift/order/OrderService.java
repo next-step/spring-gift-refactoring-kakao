@@ -4,7 +4,6 @@ import gift.member.Member;
 import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,7 +18,6 @@ public class OrderService {
     private final MemberRepository memberRepository;
     private final KakaoMessageClient kakaoMessageClient;
 
-    @Autowired
     public OrderService(
         OrderRepository orderRepository,
         OptionRepository optionRepository,
