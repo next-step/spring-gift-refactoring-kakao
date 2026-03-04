@@ -1,9 +1,12 @@
 package gift.category;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "category")
 public class Category {
@@ -14,9 +17,6 @@ public class Category {
     private String color;
     private String imageUrl;
     private String description;
-
-    protected Category() {
-    }
 
     public Category(String name, String color, String imageUrl, String description) {
         this.name = name;

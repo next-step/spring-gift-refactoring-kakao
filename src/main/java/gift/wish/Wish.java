@@ -2,9 +2,12 @@ package gift.wish;
 
 import gift.product.Product;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "wish")
 public class Wish {
@@ -17,9 +20,6 @@ public class Wish {
     @ManyToOne
     @JoinColumn(name = "product_id")
     private Product product;
-
-    protected Wish() {
-    }
 
     public Wish(Long memberId, Product product) {
         this.memberId = memberId;

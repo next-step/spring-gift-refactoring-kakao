@@ -2,9 +2,12 @@ package gift.option;
 
 import gift.product.Product;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "options")
 public class Option {
@@ -21,9 +24,6 @@ public class Option {
 
     @Column(nullable = false)
     private int quantity;
-
-    protected Option() {
-    }
 
     public Option(Product product, String name, int quantity) {
         this.product = product;

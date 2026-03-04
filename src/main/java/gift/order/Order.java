@@ -2,11 +2,14 @@ package gift.order;
 
 import gift.option.Option;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "orders")
 public class Order {
@@ -22,9 +25,6 @@ public class Order {
     private int quantity;
     private String message;
     private LocalDateTime orderDateTime;
-
-    protected Order() {
-    }
 
     public Order(Option option, Long memberId, int quantity, String message) {
         this.option = option;

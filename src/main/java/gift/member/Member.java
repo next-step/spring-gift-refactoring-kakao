@@ -1,9 +1,12 @@
 package gift.member;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "member")
 public class Member {
@@ -18,9 +21,6 @@ public class Member {
     private String kakaoAccessToken;
 
     private int point;
-
-    protected Member() {
-    }
 
     public Member(String email, String password) {
         this.email = email;
