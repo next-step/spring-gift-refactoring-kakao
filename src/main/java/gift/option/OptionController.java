@@ -51,9 +51,4 @@ public class OptionController {
             .map(success -> ResponseEntity.noContent().<Void>build())
             .orElse(ResponseEntity.notFound().build());
     }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
-        return ResponseEntity.badRequest().body(e.getMessage());
-    }
 }
