@@ -44,13 +44,13 @@ public class AdminProductController {
         @RequestParam Long categoryId,
         Model model
     ) {
-        List<String> errors = productService.validateProductName(name, true);
+        List<String> errors = productService.validateProductNameForAdmin(name);
         if (!errors.isEmpty()) {
             populateNewForm(model, errors, name, price, imageUrl, categoryId);
             return "product/new";
         }
 
-        productService.create(name, price, imageUrl, categoryId, true);
+        productService.createForAdmin(name, price, imageUrl, categoryId);
         return "redirect:/admin/products";
     }
 
@@ -70,13 +70,13 @@ public class AdminProductController {
         @RequestParam Long categoryId,
         Model model
     ) {
-        List<String> errors = productService.validateProductName(name, true);
+        List<String> errors = productService.validateProductNameForAdmin(name);
         if (!errors.isEmpty()) {
             populateEditForm(model, productService.findEntityById(id), errors, name, price, imageUrl, categoryId);
             return "product/edit";
         }
 
-        productService.update(id, name, price, imageUrl, categoryId, true);
+        productService.updateForAdmin(id, name, price, imageUrl, categoryId);
         return "redirect:/admin/products";
     }
 

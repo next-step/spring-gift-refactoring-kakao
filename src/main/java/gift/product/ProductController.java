@@ -39,7 +39,7 @@ public class ProductController {
     @PostMapping
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductRequest request) {
         ProductResponse response = productService.create(
-            request.name(), request.price(), request.imageUrl(), request.categoryId(), false);
+            request.name(), request.price(), request.imageUrl(), request.categoryId());
         return ResponseEntity.created(URI.create("/api/products/" + response.id()))
             .body(response);
     }
@@ -50,7 +50,7 @@ public class ProductController {
         @Valid @RequestBody ProductRequest request
     ) {
         return ResponseEntity.ok(productService.update(
-            id, request.name(), request.price(), request.imageUrl(), request.categoryId(), false));
+            id, request.name(), request.price(), request.imageUrl(), request.categoryId()));
     }
 
     @DeleteMapping("/{id}")
