@@ -42,14 +42,6 @@ public class OrderController {
         return ResponseEntity.ok(orders);
     }
 
-    // order flow:
-    // 1. auth check
-    // 2. validate option
-    // 3. subtract stock
-    // 4. deduct points
-    // 5. save order
-    // 6. TODO: cleanup wish (미구현)
-    // 7. send kakao notification
     @PostMapping
     public ResponseEntity<?> createOrder(
         @RequestHeader("Authorization") String authorization,
