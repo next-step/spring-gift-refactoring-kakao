@@ -1,6 +1,6 @@
 ---
 name: refactoring
-description: 리팩터링 전체 절차 스킬. 사용자가 "리팩터링", "스타일 정리", "미사용 코드 제거", "Service 추출", "Controller 분리", "계층 분리", "코드 정리" 등을 언급하면 이 스킬을 사용한다. Phase 1(스타일 정리), Phase 2(미사용 코드 제거), Phase 3(Service Layer 추출)의 구체적 절차와 검증 방법을 정의한다.
+description: 리팩터링 전체 절차 스킬. 사용자가 "리팩터링", "스타일 정리", "미사용 코드 제거", "Service 추출", "Controller 분리", "계층 분리", "코드 정리", "트랜잭션 경계", "누락 작동", "도메인 책임" 등을 언급하면 이 스킬을 사용한다. Phase 1~3(구조 정리), Phase 4(에러 처리), Phase 6(트랜잭션), Phase 7(누락 작동), Phase 8(도메인 책임)의 구체적 절차와 검증 방법을 정의한다.
 ---
 
 # 리팩터링 절차 가이드
@@ -268,6 +268,121 @@ gift/{domain}/                      ← 각 도메인 패키지 내부
 
 ---
 
+## Phase 6: 트랜잭션 경계 세우기
+
+### 목적
+`@Transactional`이 누락된 Service 메서드에 트랜잭션을 적용하여
+데이터 정합성을 보장한다. **구조 변경** — 커밋 타입은 `refactor`.
+
+### 절차
+
+```
+1. Service 메서드 전체 목록 작성
+2. 트랜잭션이 필요한 메서드 식별:
+   a. 복합 쓰기 연산 (재고 차감 + 주문 생성 등)
+   b. 단일 쓰기 연산 (save, update, delete)
+   c. 읽기 전용 연산 (findAll, findById 등)
+3. 쓰기 메서드에 @Transactional 적용
+4. 읽기 메서드에 @Transactional(readOnly = true) 적용
+5. ./gradlew test → 동작 유지 확인
+6. 커밋 (도메인별 1커밋)
+```
+
+### 체크리스트
+- [ ] 모든 Service 쓰기 메서드에 `@Transactional`이 있는가?
+- [ ] 읽기 전용 메서드에 `@Transactional(readOnly = true)`가 있는가?
+- [ ] 복합 연산이 하나의 트랜잭션으로 묶여 있는가?
+- [ ] 트랜잭션 범위가 필요 이상으로 넓지 않은가?
+
+### 커밋 예시
+```
+refactor(order): OrderService 메서드에 @Transactional 적용
+refactor(product): ProductService 읽기 메서드에 readOnly 트랜잭션 적용
+```
+
+### 주의사항
+- `@Transactional` 추가는 **구조 변경**이다 (외부 동작 불변)
+- 트랜잭션 전파(propagation) 기본값(REQUIRED)을 사용하되, 변경이 필요하면 ADR 작성
+- Controller에는 `@Transactional`을 붙이지 않는다
+
+---
+
+## Phase 7: 누락된 작동 구현
+
+### 목적
+TODO/FIXME로 남겨진 미구현 기능을 구현한다.
+**작동 변경** — 커밋 타입은 `feat`.
+
+### 절차
+
+```
+1. TODO/FIXME 전체 탐색 (Grep으로 프로젝트 전체 검색)
+2. 구현 우선순위 결정 (비즈니스 영향도 순)
+3. 각 TODO에 대해:
+   a. 변경 전 3줄 명세 작성 (무엇을 바꾸는가 / 안 바꾸는가 / 증명 방법)
+   b. 실패하는 테스트 먼저 작성 (상태 재조회 패턴)
+   c. 기능 구현
+   d. 테스트 통과 확인
+   e. TODO 주석 제거
+   f. 커밋
+```
+
+### 커밋 예시
+```
+feat(order): 주문 시 옵션 재고 차감 구현
+feat(wish): 주문 완료 시 위시리스트에서 상품 제거
+```
+
+### 주의사항
+- 각 TODO는 별도 커밋으로 분리
+- 테스트를 먼저 작성하고 실패를 확인한 후 구현 (TDD)
+- 상태 재조회 테스트 필수 — `behavior-verification` 스킬 참조
+
+---
+
+## Phase 8: 도메인 책임 되찾기
+
+### 목적
+Service에 위치한 도메인 로직을 Entity로 이동하여
+도메인 모델의 응집도를 높인다. **구조 변경** — 커밋 타입은 `refactor`.
+
+### 책임 이동 대상 식별
+
+Service 코드에서 아래 패턴을 찾는다:
+
+| 패턴 | 이동 대상 |
+|---|---|
+| `entity.getX()` 값을 비교하여 검증 | Entity 내 검증 메서드 |
+| `entity.setX(entity.getX() - n)` 산술 연산 | Entity 내 비즈니스 메서드 |
+| 여러 필드를 조합한 조건 분기 | Entity 내 상태 판단 메서드 |
+| Entity 생성 시 복잡한 초기화 | Entity 팩토리 메서드 또는 생성자 |
+
+### 절차
+
+```
+1. Service 코드에서 Entity getter/setter 호출 패턴 탐색
+2. 이동할 로직 식별 (최소 2개 이상)
+3. 각 이동에 대해:
+   a. Entity에 비즈니스 메서드 추가
+   b. Service에서 Entity 메서드 호출로 변경
+   c. ./gradlew test → 동작 유지 확인
+   d. 커밋
+```
+
+### 커밋 예시
+```
+refactor(option): 재고 차감 로직을 Option 엔티티로 이동
+refactor(product): 상품명 검증 로직을 Product 엔티티로 이동
+```
+
+### 주의사항
+- 로직 이동 과정에서 동작을 변경하지 않는다 (refactor 커밋)
+- Entity에 비즈니스 메서드를 추가할 때 단위 테스트도 함께 고려
+- 이동 후 Service 메서드가 더 읽기 쉬워져야 한다 (목적이 명확해짐)
+- 최소 2개 이상의 책임 이동을 수행한다
+
+---
+
 ## 전체 흐름 요약
 
 ```
@@ -280,6 +395,14 @@ Phase 2: 미사용 코드 제거 → 불필요한 코드 정리
 Phase 3: Service Layer 추출 → 계층 분리 완료
          ↓ (./gradlew test 통과)
 Phase 4: 에러 처리 구조화 → 예외 체계 통합
+         ↓ (./gradlew test 통과)
+Phase 5: 인수테스트 강화 → 에러 응답 검증 보강
+         ↓ (./gradlew test 통과)
+Phase 6: 트랜잭션 경계 세우기 → 데이터 정합성 보장
+         ↓ (./gradlew test 통과)
+Phase 7: 누락된 작동 구현 → TODO 해소, feat 커밋
+         ↓ (./gradlew test 통과)
+Phase 8: 도메인 책임 되찾기 → Entity 응집도 향상
          ↓ (./gradlew test 통과)
        완료
 ```
