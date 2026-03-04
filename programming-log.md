@@ -373,3 +373,18 @@ public JwtProvider(JwtProperties properties) {
 | 파일 | `WishService.java`, `WishController.java`, `AddWishResult.java`(신규) |
 | 변경 내용 | `WishService.AddWishResult` 참조를 `AddWishResult`로 교체                 |
 | 배경 | 해당 타입은 Controller와 Service가 함께 참조하기에, 독립된 위치에 두는 것이 더 적절하다고 판단했다. |
+
+---
+
+## 15. Order 생성 책임 재조정 (DTO → Service)
+
+`OrderRequest.toEntity(Option, Long)`를 제거하고 `OrderService`에서 `Order`를 직접 생성하도록 변경했다.
+
+기존에는 코드베이스 전반의 패턴 일관성과 유지보수성을 우선해 DTO의 `toEntity()` 패턴을 선택했다. DTO에 변환 로직을 모아두면 필드 변경 시 수정 지점이 명확하고, Service에 매핑 코드가 흩어지는 것을 줄일 수 있다고 판단했다. 또한 `request.toEntity(...)` 형태가 Service의 의도를 더 빠르게 드러낸다고 보았다. 다만 `Option` 같은 도메인 엔티티를 파라미터로 받는 구조는 계층 간 결합도를 높일 수 있어, Order는 Service에서 직접 생성하도록 책임을 재조정했다.
+
+| 항목 | 내용 |
+|---|---|
+| 파일 | `OrderRequest.java`, `OrderService.java` |
+| 변경 내용 | `request.toEntity(...)` 호출 제거 후 `new Order(...)`를 Service에서 직접 생성 |
+| 이유 | `OrderRequest`가 `Option` 엔티티를 파라미터로 받아 도메인 의존이 생기는 결합도를 낮추기 위해 |
+| 동작 영향 | 없음 (주문 처리 흐름/응답/예외 처리 동일) |
