@@ -157,7 +157,7 @@ class GiftAcceptanceTest {
 
   /** G5: Authorization 헤더 없이 주문하면 실패한다. - Authorization 헤더 누락 → 400 응답 */
   @Test
-  void Member_Id_헤더_없이_선물하면_실패한다() {
+  void 인증_헤더_없이_선물하면_실패한다() {
     // when — Authorization 헤더 없이 요청
     ExtractableResponse<Response> response =
         RestAssured.given()
