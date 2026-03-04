@@ -24,7 +24,7 @@ public class SeedOptionController {
     Long productId = ((Number) request.get("productId")).longValue();
     String name = (String) request.get("name");
     int quantity = ((Number) request.get("quantity")).intValue();
-    Option saved = optionService.createRaw(productId, name, quantity);
+    Option saved = optionService.create(productId, name, quantity);
     return Map.of("id", saved.getId(), "name", saved.getName(), "quantity", saved.getQuantity());
   }
 }

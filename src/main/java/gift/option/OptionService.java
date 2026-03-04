@@ -43,15 +43,6 @@ public class OptionService {
   }
 
   @Transactional
-  public Option createRaw(Long productId, String name, int quantity) {
-    Product product =
-        productRepository
-            .findById(productId)
-            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
-    return optionRepository.save(new Option(product, name, quantity));
-  }
-
-  @Transactional
   public boolean delete(Long productId, Long optionId) {
     productRepository
         .findById(productId)
