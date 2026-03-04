@@ -36,6 +36,10 @@ public class Option {
         this.quantity = quantity;
     }
 
+    public int calculatePrice(int quantity) {
+        return product.getPrice() * quantity;
+    }
+
     public void subtractQuantity(int amount) {
         if (amount > this.quantity) {
             throw new OptionException(OptionErrorCode.INSUFFICIENT_STOCK);
