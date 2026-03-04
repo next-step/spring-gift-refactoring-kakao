@@ -18,12 +18,15 @@ public class Order {
     @JoinColumn(name = "option_id")
     private Option option;
 
+    @Column(nullable = false)
     private Long memberId; // Primitive FK
 
+    @Column(nullable = false)
     private int quantity;
 
     private String message;
 
+    @Column(nullable = false)
     private LocalDateTime orderDateTime;
 
     protected Order() { }
