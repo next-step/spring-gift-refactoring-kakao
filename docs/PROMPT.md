@@ -50,3 +50,6 @@ DatabaseCleaner 리뷰 반영 — 테이블명 하드코딩 방식을 informatio
 
 ## 프롬프트 13
 KakaoAuthService 추출 — KakaoAuthController에 남아있는 비즈니스 로직(OAuth 흐름 오케스트레이션, 인가 URL 조립)을 KakaoAuthService로 추출. 컨트롤러는 HTTP 관심사만 담당하도록 변경.
+
+## 프롬프트 14
+구조 변경 - 의존성 정리(외부 인프라 의존, 순환 참조, 크로스 패키지 의존)와 도메인 책임(객체지향 설계, 중복 제거, 호출부 단순화) 분석.

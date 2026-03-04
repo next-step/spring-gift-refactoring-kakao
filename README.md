@@ -81,3 +81,73 @@
 - [x] WishController → WishService 추출
 - [x] OrderController → OrderService 추출
 - [x] 전체 테스트 실행 → 통과 확인
+
+---
+
+### 5단계: 구조 변경 — 의존성 정리 및 도메인 책임 이동
+
+> 목적: 입력과 출력을 유지하면서 의존성과 책임 구조를 정리한다.
+> 변경이 가능한 상태를 만들고, 변경 시 위험을 통제할 수 있는 구조를 확보한다.
+> 이 단계에서는 작동을 변경하지 않는다. 구조만 변경한다.
+
+#### 5-1. 예외 처리 중앙화 — @ControllerAdvice 도입
+
+> 근거: 동일한 @ExceptionHandler가 5개 컨트롤러에 10회 중복되어 있다.
+> 예외 응답 형식 변경 시 5곳을 수정해야 하며, 누락 시 컨트롤러마다 다른 응답을 반환하게 된다.
+
+- [ ] @ControllerAdvice 클래스 생성 (NoSuchElementException→404, IllegalArgumentException→400, IllegalStateException→403)
+- [ ] 5개 컨트롤러에서 @ExceptionHandler 메서드 10개 제거
+- [ ] 전체 테스트 실행 → 통과 확인
+
+#### 5-2. 인증 처리 추출 — HandlerMethodArgumentResolver 도입
+
+> 근거: extractMember() + null 체크 + 401 반환 패턴이 OrderController 2회, WishController 3회, 총 5회 반복된다.
+> 인증 방식 변경 시 5곳을 수정해야 하며, 새 엔드포인트 추가 시 인증 누락 위험이 있다.
+> 전제 조건: 5-1 완료 (@ControllerAdvice에서 인증 실패 예외를 401로 매핑)
+
+- [ ] AuthenticationResolver를 HandlerMethodArgumentResolver로 전환
+- [ ] 인증 실패 전용 예외 생성 → @ControllerAdvice에 401 매핑 추가
+- [ ] WebMvcConfigurer에 리졸버 등록
+- [ ] OrderController, WishController에서 인증 인라인 코드 제거 → Member 파라미터 직접 수신
+- [ ] 전체 테스트 실행 → 통과 확인
+
+#### 5-3. 크로스 패키지 Repository 참조 제거 — 서비스 위임
+
+> 근거: OrderService가 OptionRepository·MemberRepository를, WishService가 ProductRepository를, OptionService가 ProductRepository를 직접 참조한다.
+> 각 도메인에 Service가 이미 존재하는데도 Repository를 직접 호출하여 findById+orElseThrow 조회 패턴이 중복되고, Repository 변경 시 영향이 패키지를 넘는다.
+
+- [ ] OptionService에 findById(Long) 메서드 추가
+- [ ] OrderService → OptionService, MemberService로 위임 전환
+- [ ] WishService → ProductService로 위임 전환
+- [ ] OptionService → ProductService로 위임 전환
+- [ ] 전체 테스트 실행 → 통과 확인
+
+#### 5-4. 외부 인프라 인터페이스 추출 — OrderMessageClient
+
+> 근거: OrderService가 KakaoMessageClient 구체 클래스에 직접 의존한다.
+> 도메인 서비스가 특정 벤더(Kakao)에 결합되어 있으며, 메시지 채널 변경 시 OrderService를 수정해야 한다.
+
+- [ ] OrderMessageClient 인터페이스 생성 (order 패키지)
+- [ ] KakaoMessageClient가 OrderMessageClient를 구현하도록 변경
+- [ ] OrderService의 의존을 KakaoMessageClient → OrderMessageClient로 변경
+- [ ] 전체 테스트 실행 → 통과 확인
+
+#### 5-5. auth ↔ member 순환 참조 해소 — 의존성 역전
+
+> 근거: auth → member와 member → auth가 순환한다. 두 패키지를 독립적으로 변경할 수 없다.
+> auth 패키지에 인터페이스를 두면 member → auth 의존이 남아 순환이 해소되지 않는다.
+> member 패키지에 TokenProvider 인터페이스를 배치하여 의존 방향을 역전시킨다 (DIP).
+
+- [ ] member 패키지에 TokenProvider 인터페이스 생성 (createToken 메서드)
+- [ ] JwtProvider가 member.TokenProvider를 구현하도록 변경
+- [ ] MemberService의 의존을 auth.JwtProvider → member.TokenProvider로 변경
+- [ ] 전체 테스트 실행 → 통과 확인
+
+#### 5-6. 도메인 책임 이동 — Member.matchesPassword()
+
+> 근거: 비밀번호 검증이 MemberService에서 getPassword()로 내부 상태를 꺼내 직접 비교한다.
+> chargePoint(), deductPoint()와 달리 비밀번호 검증만 도메인 외부에 있어, 해싱 도입 등 검증 정책 변경 시 서비스를 수정해야 한다.
+
+- [ ] Member에 matchesPassword(String) 메서드 추가
+- [ ] MemberService.login()에서 직접 비교를 matchesPassword() 호출로 대체
+- [ ] 전체 테스트 실행 → 통과 확인
