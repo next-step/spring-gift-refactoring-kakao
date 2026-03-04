@@ -128,6 +128,15 @@ Step 1에서 정리한 구조 위에 작동 변경을 수행한다. 모든 변�
 
 상세 계획: [`docs/step2-plan.md`](docs/step2-plan.md) | [`docs/step2-adr.md`](docs/step2-adr.md)
 
+### 계획
+
+1. 작동 변경 대상 파악 및 `step2-plan.md` 작성
+2. 테스트 전략 결정 (Mock vs 통합 테스트)
+3. 0단계: 모든 단계의 Red 테스트를 먼저 작성
+4. 1~6단계: 테스트를 Green으로 전환하며 구현 진행
+5. 매 단계 `./gradlew test` 전체 통과 확인
+6. ADR 작성, README 정리
+
 ### 기능 요구 사항
 
 #### 0단계: 테스트 코드 작성 (모든 단계 선행)
@@ -175,3 +184,80 @@ Step 1에서 정리한 구조 위에 작동 변경을 수행한다. 모든 변�
   - `NoSuchElementException` → 404, `IllegalArgumentException` → 400, `IllegalStateException` → 403
 - [x] REST 컨트롤러 6개에서 개별 try-catch, `@ExceptionHandler` 제거
 - [x] View 컨트롤러(`/admin/...`)는 `@Controller`이므로 영향 없음 — 기존 try-catch 유지
+
+### 코드 수정 내역
+
+#### 0단계: 테스트 코드 작성
+
+작동 변경 전 기대 동작을 테스트로 먼저 정의했다. Mock 기반 서비스 단위 테스트 대신 통합 테스트 + 도메인 단위 테스트 전략을 채택했다(ADR-004).
+
+| 테스트 | 종류 | 초기 상태 | Red 이유 |
+|--------|------|-----------|----------|
+| `OrderControllerTest.createOrderInsufficientPointsRollsBackStock` | 통합 | Red | `@Transactional` 없어 재고 롤백 안 됨 |
+| `KakaoAuthServiceTest` (신규/기존 회원) | 통합 | Green | 기존 기능 검증 안전망 |
+| `OrderControllerTest.createOrderDeletesWish` | 통합 | Red | `// TODO: cleanup wish` 미구현 |
+| `OptionTest.calculateTotalPrice` | 도메인 단위 | — | 메서드 미존재로 컴파일 에러, 4단계에서 함께 작성 |
+
+#### 1단계: @Transactional 적용
+
+| 항목 | 내용 |
+|------|------|
+| `OrderService.createOrder()` | `@Transactional` 추가 — 재고 차감·포인트 차감·주문 저장이 하나의 트랜잭션으로 묶임 |
+| `KakaoAuthService.loginWithKakao()` | `@Transactional` 추가 — 회원 생성/토큰 갱신이 원자적으로 처리됨 |
+| 나머지 5개 서비스 | 모두 단일 저장/삭제 작업이라 `@Transactional` 불필요 확인 (ADR-001) |
+
+#### 2단계: 주문 시 위시리스트 자동 삭제
+
+| 항목 | 내용 |
+|------|------|
+| `WishRepository` | `deleteByMemberIdAndProductId` 메서드 추가 |
+| `OrderService` | `WishRepository` 의존성 추가, 주문 저장 후 `deleteByMemberIdAndProductId` 호출 |
+| `// TODO: cleanup wish` | 구현 완료로 주석 제거 |
+
+#### 3단계: 예외 삼킴 로그 추가
+
+| 항목 | 내용 |
+|------|------|
+| `OrderService.sendKakaoMessageIfPossible` | `catch (Exception ignored)` → `catch (Exception e)` + `log.warn("카카오 메시지 전송 실패: memberId={}, orderId={}", ...)` |
+| `AuthenticationResolver.extractMember` | `catch (Exception e) { return null; }` → `log.debug("인증 토큰 추출 실패: {}", e.getMessage())` 추가 (인증 실패는 정상 흐름이므로 debug 레벨) |
+
+#### 4단계: 가격 계산 도메인 메서드 추가
+
+| 항목 | 내용 |
+|------|------|
+| `Option.calculateTotalPrice(int quantity)` | 도메인 메서드 추가 — `product.getPrice() * quantity` (작동 변경) |
+| `OrderService.createOrder()` | `option.getProduct().getPrice() * quantity` → `option.calculateTotalPrice(quantity)`로 위임 (구조 변경, ADR-002) |
+
+#### 5단계: 이메일 중복 검증 로직 통합
+
+| 항목 | 내용 |
+|------|------|
+| `MemberService` | `register()`와 `create()`에 중복된 `existsByEmail` 체크를 `validateEmailNotDuplicated` private 메서드로 추출 |
+
+#### 6단계: @RestControllerAdvice 도입
+
+| 항목 | 내용 |
+|------|------|
+| `GlobalExceptionHandler` 생성 | `@RestControllerAdvice(annotations = RestController.class)` — `@RestController`만 대상 (ADR-003) |
+| 예외 매핑 | `NoSuchElementException` → 404, `IllegalArgumentException` → 400, `IllegalStateException` → 403 |
+| REST 컨트롤러 정리 | 6개 컨트롤러에서 개별 try-catch, `@ExceptionHandler` 제거 |
+| 테스트 상태코드 수정 | `IllegalArgumentException`이 500 → 400으로 변경되어 3개 테스트 기대값 수정 |
+| admin 컨트롤러 보호 | `basePackages` 대신 `annotations`로 범위 제한 — `@Controller`인 admin 컨트롤러에 영향 없음 |
+
+### 학습한 점
+
+#### 테스트 전략은 검증 원칙에서 결정된다
+
+처음에는 Mock 기반 서비스 단위 테스트(`@Mock` + `@InjectMocks`)를 계획했으나, "상태를 재조회하여 검증"이라는 원칙과 충돌했다. Mock 테스트는 `then(repository).should().delete(...)`처럼 호출 여부만 확인하고, 실제 DB 상태 변화는 알 수 없다. 통합 테스트(`@SpringBootTest` + `@Sql`)로 전환하니 주문 후 위시 목록을 재조회하여 0개임을 확인하는 식으로 실제 작동을 검증할 수 있었다.
+
+#### Red 테스트 선행 작성의 한계
+
+TDD의 "테스트 먼저" 원칙을 따라 0단계에서 모든 테스트를 선행 작성하려 했으나, 컴파일 에러를 일으키는 테스트(존재하지 않는 메서드 호출)는 전체 빌드를 깨뜨렸다. `OptionTest.calculateTotalPrice`는 `Option`에 메서드가 없어 컴파일 자체가 불가능했고, 4단계에서 메서드 구현과 함께 작성했다. 컴파일 언어에서 Red 테스트 선행 작성은 "실행 시 실패"와 "컴파일 에러"를 구분해야 한다.
+
+#### @RestControllerAdvice 범위 지정의 함정
+
+`@RestControllerAdvice(basePackages = "gift")`로 처음 구현했으나, 같은 패키지의 admin `@Controller`에도 적용되어 Thymeleaf 뷰 대신 JSON 에러가 반환될 수 있었다. `annotations = RestController.class`로 변경하여 `@RestController`만 대상으로 제한했다. 패키지 기반 필터링은 같은 패키지에 다른 성격의 컨트롤러가 공존할 때 위험하다.
+
+#### 구조 변경과 작동 변경의 커밋 분리
+
+4단계에서 `Option.calculateTotalPrice` 추가(작동 변경)와 `OrderService`에서의 위임(구조 변경)을 별도 커밋으로 분리했다. 한 커밋의 diff를 보고 30초 안에 의도를 설명할 수 있는지가 분리 기준이었다. 작동 변경 커밋에는 새 메서드와 테스트만, 구조 변경 커밋에는 호출부 교체만 담겼다.
