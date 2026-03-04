@@ -1,7 +1,7 @@
 package gift.option;
 
 import gift.product.Product;
-import gift.product.ProductRepository;
+import gift.product.ProductService;
 import java.util.List;
 import java.util.NoSuchElementException;
 import org.springframework.stereotype.Service;
@@ -10,23 +10,33 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class OptionService {
     private final OptionRepository optionRepository;
-    private final ProductRepository productRepository;
+    private final ProductService productService;
 
-    public OptionService(OptionRepository optionRepository, ProductRepository productRepository) {
+    public OptionService(OptionRepository optionRepository, ProductService productService) {
         this.optionRepository = optionRepository;
-        this.productRepository = productRepository;
+        this.productService = productService;
+    }
+
+    @Transactional
+    public Option save(Option option) {
+        return optionRepository.save(option);
+    }
+
+    @Transactional(readOnly = true)
+    public Option findById(Long id) {
+        return optionRepository.findById(id).orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다. id=" + id));
     }
 
     @Transactional(readOnly = true)
     public List<Option> findByProductId(Long productId) {
-        findProduct(productId);
+        productService.findById(productId);
         return optionRepository.findByProductId(productId);
     }
 
     @Transactional
     public Option create(Long productId, String name, int quantity) {
         validateName(name);
-        Product product = findProduct(productId);
+        Product product = productService.findById(productId);
 
         if (optionRepository.existsByProductIdAndName(productId, name)) {
             throw new IllegalArgumentException("이미 존재하는 옵션명입니다.");
@@ -37,7 +47,7 @@ public class OptionService {
 
     @Transactional
     public void delete(Long productId, Long optionId) {
-        findProduct(productId);
+        productService.findById(productId);
 
         List<Option> options = optionRepository.findByProductId(productId);
         if (options.size() <= 1) {
@@ -52,12 +62,6 @@ public class OptionService {
         }
 
         optionRepository.delete(option);
-    }
-
-    private Product findProduct(Long productId) {
-        return productRepository
-                .findById(productId)
-                .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
     }
 
     private void validateName(String name) {

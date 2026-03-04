@@ -117,11 +117,11 @@
 > 근거: OrderService가 OptionRepository·MemberRepository를, WishService가 ProductRepository를, OptionService가 ProductRepository를 직접 참조한다.
 > 각 도메인에 Service가 이미 존재하는데도 Repository를 직접 호출하여 findById+orElseThrow 조회 패턴이 중복되고, Repository 변경 시 영향이 패키지를 넘는다.
 
-- [ ] OptionService에 findById(Long) 메서드 추가
-- [ ] OrderService → OptionService, MemberService로 위임 전환
-- [ ] WishService → ProductService로 위임 전환
-- [ ] OptionService → ProductService로 위임 전환
-- [ ] 전체 테스트 실행 → 통과 확인
+- [x] OptionService에 findById(Long) 메서드 추가
+- [x] OrderService → OptionService, MemberService로 위임 전환
+- [x] WishService → ProductService로 위임 전환
+- [x] OptionService → ProductService로 위임 전환
+- [x] 전체 테스트 실행 → 통과 확인
 
 #### 5-4. 외부 인프라 인터페이스 추출 — OrderMessageClient
 

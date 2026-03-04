@@ -65,3 +65,12 @@ KakaoAuthService 추출 — KakaoAuthController에 남아있는 비즈니스 로
 
 ## 프롬프트 18
 5-2 보정: 작동 변경 방지 및 인수 테스트 검증 — AuthenticationResolver에서 Authorization 헤더 누락 시 MissingRequestHeaderException을 throw하여 기존 400 응답 유지. 인수 테스트 "주문이 실패한다" 단언을 ≥400에서 =400으로 정밀화.
+
+## 프롬프트 19
+크로스 패키지 Repository 참조 제거 — 4개 서비스(OrderService, WishService, OptionService)에서 타 패키지 Repository 직접 참조를 해당 도메인 Service 위임으로 대체. OptionRepository→OptionService, MemberRepository→MemberService, ProductRepository→ProductService. JPA dirty checking 활용으로 명시적 save() 제거.
+
+## 프롬프트 20
+작업 3 검증: 작동 변경 분석 및 인수 테스트 검토 — 크로스 패키지 Repository 참조 제거 리팩터링의 작동 변경 여부 분석(예외 메시지 차이, save() 제거, readOnly 전파). OrderService에 dirty checking 전환 사유 및 예외 메시지 차이 주석 추가. 인수 테스트 17개 시나리오 커버리지 충분성 확인.
+
+## 프롬프트 21
+save() 위임 복원 — 프롬프트 19에서 save() 제거(dirty checking 전환)는 요청 범위("Service 위임") 밖의 부수적 작업이므로 복원. OptionService.save(), MemberService.save() 위임 메서드 추가. OrderService에서 optionService.save(option), memberService.save(member) 호출 복원. dirty checking 주석 제거.

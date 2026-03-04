@@ -49,6 +49,11 @@ public class MemberService {
         return memberRepository.findAll();
     }
 
+    @Transactional
+    public Member save(Member member) {
+        return memberRepository.save(member);
+    }
+
     @Transactional(readOnly = true)
     public Member findById(Long id) {
         return memberRepository

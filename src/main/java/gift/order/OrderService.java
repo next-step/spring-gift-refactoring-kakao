@@ -1,10 +1,9 @@
 package gift.order;
 
 import gift.member.Member;
-import gift.member.MemberRepository;
+import gift.member.MemberService;
 import gift.option.Option;
-import gift.option.OptionRepository;
-import java.util.NoSuchElementException;
+import gift.option.OptionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -13,18 +12,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class OrderService {
     private final OrderRepository orderRepository;
-    private final OptionRepository optionRepository;
-    private final MemberRepository memberRepository;
+    private final OptionService optionService;
+    private final MemberService memberService;
     private final KakaoMessageClient kakaoMessageClient;
 
     public OrderService(
             OrderRepository orderRepository,
-            OptionRepository optionRepository,
-            MemberRepository memberRepository,
+            OptionService optionService,
+            MemberService memberService,
             KakaoMessageClient kakaoMessageClient) {
         this.orderRepository = orderRepository;
-        this.optionRepository = optionRepository;
-        this.memberRepository = memberRepository;
+        this.optionService = optionService;
+        this.memberService = memberService;
         this.kakaoMessageClient = kakaoMessageClient;
     }
 
@@ -35,19 +34,15 @@ public class OrderService {
 
     @Transactional
     public Order createOrder(Long memberId, Long optionId, int quantity, String message) {
-        Option option = optionRepository
-                .findById(optionId)
-                .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다. id=" + optionId));
+        Option option = optionService.findById(optionId);
 
         option.subtractQuantity(quantity);
-        optionRepository.save(option);
+        optionService.save(option);
 
-        Member member = memberRepository
-                .findById(memberId)
-                .orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다. id=" + memberId));
+        Member member = memberService.findById(memberId);
         int price = option.getProduct().getPrice() * quantity;
         member.deductPoint(price);
-        memberRepository.save(member);
+        memberService.save(member);
 
         Order saved = orderRepository.save(new Order(option, memberId, quantity, message));
 

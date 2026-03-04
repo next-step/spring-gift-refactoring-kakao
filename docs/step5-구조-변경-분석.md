@@ -208,6 +208,8 @@ Option option = optionRepository
 
 **예외**: `AuthenticationResolver`는 인증 인프라 컴포넌트이므로 이 규칙을 즉시 적용하지 않는다. 작업 2에서 `HandlerMethodArgumentResolver`로 전환될 때 함께 정리한다.
 
+**허용된 작동 차이**: `OrderService.createOrder()`에서 회원 조회를 `memberRepository.findById()` → `memberService.findById()`로 위임하면서 예외 메시지가 변경된다. 기존 `"회원이 존재하지 않습니다. id=" + memberId` → 변경 후 `"Member not found. id=" + id`. `GlobalExceptionHandler`가 `NoSuchElementException` → 404 응답 시 예외 메시지를 응답 본문에 포함하지 않으므로 클라이언트 관점에서 작동 변경 없음. MemberService의 메시지를 OrderService 전용으로 맞추면 Service 재사용성이 떨어지므로 허용한다.
+
 **검증**: 인수 테스트 17개 전체 통과.
 
 #### 작업 내용
@@ -389,6 +391,7 @@ if (member.getPassword() == null || !member.getPassword().equals(password)) {
 | Validator 구조 중복 | `ProductNameValidator`와 `OptionNameValidator`의 정규식 동일 | 2개뿐이며 독립적으로 진화할 가능성이 있다. 공통화하면 한쪽 변경이 다른 쪽에 영향. 세 번째 Validator 등장 시 재검토 |
 | AdminProductController 이중 검증 | 서비스 호출 전 직접 검증 + 서비스 내부 재검증 | `allowKakao` 플래그는 정책 변경(작동 변경)에 해당하므로 이번 범위 밖 |
 | KakaoLoginClient 추상화 | KakaoAuthService → KakaoLoginClient 구체 의존 | KakaoAuthService가 Kakao 전용이므로 구체 의존이 자연스럽다. 다른 OAuth 제공자 추가 시 별도 서비스 생성 |
+| OrderService 내 managed 엔티티 명시적 save() | `optionService.save(option)`, `memberService.save(member)` 호출 | `@Transactional` 내 managed 엔티티이므로 dirty checking으로 자동 반영되어 save()가 no-op이다. 그러나 명시적 save()는 저장 시점을 코드에서 바로 확인할 수 있어 가독성에 유리하다. 트레이드오프가 있으므로 현행 유지한다 |
 
 ---
 
