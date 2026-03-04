@@ -218,3 +218,22 @@
 **문서:**
 - `PLAN.md` 생성 및 완료 상태 업데이트
 - 매 커밋마다 `./gradlew spotlessApply build` 성공 확인
+
+## 세션: 2026-03-04 — Checkstyle 도입 + 코딩 스타일 불일치 수정
+
+### 프롬프트 1: 코딩 스타일 점검 및 Checkstyle 도입 계획 수립 (Plan 모드)
+> Step2 구현 완료 후 코딩 컨벤션 점검을 수행. Spotless(포매팅)에 더해 네이밍 규칙 자동 검증 수단으로 Checkstyle 도입 계획 수립.
+
+- 네이밍 컨벤션(PascalCase, camelCase 등) 준수 확인
+- 스타일 불일치 5건 식별, 수용 가능 4건 분류
+- 5개 커밋으로 분리하여 "한 커밋 = 하나의 의도" 원칙 유지
+
+### 프롬프트 2: Checkstyle 도입 + 코딩 스타일 불일치 수정 실행
+> Implement the following plan: (5개 커밋 순차 실행)
+
+- **커밋 1**: `config/checkstyle/checkstyle.xml` + `suppressions.xml` 생성, `build.gradle.kts`에 checkstyle 플러그인 추가. 네이밍 모듈 7개 설정, 테스트 소스 한글 메서드명 억제
+- **커밋 2**: `GiftAcceptanceTest` 메서드명 `Member_Id_헤더_없이_선물하면_실패한다` → `인증_헤더_없이_선물하면_실패한다` (실제 검증 내용과 일치)
+- **커밋 3**: `AdminMemberController` 영어 에러 메시지 한국어화 + `IllegalArgumentException` → `NoSuchElementException` (엔티티 미존재 예외 통일)
+- **커밋 4**: `JwtProvider`, `AuthenticationResolver`에서 단일 생성자의 불필요한 `@Autowired` + import 제거
+- **커밋 5**: `MemberService.update()`, `chargePoint()`에서 `IllegalArgumentException` → `NoSuchElementException` (엔티티 미존재 예외 통일)
+- 매 커밋마다 `./gradlew spotlessApply build` 성공 확인
