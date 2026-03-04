@@ -13,3 +13,6 @@ INSERT INTO options (id, name, quantity, product_id) VALUES (2, '커피 기본',
 -- 회원
 INSERT INTO member (id, email, password, point) VALUES (1, 'sender@test.com', 'password', 100000);
 INSERT INTO member (id, email, password, point) VALUES (2, 'receiver@test.com', 'password', 0);
+
+-- 위시
+INSERT INTO wish (id, member_id, product_id) VALUES (1, 1, 1);

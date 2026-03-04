@@ -6,6 +6,7 @@ import gift.member.MemberService;
 import gift.option.Option;
 import gift.option.OptionRepository;
 import gift.product.Product;
+import gift.wish.WishService;
 import java.util.NoSuchElementException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,16 +23,19 @@ public class OrderService {
   private final OrderRepository orderRepository;
   private final OptionRepository optionRepository;
   private final MemberService memberService;
+  private final WishService wishService;
   private final KakaoMessageClient kakaoMessageClient;
 
   public OrderService(
       OrderRepository orderRepository,
       OptionRepository optionRepository,
       MemberService memberService,
+      WishService wishService,
       KakaoMessageClient kakaoMessageClient) {
     this.orderRepository = orderRepository;
     this.optionRepository = optionRepository;
     this.memberService = memberService;
+    this.wishService = wishService;
     this.kakaoMessageClient = kakaoMessageClient;
   }
 
@@ -55,6 +59,8 @@ public class OrderService {
 
     int price = option.calculateTotalPrice(quantity);
     member.deductPoint(price);
+
+    wishService.removeByMemberAndProduct(memberId, option.getProduct().getId());
 
     Order saved = orderRepository.save(new Order(option, memberId, quantity, message));
 

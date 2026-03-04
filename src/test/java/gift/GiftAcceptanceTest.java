@@ -6,6 +6,7 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -177,5 +178,49 @@ class GiftAcceptanceTest {
 
     // then (MissingRequestHeaderException → 400)
     assertThat(response.statusCode()).isEqualTo(400);
+  }
+
+  /**
+   * G6: 위시리스트 상품을 주문하면 위시가 자동 제거된다. - test-data.sql에 wish(member=1, product=1)가 존재 - 옵션1(상품1)로 주문 →
+   * 201 - 위시 목록 조회 → productId=1 미포함
+   */
+  @Test
+  void 위시리스트_상품을_주문하면_위시가_자동_제거된다() {
+    // when — 위시에 있는 상품 주문
+    ExtractableResponse<Response> orderResponse =
+        RestAssured.given()
+            .log()
+            .all()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + token)
+            .body(
+                Map.of(
+                    "optionId", 1,
+                    "quantity", 1,
+                    "message", "위시 자동 정리 테스트"))
+            .when()
+            .post("/api/orders")
+            .then()
+            .log()
+            .all()
+            .extract();
+
+    assertThat(orderResponse.statusCode()).isEqualTo(201);
+
+    // then — 위시 목록에서 productId=1이 제거됨
+    ExtractableResponse<Response> wishResponse =
+        RestAssured.given()
+            .log()
+            .all()
+            .header("Authorization", "Bearer " + token)
+            .when()
+            .get("/api/wishes")
+            .then()
+            .log()
+            .all()
+            .extract();
+
+    List<Long> productIds = wishResponse.jsonPath().getList("content.productId", Long.class);
+    assertThat(productIds).doesNotContain(1L);
   }
 }
