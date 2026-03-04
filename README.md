@@ -162,12 +162,15 @@
     - `@ExceptionHandler(IllegalArgumentException.class)` 3곳 → 전역 핸들러로 통합
     - 각 Controller에서 해당 메서드 제거
 
-- [ ] 22. `refactor: move Kakao authorization URL building to KakaoLoginClient`
-  - **수정:** KakaoLoginClient, KakaoAuthController
+- [ ] 22. `refactor: move Kakao authorization URL building to KakaoAuthorizationUrl`
+  - **생성:** KakaoAuthorizationUrl
+  - **수정:** KakaoAuthService, KakaoAuthController
   - **변경 내용:**
-    - `KakaoLoginClient.buildAuthorizationUrl()` 메서드 추가 (인가 URL 조립 책임 이동)
-    - `KakaoAuthController`에서 URL 조립 코드 제거, `KakaoLoginClient` 호출로 대체
+    - `KakaoAuthorizationUrl` 값 객체 생성 (`KakaoLoginProperties`를 받아 인가 URL 조립)
+    - `KakaoAuthService.buildAuthorizationUrl()`에서 `KakaoAuthorizationUrl`에 위임
+    - `KakaoAuthController`에서 URL 조립 코드 제거, `KakaoAuthService` 호출로 대체
     - Controller에서 `KakaoLoginProperties` 의존성 제거
+  - **설계 근거:** URL 조립을 독립 객체로 분리하여 단위 테스트를 용이하게 하고, Service는 도메인 흐름 제어에 집중
 
 - [ ] 23. `refactor: add behavior methods to domain entities`
   - **수정:** Member, Order, Wish, MemberService, OrderService, KakaoMessageClient, WishController
