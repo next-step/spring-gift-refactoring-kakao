@@ -1,5 +1,6 @@
 package gift.member;
 
+import gift.DomainException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,7 +34,7 @@ public class AdminMemberController {
         try {
             memberService.register(email, password);
             return "redirect:/admin/members";
-        } catch (IllegalArgumentException e) {
+        } catch (DomainException e) {
             populateNewFormError(model, email, e.getMessage());
             return "member/new";
         }

@@ -13,8 +13,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.notFound().build();
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
+    @ExceptionHandler(DomainException.class)
+    public ResponseEntity<String> handleDomainException(DomainException e) {
         return ResponseEntity.badRequest().body(e.getMessage());
     }
 }

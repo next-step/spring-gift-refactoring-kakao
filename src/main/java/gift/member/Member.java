@@ -1,5 +1,6 @@
 package gift.member;
 
+import gift.DomainException;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -41,7 +42,7 @@ public class Member {
 
     public void chargePoint(int amount) {
         if (amount <= 0) {
-            throw new IllegalArgumentException("충전 금액은 1 이상이어야 합니다.");
+            throw new DomainException("충전 금액은 1 이상이어야 합니다.");
         }
         this.point += amount;
     }
@@ -53,10 +54,10 @@ public class Member {
     // 주문 결제를 위한 포인트 차감
     public void deductPoint(int amount) {
         if (amount <= 0) {
-            throw new IllegalArgumentException("차감 금액은 1 이상이어야 합니다.");
+            throw new DomainException("차감 금액은 1 이상이어야 합니다.");
         }
         if (amount > this.point) {
-            throw new IllegalArgumentException("포인트가 부족합니다.");
+            throw new DomainException("포인트가 부족합니다.");
         }
         this.point -= amount;
     }

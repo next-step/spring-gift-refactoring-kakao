@@ -1,5 +1,6 @@
 package gift.member;
 
+import gift.DomainException;
 import java.util.List;
 import java.util.NoSuchElementException;
 import org.springframework.stereotype.Service;
@@ -16,18 +17,17 @@ public class MemberService {
     @Transactional
     public Member register(String email, String password) {
         if (memberRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("이미 등록된 이메일입니다.");
+            throw new DomainException("이미 등록된 이메일입니다.");
         }
         return memberRepository.save(new Member(email, password));
     }
 
     public Member login(String email, String password) {
-        final Member member = memberRepository
-                .findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다."));
+        final Member member =
+                memberRepository.findByEmail(email).orElseThrow(() -> new DomainException("이메일 또는 비밀번호가 올바르지 않습니다."));
 
         if (!member.checkPassword(password)) {
-            throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
+            throw new DomainException("이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
         return member;
