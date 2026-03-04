@@ -1,6 +1,7 @@
 package gift.member;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,7 +53,7 @@ public class MemberService {
     Member member =
         memberRepository
             .findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다. id=" + id));
+            .orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다. id=" + id));
     member.update(email, password);
     return member;
   }
@@ -62,7 +63,7 @@ public class MemberService {
     Member member =
         memberRepository
             .findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다. id=" + id));
+            .orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다. id=" + id));
     member.chargePoint(amount);
     return member;
   }
