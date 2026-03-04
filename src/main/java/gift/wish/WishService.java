@@ -33,9 +33,6 @@ public class WishService {
         return wishRepository.findByMemberId(member.getId(), pageable).map(WishResponse::from);
     }
 
-    public record AddWishResult(WishResponse wish, boolean created) {
-    }
-
     public AddWishResult addWish(String authorization, WishRequest request) {
         Member member = extractMember(authorization);
         Product product = productRepository.findById(request.productId())

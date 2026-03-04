@@ -361,3 +361,15 @@ public JwtProvider(JwtProperties properties) {
 | 예외 처리 | 기존 컨트롤러의 `orElseThrow(() -> new IllegalArgumentException(...))` 및 중복 이메일 분기 로직 유지 |
 | 제외한 변경 | 새 예외 타입 추가, `@ExceptionHandler` 추가/변경, 응답/리다이렉트 경로 변경 없음 |
 | 목적 | step1 리뷰 기준에 맞춰 “작동 변경 없이 구조만 분리” 원칙을 충족 |
+
+---
+
+## 14. AddWishResult 분리 (Service inner record → 독립 DTO)
+
+`WishService` 내부에 있던 `AddWishResult`를 `gift.wish` 패키지의 독립 DTO로 분리했다.
+
+| 항목 | 내용                                                                  |
+|---|---------------------------------------------------------------------|
+| 파일 | `WishService.java`, `WishController.java`, `AddWishResult.java`(신규) |
+| 변경 내용 | `WishService.AddWishResult` 참조를 `AddWishResult`로 교체                 |
+| 배경 | 해당 타입은 Controller와 Service가 함께 참조하기에, 독립된 위치에 두는 것이 더 적절하다고 판단했다. |

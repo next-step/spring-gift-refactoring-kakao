@@ -42,7 +42,7 @@ public class WishController {
         @RequestHeader("Authorization") String authorization,
         @Valid @RequestBody WishRequest request
     ) {
-        WishService.AddWishResult result = wishService.addWish(authorization, request);
+        AddWishResult result = wishService.addWish(authorization, request);
         if (!result.created()) {
             return ResponseEntity.ok(result.wish());
         }
