@@ -192,6 +192,12 @@ Step 1에서 정리한 구조 위에 작동 변경을 수행한다. 모든 변�
 - [x] 디미터 법칙 개선 — `order.getOption().getName()` → `option.getName()`
 - [x] `OrderService`에서 `Product` 추출 라인 제거, `option` 직접 전달
 
+#### 8단계: 인증 null 체크 반복 제거
+
+- [x] `AuthenticationResolver`를 `HandlerMethodArgumentResolver`로 전환 — 인증 실패 시 `ResponseStatusException(401)`
+- [x] `WebMvcConfig` 생성 — resolver 등록
+- [x] `OrderController`(2곳), `WishController`(3곳)에서 `@RequestHeader` + null 체크 제거, `Member` 직접 파라미터로 변경
+
 ### 코드 수정 내역
 
 #### 0단계: 테스트 코드 작성
@@ -258,6 +264,15 @@ Step 1에서 정리한 구조 위에 작동 변경을 수행한다. 모든 변�
 | `KakaoMessageClient.sendToMe` | `Product` → `Option` 파라미터 변경, `calculateTotalPrice` 도메인 메서드 재사용 |
 | `KakaoMessageClient.buildTemplate` | `order.getOption().getName()` → `option.getName()` 직접 접근 (디미터 법칙 개선) |
 | `OrderService.sendKakaoMessageIfPossible` | `Product product = option.getProduct()` 제거, `option` 직접 전달 |
+
+#### 8단계: 인증 null 체크 반복 제거
+
+| 항목 | 내용 |
+|------|------|
+| `AuthenticationResolver` | `HandlerMethodArgumentResolver` 구현, 인증 실패 시 `ResponseStatusException(401)` |
+| `WebMvcConfig` (신규) | `WebMvcConfigurer`로 resolver 등록 |
+| `OrderController` | `AuthenticationResolver` 의존성 + null 체크 2곳 제거, `Member` 직접 파라미터 |
+| `WishController` | 같은 방식으로 null 체크 3곳 제거 |
 
 ### 학습한 점
 
