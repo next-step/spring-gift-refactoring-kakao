@@ -43,4 +43,12 @@ class OptionTest {
 
         assertThrows(IllegalArgumentException.class, () -> option.subtractQuantity(11));
     }
+
+    @Test
+    @DisplayName("calculateTotalPrice는 상품 가격 × 수량을 반환한다")
+    void calculateTotalPrice() {
+        Option option = createOption(100);
+
+        assertEquals(3000, option.calculateTotalPrice(3));
+    }
 }
