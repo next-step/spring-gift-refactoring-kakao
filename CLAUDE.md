@@ -60,9 +60,9 @@ Phase 3: Service Layer 추출
   - Repository 호출 → Service에서만 수행
 
 Phase 6: 트랜잭션 경계 세우기
-  - @Transactional 누락된 Service 메서드 식별
-  - 복합 연산(재고 차감 + 주문 생성 등)에 트랜잭션 적용
-  - 읽기 전용 메서드에 @Transactional(readOnly = true) 적용
+  - 트랜잭션 변경은 구조 변경과 작동 변경을 반드시 분리하여 커밋
+  - 구조 변경(refactor): 선언 위치 이동, 단일 Repository 호출에 명시적 추가
+  - 작동 변경(feat): 복합 쓰기에 원자성 부여, propagation/isolation 변경
 
 Phase 7: 누락된 작동 구현
   - TODO/FIXME 탐색으로 미구현 기능 식별

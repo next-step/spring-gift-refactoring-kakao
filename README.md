@@ -56,6 +56,13 @@
 - [x] test(wish): 에러 응답 code 필드 검증 추가
 - [x] test(order): 에러 응답 code 필드 검증 추가
 
+### Phase 6: 트랜잭션 경계 세우기
+#### 구조 변경 (refactor 커밋)
+- [ ] refactor: 전체 Service @Transactional 현황 검증 및 누락 확인
+- [ ] refactor: 클래스 레벨 vs 메서드 레벨 @Transactional 전략 결정 및 적용
+#### 작동 변경 (feat 커밋 — 상태 재조회 테스트 필수)
+- [ ] feat: 복합 쓰기 연산(OrderService.createOrder 등)에 원자적 트랜잭션 적용
+
 ## 구현 전략
 
 ### Phase 0: 테스트 코드 작성
@@ -90,6 +97,15 @@
 - **원칙**: 에러 응답 형식 통일 (`{"code": "...", "message": "..."}`)
 - **주의**: Admin Controller(`@Controller`)는 `@RestControllerAdvice` 적용 대상이 아니므로 기존 방식 유지. 교체 커밋은 도메인별로 분리하여 테스트 통과 확인
 - **검증**: 각 커밋마다 `./gradlew test` + `./gradlew checkstyleMain` 통과
+
+### Phase 6: 트랜잭션 경계 세우기
+- **목적**: Service 메서드의 트랜잭션 경계가 올바르게 설정되었는지 검증하고 개선
+- **현황**: 모든 Service 메서드에 `@Transactional` 또는 `@Transactional(readOnly = true)`가 이미 적용되어 있음 (Phase 3에서 적용)
+- **핵심 원칙**: 트랜잭션 변경은 구조 변경과 작동 변경을 **반드시 분리**하여 커밋
+  - 구조 변경(`refactor`): 선언 위치 이동, 단일 Repository 호출에 명시적 추가 — 기존 테스트 통과로 충분
+  - 작동 변경(`feat`): 복합 쓰기에 원자성 부여, propagation/isolation 변경 — 실패 시 롤백 동작이 달라지므로 **상태 재조회 테스트 필수**
+- **검증 포인트**: (1) 복합 쓰기 연산(OrderService.createOrder: 재고 차감 + 포인트 차감 + 주문 생성)의 원자성 (2) 클래스 레벨 @Transactional 적용 여부 결정
+- **검증**: 구조 변경은 `./gradlew test` 통과, 작동 변경은 상태 재조회 테스트 동반
 
 ## 진행 기록
 

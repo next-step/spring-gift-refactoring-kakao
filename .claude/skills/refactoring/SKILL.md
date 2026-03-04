@@ -271,38 +271,53 @@ gift/{domain}/                      ← 각 도메인 패키지 내부
 ## Phase 6: 트랜잭션 경계 세우기
 
 ### 목적
-`@Transactional`이 누락된 Service 메서드에 트랜잭션을 적용하여
-데이터 정합성을 보장한다. **구조 변경** — 커밋 타입은 `refactor`.
+Service 메서드의 트랜잭션 경계를 검증하고 개선한다.
+트랜잭션 변경은 **구조 변경과 작동 변경이 섞일 수 있으므로** 반드시 분리하여 커밋한다.
+
+### 트랜잭션 변경의 구조/작동 분류
+
+| 변경 내용 | 분류 | 커밋 타입 | 이유 |
+|---|---|---|---|
+| 선언 위치 이동 (메서드→클래스) | 구조 변경 | `refactor` | 동작 동일 |
+| 단일 Repository 호출에 명시적 추가 | 구조 변경 | `refactor` | 이미 암묵적 트랜잭션 존재 |
+| 복합 쓰기에 원자성 부여 | **작동 변경** | `feat` | 실패 시 롤백 동작이 달라짐 |
+| propagation/isolation 변경 | **작동 변경** | `feat` | 동시성·참여 동작 변경 |
+| readOnly 추가 (쓰기 없는 메서드) | 구조 변경 | `refactor` | 최적화 힌트, 동작 동일 |
+| readOnly 추가 (쓰기 있는 메서드) | **작동 변경** | `feat` | 쓰기 시 예외 발생 가능 |
 
 ### 절차
 
 ```
 1. Service 메서드 전체 목록 작성
-2. 트랜잭션이 필요한 메서드 식별:
-   a. 복합 쓰기 연산 (재고 차감 + 주문 생성 등)
-   b. 단일 쓰기 연산 (save, update, delete)
-   c. 읽기 전용 연산 (findAll, findById 등)
-3. 쓰기 메서드에 @Transactional 적용
-4. 읽기 메서드에 @Transactional(readOnly = true) 적용
-5. ./gradlew test → 동작 유지 확인
-6. 커밋 (도메인별 1커밋)
+2. 각 메서드의 트랜잭션 현황 확인
+3. 변경이 필요한 메서드를 구조 변경 / 작동 변경으로 분류
+4. 구조 변경 먼저 커밋 (refactor)
+   - 선언 위치 정리, 단일 호출 메서드에 명시적 선언 등
+   - ./gradlew test → 동작 유지 확인
+5. 작동 변경은 별도 커밋 (feat)
+   - 변경 전 3줄 명세 작성
+   - 상태 재조회 테스트 동반
+   - ./gradlew test → 통과 확인
 ```
 
 ### 체크리스트
-- [ ] 모든 Service 쓰기 메서드에 `@Transactional`이 있는가?
-- [ ] 읽기 전용 메서드에 `@Transactional(readOnly = true)`가 있는가?
+- [ ] 각 트랜잭션 변경이 구조/작동 중 어디에 해당하는지 분류했는가?
+- [ ] 구조 변경과 작동 변경이 같은 커밋에 섞여 있지 않은가?
+- [ ] 작동 변경이면 상태 재조회 테스트를 동반했는가?
 - [ ] 복합 연산이 하나의 트랜잭션으로 묶여 있는가?
 - [ ] 트랜잭션 범위가 필요 이상으로 넓지 않은가?
+- [ ] ADR이 필요한 결정(전파 전략 변경 등)이 있는가?
 
 ### 커밋 예시
 ```
-refactor(order): OrderService 메서드에 @Transactional 적용
-refactor(product): ProductService 읽기 메서드에 readOnly 트랜잭션 적용
+refactor(order): OrderService @Transactional 선언을 클래스 레벨로 이동
+feat(order): OrderService.createOrder에 원자적 트랜잭션 적용
 ```
 
 ### 주의사항
-- `@Transactional` 추가는 **구조 변경**이다 (외부 동작 불변)
-- 트랜잭션 전파(propagation) 기본값(REQUIRED)을 사용하되, 변경이 필요하면 ADR 작성
+- 트랜잭션 경계 변경을 일괄 "구조 변경"으로 분류하지 않는다
+- 복합 쓰기에 원자성을 부여하면 실패 시 관찰 가능한 상태가 달라지므로 작동 변경이다
+- 트랜잭션 전파(propagation) 기본값(REQUIRED) 외 변경이 필요하면 ADR 작성
 - Controller에는 `@Transactional`을 붙이지 않는다
 
 ---
