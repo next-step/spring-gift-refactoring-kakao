@@ -66,7 +66,7 @@ public class ProductService {
     productRepository.deleteById(id);
   }
 
-  public void validateNameOrThrow(String name) {
+  private void validateNameOrThrow(String name) {
     List<String> errors = ProductNameValidator.validate(name);
     if (!errors.isEmpty()) {
       throw new IllegalArgumentException(String.join(", ", errors));
