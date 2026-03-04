@@ -80,7 +80,7 @@ class OrderControllerTest {
         @Test
         @DisplayName("인증된 사용자의 주문 목록을 반환한다")
         void returnsOrdersForAuthenticatedMember() throws Exception {
-            var order = new Order(option, member.getId(), 2, "선물입니다");
+            var order = new Order(option, member.getId(), 2, 10000, "선물입니다");
             setId(order, 1L);
 
             given(authenticationResolver.extractMember(anyString())).willReturn(member);
@@ -115,7 +115,7 @@ class OrderControllerTest {
         void createsOrderSuccessfully() throws Exception {
             var request = new OrderRequest(1L, 2, "생일 축하해!");
 
-            var savedOrder = new Order(option, member.getId(), 2, "생일 축하해!");
+            var savedOrder = new Order(option, member.getId(), 2, 10000, "생일 축하해!");
             setId(savedOrder, 1L);
 
             given(authenticationResolver.extractMember(anyString())).willReturn(member);

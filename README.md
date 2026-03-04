@@ -46,13 +46,15 @@
 ### 기능 목록
 
 #### 트랜잭션 경계 세우기 (작동 변경)
-- [ ] `OrderService.createOrder()`에 `@Transactional` 적용 — 재고 차감 + 포인트 차감 + 주문 저장이 원자적으로 실행
-- [ ] 다른 Service 메서드에도 `@Transactional` 검토 및 적용
-- [ ] 트랜잭션 롤백을 검증하는 통합 테스트 작성
+- [x] `OrderService.createOrder()`에 `@Transactional` 적용 — 재고 차감 + 포인트 차감 + 주문 저장이 원자적으로 실행
+- [x] 다른 Service 메서드에도 `@Transactional` 검토 및 적용 (10개 메서드)
+- [x] 트랜잭션 롤백을 검증하는 통합 테스트 작성
 
 #### 누락된 작동 구현 (작동 변경)
-- [ ] 코드에 의도가 남아 있지만 구현되지 않은 작동 식별 및 완료
-- [ ] 새로운 작동에 대한 테스트 작성 (상태 재조회로 검증)
+- [x] `Order`에 `totalPrice` 필드 추가 — 주문 시 계산된 금액을 영속화
+- [x] `OrderResponse`에 `totalPrice` 포함
+- [x] DB 마이그레이션 (`V3__Add_total_price_to_orders.sql`)
+- [x] `EntityManager.flush()` + `clear()` 후 DB 재조회로 검증하는 통합 테스트 작성
 
 #### 도메인 책임 되찾기 (구조 변경, 최소 2개)
 - [ ] 가격 계산 로직을 도메인 엔티티로 이동 — `OrderService`와 `KakaoMessageClient`에 산재된 계산 통합

@@ -84,7 +84,7 @@ class OrderServiceTest {
         @DisplayName("정상적으로 주문을 생성한다")
         void createsOrderSuccessfully() throws Exception {
             var request = new OrderRequest(1L, 2, "선물입니다");
-            var savedOrder = new Order(option, member.getId(), 2, "선물입니다");
+            var savedOrder = new Order(option, member.getId(), 2, 10000, "선물입니다");
             setId(savedOrder, 1L);
 
             given(optionRepository.findById(1L)).willReturn(Optional.of(option));
@@ -168,7 +168,7 @@ class OrderServiceTest {
         void orderSucceedsEvenIfKakaoFails() throws Exception {
             member.updateKakaoAccessToken("kakao-token");
             var request = new OrderRequest(1L, 1, "");
-            var savedOrder = new Order(option, member.getId(), 1, "");
+            var savedOrder = new Order(option, member.getId(), 1, 5000, "");
             setId(savedOrder, 1L);
 
             given(optionRepository.findById(1L)).willReturn(Optional.of(option));
@@ -189,7 +189,7 @@ class OrderServiceTest {
         @Test
         @DisplayName("회원의 주문 목록을 페이징 조회한다")
         void returnsPagedOrders() throws Exception {
-            var order = new Order(option, 1L, 2, "선물");
+            var order = new Order(option, 1L, 2, 10000, "선물");
             setId(order, 1L);
             var pageable = PageRequest.of(0, 10);
 

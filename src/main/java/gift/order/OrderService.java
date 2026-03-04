@@ -54,7 +54,7 @@ public class OrderService {
         memberRepository.save(member);
 
         // save order
-        Order saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
+        Order saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), price, request.message()));
 
         // best-effort kakao notification
         sendKakaoMessageIfPossible(member, saved, option);

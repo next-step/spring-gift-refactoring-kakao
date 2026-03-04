@@ -24,16 +24,18 @@ public class Order {
     // primitive FK
     private Long memberId;
     private int quantity;
+    private int totalPrice;
     private String message;
     private LocalDateTime orderDateTime;
 
     protected Order() {
     }
 
-    public Order(Option option, Long memberId, int quantity, String message) {
+    public Order(Option option, Long memberId, int quantity, int totalPrice, String message) {
         this.option = option;
         this.memberId = memberId;
         this.quantity = quantity;
+        this.totalPrice = totalPrice;
         this.message = message;
         this.orderDateTime = LocalDateTime.now();
     }
@@ -52,6 +54,10 @@ public class Order {
 
     public int getQuantity() {
         return quantity;
+    }
+
+    public int getTotalPrice() {
+        return totalPrice;
     }
 
     public String getMessage() {

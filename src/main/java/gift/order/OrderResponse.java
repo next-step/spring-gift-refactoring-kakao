@@ -6,6 +6,7 @@ public record OrderResponse(
     Long id,
     Long optionId,
     int quantity,
+    int totalPrice,
     LocalDateTime orderDateTime,
     String message
 ) {
@@ -14,6 +15,7 @@ public record OrderResponse(
             order.getId(),
             order.getOption().getId(),
             order.getQuantity(),
+            order.getTotalPrice(),
             order.getOrderDateTime(),
             order.getMessage()
         );
