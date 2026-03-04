@@ -16,14 +16,12 @@
 - Claude가 `build.gradle.kts`에 Spotless 플러그인 추가, `spotlessApply` 실행하여 전체 소스 포매팅 적용
 - ktlint 위반도 함께 수정하여 빌드 성공 확인
 
-### 프롬프트 3: 커밋 + Co-author 등록
-> 이 작업 자를 코워커로 등록하고, 커밋을 한 번 합니다. Co-authored-by: koomin1227 <koomin1227@naver.com>
+### (deprecated no co-worker)프롬프트 3: 커밋 + Co-author 등록
 
 - Spotless 적용 작업 전체를 한 번에 커밋
-- Co-author를 지정하여 커밋 메시지에 포함
 
 ### 프롬프트 4: 전역 규칙 고정
-> 별도의 요청이 있기 전까지, 다음의 두가지를 전역 규칙으로 고정합니다. 1. 매 대화 세션 마다, 프롬프트위주로 나의 코딩 에이전트 사용에 대한 prompt.md파일 추가 작성 2. 커밋에 Co-authored-by: koomin1227 <koomin1227@naver.com> 코워커를 항상 등록하고, 한국어로 커밋메시지작성
+> 별도의 요청이 있기 전까지, 다음의 두가지를 전역 규칙으로 고정합니다. 1. 매 대화 세션 마다, 프롬프트위주로 나의 코딩 에이전트 사용에 대한 prompt.md파일 추가 작성
 
 - 두 가지 전역 규칙을 메모리에 저장: prompt.md 매 세션 추가 작성, 커밋 시 Co-author + 한국어 메시지
 
@@ -133,3 +131,63 @@
 - `gift.auth.KakaoLoginClient`, `gift.auth.KakaoLoginProperties`, `gift.order.KakaoMessageClient` → `gift.infrastructure.kakao` 패키지로 이동
 - `KakaoAuthService`, `OrderService`의 import 경로 업데이트
 - `./gradlew spotlessApply build` — 테스트 9개 모두 통과 확인
+
+## 세션: 2026-03-04 — Step1 검토 및 리뷰어 피드백 반영
+
+### 프롬프트 1: Step1 전체 검토
+> step1 과제 요구사항 대비 커밋 이력 검토
+
+- 10개 커밋 중 8개는 순수 구조 변경으로 원칙을 잘 지킴
+- **문제 커밋 2개 식별**:
+  - `b926ddc` (서비스 레이어 추출): 구조 변경에 작동 변경 혼재 (404→400 응답 변경, 트랜잭션 경계 추가)
+  - `20f2ad4` (예외 처리 통합): `refactor:` 라벨이나 실제로는 버그 수정 (500→400), 응답 body 형식 변경
+- 기타 코드 우려: `OptionService.createRaw()` 검증 우회, `BEARER_PREFIX` 3곳 중복, `OrderService`의 `MemberRepository` 직접 의존
+
+### 프롬프트 2: 리뷰어(wooobo) 피드백 확인 (PR #41)
+
+**피드백 3건:**
+
+1. **커밋 분할 제안** — 7개 서비스를 한 커밋에 추출한 것이 너무 큼. 도메인 단위로 커밋 분리 권장
+2. **응답 상태 코드 변경 주의** — 구조 변경 시 404→400 같은 클라이언트 의존 부분이 달라지지 않는지 확인 필요
+3. **Claude Skills 문서 포맷** — SKILL.md에 name, description 등 메타데이터 프로퍼티 활용 제안
+
+**자체 검토와 리뷰어 피드백 일치점:**
+- 피드백 1, 2번은 자체 검토에서도 동일하게 식별한 문제 (커밋 6의 구조+작동 혼재)
+- 리뷰어는 승인했으나, 다음 단계에서 개선할 포인트로 인식
+
+### 프롬프트 3: 리뷰어(catsbi) 피드백 확인 (PR #40)
+
+**코드 품질 12건 상세 리뷰:**
+
+1. `validateNameOrThrow` public → private 변경 제안
+2. `orElse(null)` + null 체크 → Optional 체이닝 권장
+3. 예외 메시지 한글/영어 혼용 지적
+4. public API 주석 → javadoc 스타일 변경 제안
+5. 외부 URL 상수 → properties 외부화 제안
+6. `option.getProduct().getPrice()` 디미터 법칙 위반
+7. `catch (Exception ignored)` 로깅 없이 무시 지적
+8. `sendKakaoMessageIfPossible` 전략 패턴 추상화 제안
+9. 비밀번호 평문 저장/비교 지적
+10. `NoSuchElementException` → 400은 부적절, 404 권장
+11. `AdminMemberController` 인증 로직 분리 제안
+12. `Order`에서 Option/Member 참조 방식 불일치 지적
+
+### 프롬프트 4: 피드백 통합 및 반영 계획 수립 (Plan 모드)
+
+- 자체 검토 + 리뷰어1(wooobo) + 리뷰어2(catsbi) 피드백을 통합하여 분류
+- **구조 변경 7건 (S1~S7)**: step2 전에 즉시 반영 (작동 변경 없음)
+- **작동 변경 8건 (B1~B8)**: step2에서 테스트와 함께 반영
+- **설계 판단 1건 (D1)**: step2에서 검토
+- **프로세스 4건 (P1~P4)**: 습관 개선으로 인지
+- 구조 변경을 독립 커밋으로 분리하여 "한 커밋 = 하나의 의도" 원칙 준수
+
+### 프롬프트 5: 구조 변경 반영 실행
+
+- **커밋 1**: `validateNameOrThrow` public → private (OptionService, ProductService)
+- **커밋 2**: WishService `orElse(null)` → Optional 체이닝
+- **커밋 3**: Member.java, MemberService.java 예외 메시지 6건 한국어 통일
+- **커밋 4**: Member.deductPoint() 주석 javadoc 스타일로 변경
+- **커밋 5**: 카카오 API URL 4개를 application.properties로 외부화, KakaoMessageProperties 신규 생성
+- **커밋 6**: BEARER_PREFIX 3곳 중복 → AuthConstants 공통 상수 클래스로 통합
+- **커밋 7**: OptionService.createRaw() 제거, SeedOptionController에서 create() 사용
+- 매 커밋마다 `./gradlew spotlessApply build` 성공 확인
