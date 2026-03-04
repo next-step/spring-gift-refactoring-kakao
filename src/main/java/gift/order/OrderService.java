@@ -4,6 +4,7 @@ import gift.member.Member;
 import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
+import gift.wish.WishRepository;
 import java.util.NoSuchElementException;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -16,16 +17,19 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OptionRepository optionRepository;
     private final MemberRepository memberRepository;
+    private final WishRepository wishRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     public OrderService(
             OrderRepository orderRepository,
             OptionRepository optionRepository,
             MemberRepository memberRepository,
+            WishRepository wishRepository,
             ApplicationEventPublisher eventPublisher) {
         this.orderRepository = orderRepository;
         this.optionRepository = optionRepository;
         this.memberRepository = memberRepository;
+        this.wishRepository = wishRepository;
         this.eventPublisher = eventPublisher;
     }
 
@@ -48,6 +52,10 @@ public class OrderService {
 
         final Order saved =
                 orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
+
+        wishRepository
+                .findByMemberIdAndProductId(member.getId(), option.getProduct().getId())
+                .ifPresent(wishRepository::delete);
 
         if (member.getKakaoAccessToken() != null) {
             eventPublisher.publishEvent(
