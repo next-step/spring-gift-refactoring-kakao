@@ -185,6 +185,13 @@ Step 1에서 정리한 구조 위에 작동 변경을 수행한다. 모든 변�
 - [x] REST 컨트롤러 6개에서 개별 try-catch, `@ExceptionHandler` 제거
 - [x] View 컨트롤러(`/admin/...`)는 `@Controller`이므로 영향 없음 — 기존 try-catch 유지
 
+#### 7단계: KakaoMessageClient가 Option을 받도록 변경
+
+- [x] `sendToMe(accessToken, order, product)` → `sendToMe(accessToken, order, option)` 시그니처 변경
+- [x] 가격 계산 중복 제거 — `product.getPrice() * order.getQuantity()` → `option.calculateTotalPrice(order.getQuantity())`
+- [x] 디미터 법칙 개선 — `order.getOption().getName()` → `option.getName()`
+- [x] `OrderService`에서 `Product` 추출 라인 제거, `option` 직접 전달
+
 ### 코드 수정 내역
 
 #### 0단계: 테스트 코드 작성
@@ -243,6 +250,14 @@ Step 1에서 정리한 구조 위에 작동 변경을 수행한다. 모든 변�
 | REST 컨트롤러 정리 | 6개 컨트롤러에서 개별 try-catch, `@ExceptionHandler` 제거 |
 | 테스트 상태코드 수정 | `IllegalArgumentException`이 500 → 400으로 변경되어 3개 테스트 기대값 수정 |
 | admin 컨트롤러 보호 | `basePackages` 대신 `annotations`로 범위 제한 — `@Controller`인 admin 컨트롤러에 영향 없음 |
+
+#### 7단계: KakaoMessageClient Option 시그니처 변경
+
+| 항목 | 내용 |
+|------|------|
+| `KakaoMessageClient.sendToMe` | `Product` → `Option` 파라미터 변경, `calculateTotalPrice` 도메인 메서드 재사용 |
+| `KakaoMessageClient.buildTemplate` | `order.getOption().getName()` → `option.getName()` 직접 접근 (디미터 법칙 개선) |
+| `OrderService.sendKakaoMessageIfPossible` | `Product product = option.getProduct()` 제거, `option` 직접 전달 |
 
 ### 학습한 점
 
