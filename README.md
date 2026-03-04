@@ -157,8 +157,8 @@ Step 1에서 정리한 구조 위에 작동 변경을 수행한다. 모든 변�
 
 #### 3단계: 예외 삼킴(swallow) 로그 추가
 
-- [ ] `OrderService.sendKakaoMessageIfPossible` — `catch (Exception ignored)` → `catch (Exception e)` + `log.warn(...)` (회원 ID, 주문 ID 포함)
-- [ ] `AuthenticationResolver.extractMember` — `catch (Exception e) { return null; }` → 인증 실패 debug 로그 추가
+- [x] `OrderService.sendKakaoMessageIfPossible` — `catch (Exception ignored)` → `catch (Exception e)` + `log.warn(...)` (회원 ID, 주문 ID 포함)
+- [x] `AuthenticationResolver.extractMember` — `catch (Exception e) { return null; }` → 인증 실패 debug 로그 추가
 
 #### 4단계: 가격 계산 도메인 메서드 추가
 
