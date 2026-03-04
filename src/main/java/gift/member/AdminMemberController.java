@@ -1,5 +1,6 @@
 package gift.member;
 
+import java.util.NoSuchElementException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,7 +38,7 @@ public class AdminMemberController {
   @PostMapping
   public String create(@RequestParam String email, @RequestParam String password, Model model) {
     if (memberService.existsByEmail(email)) {
-      populateNewFormError(model, email, "Email is already registered.");
+      populateNewFormError(model, email, "이미 등록된 이메일입니다.");
       return "member/new";
     }
 
@@ -50,7 +51,7 @@ public class AdminMemberController {
     Member member =
         memberService
             .findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Member not found. id=" + id));
+            .orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다. id=" + id));
     model.addAttribute("member", member);
     return "member/edit";
   }
