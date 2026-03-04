@@ -70,6 +70,7 @@ public class MemberService {
 
     @Transactional
     public void deleteMember(Long id) {
+        getMember(id);
         memberRepository.deleteById(id);
     }
 
