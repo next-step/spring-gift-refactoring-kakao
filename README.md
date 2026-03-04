@@ -71,6 +71,11 @@
 - KakaoMessageClient.sendToMe()에서 Product 파라미터 제거 (Order를 통해 접근)
 - 호출부 단순화: OrderService.sendKakaoMessageIfPossible() 파라미터 3개 → 2개
 
+#### Commit 11 [구조] IllegalArgumentException 핸들러를 GlobalExceptionHandler로 통합
+
+- OptionController, ProductController, MemberController에 중복된 @ExceptionHandler 3건 제거
+- GlobalExceptionHandler에 IllegalArgumentException → 400 Bad Request 핸들러 1건 추가
+
 ---
 
 ## AI 활용 과정
