@@ -139,4 +139,52 @@ class OrderControllerTest {
         .then()
             .statusCode(500);
     }
+
+    @Test
+    @DisplayName("POST /api/orders - 포인트 부족 시 재고가 롤백된다")
+    @Sql(scripts = "/cleanup.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(scripts = "/setup-low-point.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+    @Sql(scripts = "/cleanup.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+    void createOrderInsufficientPointsRollsBackStock() {
+        // setup-low-point.sql: member point=500, product price=1000, option quantity=100
+        String lowPointToken = "Bearer " + jwtProvider.createToken("lowpoint@test.com");
+        given()
+            .header("Authorization", lowPointToken)
+            .contentType(ContentType.JSON)
+            .body(Map.of("optionId", 1, "quantity", 1, "message", "선물"))
+        .when()
+            .post("/api/orders")
+        .then()
+            .statusCode(500);
+
+        // @Transactional 덕분에 재고가 원래대로 유지되어야 한다
+        given()
+        .when()
+            .get("/api/products/1/options")
+        .then()
+            .body("[0].quantity", equalTo(100));
+    }
+
+    @Test
+    @DisplayName("POST /api/orders - 주문 생성 후 해당 상품의 위시가 삭제된다")
+    void createOrderDeletesWish() {
+        // setup-data.sql: wish (member_id=1, product_id=1) 존재
+        given()
+            .header("Authorization", token)
+            .contentType(ContentType.JSON)
+            .body(Map.of("optionId", 1, "quantity", 1, "message", "선물"))
+        .when()
+            .post("/api/orders")
+        .then()
+            .statusCode(201);
+
+        // 위시 목록 재조회 → 0개
+        given()
+            .header("Authorization", token)
+        .when()
+            .get("/api/wishes")
+        .then()
+            .statusCode(200)
+            .body("content.size()", equalTo(0));
+    }
 }
