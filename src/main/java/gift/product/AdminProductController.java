@@ -40,7 +40,7 @@ public class AdminProductController {
         Model model
     ) {
         try {
-            productService.saveProduct(name, price, imageUrl, categoryId);
+            productService.create(new ProductRequest(name, price, imageUrl, categoryId), true);
             return "redirect:/admin/products";
         } catch (IllegalArgumentException e) {
             populateNewForm(model, List.of(e.getMessage()), name, price, imageUrl, categoryId);
@@ -50,8 +50,7 @@ public class AdminProductController {
 
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
-        Product product = productService.findById(id)
-            .orElseThrow(() -> new java.util.NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
+        Product product = productService.getById(id);
         model.addAttribute("product", product);
         model.addAttribute("categories", productService.findAllCategories());
         return "product/edit";
@@ -67,11 +66,10 @@ public class AdminProductController {
         Model model
     ) {
         try {
-            productService.updateProduct(id, name, price, imageUrl, categoryId);
+            productService.update(id, new ProductRequest(name, price, imageUrl, categoryId), true);
             return "redirect:/admin/products";
         } catch (IllegalArgumentException e) {
-            Product product = productService.findById(id)
-                .orElseThrow(() -> new java.util.NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
+            Product product = productService.getById(id);
             populateEditForm(model, product, List.of(e.getMessage()), name, price, imageUrl, categoryId);
             return "product/edit";
         }

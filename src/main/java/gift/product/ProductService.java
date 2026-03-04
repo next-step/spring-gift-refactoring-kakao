@@ -38,32 +38,24 @@ public class ProductService {
     }
 
     public Product create(ProductRequest request) {
-        validateName(request.name());
+        return create(request, false);
+    }
+
+    public Product create(ProductRequest request, boolean allowKakao) {
+        validateName(request.name(), allowKakao);
         Category category = findCategoryById(request.categoryId());
         return productRepository.save(request.toEntity(category));
     }
 
     public Product update(Long id, ProductRequest request) {
-        validateName(request.name());
+        return update(id, request, false);
+    }
+
+    public Product update(Long id, ProductRequest request, boolean allowKakao) {
+        validateName(request.name(), allowKakao);
         Category category = findCategoryById(request.categoryId());
-        Product product = productRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
+        Product product = getById(id);
         product.update(request.name(), request.price(), request.imageUrl(), category);
-        return productRepository.save(product);
-    }
-
-    public Product saveProduct(String name, int price, String imageUrl, Long categoryId) {
-        validateNameForAdmin(name);
-        Category category = findCategoryById(categoryId);
-        return productRepository.save(new Product(name, price, imageUrl, category));
-    }
-
-    public Product updateProduct(Long id, String name, int price, String imageUrl, Long categoryId) {
-        validateNameForAdmin(name);
-        Product product = productRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
-        Category category = findCategoryById(categoryId);
-        product.update(name, price, imageUrl, category);
         return productRepository.save(product);
     }
 
@@ -79,15 +71,8 @@ public class ProductService {
         return categoryService.findById(categoryId);
     }
 
-    private void validateName(String name) {
-        List<String> errors = ProductNameValidator.validate(name);
-        if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(String.join(", ", errors));
-        }
-    }
-
-    private void validateNameForAdmin(String name) {
-        List<String> errors = ProductNameValidator.validate(name, true);
+    private void validateName(String name, boolean allowKakao) {
+        List<String> errors = ProductNameValidator.validate(name, allowKakao);
         if (!errors.isEmpty()) {
             throw new IllegalArgumentException(String.join(", ", errors));
         }

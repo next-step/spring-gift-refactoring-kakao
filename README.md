@@ -82,6 +82,12 @@
 - GlobalExceptionHandler에 UnauthorizedException → 401 핸들러 추가
 - OrderController(2건), WishController(3건)의 null 체크 분기 총 5건 제거
 
+#### Commit 13 [구조] ProductService 중복 메서드 통합
+
+- saveProduct()/updateProduct()(Admin용)을 create()/update()에 allowKakao 파라미터로 통합
+- 중복 메서드 2개, 중복 validateNameForAdmin() 제거
+- AdminProductController에서 ProductRequest를 생성하여 동일 메서드 호출
+
 ---
 
 ## AI 활용 과정
