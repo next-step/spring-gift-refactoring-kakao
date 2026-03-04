@@ -171,5 +171,7 @@ Step 1에서 정리한 구조 위에 작동 변경을 수행한다. 모든 변�
 
 #### 6단계: @RestControllerAdvice 도입
 
-- [ ] REST API(`/api/...`)의 예외 처리를 일원화
-- [ ] View 컨트롤러(`/admin/...`)만 개별 try-catch 유지
+- [x] `GlobalExceptionHandler` 생성 — `@RestControllerAdvice(annotations = RestController.class)`로 REST API만 대상
+  - `NoSuchElementException` → 404, `IllegalArgumentException` → 400, `IllegalStateException` → 403
+- [x] REST 컨트롤러 6개에서 개별 try-catch, `@ExceptionHandler` 제거
+- [x] View 컨트롤러(`/admin/...`)는 `@Controller`이므로 영향 없음 — 기존 try-catch 유지
