@@ -34,9 +34,7 @@ public class MemberService {
         Member member = memberRepository.findByEmail(email)
             .orElseThrow(() -> new MemberException(MemberErrorCode.INVALID_CREDENTIALS));
 
-        if (member.getPassword() == null || !member.getPassword().equals(password)) {
-            throw new MemberException(MemberErrorCode.INVALID_CREDENTIALS);
-        }
+        member.verifyPassword(password);
         return member;
     }
 
