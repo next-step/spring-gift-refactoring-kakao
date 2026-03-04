@@ -4,13 +4,17 @@
 
 ### 리팩토링 계획
 
-미션 요구사항을 3가지로 분류하고, 구조 변경과 작동 변경을 분리하여 총 7개 커밋으로 나누어 진행했다.
+미션 요구사항을 3가지로 분류하고, 구조 변경과 작동 변경을 분리하여 총 13개 커밋으로 나누어 진행했다.
 
-| 분류      | 해결 대상                                         | 커밋             |
-|---------|-----------------------------------------------|----------------|
+| 분류 | 해결 대상 | 커밋 |
+|------|-----------|------|
 | 트랜잭션 경계 | OrderService.createOrder()의 3개 save가 원자적이지 않음 | #1(구조), #2(작동) |
-| 누락된 작동  | 카카오 메시지 실패 무시, 검증 누락                          | #3, #5, #7     |
-| 도메인 책임  | 검증/판단 로직이 Controller에 위치                      | #4(구조), #6(구조) |
+| 트랜잭션 경계 | OptionService, MemberService의 read-then-write가 원자적이지 않음 | #8(작동) |
+| 누락된 작동 | 카카오 메시지 실패 무시, 검증 누락 | #3, #5, #7 |
+| 도메인 책임 | 검증/판단 로직이 Controller에 위치 | #4(구조), #6(구조) |
+| 도메인 책임 | cross-domain Repository 직접 접근 | #9(구조) |
+| 도메인 책임 | 가격 계산이 서비스/인프라에 중복 | #10(구조) |
+| 도메인 책임 | ExceptionHandler 중복, 인증 분기 중복, 메서드 중복 | #11, #12, #13(구조) |
 
 ### 커밋 내역
 
@@ -87,6 +91,17 @@
 - saveProduct()/updateProduct()(Admin용)을 create()/update()에 allowKakao 파라미터로 통합
 - 중복 메서드 2개, 중복 validateNameForAdmin() 제거
 - AdminProductController에서 ProductRequest를 생성하여 동일 메서드 호출
+
+### 개선 효과 요약
+
+| 개선 항목 | before | after |
+|-----------|--------|-------|
+| @Transactional 누락 | 5개 메서드 | 모두 적용 |
+| cross-domain Repository 직접 접근 | 4곳 | 0곳 (Service 위임) |
+| 가격 계산 중복 | 2곳 | Order.getTotalPrice() 1곳 |
+| @ExceptionHandler 중복 | 3개 컨트롤러 | GlobalExceptionHandler 1곳 |
+| 인증 null 체크 분기 | 5건 | 0건 (예외 기반) |
+| ProductService 중복 메서드 | 2쌍 + validateNameForAdmin | create/update + allowKakao |
 
 ---
 
