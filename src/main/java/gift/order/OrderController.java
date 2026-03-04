@@ -32,7 +32,7 @@ public class OrderController {
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(
             @AuthMember Member member, @Valid @RequestBody OrderRequest request) {
-        final Order saved = orderService.createOrder(member, request);
+        final Order saved = orderService.createOrder(member.getId(), request);
         return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
                 .body(OrderResponse.from(saved));
     }

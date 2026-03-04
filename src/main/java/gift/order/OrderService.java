@@ -35,7 +35,9 @@ public class OrderService {
     }
 
     @Transactional
-    public Order createOrder(Member member, OrderRequest request) {
+    public Order createOrder(Long memberId, OrderRequest request) {
+        final Member member =
+                memberRepository.findById(memberId).orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다."));
         final Option option = optionRepository
                 .findById(request.optionId())
                 .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다."));
@@ -43,8 +45,7 @@ public class OrderService {
         option.subtractQuantity(request.quantity());
         optionRepository.save(option);
 
-        final Order saved =
-                orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
+        final Order saved = orderRepository.save(new Order(option, memberId, request.quantity(), request.message()));
 
         member.deductPoint(saved.getTotalPrice());
         memberRepository.save(member);
