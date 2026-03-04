@@ -59,7 +59,7 @@
 #### 도메인 책임 되찾기 (구조 변경, 최소 2개)
 - [x] 가격 계산 로직을 `Order` 생성자로 이동 — `OrderService`와 `KakaoMessageClient`의 중복 계산 제거
 - [x] `KakaoMessageClient.sendToMe()`에서 `Product` 파라미터 제거 — 호출부 단순화
-- [ ] 인증 중복 코드 제거 — Controller 8곳에 반복되는 null 체크 패턴 통합
+- [x] 인증 중복 코드 제거 — `@LoginMember` + `HandlerMethodArgumentResolver`로 5개 메서드의 null 체크 패턴 제거
 
 ### 구현 전략
 1. TDD: 테스트 먼저 작성 → 구현 → 리팩터
