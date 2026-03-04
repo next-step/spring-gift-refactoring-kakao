@@ -39,6 +39,13 @@ public class WishService {
   }
 
   @Transactional
+  public void removeByMemberAndProduct(Long memberId, Long productId) {
+    wishRepository
+        .findByMemberIdAndProductId(memberId, productId)
+        .ifPresent(wishRepository::delete);
+  }
+
+  @Transactional
   public RemoveWishResult removeWish(Long memberId, Long wishId) {
     return wishRepository
         .findById(wishId)
