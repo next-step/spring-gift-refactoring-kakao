@@ -59,3 +59,9 @@ KakaoAuthService 추출 — KakaoAuthController에 남아있는 비즈니스 로
 
 ## 프롬프트 16
 인수 테스트 커버리지 검토: GlobalExceptionHandler — NoSuchElementException→404 매핑의 단언문 정밀도 개선. "상품 등록이 실패한다" 스텝을 `≥400`에서 `=404`로 변경. "존재하지 않는 옵션으로 주문" 시나리오에 `=404` 전용 스텝 추가.
+
+## 프롬프트 17
+인증 처리 추출 — HandlerMethodArgumentResolver 도입. OrderController(2회)와 WishController(3회)에서 반복되는 인증 보일러플레이트를 @AuthenticatedMember 커스텀 어노테이션 + AuthenticationResolver(HandlerMethodArgumentResolver 구현)로 추출. 컨트롤러가 Member를 파라미터로 직접 받도록 변경.
+
+## 프롬프트 18
+5-2 보정: 작동 변경 방지 및 인수 테스트 검증 — AuthenticationResolver에서 Authorization 헤더 누락 시 MissingRequestHeaderException을 throw하여 기존 400 응답 유지. 인수 테스트 "주문이 실패한다" 단언을 ≥400에서 =400으로 정밀화.

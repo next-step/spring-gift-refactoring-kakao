@@ -1,5 +1,6 @@
 package gift;
 
+import gift.auth.AuthenticationException;
 import java.util.NoSuchElementException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -8,6 +9,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice(annotations = RestController.class)
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<Void> handleUnauthorized(AuthenticationException e) {
+        return ResponseEntity.status(401).build();
+    }
 
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<Void> handleNotFound(NoSuchElementException e) {

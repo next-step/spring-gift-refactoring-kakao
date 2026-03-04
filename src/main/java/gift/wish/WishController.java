@@ -1,6 +1,7 @@
 package gift.wish;
 
-import gift.auth.AuthenticationResolver;
+import gift.auth.AuthenticatedMember;
+import gift.member.Member;
 import jakarta.validation.Valid;
 import java.net.URI;
 import org.springframework.data.domain.Page;
@@ -11,7 +12,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,32 +19,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/wishes")
 public class WishController {
     private final WishService wishService;
-    private final AuthenticationResolver authenticationResolver;
 
-    public WishController(WishService wishService, AuthenticationResolver authenticationResolver) {
+    public WishController(WishService wishService) {
         this.wishService = wishService;
-        this.authenticationResolver = authenticationResolver;
     }
 
     @GetMapping
-    public ResponseEntity<Page<WishResponse>> getWishes(
-            @RequestHeader("Authorization") String authorization, Pageable pageable) {
-        var member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(401).build();
-        }
+    public ResponseEntity<Page<WishResponse>> getWishes(@AuthenticatedMember Member member, Pageable pageable) {
         var wishes = wishService.findByMemberId(member.getId(), pageable).map(WishResponse::from);
         return ResponseEntity.ok(wishes);
     }
 
     @PostMapping
     public ResponseEntity<WishResponse> addWish(
-            @RequestHeader("Authorization") String authorization, @Valid @RequestBody WishRequest request) {
-        var member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(401).build();
-        }
-
+            @AuthenticatedMember Member member, @Valid @RequestBody WishRequest request) {
         AddWishResult result = wishService.addWish(member.getId(), request.productId());
         WishResponse response = WishResponse.from(result.wish());
 
@@ -57,13 +45,7 @@ public class WishController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> removeWish(
-            @RequestHeader("Authorization") String authorization, @PathVariable Long id) {
-        var member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(401).build();
-        }
-
+    public ResponseEntity<Void> removeWish(@AuthenticatedMember Member member, @PathVariable Long id) {
         wishService.removeWish(member.getId(), id);
         return ResponseEntity.noContent().build();
     }

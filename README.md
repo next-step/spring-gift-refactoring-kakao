@@ -106,11 +106,11 @@
 > 인증 방식 변경 시 5곳을 수정해야 하며, 새 엔드포인트 추가 시 인증 누락 위험이 있다.
 > 전제 조건: 5-1 완료 (@ControllerAdvice에서 인증 실패 예외를 401로 매핑)
 
-- [ ] AuthenticationResolver를 HandlerMethodArgumentResolver로 전환
-- [ ] 인증 실패 전용 예외 생성 → @ControllerAdvice에 401 매핑 추가
-- [ ] WebMvcConfigurer에 리졸버 등록
-- [ ] OrderController, WishController에서 인증 인라인 코드 제거 → Member 파라미터 직접 수신
-- [ ] 전체 테스트 실행 → 통과 확인
+- [x] AuthenticationResolver를 HandlerMethodArgumentResolver로 전환
+- [x] 인증 실패 전용 예외 생성 → @ControllerAdvice에 401 매핑 추가
+- [x] WebMvcConfigurer에 리졸버 등록
+- [x] OrderController, WishController에서 인증 인라인 코드 제거 → Member 파라미터 직접 수신
+- [x] 전체 테스트 실행 → 통과 확인
 
 #### 5-3. 크로스 패키지 Repository 참조 제거 — 서비스 위임
 
