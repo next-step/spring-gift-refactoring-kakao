@@ -1,6 +1,8 @@
 package gift.option;
 
 import gift.product.Product;
+import java.util.NoSuchElementException;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -41,6 +43,12 @@ public class Option {
             throw new IllegalArgumentException("차감할 수량이 현재 재고보다 많습니다.");
         }
         this.quantity -= amount;
+    }
+
+    public void validateBelongsTo(Long productId) {
+        if (!this.product.getId().equals(productId)) {
+            throw new NoSuchElementException("옵션이 존재하지 않습니다. id=" + this.id);
+        }
     }
 
     public Long getId() {

@@ -62,7 +62,7 @@ public class OrderService {
     }
 
     private void sendKakaoMessageIfPossible(Member member, Order order) {
-        if (member.getKakaoAccessToken() == null) {
+        if (!member.canReceiveKakaoMessage()) {
             return;
         }
         try {
