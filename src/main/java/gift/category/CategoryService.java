@@ -23,7 +23,6 @@ public class CategoryService {
             .toList();
     }
 
-    @Transactional
     public CategoryResponse create(CategoryRequest request) {
         Category saved = categoryRepository.save(request.toEntity());
         return CategoryResponse.from(saved);
@@ -39,7 +38,6 @@ public class CategoryService {
         return CategoryResponse.from(category);
     }
 
-    @Transactional
     public void delete(Long id) {
         categoryRepository.deleteById(id);
     }

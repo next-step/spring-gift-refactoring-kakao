@@ -81,7 +81,6 @@ public class ProductService {
         return ProductResponse.from(saved);
     }
 
-    @Transactional
     public void delete(Long id) {
         productRepository.deleteById(id);
     }
