@@ -401,8 +401,10 @@ public Order createOrder(Long memberId, Long optionId, int quantity, String mess
 
 **테스트 영향**: 기존 인수 테스트 통과 유지 (외부 작동 동일). 트랜잭션 경계 변경은 단위 테스트로 검증.
 
-**영향 범위**: `OrderService.java`
+**영향 범위**: `OrderService.java`, `OrderCreatedEvent.java`(신규), `OrderMessageEventListener.java`(신규)
 **우선순위**: 높음
+
+**검증 결과**: `./gradlew cucumberTest` — 17개 시나리오 전체 통과
 
 ---
 

@@ -186,10 +186,10 @@
 > 근거: OrderService.createOrder()의 @Transactional 내에서 Kakao API를 호출한다.
 > 외부 API 타임아웃 동안 DB 커넥션이 점유되며, 메시지 전송은 주문의 부수 효과이므로 트랜잭션 커밋 후로 분리한다.
 
-- [ ] OrderCreatedEvent 도메인 이벤트 클래스 생성
-- [ ] 메시지 전송을 @TransactionalEventListener(phase = AFTER_COMMIT)로 이동
-- [ ] OrderService.createOrder()에서 sendMessageIfPossible() 제거, 이벤트 발행으로 대체
-- [ ] 전체 테스트 실행 → 통과 확인
+- [x] OrderCreatedEvent 도메인 이벤트 클래스 생성
+- [x] 메시지 전송을 @TransactionalEventListener(phase = AFTER_COMMIT)로 이동
+- [x] OrderService.createOrder()에서 sendMessageIfPossible() 제거, 이벤트 발행으로 대체
+- [x] 전체 테스트 실행 → 통과 확인
 
 #### 6-3. Option.subtractQuantity 음수/영 검증 추가
 

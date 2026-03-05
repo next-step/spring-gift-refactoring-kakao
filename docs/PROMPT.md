@@ -92,3 +92,6 @@ auth ↔ member 순환 참조 해소 — member 패키지에 TokenProvider 인�
 
 ## 프롬프트 27
 6-1. Authorization 헤더 누락 시 401 반환 — AuthenticationResolver에서 MissingRequestHeaderException → AuthenticationException으로 변경하여 400 → 401 응답 수정 (RFC 7235). TODO 주석 제거. 인수 테스트 "인증에 실패한다" 401 전용 스텝 추가. throws 절에서 MissingRequestHeaderException 제거.
+
+## 프롬프트 28
+6-2. 트랜잭션에서 외부 API 호출 분리 — OrderService.createOrder()의 @Transactional 내 sendMessageIfPossible() 호출을 @TransactionalEventListener(AFTER_COMMIT)로 분리. OrderCreatedEvent 도메인 이벤트 record 신규 생성, OrderMessageEventListener가 커밋 후 메시지 전송 담당. OrderService에서 OrderMessageClient 의존 제거 → ApplicationEventPublisher로 대체.

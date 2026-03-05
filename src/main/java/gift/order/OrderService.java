@@ -4,6 +4,7 @@ import gift.member.Member;
 import gift.member.MemberService;
 import gift.option.Option;
 import gift.option.OptionService;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -14,17 +15,17 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OptionService optionService;
     private final MemberService memberService;
-    private final OrderMessageClient orderMessageClient;
+    private final ApplicationEventPublisher publisher;
 
     public OrderService(
             OrderRepository orderRepository,
             OptionService optionService,
             MemberService memberService,
-            OrderMessageClient orderMessageClient) {
+            ApplicationEventPublisher publisher) {
         this.orderRepository = orderRepository;
         this.optionService = optionService;
         this.memberService = memberService;
-        this.orderMessageClient = orderMessageClient;
+        this.publisher = publisher;
     }
 
     @Transactional(readOnly = true)
@@ -46,19 +47,8 @@ public class OrderService {
 
         Order saved = orderRepository.save(new Order(option, memberId, quantity, message));
 
-        sendMessageIfPossible(member, saved, option);
+        publisher.publishEvent(OrderCreatedEvent.from(member, saved, option.getProduct()));
 
         return saved;
-    }
-
-    private void sendMessageIfPossible(Member member, Order order, Option option) {
-        if (member.getKakaoAccessToken() == null) {
-            return;
-        }
-        try {
-            var product = option.getProduct();
-            orderMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
-        } catch (Exception ignored) {
-        }
     }
 }
