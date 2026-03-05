@@ -63,6 +63,10 @@ public class Member {
         this.point -= amount;
     }
 
+    public boolean matchesPassword(String rawPassword) {
+        return this.password != null && this.password.equals(rawPassword);
+    }
+
     public Long getId() {
         return id;
     }

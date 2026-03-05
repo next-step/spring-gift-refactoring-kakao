@@ -150,6 +150,7 @@
 > 근거: 비밀번호 검증이 MemberService에서 getPassword()로 내부 상태를 꺼내 직접 비교한다.
 > chargePoint(), deductPoint()와 달리 비밀번호 검증만 도메인 외부에 있어, 해싱 도입 등 검증 정책 변경 시 서비스를 수정해야 한다.
 
-- [ ] Member에 matchesPassword(String) 메서드 추가
-- [ ] MemberService.login()에서 직접 비교를 matchesPassword() 호출로 대체
-- [ ] 전체 테스트 실행 → 통과 확인
+- [x] Member에 matchesPassword(String) 메서드 추가
+- [x] MemberService.login()에서 직접 비교를 matchesPassword() 호출로 대체
+- [x] "틀린 비밀번호로 로그인하면 실패한다" 인수 테스트 시나리오 추가
+- [x] 전체 테스트 실행 → 통과 확인

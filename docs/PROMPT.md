@@ -80,3 +80,6 @@ save() 위임 복원 — 프롬프트 19에서 save() 제거(dirty checking 전�
 
 ## 프롬프트 23
 auth ↔ member 순환 참조 해소 — member 패키지에 TokenProvider 인터페이스를 생성하고 auth.JwtProvider가 이를 구현하도록 변경. MemberService의 의존을 auth.JwtProvider → member.TokenProvider로 역전. TokenResponse를 auth → member 패키지로 이동하여 MemberController → TokenResponse 순환도 해소. member 패키지에서 auth 패키지 import 0건 달성.
+
+## 프롬프트 24
+도메인 책임 이동 — Member 엔티티에 matchesPassword(String) 메서드를 추가하고, MemberService.login()에서 getPassword()로 내부 상태를 꺼내 직접 비교하던 로직을 matchesPassword() 호출로 대체. 비밀번호 검증 책임을 도메인 객체로 이동.

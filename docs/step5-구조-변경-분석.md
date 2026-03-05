@@ -374,9 +374,12 @@ if (member.getPassword() == null || !member.getPassword().equals(password)) {
 
 1. `Member`에 `matchesPassword(String rawPassword)` 메서드 추가 — null 체크 포함
 2. `MemberService.login()`에서 `getPassword()` 직접 비교를 `member.matchesPassword(password)`로 대체
-3. 인수 테스트 실행
+3. "틀린 비밀번호로 로그인하면 실패한다" 인수 테스트 시나리오 추가 — `matchesPassword()`의 `false` 반환 경로 커버
+4. 인수 테스트 실행
 
-**영향 범위**: Member, MemberService
+**검증**: 인수 테스트 18개 전체 통과. (작업 6에서 시나리오 1개 추가.)
+
+**영향 범위**: Member, MemberService, member.feature
 
 ---
 
@@ -410,4 +413,4 @@ if (member.getPassword() == null || !member.getPassword().equals(password)) {
 - 작업 1 → 2: `@ControllerAdvice`가 있어야 `HandlerMethodArgumentResolver`의 인증 실패 예외를 처리할 수 있다.
 - 작업 3~6: 서로 독립적이다. 영향 범위가 넓은 것(크로스 패키지 의존, 3개 서비스 수정)을 먼저, 좁은 것(단일 메서드 이동)을 마지막에 배치한다.
 
-**검증 전략**: 각 작업 완료 후 인수 테스트 17개 시나리오를 실행하여, 입력과 출력이 변경되지 않았음을 확인한다.
+**검증 전략**: 각 작업 완료 후 인수 테스트를 실행하여, 입력과 출력이 변경되지 않았음을 확인한다. (작업 6에서 시나리오 1개 추가되어 최종 18개.)
