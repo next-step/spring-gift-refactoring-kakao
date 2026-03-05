@@ -43,14 +43,17 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public List<Member> findAll() {
-        return memberRepository.findAll();
+    public List<MemberResponse> findAll() {
+        return memberRepository.findAll().stream()
+            .map(MemberResponse::from)
+            .toList();
     }
 
     @Transactional(readOnly = true)
-    public Member findById(Long id) {
-        return memberRepository.findById(id)
+    public MemberResponse findById(Long id) {
+        Member member = memberRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다. id=" + id));
+        return MemberResponse.from(member);
     }
 
     public boolean existsByEmail(String email) {
@@ -58,11 +61,11 @@ public class MemberService {
     }
 
     @Transactional
-    public Member create(String email, String password) {
+    public void create(String email, String password) {
         if (memberRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("이미 등록된 이메일입니다.");
         }
-        return memberRepository.save(new Member(email, password));
+        memberRepository.save(new Member(email, password));
     }
 
     @Transactional
