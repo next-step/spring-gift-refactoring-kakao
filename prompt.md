@@ -237,3 +237,41 @@
 - **커밋 4**: `JwtProvider`, `AuthenticationResolver`에서 단일 생성자의 불필요한 `@Autowired` + import 제거
 - **커밋 5**: `MemberService.update()`, `chargePoint()`에서 `IllegalArgumentException` → `NoSuchElementException` (엔티티 미존재 예외 통일)
 - 매 커밋마다 `./gradlew spotlessApply build` 성공 확인
+
+## 세션: 2026-03-05 — 과제 종합 검토 + 코드 품질 개선
+
+### 프롬프트 1: 과제 완료 종합 검토
+> 현재 프로젝트에서 여러가지 사항에 대해 물어보겟습니다. 나는 과제를 완료했다고 생각합니다. 우선 종합적으로 검토하고 의견을 줍니다.
+
+- Explore 에이전트로 Docker 구성, Cucumber 테스트, 컨트롤러, 서비스, 엔티티 전체 검토
+- 과제 요구사항(Application 컨테이너화 + E2E Cucumber 테스트) 충분히 완료 판단
+- 경미한 개선 사항 4건 보고: PostgreSQL 포트 매핑 문서 불일치, Kakao 프로퍼티 키 불일치, flyway-mysql 의존성, GiftSteps 수신자 파라미터 미사용
+
+### 프롬프트 2: GlobalExceptionHandler 중복 코드 확인
+> ui/globalexceptionhandler의 중복코드는 의도된 건가요?
+
+- `IllegalStateException`과 `IllegalArgumentException` 핸들러가 동일한 상태코드(400)와 로직임을 확인
+- 합치기(방법1) vs 공통 메서드 추출(방법2) 제안
+
+### 프롬프트 3: 알림 기능 존재 확인
+> 현재 앱에 알림 기능이 있나요?
+
+- `KakaoMessageClient.sendToMe()` — 카카오톡 나에게 보내기 알림 기능 존재 확인
+- `OrderService.placeOrder()` 완료 후 호출됨
+
+### 프롬프트 4: OrderController의 `<?>` 와일드카드 + `== null` 수동 인증 검토
+> 두 가지 질문이 있습니다. <?>의 사용 그리고 == null을 사용하는 것에 대해 어떻게 생각해?
+
+- `ResponseEntity<?>`: 인증 실패/성공 반환 타입이 달라 와일드카드 사용 → 타입 정보 손실 문제
+- `== null` 수동 인증: 횡단 관심사가 컨트롤러에 반복 → `HandlerMethodArgumentResolver`로 분리 제안
+
+### 프롬프트 5: @LoginMember ArgumentResolver 도입 + GlobalExceptionHandler 중복 통합 실행
+> 두 작업에 대한 목록을 plan.md에 추가하고, 작업을 진행합니다.
+
+- **Task 1**: `@LoginMember` 어노테이션 + `LoginMemberArgumentResolver` + `UnauthorizedException` + `WebMvcConfig` 생성
+  - `OrderController`, `WishController`에서 수동 인증 코드 제거, `@LoginMember Member member` 파라미터로 교체
+  - `ResponseEntity<?>` → 구체 타입(`ResponseEntity<Page<OrderResponse>>` 등)으로 변경
+  - `AuthenticationResolver` 의존성 제거로 컨트롤러 단순화
+- **Task 2**: `GlobalExceptionHandler`에서 `IllegalStateException` + `IllegalArgumentException` 핸들러를 하나로 합침 + `UnauthorizedException` → 401 핸들러 추가
+- 기존 테스트 `인증_헤더_없이_선물하면_실패한다` 기대값 400 → 401로 변경 (의미적으로 더 정확)
+- `./gradlew build -x cucumberTest` — 테스트 11개 모두 통과 확인
