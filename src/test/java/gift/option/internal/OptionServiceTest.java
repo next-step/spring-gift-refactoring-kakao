@@ -176,6 +176,85 @@ class OptionServiceTest {
     }
 
     @Test
+    @DisplayName("옵션을 수정한다 — validateExists + 중복 체크(자기 제외) + 조회 + Entity 상태 변경 + 응답 매핑")
+    void testUpdateOption() {
+        // given
+        Long productId = 10L;
+        Long optionId = 1L;
+        Product product = createProduct(productId, "상품", 1000, "https://img.png");
+        Option option = createOption(optionId, product, "TALL", 100);
+
+        given(optionRepo.existsByProductIdAndNameAndIdNot(productId, "GRANDE", optionId))
+                .willReturn(false);
+        given(optionRepo.findByIdAndProductId(optionId, productId))
+                .willReturn(Optional.of(option));
+
+        // when
+        OptionResponse response = optionService.updateOption(
+                productId, optionId, new OptionRequest("GRANDE", 200)
+        );
+
+        // then
+        then(productQueryPort).should()
+                .validateExists(productId);
+        then(optionRepo).should()
+                .existsByProductIdAndNameAndIdNot(productId, "GRANDE", optionId);
+
+        assertThat(response.id()).isEqualTo(optionId);
+        assertThat(response.name()).isEqualTo("GRANDE");
+        assertThat(response.quantity()).isEqualTo(200);
+
+        assertThat(option.getName()).isEqualTo("GRANDE");
+        assertThat(option.getQuantity()).isEqualTo(200);
+    }
+
+    @Test
+    @DisplayName("옵션 수정 시 상품이 없으면 NotFoundException 이 전파된다")
+    void testUpdateOptionProductNotFound() {
+        // given
+        willThrow(NotFoundException.productNotFound())
+                .given(productQueryPort).validateExists(NOT_EXISTING_ID);
+
+        // when + then
+        assertThatThrownBy(() -> optionService.updateOption(
+                NOT_EXISTING_ID, 1L, new OptionRequest("옵션", 100)))
+                .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("옵션 수정 시 해당 옵션이 없으면 NotFoundException 이 발생한다")
+    void testUpdateOptionNotFound() {
+        // given
+        Long productId = 10L;
+
+        given(optionRepo.existsByProductIdAndNameAndIdNot(productId, "옵션", NOT_EXISTING_ID))
+                .willReturn(false);
+        given(optionRepo.findByIdAndProductId(NOT_EXISTING_ID, productId))
+                .willReturn(Optional.empty());
+
+        // when + then
+        assertThatThrownBy(() -> optionService.updateOption(
+                productId, NOT_EXISTING_ID, new OptionRequest("옵션", 100)))
+                .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("옵션 수정 시 다른 옵션과 이름이 중복되면 DuplicateOptionNameException 이 발생한다")
+    void testUpdateOptionDuplicateName() {
+        // given
+        Long productId = 10L;
+        Long optionId = 1L;
+
+        given(optionRepo.existsByProductIdAndNameAndIdNot(productId, "기존옵션", optionId))
+                .willReturn(true);
+
+        // when + then
+        assertThatThrownBy(() -> optionService.updateOption(
+                productId, optionId, new OptionRequest("기존옵션", 100)))
+                .isInstanceOf(DuplicateOptionNameException.class);
+    }
+
+    @Test
     @DisplayName("옵션을 삭제한다 — validateExists + countByProductId > 1 + findByIdAndProductId + delete")
     void testDeleteOption() {
         // given
