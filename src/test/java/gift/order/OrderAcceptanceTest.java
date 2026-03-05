@@ -8,6 +8,7 @@ import gift.option.Option;
 import gift.option.OptionRepository;
 import gift.product.Product;
 import gift.product.ProductRepository;
+import gift.wish.Wish;
 import gift.wish.WishRepository;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
@@ -181,6 +182,55 @@ class OrderAcceptanceTest {
                 .body("id", notNullValue())
                 .body("optionId", equalTo(option.getId().intValue()))
                 .body("quantity", equalTo(5));
+        }
+
+        @Test
+        @DisplayName("성공: 주문 완료 시 위시리스트에서 해당 상품이 삭제된다")
+        void success_removesWishAfterOrder() {
+            // Given: 위시리스트에 상품 추가
+            wishRepository.save(new Wish(member.getId(), product));
+
+            // When: 주문
+            RestAssured.given()
+                .header("Authorization", "Bearer " + token)
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "optionId": %d,
+                        "quantity": 1,
+                        "message": "메시지"
+                    }
+                    """.formatted(option.getId()))
+                .when()
+                .post("/api/orders")
+                .then()
+                .statusCode(201);
+
+            // Then: 위시리스트에서 삭제되어야 한다
+            assertThat(wishRepository.findByMemberIdAndProductId(member.getId(), product.getId()))
+                .isEmpty();
+        }
+
+        @Test
+        @DisplayName("성공: 위시리스트에 없는 상품을 주문해도 정상 동작한다")
+        void success_orderWithoutWish() {
+            // Given: 위시리스트 비어있음
+
+            // When & Then: 주문 성공
+            RestAssured.given()
+                .header("Authorization", "Bearer " + token)
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "optionId": %d,
+                        "quantity": 1,
+                        "message": "메시지"
+                    }
+                    """.formatted(option.getId()))
+                .when()
+                .post("/api/orders")
+                .then()
+                .statusCode(201);
         }
 
         @Test
