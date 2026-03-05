@@ -181,6 +181,64 @@ Spring Boot 기반의 선물하기 서비스. 사용자가 카테고리와 상�
 
 ---
 
+## 리팩터링 계획 (2단계 목표)
+
+> 목표: **작동 변경을 안전하게 수행**하고, 그 결과를 **증거(테스트)로 증명**한다.
+
+### 작동 변경 1: 트랜잭션 경계 세우기
+
+여러 저장 작업이 하나의 논리 작업인 곳에 `@Transactional`을 추가하여 중간 실패 시 부분 반영을 방지한다.
+
+- [ ] `OrderService.createOrder()` — 재고 차감 + 포인트 차감 + 주문 저장이 원자적으로 처리되어야 함
+  - **증거**: 포인트 부족 시 재고가 롤백되는지 테스트로 검증 (현재는 재고만 차감되는 버그 존재)
+- [ ] `KakaoAuthService.processCallback()` — 회원 조회/생성 + 카카오 토큰 저장
+- [ ] `MemberService.update()`, `chargePoint()` — 조회 + 수정이 하나의 단위
+- [ ] `ProductService.update()` — 조회 + 수정이 하나의 단위
+- [ ] `CategoryService.update()` — 조회 + 수정이 하나의 단위
+
+### 작동 변경 2: 누락된 작동 구현
+
+기존 코드에 의도(TODO 주석)가 남아 있었지만 구현되지 않은 작동을 완료한다.
+
+- [ ] 주문 완료 후 위시리스트에서 해당 상품 자동 제거
+  - **근거**: `OrderService`의 `// TODO: 주문 완료 후 위시리스트에서 해당 상품 자동 제거 (미구현)` 주석
+  - **증거**: 위시리스트에 상품을 추가한 뒤 주문 → 위시리스트에서 해당 상품이 사라지는지 테스트로 검증
+
+### 구조 변경: 도메인 책임 되찾기
+
+작동을 유지하면서 책임과 판단을 올바른 위치로 이동한다. 최소 2개 이상 수행.
+
+- [ ] **개선 1: 위시 중복 체크를 서비스로 이동** (호출부 단순화)
+  - 현재: `WishController`에서 `findByMemberAndProduct()` + `addWish()` 두 단계로 분리 호출
+  - 변경: `WishService.addWish()` 안에서 중복 체크까지 처리, 컨트롤러는 한 번만 호출
+  - **효과**: 컨트롤러의 분기 제거, 서비스가 도메인 규칙(멱등 추가) 책임
+- [ ] **개선 2: 상품 이름 검증을 서비스로 이동** (중복 제거)
+  - 현재: `ProductController.createProduct()`와 `updateProduct()`에서 각각 `validateName()` 호출
+  - 변경: `ProductService.create()`와 `update()` 안에서 검증 수행
+  - **효과**: 검증 로직 중복 제거, 서비스가 비즈니스 규칙(이름 제약) 책임. Admin은 `allowKakao=true` 정책이 다르므로 서비스 메서드 오버로드 또는 파라미터로 분리
+
+### 진행 원칙
+
+```
+1. 작동 변경과 구조 변경 커밋을 분리한다
+2. 작동 변경은 반드시 테스트(증거)와 함께 제출한다
+3. 변경 전에 "무엇을 바꾸는지 / 무엇을 바꾸지 않는지 / 무엇이 이를 증명하는지"를 명시한다
+4. git diff를 자주 확인해 의도하지 않은 변경을 통제한다
+5. ADR은 트레이드오프가 있는 결정에 남긴다
+```
+
+### 진행 순서
+
+```
+1. 트랜잭션 경계 (작동 변경) — 테스트 먼저 작성 → @Transactional 추가 → 테스트 통과 확인
+   ↓
+2. 누락된 작동 구현 (작동 변경) — 테스트 먼저 작성 → 위시 클린업 구현 → 테스트 통과 확인
+   ↓
+3. 도메인 책임 이동 (구조 변경) — 기존 테스트 통과 확인 → 구조 변경 → 테스트 재통과 확인
+```
+
+---
+
 ## 커밋 규칙
 
 [AngularJS Git Commit Message Conventions](https://docs.google.com/document/d/1QrDFcIiPjSLDn3EL15IJygNPiHORgU1_OOAqWjiDU5Y/edit) 준수
@@ -192,3 +250,4 @@ Spring Boot 기반의 선물하기 서비스. 사용자가 카테고리와 상�
 AI 도구(Claude Code)를 활용한 과정과 의사결정은 아래 문서에 기록한다.
 
 - [`chatlog/AI_USAGE_STEP_1.md`](chatlog/AI_USAGE_STEP_1.md) — 리팩터링 준비 단계 AI 사용 기록
+- [`chatlog/AI_USAGE_STEP_2.md`](chatlog/AI_USAGE_STEP_2.md) — 리팩터링 완성 단계 AI 사용 기록
