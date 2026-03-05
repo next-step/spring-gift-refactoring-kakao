@@ -17,14 +17,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
-    private final OrderService orderService;
+    private final OrderQueryService orderQueryService;
+    private final OrderCommandService orderCommandService;
     private final AuthenticationResolver authenticationResolver;
 
     public OrderController(
-        OrderService orderService,
+        OrderQueryService orderQueryService,
+        OrderCommandService orderCommandService,
         AuthenticationResolver authenticationResolver
     ) {
-        this.orderService = orderService;
+        this.orderQueryService = orderQueryService;
+        this.orderCommandService = orderCommandService;
         this.authenticationResolver = authenticationResolver;
     }
 
@@ -37,7 +40,7 @@ public class OrderController {
         if (member == null) {
             throw new CommonException(CommonErrorCode.UNAUTHORIZED);
         }
-        var orders = orderService.findByMemberId(member.getId(), pageable)
+        var orders = orderQueryService.findByMemberId(member.getId(), pageable)
             .map(OrderResponse::from);
         return ResponseEntity.ok(orders);
     }
@@ -52,7 +55,7 @@ public class OrderController {
             throw new CommonException(CommonErrorCode.UNAUTHORIZED);
         }
 
-        var saved = orderService.createOrder(
+        var saved = orderCommandService.createOrder(
             member, request.optionId(), request.quantity(), request.message()
         );
         return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))

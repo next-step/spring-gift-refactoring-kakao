@@ -6,21 +6,19 @@ import gift.option.Option;
 import gift.option.OptionRepository;
 import gift.product.Product;
 import gift.wish.WishRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@Transactional(readOnly = true)
-public class OrderService {
+@Transactional
+public class OrderCommandService {
     private final OrderRepository orderRepository;
     private final OptionRepository optionRepository;
     private final MemberRepository memberRepository;
     private final WishRepository wishRepository;
     private final KakaoMessageClient kakaoMessageClient;
 
-    public OrderService(
+    public OrderCommandService(
         OrderRepository orderRepository,
         OptionRepository optionRepository,
         MemberRepository memberRepository,
@@ -34,11 +32,6 @@ public class OrderService {
         this.kakaoMessageClient = kakaoMessageClient;
     }
 
-    public Page<Order> findByMemberId(Long memberId, Pageable pageable) {
-        return orderRepository.findByMemberId(memberId, pageable);
-    }
-
-    @Transactional
     public Order createOrder(Member member, Long optionId, int quantity, String message) {
         Option option = optionRepository.findById(optionId)
             .orElseThrow(() -> new OrderException(OrderErrorCode.OPTION_NOT_FOUND));
