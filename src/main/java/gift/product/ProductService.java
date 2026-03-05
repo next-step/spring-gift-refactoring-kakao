@@ -45,11 +45,15 @@ public class ProductService {
 
   @Transactional
   public Product create(String name, int price, String imageUrl, Long categoryId) {
-    return create(name, price, imageUrl, categoryId, false);
+    return createInternal(name, price, imageUrl, categoryId, false);
   }
 
   @Transactional
-  public Product create(
+  public Product createAllowingKakao(String name, int price, String imageUrl, Long categoryId) {
+    return createInternal(name, price, imageUrl, categoryId, true);
+  }
+
+  private Product createInternal(
       String name, int price, String imageUrl, Long categoryId, boolean allowKakao) {
     validateNameOrThrow(name, allowKakao);
     Category category =
@@ -62,11 +66,16 @@ public class ProductService {
   @Transactional
   public Optional<Product> update(
       Long id, String name, int price, String imageUrl, Long categoryId) {
-    return update(id, name, price, imageUrl, categoryId, false);
+    return updateInternal(id, name, price, imageUrl, categoryId, false);
   }
 
   @Transactional
-  public Optional<Product> update(
+  public Optional<Product> updateAllowingKakao(
+      Long id, String name, int price, String imageUrl, Long categoryId) {
+    return updateInternal(id, name, price, imageUrl, categoryId, true);
+  }
+
+  private Optional<Product> updateInternal(
       Long id, String name, int price, String imageUrl, Long categoryId, boolean allowKakao) {
     validateNameOrThrow(name, allowKakao);
     Category category =
