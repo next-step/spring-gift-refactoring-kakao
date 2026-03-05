@@ -1,6 +1,6 @@
 package gift.product;
 
-import gift.category.CategoryService;
+import gift.category.CategoryQueryService;
 import java.util.List;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -14,11 +14,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RequestMapping("/admin/products")
 public class AdminProductController {
     private final ProductService productService;
-    private final CategoryService categoryService;
+    private final CategoryQueryService categoryQueryService;
 
-    public AdminProductController(ProductService productService, CategoryService categoryService) {
+    public AdminProductController(ProductService productService, CategoryQueryService categoryQueryService) {
         this.productService = productService;
-        this.categoryService = categoryService;
+        this.categoryQueryService = categoryQueryService;
     }
 
     @GetMapping
@@ -29,7 +29,7 @@ public class AdminProductController {
 
     @GetMapping("/new")
     public String newForm(Model model) {
-        model.addAttribute("categories", categoryService.findAll());
+        model.addAttribute("categories", categoryQueryService.findAll());
         return "product/new";
     }
 
@@ -55,7 +55,7 @@ public class AdminProductController {
     public String editForm(@PathVariable Long id, Model model) {
         Product product = productService.findById(id);
         model.addAttribute("product", product);
-        model.addAttribute("categories", categoryService.findAll());
+        model.addAttribute("categories", categoryQueryService.findAll());
         return "product/edit";
     }
 
@@ -99,7 +99,7 @@ public class AdminProductController {
         model.addAttribute("price", price);
         model.addAttribute("imageUrl", imageUrl);
         model.addAttribute("categoryId", categoryId);
-        model.addAttribute("categories", categoryService.findAll());
+        model.addAttribute("categories", categoryQueryService.findAll());
     }
 
     private void populateEditForm(
@@ -117,6 +117,6 @@ public class AdminProductController {
         model.addAttribute("price", price);
         model.addAttribute("imageUrl", imageUrl);
         model.addAttribute("categoryId", categoryId);
-        model.addAttribute("categories", categoryService.findAll());
+        model.addAttribute("categories", categoryQueryService.findAll());
     }
 }

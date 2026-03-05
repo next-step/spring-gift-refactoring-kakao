@@ -16,15 +16,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/categories")
 public class CategoryController {
-    private final CategoryService categoryService;
+    private final CategoryQueryService categoryQueryService;
+    private final CategoryCommandService categoryCommandService;
 
-    public CategoryController(CategoryService categoryService) {
-        this.categoryService = categoryService;
+    public CategoryController(
+        CategoryQueryService categoryQueryService,
+        CategoryCommandService categoryCommandService
+    ) {
+        this.categoryQueryService = categoryQueryService;
+        this.categoryCommandService = categoryCommandService;
     }
 
     @GetMapping
     public ResponseEntity<List<CategoryResponse>> getCategories() {
-        List<CategoryResponse> categories = categoryService.findAll().stream()
+        List<CategoryResponse> categories = categoryQueryService.findAll().stream()
             .map(CategoryResponse::from)
             .toList();
         return ResponseEntity.ok(categories);
@@ -32,7 +37,7 @@ public class CategoryController {
 
     @PostMapping
     public ResponseEntity<CategoryResponse> createCategory(@Valid @RequestBody CategoryRequest request) {
-        Category saved = categoryService.save(request.toEntity());
+        Category saved = categoryCommandService.save(request.toEntity());
         return ResponseEntity.created(URI.create("/api/categories/" + saved.getId()))
             .body(CategoryResponse.from(saved));
     }
@@ -42,7 +47,7 @@ public class CategoryController {
         @PathVariable Long id,
         @Valid @RequestBody CategoryRequest request
     ) {
-        Category category = categoryService.update(
+        Category category = categoryCommandService.update(
             id, request.name(), request.color(), request.imageUrl(), request.description()
         );
         return ResponseEntity.ok(CategoryResponse.from(category));
@@ -50,7 +55,7 @@ public class CategoryController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
-        categoryService.deleteById(id);
+        categoryCommandService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 }
