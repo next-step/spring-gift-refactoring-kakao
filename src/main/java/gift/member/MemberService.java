@@ -23,6 +23,10 @@ public class MemberService {
     return memberRepository.findById(id);
   }
 
+  public Optional<Member> findByEmail(String email) {
+    return memberRepository.findByEmail(email);
+  }
+
   public boolean existsByEmail(String email) {
     return memberRepository.existsByEmail(email);
   }
