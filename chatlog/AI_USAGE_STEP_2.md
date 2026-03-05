@@ -528,3 +528,59 @@ public ResponseEntity<ProductResponse> getProduct(@PathVariable Long id) {
 - **일관성 보장**: 모든 컨트롤러에서 동일한 예외에 동일한 HTTP 상태 코드 반환
 
 ---
+
+## 11단계: 주문 총액 계산을 도메인 객체로 이동 (구조 변경)
+
+### 프롬프트
+
+> 서비스에서 getter로 꺼내서 처리하는 부분, 도메인 객체에게 시키는 방향으로 개선하자
+
+### 변경 전/후 정의
+
+- **무엇을 바꾸는가**: 주문 총액 계산 책임을 `OrderService`에서 `Option` 도메인 객체로 이동
+- **무엇을 바꾸지 않는가**: 주문 생성 흐름 및 가격 계산 결과
+- **무엇이 이를 증명하는가**: 기존 `OrderServiceTest` 전체 통과 (롤백 + 성공 + 위시 제거)
+
+### 변경 전 (서비스가 getter 체이닝으로 직접 계산)
+
+```java
+// OrderService — option에서 product를 꺼내고, product에서 price를 꺼내서 직접 곱셈
+int price = option.getProduct().getPrice() * quantity;
+member.deductPoint(price);
+```
+
+디미터 법칙(Law of Demeter) 위반: `option.getProduct().getPrice()` — 객체의 내부 구조를 서비스가 알아야 한다.
+
+### 변경 후 (도메인 객체에게 위임)
+
+```java
+// Option — 자신의 상품 가격을 알고 있으므로 직접 계산
+public int calculatePrice(int quantity) {
+    return product.getPrice() * quantity;
+}
+
+// OrderService — 객체에게 물어보기만 함
+member.deductPoint(option.calculatePrice(quantity));
+```
+
+### AI 활용 방식
+
+1. 전체 서비스 코드를 읽고 "getter로 꺼내서 서비스에서 처리하는" 패턴 탐색
+2. `OrderService` 48번째 줄 `option.getProduct().getPrice() * quantity` 식별
+3. `Option.calculatePrice(int quantity)` 메서드 추가
+4. `OrderService`에서 해당 라인을 `option.calculatePrice(quantity)` 호출로 교체
+5. **전체 테스트 통과 확인** (`./gradlew test` BUILD SUCCESSFUL)
+
+### 산출물
+
+| 파일 | 변경 | 종류 |
+|------|------|------|
+| `Option.java` | `calculatePrice(int quantity)` 메서드 추가 | 구조 변경 |
+| `OrderService.java` | getter 체이닝 → `option.calculatePrice(quantity)` 위임 | 구조 변경 |
+
+### 효과
+
+- **디미터 법칙 준수**: 서비스가 `option → product → price` 내부 구조를 몰라도 됨
+- **가격 계산 캡슐화**: 계산 로직이 바뀌어도(할인, 세금 등) `Option` 한 곳만 수정하면 됨
+
+---

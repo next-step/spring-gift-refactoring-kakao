@@ -45,8 +45,7 @@ public class OrderService {
         option.subtractQuantity(quantity);
         optionRepository.save(option);
 
-        int price = option.getProduct().getPrice() * quantity;
-        member.deductPoint(price);
+        member.deductPoint(option.calculatePrice(quantity));
         memberRepository.save(member);
 
         Order saved = orderRepository.save(new Order(option, member.getId(), quantity, message));
