@@ -177,9 +177,9 @@
 > 근거: Authorization 헤더 누락 시 MissingRequestHeaderException → 400을 반환한다.
 > 의미적으로 인증 자격 증명 누락은 401이 맞다 (RFC 7235). TODO 주석으로 인지된 상태.
 
-- [ ] AuthenticationResolver에서 MissingRequestHeaderException 대신 AuthenticationException을 던져 401 반환
-- [ ] 인수 테스트 수정 (인증 헤더 누락 시 400 → 401)
-- [ ] 전체 테스트 실행 → 통과 확인
+- [x] AuthenticationResolver에서 MissingRequestHeaderException 대신 AuthenticationException을 던져 401 반환
+- [x] 인수 테스트 수정 (인증 헤더 누락 시 400 → 401)
+- [x] 전체 테스트 실행 → 통과 확인
 
 #### 6-2. 트랜잭션에서 외부 API 호출 분리
 

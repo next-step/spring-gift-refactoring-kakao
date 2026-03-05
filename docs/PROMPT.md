@@ -89,3 +89,6 @@ auth ↔ member 순환 참조 해소 — member 패키지에 TokenProvider 인�
 
 ## 프롬프트 26
 5-7. MemberService.register()에서 create() 재사용 — register()와 create()의 중복 로직(이메일 중복 검증 + Member 저장)을 제거. register()가 create()를 내부 호출하고 토큰 생성만 추가하여 변경 지점을 1곳으로 수렴. API 입출력 변경 없음.
+
+## 프롬프트 27
+6-1. Authorization 헤더 누락 시 401 반환 — AuthenticationResolver에서 MissingRequestHeaderException → AuthenticationException으로 변경하여 400 → 401 응답 수정 (RFC 7235). TODO 주석 제거. 인수 테스트 "인증에 실패한다" 401 전용 스텝 추가. throws 절에서 MissingRequestHeaderException 제거.

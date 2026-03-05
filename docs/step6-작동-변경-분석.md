@@ -384,10 +384,12 @@ public Order createOrder(Long memberId, Long optionId, int quantity, String mess
 
 **리팩토링 이점**: 변경 위험 통제 — HTTP 의미론에 맞는 응답으로 클라이언트가 인증 실패(401)와 잘못된 요청(400)을 구분하여 적절한 재시도 전략(토큰 재발급 vs 요청 수정)을 적용할 수 있다.
 
-**테스트 영향**: 기존 인수 테스트 중 인증 헤더 누락 시나리오가 400을 기대한다면 401로 수정 필요. 해당 시나리오가 없다면 추가 필요.
+**테스트 영향**: 기존 인수 테스트 "인증되지 않은 사용자가 주문하면 실패한다" 시나리오의 단언을 400 → 401로 수정. "인증에 실패한다" 전용 스텝 신규 추가.
 
-**영향 범위**: `AuthenticationResolver.java`
+**영향 범위**: `AuthenticationResolver.java`, `gift.feature`, `GiftStepDefinitions.java`
 **우선순위**: 높음
+
+**검증 결과**: `./gradlew cucumberTest` — 17개 시나리오 전체 통과
 
 ---
 

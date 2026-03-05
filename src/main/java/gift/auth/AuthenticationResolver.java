@@ -5,7 +5,6 @@ import gift.member.MemberRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.MethodParameter;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.support.WebDataBinderFactory;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
@@ -37,13 +36,11 @@ public class AuthenticationResolver implements HandlerMethodArgumentResolver {
             MethodParameter parameter,
             ModelAndViewContainer mavContainer,
             NativeWebRequest webRequest,
-            WebDataBinderFactory binderFactory)
-            throws MissingRequestHeaderException {
+            WebDataBinderFactory binderFactory) {
         HttpServletRequest request = (HttpServletRequest) webRequest.getNativeRequest();
         String authorization = request.getHeader("Authorization");
         if (authorization == null) {
-            // TODO: 의미적으로는 401이 맞으나, 기존 작동(400)을 유지한다.
-            throw new MissingRequestHeaderException("Authorization", parameter);
+            throw new AuthenticationException("인증에 실패했습니다.");
         }
         Member member = extractMember(authorization);
         if (member == null) {
