@@ -1,5 +1,7 @@
 package gift.kakao;
 
+import gift.external.ExternalProvider;
+import gift.message.MessageClient;
 import gift.order.Order;
 import gift.product.Product;
 import org.springframework.stereotype.Component;
@@ -7,13 +9,19 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClient;
 
 @Component
-public class KakaoMessageClient {
+public class KakaoMessageClient implements MessageClient {
     private final RestClient restClient;
 
     public KakaoMessageClient(RestClient.Builder builder) {
         this.restClient = builder.build();
     }
 
+    @Override
+    public ExternalProvider provider() {
+        return ExternalProvider.KAKAO;
+    }
+
+    @Override
     public void sendToMe(String accessToken, Order order, Product product) {
         String templateObject = buildTemplate(order, product);
 

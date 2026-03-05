@@ -1,6 +1,9 @@
 package gift.auth;
 
-import gift.kakao.KakaoLoginClient;
+import gift.auth.oauth.OAuthClient;
+import gift.auth.oauth.OAuthClientRegistry;
+import gift.auth.oauth.OAuthUserInfo;
+import gift.external.ExternalProvider;
 import gift.member.Member;
 import gift.member.MemberRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -18,12 +21,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class KakaoAuthServiceTest {
+class OAuthServiceTest {
     @Mock
-    private KakaoLoginProperties properties;
+    private OAuthClientRegistry oAuthClientRegistry;
 
     @Mock
-    private KakaoLoginClient kakaoLoginClient;
+    private OAuthClient oAuthClient;
 
     @Mock
     private MemberRepository memberRepository;
@@ -32,46 +35,42 @@ class KakaoAuthServiceTest {
     private JwtProvider jwtProvider;
 
     @InjectMocks
-    private KakaoAuthService kakaoAuthService;
+    private OAuthService oAuthService;
 
     @Test
-    @DisplayName("기존 회원 카카오 로그인 콜백 성공 시 JWT를 반환한다")
+    @DisplayName("기존 회원 OAuth 로그인 콜백 성공 시 JWT를 반환한다")
     void handleCallback_existingMember_returnsToken() {
         String email = "test@example.com";
         String kakaoAccessToken = "kakao-token";
         Member member = new Member(email, "password");
 
-        KakaoLoginClient.KakaoTokenResponse tokenResponse = new KakaoLoginClient.KakaoTokenResponse(kakaoAccessToken);
-        KakaoLoginClient.KakaoUserResponse.KakaoAccount account = new KakaoLoginClient.KakaoUserResponse.KakaoAccount(email);
-        KakaoLoginClient.KakaoUserResponse userResponse = new KakaoLoginClient.KakaoUserResponse(account);
+        OAuthUserInfo userInfo = new OAuthUserInfo(email, kakaoAccessToken);
 
-        when(kakaoLoginClient.requestAccessToken("code")).thenReturn(tokenResponse);
-        when(kakaoLoginClient.requestUserInfo(kakaoAccessToken)).thenReturn(userResponse);
+        when(oAuthClientRegistry.get(ExternalProvider.KAKAO)).thenReturn(oAuthClient);
+        when(oAuthClient.getUserInfo("code")).thenReturn(userInfo);
         when(memberRepository.findByEmail(email)).thenReturn(Optional.of(member));
         when(jwtProvider.createToken(email)).thenReturn("jwt-token");
 
-        TokenResponse response = kakaoAuthService.handleCallback("code");
+        TokenResponse response = oAuthService.handleCallback(ExternalProvider.KAKAO, "code");
 
         assertEquals("jwt-token", response.token());
         verify(memberRepository).save(member);
     }
 
     @Test
-    @DisplayName("신규 회원 카카오 로그인 콜백 성공 시 회원을 생성하고 JWT를 반환한다")
+    @DisplayName("신규 회원 OAuth 로그인 콜백 성공 시 회원을 생성하고 JWT를 반환한다")
     void handleCallback_newMember_createsMemberAndReturnsToken() {
         String email = "new@example.com";
         String kakaoAccessToken = "kakao-token";
 
-        KakaoLoginClient.KakaoTokenResponse tokenResponse = new KakaoLoginClient.KakaoTokenResponse(kakaoAccessToken);
-        KakaoLoginClient.KakaoUserResponse.KakaoAccount account = new KakaoLoginClient.KakaoUserResponse.KakaoAccount(email);
-        KakaoLoginClient.KakaoUserResponse userResponse = new KakaoLoginClient.KakaoUserResponse(account);
+        OAuthUserInfo userInfo = new OAuthUserInfo(email, kakaoAccessToken);
 
-        when(kakaoLoginClient.requestAccessToken("code")).thenReturn(tokenResponse);
-        when(kakaoLoginClient.requestUserInfo(kakaoAccessToken)).thenReturn(userResponse);
+        when(oAuthClientRegistry.get(ExternalProvider.KAKAO)).thenReturn(oAuthClient);
+        when(oAuthClient.getUserInfo("code")).thenReturn(userInfo);
         when(memberRepository.findByEmail(email)).thenReturn(Optional.empty());
         when(jwtProvider.createToken(email)).thenReturn("jwt-token");
 
-        TokenResponse response = kakaoAuthService.handleCallback("code");
+        TokenResponse response = oAuthService.handleCallback(ExternalProvider.KAKAO, "code");
 
         assertEquals("jwt-token", response.token());
         verify(memberRepository).save(any(Member.class));

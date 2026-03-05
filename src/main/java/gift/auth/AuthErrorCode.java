@@ -5,7 +5,8 @@ import org.springframework.http.HttpStatus;
 
 public enum AuthErrorCode implements BaseErrorCode {
     AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "인증에 실패했습니다."),
-    ACCESS_DENIED(HttpStatus.FORBIDDEN, "접근 권한이 없습니다.");
+    ACCESS_DENIED(HttpStatus.FORBIDDEN, "접근 권한이 없습니다."),
+    INVALID_OAUTH_PROVIDER(HttpStatus.BAD_REQUEST, "지원하지 않는 OAuth Provider입니다.");
 
     private final HttpStatus httpStatus;
     private final String message;

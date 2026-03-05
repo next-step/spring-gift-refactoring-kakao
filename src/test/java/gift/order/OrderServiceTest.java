@@ -3,7 +3,7 @@ package gift.order;
 import gift.auth.AuthenticationException;
 import gift.auth.AuthenticationResolver;
 import gift.category.Category;
-import gift.kakao.KakaoMessageClient;
+import gift.message.MessageClientRegistry;
 import gift.member.Member;
 import gift.member.MemberRepository;
 import gift.option.Option;
@@ -39,7 +39,7 @@ class OrderServiceTest {
     private AuthenticationResolver authenticationResolver;
 
     @Mock
-    private KakaoMessageClient kakaoMessageClient;
+    private MessageClientRegistry messageClientRegistry;
 
     @InjectMocks
     private OrderService orderService;

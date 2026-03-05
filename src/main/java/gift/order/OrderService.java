@@ -2,7 +2,9 @@ package gift.order;
 
 import gift.auth.AuthenticationException;
 import gift.auth.AuthenticationResolver;
-import gift.kakao.KakaoMessageClient;
+import gift.external.ExternalProvider;
+import gift.message.MessageClient;
+import gift.message.MessageClientRegistry;
 import gift.member.Member;
 import gift.member.MemberRepository;
 import gift.option.Option;
@@ -21,7 +23,7 @@ public class OrderService {
     private final OptionRepository optionRepository;
     private final MemberRepository memberRepository;
     private final AuthenticationResolver authenticationResolver;
-    private final KakaoMessageClient kakaoMessageClient;
+    private final MessageClientRegistry messageClientRegistry;
 
     public Page<OrderResponse> getOrders(String authorization, Pageable pageable) {
         Member member = extractMember(authorization);
@@ -55,7 +57,8 @@ public class OrderService {
             return;
         }
         try {
-            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, option.getProduct());
+            MessageClient messageClient = messageClientRegistry.get(ExternalProvider.KAKAO);
+            messageClient.sendToMe(member.getKakaoAccessToken(), order, option.getProduct());
         } catch (Exception ignored) {
         }
     }

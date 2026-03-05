@@ -129,3 +129,31 @@ step1에서 대부분 Controller의 Repository 직접 의존을 Service로 분�
 1. Controller는 요청/응답 흐름에 집중하고, 비즈니스/데이터 접근 로직은 Service로 일관되게 관리할 수 있다.
 2. step1에서 누락된 의존성 분리를 보완해 전체 도메인 구조 기준을 맞출 수 있다.
 3. Admin 상품 관리 로직의 회귀를 단위 테스트로 빠르게 검증할 수 있다.
+
+---
+
+## 6. [구조 변경] OAuth/메시지 클라이언트 Provider 확장 구조 전환
+
+### 6-1. 배경
+
+기존에는 인증/메시지 서비스가 Kakao 구현체를 직접 의존하고 있어, Google/Line 같은 Provider 확장 시 서비스 코드를 수정해야 했다.  
+외부 연동 구현 교체 영향을 최소화하기 위해 인터페이스 + Registry 기반 구조로 전환했다.
+
+### 6-2. 수정사항
+
+| 항목 | 내용 |
+|---|---|
+| Provider 식별자 | `ExternalProvider` enum 추가 (`KAKAO`, `GOOGLE`, `LINE`) |
+| OAuth 포트 | `OAuthClient`, `OAuthUserInfo`, `OAuthClientRegistry` 추가 |
+| 메시지 포트 | `MessageClient`, `MessageClientRegistry` 추가 |
+| Kakao 어댑터화 | `KakaoLoginClient`가 `OAuthClient` 구현, `KakaoMessageClient`가 `MessageClient` 구현 |
+| Auth 서비스 일반화 | `KakaoAuthService` -> `OAuthService`로 전환 (`provider` 인자 기반 처리) |
+| Auth 컨트롤러 일반화 | `KakaoAuthController` -> `OAuthController`로 전환, 경로를 `/api/auth/{provider}/login`, `/api/auth/{provider}/callback`으로 변경 |
+| 예외 보강 | `AuthErrorCode.INVALID_OAUTH_PROVIDER`, `InvalidOAuthProviderException` 추가 |
+| 테스트 반영 | `KakaoAuthServiceTest` -> `OAuthServiceTest`로 전환 및 Registry 기반 목킹으로 수정 |
+
+### 6-3. 기대효과
+
+1. 신규 Provider 추가 시 서비스 코드 변경을 최소화하고 구현체 추가 중심으로 확장할 수 있다.
+2. 외부 API 변경 영향이 Provider별 어댑터 내부로 제한되어 유지보수가 쉬워진다.
+3. 테스트가 벤더 구현 세부사항보다 인터페이스 계약 검증에 집중된다.
