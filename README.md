@@ -298,6 +298,7 @@ Step 1에서 정리한 구조 위에 작동 변경을 수행한다. 모든 변�
 | 위시 삭제 책임 통합 | `OrderService`가 `WishRepository` 직접 의존 → `WishService.removeByMemberAndProduct`로 위임. 삭제 책임을 `WishService` 한 곳으로 통합 |
 | 낙관적 락(`@Version`) 적용 | Member, Product, Category, Option에 `@Version` 추가. 동시 수정 시 lost update 방지, 충돌 시 409 Conflict 반환 (ADR-006) |
 | `Option.subtractQuantity` 경계 검증 | `amount <= 0` 검증 추가 + `OptionTest`에 0/음수 경계 케이스 테스트 보강 |
+| `calculateTotalPrice` int 오버플로우 방지 | 반환 타입 `int` → `long`, `(long)` 캐스트로 대량 주문 시 오버플로우 방지 + 호출 체인(`deductPoint`) 연쇄 수정 |
 
 ### 학습한 점
 
