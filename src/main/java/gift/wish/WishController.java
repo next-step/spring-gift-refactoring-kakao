@@ -49,15 +49,13 @@ public class WishController {
             return ResponseEntity.status(401).build();
         }
 
-        var existing = wishService.findByMemberAndProduct(member.getId(), request.productId());
-        if (existing.isPresent()) {
-            return ResponseEntity.ok(WishResponse.from(existing.get()));
-        }
-
         try {
-            var saved = wishService.addWish(member.getId(), request.productId());
-            return ResponseEntity.created(URI.create("/api/wishes/" + saved.getId()))
-                .body(WishResponse.from(saved));
+            var result = wishService.addWish(member.getId(), request.productId());
+            if (result.created()) {
+                return ResponseEntity.created(URI.create("/api/wishes/" + result.wish().getId()))
+                    .body(WishResponse.from(result.wish()));
+            }
+            return ResponseEntity.ok(WishResponse.from(result.wish()));
         } catch (NoSuchElementException e) {
             return ResponseEntity.notFound().build();
         }

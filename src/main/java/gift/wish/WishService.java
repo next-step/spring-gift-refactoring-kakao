@@ -2,7 +2,6 @@ package gift.wish;
 
 import gift.product.ProductRepository;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,18 +16,22 @@ public class WishService {
         this.productRepository = productRepository;
     }
 
+    public record AddWishResult(Wish wish, boolean created) {
+    }
+
     public Page<Wish> getWishes(Long memberId, Pageable pageable) {
         return wishRepository.findByMemberId(memberId, pageable);
     }
 
-    public Optional<Wish> findByMemberAndProduct(Long memberId, Long productId) {
-        return wishRepository.findByMemberIdAndProductId(memberId, productId);
-    }
-
-    public Wish addWish(Long memberId, Long productId) {
+    public AddWishResult addWish(Long memberId, Long productId) {
+        var existing = wishRepository.findByMemberIdAndProductId(memberId, productId);
+        if (existing.isPresent()) {
+            return new AddWishResult(existing.get(), false);
+        }
         var product = productRepository.findById(productId)
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
-        return wishRepository.save(new Wish(memberId, product));
+        Wish saved = wishRepository.save(new Wish(memberId, product));
+        return new AddWishResult(saved, true);
     }
 
     public void removeWish(Long memberId, Long wishId) {

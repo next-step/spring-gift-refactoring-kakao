@@ -219,3 +219,65 @@ Step 2에서 수행할 작업 식별:
 | `OrderService.java` | `WishRepository` 의존성 추가 + 위시 삭제 로직 + TODO 주석 제거 | 작동 변경 |
 
 ---
+
+## 7단계: 위시 중복 체크를 서비스로 이동 (구조 변경)
+
+### 프롬프트
+
+> 위시 중복 체크를 서비스로 이동. 호출부 단순화.
+
+### 변경 전/후 정의
+
+- **무엇을 바꾸는가**: 중복 체크 책임을 컨트롤러에서 서비스로 이동
+- **무엇을 바꾸지 않는가**: API 동작 (신규 201, 중복 200, 미존재 상품 404)
+- **무엇이 이를 증명하는가**: `WishServiceTest` 3개 + 기존 Cucumber wish 시나리오 6개
+
+### 변경 전 (컨트롤러에 분기)
+
+```java
+// WishController - 서비스를 두 번 호출, 컨트롤러가 도메인 규칙(멱등) 판단
+var existing = wishService.findByMemberAndProduct(memberId, productId);
+if (existing.isPresent()) {
+    return ResponseEntity.ok(WishResponse.from(existing.get()));
+}
+var saved = wishService.addWish(memberId, productId);
+return ResponseEntity.created(...).body(WishResponse.from(saved));
+```
+
+### 변경 후 (서비스가 책임)
+
+```java
+// WishService - 중복 체크 + 생성을 하나로, AddWishResult(wish, created) 반환
+var result = wishService.addWish(memberId, productId);
+
+// WishController - 서비스 한 번 호출, HTTP 상태만 결정
+if (result.created()) {
+    return ResponseEntity.created(...).body(...);
+}
+return ResponseEntity.ok(...);
+```
+
+### AI 활용 방식
+
+1. **테스트 먼저 작성** (Red): `WishServiceTest` — 신규 추가(created=true) + 중복 추가(created=false, 동일 ID, count=1) + 미존재 상품 예외
+2. **중복 테스트 실패 확인**: 기존 `addWish`에 중복 체크가 없어서 실패
+3. **서비스 변경**: `addWish`가 `AddWishResult(Wish, boolean created)` 반환, 중복 시 기존 위시 반환
+4. **컨트롤러 단순화**: `findByMemberAndProduct` 호출 제거, `addWish` 한 번만 호출
+5. **`findByMemberAndProduct` 메서드 제거**: 외부 호출자 없음
+6. **전체 테스트 통과 확인** (`./gradlew clean test` BUILD SUCCESSFUL)
+
+### 산출물
+
+| 파일 | 변경 | 종류 |
+|------|------|------|
+| `WishServiceTest.java` | 신규 — 3개 테스트 | 테스트 |
+| `WishService.java` | `addWish` 반환 타입 변경 + 중복 체크 내재화 + `findByMemberAndProduct` 제거 | 구조 변경 |
+| `WishController.java` | 분기 제거, 서비스 한 번 호출로 단순화 | 구조 변경 |
+
+### 효과
+
+- **컨트롤러 분기 제거**: 서비스 2회 호출 + if/else → 서비스 1회 호출 + result.created() 분기
+- **도메인 규칙 캡슐화**: "위시 추가는 멱등" 규칙이 서비스 안에 위치
+- **API 동작 유지**: 신규 201, 중복 200, 미존재 404 — Cucumber 시나리오 전체 통과
+
+---
