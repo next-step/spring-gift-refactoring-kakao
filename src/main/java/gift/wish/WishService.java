@@ -47,7 +47,7 @@ public class WishService {
             .orElseThrow(() -> new NoSuchElementException("위시가 존재하지 않습니다. id=" + wishId));
 
         if (!wish.isOwnedBy(memberId)) {
-            throw new IllegalArgumentException("해당 위시에 대한 권한이 없습니다.");
+            throw new IllegalStateException("해당 위시에 대한 권한이 없습니다.");
         }
 
         wishRepository.delete(wish);

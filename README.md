@@ -290,10 +290,10 @@
 - [x] 기존 `ProductControllerTest` + `AdminProductControllerTest` 전체 통과 확인
 
 #### 5-2. wish 패키지 — WishController 예외 처리를 @ExceptionHandler 방식으로 통일 (구조)
-- [ ] `WishService.removeWish()`에서 소유권 실패 시 `IllegalArgumentException` → `IllegalStateException` 변경
-- [ ] `WishController`에서 try-catch 제거
-- [ ] `WishController`에 `@ExceptionHandler` 추가: `NoSuchElementException`→404, `IllegalArgumentException`→400, `IllegalStateException`→403
-- [ ] 기존 `WishControllerTest` 전체 통과 확인 (외부 동작 변화 없음)
+- [x] `WishService.removeWish()`에서 소유권 실패 시 `IllegalArgumentException` → `IllegalStateException` 변경
+- [x] `WishController`에서 try-catch 제거
+- [x] `WishController`에 `@ExceptionHandler` 추가: `NoSuchElementException`→404, `IllegalArgumentException`→400, `IllegalStateException`→403
+- [x] 기존 `WishControllerTest` 전체 통과 확인 (외부 동작 변화 없음)
 
 ### ADR 목록
 - [x] `docs/adr/001-price-calculation-location.md` — 가격 계산 로직 위치 결정 (커밋 1-2)
