@@ -1,7 +1,6 @@
 package gift.order.internal;
 
 import gift.auth.AuthenticationPort;
-import gift.global.UnauthorizedException;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
@@ -33,8 +32,7 @@ public class OrderController {
             Pageable pageable
     ) {
         // auth check
-        Long memberId = authenticationPort.getMemberIdFrom(authorization)
-                .orElseThrow(UnauthorizedException::new);
+        Long memberId = authenticationPort.getMemberIdFrom(authorization);
 
         PagedModel<OrderResponse> response = orderService.getOrders(memberId, pageable);
 
@@ -56,8 +54,7 @@ public class OrderController {
             @Valid @RequestBody OrderRequest request
     ) {
         // auth check
-        Long memberId = authenticationPort.getMemberIdFrom(authorization)
-                .orElseThrow(UnauthorizedException::new);
+        Long memberId = authenticationPort.getMemberIdFrom(authorization);
 
         OrderResponse response = orderService.createOrder(memberId, request);
 

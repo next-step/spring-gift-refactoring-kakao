@@ -14,7 +14,7 @@ public interface AuthenticationPort {
      * @param authorization {@code HTTP} 요청의 {@code Authorization} 헤더 값
      * @return 유효한 {@code authorization} 이 아니면 {@code Optional.empty()}
      */
-    Optional<Long> getMemberIdFrom(String authorization);
+    Optional<Long> requestMemberIdFrom(String authorization);
 
     /**
      * {@code Authorization} 에서 사용자 ID 를 요구한다. 인증 실패 시 예외를 던진다.
