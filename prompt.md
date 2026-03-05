@@ -275,3 +275,37 @@
 - **Task 2**: `GlobalExceptionHandler`에서 `IllegalStateException` + `IllegalArgumentException` 핸들러를 하나로 합침 + `UnauthorizedException` → 401 핸들러 추가
 - 기존 테스트 `인증_헤더_없이_선물하면_실패한다` 기대값 400 → 401로 변경 (의미적으로 더 정확)
 - `./gradlew build -x cucumberTest` — 테스트 11개 모두 통과 확인
+
+### 프롬프트 6: Step2 리팩터링 관점 코드 검토
+> 다음 관점에서 현재 코드를 검토합니다. 2단계 리팩터링 완성하기 — 트랜잭션 경계, 누락된 작동 구현, 도메인 책임 되찾기
+
+- Explore 에이전트로 전체 코드 심층 분석
+- 14개 검토 항목 식별: 작동 변경 6건, 구조 변경 7건, 설계 판단 2건 (취소선 1)
+- `review-issues.md`에 전체 항목 기록
+
+### 프롬프트 7~13: 14개 항목 하나씩 검토
+> 각 항목의 진위 여부와 수정 필요성을 사용자와 하나씩 확인
+
+- **수정 확정 11개**: D-1, B-1, B-4, B-5, T-2, D-2, D-3, D-5, T-3, B-6, B-7
+- **보류 2개**: B-2(옵션별 가격), D-4(memberId FK 비일관)
+- **제외 1개**: D-6(OSIV 잠재 위험 — `open-in-view` 설정 자체가 없어 Spring Boot 기본값 true)
+
+### 프롬프트 14: 구조 변경 → 작동 변경 순서로 수정 실행
+> 순서는, 구조변경 우선, 그다음 동작 변경 순서대로 작업하고 매 작업 마다 커밋합니다.
+
+**구조 변경 6건:**
+- D-2: `AuthenticationResolver`의 `MemberRepository` → `MemberService` 전환
+- D-3: `KakaoMessageClient` 가격 계산을 `Option.calculateTotalPrice()`로 위임, `Product` 파라미터 제거
+- D-5: `ProductService`의 `CategoryRepository` → `CategoryService`, `OptionService`의 `ProductRepository` → `ProductService`
+- B-7: `WishService`의 `ProductRepository` → `ProductService`
+- T-3: `OptionService.delete()`에서 `findByProductId().size()` → `countByProductId()` COUNT 쿼리
+- B-6: `Option` 생성자에 `quantity < 1` 검증 추가
+
+**작동 변경 5건:**
+- D-1: `ProductService.create()/update()`에 `allowKakao` 파라미터 추가, Admin은 `true` 전달
+- B-1: `Option.subtractQuantity()`에 `amount <= 0` 검증 추가
+- B-4: `CategoryService.delete()`에 연관 상품 사전 검증 (`existsByCategoryId`) 추가. 순환 의존(CategoryService↔ProductService) 발생으로 `ProductRepository` 직접 사용
+- B-5: `ProductService.delete()`에서 위시 자동 삭제 + 주문 이력 존재 시 삭제 금지
+- T-2: `AdminMemberController`의 중복 `existsByEmail` 제거, `register()` 예외 활용
+
+- 매 커밋마다 `./gradlew spotlessApply build -x cucumberTest` 성공 확인
