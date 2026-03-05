@@ -21,7 +21,7 @@ public class WishService {
     private final ProductQueryPort productQueryPort;
 
     public PagedModel<WishResponse> getWishes(Long memberId, Pageable pageable) {
-        Page<WishResponse> pageResponse = wishRepo.findByMemberIdInnerJoinFetchProduct(
+        Page<WishResponse> pageResponse = wishRepo.findByMemberId(
                         memberId, pageable
                 )
                 .map(WishResponse::from);
@@ -36,7 +36,7 @@ public class WishService {
 
         Product product = productQueryPort.getReference(productId);
 
-        Optional<Wish> opt = wishRepo.findByMemberIdAndProductIdInnerJoinFetchProduct(
+        Optional<Wish> opt = wishRepo.findByMemberIdAndProductId(
                 memberId, productId
         );
 

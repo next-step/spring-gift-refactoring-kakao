@@ -42,7 +42,7 @@ class WishServiceTest {
     ProductQueryPort productQueryPort;
 
     @Test
-    @DisplayName("위시 목록을 조회한다 — wishRepo.findByMemberIdInnerJoinFetchProduct 호출 + 응답 매핑")
+    @DisplayName("위시 목록을 조회한다 — wishRepo.findByMemberId 호출 + 응답 매핑")
     void testGetWishes() {
         // given
         Long memberId = 1L;
@@ -56,7 +56,7 @@ class WishServiceTest {
                 List.of(wish), pageable, 1
         );
 
-        given(wishRepo.findByMemberIdInnerJoinFetchProduct(memberId, pageable))
+        given(wishRepo.findByMemberId(memberId, pageable))
                 .willReturn(page);
 
         // when
@@ -64,7 +64,7 @@ class WishServiceTest {
 
         // then
         then(wishRepo).should()
-                .findByMemberIdInnerJoinFetchProduct(memberId, pageable);
+                .findByMemberId(memberId, pageable);
 
         assertThat(response.getContent()).hasSize(1);
 
@@ -125,7 +125,7 @@ class WishServiceTest {
 
         given(productQueryPort.getReference(productId))
                 .willReturn(product);
-        given(wishRepo.findByMemberIdAndProductIdInnerJoinFetchProduct(memberId, productId))
+        given(wishRepo.findByMemberIdAndProductId(memberId, productId))
                 .willReturn(Optional.empty());
         given(wishRepo.save(any(Wish.class)))
                 .willReturn(savedWish);
@@ -162,7 +162,7 @@ class WishServiceTest {
 
         given(productQueryPort.getReference(productId))
                 .willReturn(product);
-        given(wishRepo.findByMemberIdAndProductIdInnerJoinFetchProduct(memberId, productId))
+        given(wishRepo.findByMemberIdAndProductId(memberId, productId))
                 .willReturn(Optional.of(existingWish));
 
         // when
