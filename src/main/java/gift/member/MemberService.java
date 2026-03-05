@@ -2,17 +2,14 @@ package gift.member;
 
 import gift.auth.JwtProvider;
 import gift.auth.TokenResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class MemberService {
     private final MemberRepository memberRepository;
     private final JwtProvider jwtProvider;
-
-    public MemberService(MemberRepository memberRepository, JwtProvider jwtProvider) {
-        this.memberRepository = memberRepository;
-        this.jwtProvider = jwtProvider;
-    }
 
     public TokenResponse register(MemberRequest request) {
         if (memberRepository.existsByEmail(request.email())) {

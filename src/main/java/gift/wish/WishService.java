@@ -6,25 +6,17 @@ import gift.auth.ForbiddenException;
 import gift.member.Member;
 import gift.product.Product;
 import gift.product.ProductRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class WishService {
     private final WishRepository wishRepository;
     private final ProductRepository productRepository;
     private final AuthenticationResolver authenticationResolver;
-
-    public WishService(
-        WishRepository wishRepository,
-        ProductRepository productRepository,
-        AuthenticationResolver authenticationResolver
-    ) {
-        this.wishRepository = wishRepository;
-        this.productRepository = productRepository;
-        this.authenticationResolver = authenticationResolver;
-    }
 
     public Page<WishResponse> getWishes(String authorization, Pageable pageable) {
         Member member = extractMember(authorization);

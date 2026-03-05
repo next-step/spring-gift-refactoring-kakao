@@ -7,31 +7,19 @@ import gift.member.Member;
 import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class OrderService {
     private final OrderRepository orderRepository;
     private final OptionRepository optionRepository;
     private final MemberRepository memberRepository;
     private final AuthenticationResolver authenticationResolver;
     private final KakaoMessageClient kakaoMessageClient;
-
-    public OrderService(
-        OrderRepository orderRepository,
-        OptionRepository optionRepository,
-        MemberRepository memberRepository,
-        AuthenticationResolver authenticationResolver,
-        KakaoMessageClient kakaoMessageClient
-    ) {
-        this.orderRepository = orderRepository;
-        this.optionRepository = optionRepository;
-        this.memberRepository = memberRepository;
-        this.authenticationResolver = authenticationResolver;
-        this.kakaoMessageClient = kakaoMessageClient;
-    }
 
     public Page<OrderResponse> getOrders(String authorization, Pageable pageable) {
         Member member = extractMember(authorization);

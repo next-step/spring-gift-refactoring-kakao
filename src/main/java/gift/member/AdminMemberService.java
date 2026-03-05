@@ -1,17 +1,15 @@
 package gift.member;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class AdminMemberService {
     private final MemberRepository memberRepository;
-
-    public AdminMemberService(MemberRepository memberRepository) {
-        this.memberRepository = memberRepository;
-    }
 
     public List<Member> findAll() {
         return memberRepository.findAll();

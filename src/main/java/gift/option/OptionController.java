@@ -1,6 +1,7 @@
 package gift.option;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,12 +21,9 @@ import java.util.List;
  */
 @RestController
 @RequestMapping(path = "/api/products/{productId}/options")
+@RequiredArgsConstructor
 public class OptionController {
     private final OptionService optionService;
-
-    public OptionController(OptionService optionService) {
-        this.optionService = optionService;
-    }
 
     @GetMapping
     public ResponseEntity<List<OptionResponse>> getOptions(@PathVariable Long productId) {

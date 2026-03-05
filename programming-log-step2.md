@@ -30,7 +30,7 @@ Service 계층 도입 이후 예외 처리가 Controller별 `@ExceptionHandler`�
 
 ---
 
-## 2. [구조 변경] lombok적용
+## 2. [구조 변경] lombok 적용
 
 ### 2-1. 배경
 
@@ -43,11 +43,12 @@ JPA 요구사항(기본 생성자)은 유지하면서 반복 코드를 줄이기
 |---|---|
 | 의존성 추가 | `build.gradle.kts`에 `lombok` (`compileOnly`, `annotationProcessor`, `testCompileOnly`, `testAnnotationProcessor`) 추가 |
 | 엔티티 적용 | `Category`, `Product`, `Option`, `Order`, `Wish`, `Member`에 `@Getter`, `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 적용 |
-| 코드 정리 | 수동 getter 및 protected 기본 생성자 제거 |
-| 검증 | `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test` → `BUILD SUCCESSFUL` |
+| DI 적용 | Service/Controller/Component에 `@RequiredArgsConstructor` 적용, 수동 생성자 제거 |
+| 적용 대상 | `CategoryController`, `CategoryService`, `ProductController`, `ProductService`, `AdminProductController`, `MemberController`, `MemberService`, `AdminMemberController`, `AdminMemberService`, `OptionController`, `OptionService`, `OrderController`, `OrderService`, `WishController`, `WishService`, `KakaoAuthController`, `KakaoAuthService`, `AuthenticationResolver` |
+| 코드 정리 | 수동 getter / protected 기본 생성자 / 단순 DI 생성자 제거 |
 
 ### 2-3. 기대효과
 
 1. 엔티티 보일러플레이트를 줄여 코드 가독성과 유지보수성을 높일 수 있다.
 2. JPA 제약(`protected` 기본 생성자)은 유지하면서 표현을 단순화할 수 있다.
-3. 변경 시 핵심 도메인 로직에 집중하기 쉬워진다.
+3. DI 관련 생성자 보일러플레이트를 줄이면서 생성자 주입의 장점을 유지할 수 있다.

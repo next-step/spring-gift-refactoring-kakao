@@ -1,6 +1,7 @@
 package gift.wish;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -17,12 +18,9 @@ import java.net.URI;
 
 @RestController
 @RequestMapping("/api/wishes")
+@RequiredArgsConstructor
 public class WishController {
     private final WishService wishService;
-
-    public WishController(WishService wishService) {
-        this.wishService = wishService;
-    }
 
     @GetMapping
     public ResponseEntity<Page<WishResponse>> getWishes(

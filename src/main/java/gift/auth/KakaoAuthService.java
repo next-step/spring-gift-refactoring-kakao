@@ -3,29 +3,19 @@ package gift.auth;
 import gift.kakao.KakaoLoginClient;
 import gift.member.Member;
 import gift.member.MemberRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 
 @Service
+@RequiredArgsConstructor
 public class KakaoAuthService {
     private final KakaoLoginProperties properties;
     private final KakaoLoginClient kakaoLoginClient;
     private final MemberRepository memberRepository;
     private final JwtProvider jwtProvider;
-
-    public KakaoAuthService(
-        KakaoLoginProperties properties,
-        KakaoLoginClient kakaoLoginClient,
-        MemberRepository memberRepository,
-        JwtProvider jwtProvider
-    ) {
-        this.properties = properties;
-        this.kakaoLoginClient = kakaoLoginClient;
-        this.memberRepository = memberRepository;
-        this.jwtProvider = jwtProvider;
-    }
 
     public URI getLoginUri() {
         String url = UriComponentsBuilder.fromUriString("https://kauth.kakao.com/oauth/authorize")
