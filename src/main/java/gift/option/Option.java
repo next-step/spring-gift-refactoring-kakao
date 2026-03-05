@@ -65,7 +65,7 @@ public class Option {
         return quantity;
     }
 
-    public int calculateTotalPrice(int quantity) {
-        return product.getPrice() * quantity;
+    public long calculateTotalPrice(int quantity) {
+        return (long) product.getPrice() * quantity;
     }
 }

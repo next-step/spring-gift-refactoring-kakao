@@ -52,14 +52,14 @@ public class Member {
         this.point += amount;
     }
 
-    public void deductPoint(int amount) {
+    public void deductPoint(long amount) {
         if (amount <= 0) {
             throw new IllegalArgumentException("차감 금액은 1 이상이어야 합니다.");
         }
         if (amount > this.point) {
             throw new IllegalArgumentException("포인트가 부족합니다.");
         }
-        this.point -= amount;
+        this.point -= (int) amount;
     }
 
     public Long getId() {

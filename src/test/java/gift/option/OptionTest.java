@@ -58,6 +58,6 @@ class OptionTest {
     void calculateTotalPrice() {
         Option option = createOption(100);
 
-        assertEquals(3000, option.calculateTotalPrice(3));
+        assertEquals(3000L, option.calculateTotalPrice(3));
     }
 }
