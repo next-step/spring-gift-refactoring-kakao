@@ -3,15 +3,18 @@ package gift.member;
 import gift.DomainException;
 import java.util.List;
 import java.util.NoSuchElementException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class MemberService {
     private final MemberRepository memberRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public MemberService(MemberRepository memberRepository) {
+    public MemberService(MemberRepository memberRepository, PasswordEncoder passwordEncoder) {
         this.memberRepository = memberRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional
@@ -19,14 +22,15 @@ public class MemberService {
         if (memberRepository.existsByEmail(email)) {
             throw new DomainException("이미 등록된 이메일입니다.");
         }
-        return memberRepository.save(new Member(email, password));
+        final String encodedPassword = passwordEncoder.encode(password);
+        return memberRepository.save(new Member(email, encodedPassword));
     }
 
     public Member login(String email, String password) {
         final Member member =
                 memberRepository.findByEmail(email).orElseThrow(() -> new DomainException("이메일 또는 비밀번호가 올바르지 않습니다."));
 
-        if (!member.checkPassword(password)) {
+        if (member.getPassword() == null || !passwordEncoder.matches(password, member.getPassword())) {
             throw new DomainException("이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
@@ -44,7 +48,8 @@ public class MemberService {
     @Transactional
     public Member updateMember(Long id, String email, String password) {
         final Member member = findById(id);
-        member.update(email, password);
+        final String encodedPassword = passwordEncoder.encode(password);
+        member.update(email, encodedPassword);
         return memberRepository.save(member);
     }
 
