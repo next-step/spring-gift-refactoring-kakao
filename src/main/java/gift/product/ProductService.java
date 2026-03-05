@@ -2,6 +2,8 @@ package gift.product;
 
 import gift.category.Category;
 import gift.category.CategoryService;
+import gift.order.OrderRepository;
+import gift.wish.WishRepository;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -15,10 +17,18 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProductService {
   private final ProductRepository productRepository;
   private final CategoryService categoryService;
+  private final OrderRepository orderRepository;
+  private final WishRepository wishRepository;
 
-  public ProductService(ProductRepository productRepository, CategoryService categoryService) {
+  public ProductService(
+      ProductRepository productRepository,
+      CategoryService categoryService,
+      OrderRepository orderRepository,
+      WishRepository wishRepository) {
     this.productRepository = productRepository;
     this.categoryService = categoryService;
+    this.orderRepository = orderRepository;
+    this.wishRepository = wishRepository;
   }
 
   public Page<Product> findAll(Pageable pageable) {
@@ -74,6 +84,10 @@ public class ProductService {
 
   @Transactional
   public void delete(Long id) {
+    if (orderRepository.existsByOptionProductId(id)) {
+      throw new IllegalStateException("주문 이력이 있는 상품은 삭제할 수 없습니다.");
+    }
+    wishRepository.deleteByProductId(id);
     productRepository.deleteById(id);
   }
 
