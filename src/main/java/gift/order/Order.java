@@ -31,11 +31,18 @@ public class Order {
     private LocalDateTime orderDateTime;
 
     public Order(Option option, Member member, int quantity, String message) {
+        validateQuantity(quantity);
         this.option = option;
         this.member = member;
         this.quantity = quantity;
         this.message = message;
         this.orderDateTime = LocalDateTime.now();
+    }
+
+    private void validateQuantity(int quantity) {
+        if (quantity < 1) {
+            throw new IllegalArgumentException("주문 수량은 1 이상이어야 합니다.");
+        }
     }
 
 }

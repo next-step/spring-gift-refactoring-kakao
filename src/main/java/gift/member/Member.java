@@ -23,12 +23,23 @@ public class Member {
     private int point;
 
     public Member(String email, String password) {
+        validateEmail(email);
         this.email = email;
         this.password = password;
     }
 
     public Member(String email) {
+        validateEmail(email);
         this.email = email;
+    }
+
+    private void validateEmail(String email) {
+        if (email == null || email.isBlank()) {
+            throw new IllegalArgumentException("이메일은 필수입니다.");
+        }
+        if (!email.contains("@")) {
+            throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
+        }
     }
 
     public boolean matchesPassword(String password) {

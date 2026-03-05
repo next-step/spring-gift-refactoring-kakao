@@ -29,11 +29,20 @@ public class Option {
 
     private int quantity;
 
+    private static final int MAX_QUANTITY = 99_999_999;
+
     public Option(Product product, String name, int quantity) {
         validateName(name);
+        validateQuantity(quantity);
         this.product = product;
         this.name = name;
         this.quantity = quantity;
+    }
+
+    private void validateQuantity(int quantity) {
+        if (quantity < 1 || quantity > MAX_QUANTITY) {
+            throw new IllegalArgumentException("옵션 수량은 1 이상 " + MAX_QUANTITY + " 이하여야 합니다.");
+        }
     }
 
     private void validateName(String name) {

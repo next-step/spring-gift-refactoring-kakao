@@ -71,3 +71,37 @@ Wish, Order 엔티티가 Member를 `Long memberId`로만 참조하면서 주석�
 ### 변경 내용
 - Wish, Order: `Long memberId` → `@ManyToOne @JoinColumn(name = "member_id", nullable = false) Member member`
 - WishService: `MemberService` 의존 추가 (Wish 생성 시 Member 조회 필요)
+
+## ADR-004: 검증(Validation) 전략
+
+### 문제 상황
+검증 로직이 세 곳에 분산되어 있었다.
+- **Request DTO**: Bean Validation(`@NotBlank`, `@Min`, `@Email`, `@Positive`)
+- **서비스**: `ProductNameValidator`, `OptionNameValidator` 유틸리티 클래스 호출
+- **컨트롤러**: `AdminProductController`에서 `ProductNameValidator`를 직접 호출 (서비스와 중복)
+
+비즈니스 규칙(이름 길이/패턴, 수량 범위, 가격, 이메일 형식)과 형식 검사(`@NotNull`, `@NotBlank`)가 구분 없이 DTO에 혼재되어 있어, 서비스 내부 호출 시 도메인 무결성이 보장되지 않았다.
+
+### 논의 후보
+1. **서비스에 일원화** — DTO의 Bean Validation을 제거하고 서비스에서만 검증. 잘못된 요청이 트랜잭션까지 진입.
+2. **DTO에 일원화** — Validator 클래스를 제거하고 Bean Validation + Custom Annotation으로 처리. 서비스 직접 호출 시 보호 불가.
+3. **도메인 엔티티에 비즈니스 규칙, DTO에 형식 검사** — 역할을 분리. 도메인이 스스로 무결성을 보장하고, DTO는 명백한 쓰레기 입력만 조기 차단.
+
+### 결정
+> **3번 채택. 비즈니스 규칙은 도메인 엔티티가, 형식 검사는 DTO가 담당한다.**
+
+### 이유
+- "상품 이름은 15자 이내", "옵션 수량은 1 이상", "이메일 형식"은 도메인 불변식이다. 누가 호출하든(컨트롤러, 서비스, 테스트) 도메인 객체가 스스로 보장해야 한다.
+- DTO의 `@NotBlank`, `@NotNull`은 "값이 존재하는가"의 형식 검사로, 트랜잭션 진입 전에 쓰레기 입력을 차단하는 방어 계층 역할이다.
+- "카카오 포함 여부"는 호출자(Admin vs API)에 따라 달라지는 정책이므로 도메인 불변식이 아닌 서비스에 유지한다.
+- Validator 유틸리티 클래스와 컨트롤러의 중복 호출이 제거되어 검증 규칙의 관리 지점이 단일화된다.
+
+### 변경 내용
+- Product, Option: 생성자/update에서 이름(blank, 길이, 패턴) 검증
+- Product: 가격(`price > 0`) 검증
+- Option: 수량 범위(`1 ~ 99,999,999`) 검증
+- Order: 수량(`quantity >= 1`) 검증
+- Member: 이메일(blank, `@` 포함) 검증
+- Request DTO: 비즈니스 규칙 어노테이션(`@Min`, `@Max`, `@Email`, `@Positive`) 제거, 형식 검사(`@NotBlank`, `@NotNull`)만 유지
+- `ProductNameValidator`, `OptionNameValidator` 삭제
+- `AdminProductController`: 서비스 예외 catch 방식으로 전환

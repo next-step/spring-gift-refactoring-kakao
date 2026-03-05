@@ -36,10 +36,17 @@ public class Product {
 
     public Product(String name, int price, String imageUrl, Category category) {
         validateName(name);
+        validatePrice(price);
         this.name = name;
         this.price = price;
         this.imageUrl = imageUrl;
         this.category = category;
+    }
+
+    private void validatePrice(int price) {
+        if (price <= 0) {
+            throw new IllegalArgumentException("상품 가격은 1 이상이어야 합니다.");
+        }
     }
 
     public void removeOption(Option option) {
@@ -51,6 +58,7 @@ public class Product {
 
     public void update(String name, int price, String imageUrl, Category category) {
         validateName(name);
+        validatePrice(price);
         this.name = name;
         this.price = price;
         this.imageUrl = imageUrl;
