@@ -28,15 +28,14 @@ public class ProductService {
     }
 
     public Product findById(Long id) {
-        return productRepository.findById(id).orElse(null);
+        return productRepository.findById(id)
+            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
     }
 
     public Product create(ProductRequest request) {
         validateName(request.name());
-        var category = categoryRepository.findById(request.categoryId()).orElse(null);
-        if (category == null) {
-            return null;
-        }
+        var category = categoryRepository.findById(request.categoryId())
+            .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + request.categoryId()));
         return productRepository.save(request.toEntity(category));
     }
 
@@ -48,14 +47,10 @@ public class ProductService {
 
     public Product update(Long id, ProductRequest request) {
         validateName(request.name());
-        var category = categoryRepository.findById(request.categoryId()).orElse(null);
-        if (category == null) {
-            return null;
-        }
-        var product = productRepository.findById(id).orElse(null);
-        if (product == null) {
-            return null;
-        }
+        var category = categoryRepository.findById(request.categoryId())
+            .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + request.categoryId()));
+        var product = productRepository.findById(id)
+            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
         product.update(request.name(), request.price(), request.imageUrl(), category);
         return productRepository.save(product);
     }
