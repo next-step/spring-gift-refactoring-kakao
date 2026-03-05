@@ -4,6 +4,7 @@ import gift.member.Member;
 import gift.member.MemberService;
 import gift.option.Option;
 import gift.option.OptionService;
+import gift.wish.WishService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +18,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OptionService optionService;
     private final MemberService memberService;
+    private final WishService wishService;
     private final OrderNotificationSender notificationSender;
 
     public Page<Order> findByMemberId(Long memberId, Pageable pageable) {
@@ -32,7 +34,9 @@ public class OrderService {
 
         Order saved = orderRepository.save(new Order(option, member, quantity, message));
 
-        // TODO: 위시 정리 구현 필요
+        Long productId = option.getProduct().getId();
+        wishService.findByMemberIdAndProductId(memberId, productId)
+                .ifPresent(wish -> wishService.removeWish(wish.getId(), memberId));
 
         notificationSender.send(member, saved, option);
         return saved;
