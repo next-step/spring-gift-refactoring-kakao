@@ -295,6 +295,7 @@ Step 1에서 정리한 구조 위에 작동 변경을 수행한다. 모든 변�
 | 항목 | 내용 |
 |------|------|
 | 외부 HTTP 호출 트랜잭션 분리 | `@Transactional` → `TransactionTemplate` 전환. 카카오 API 응답 지연 시 DB 커넥션 점유 문제 해소 (ADR-005) |
+| 위시 삭제 책임 통합 | `OrderService`가 `WishRepository` 직접 의존 → `WishService.removeByMemberAndProduct`로 위임. 삭제 책임을 `WishService` 한 곳으로 통합 |
 
 ### 학습한 점
 
