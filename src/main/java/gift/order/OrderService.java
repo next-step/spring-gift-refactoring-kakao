@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.NoSuchElementException;
 
@@ -21,41 +21,42 @@ public class OrderService {
     private final OptionRepository optionRepository;
     private final MemberRepository memberRepository;
     private final KakaoMessageClient kakaoMessageClient;
+    private final TransactionTemplate transactionTemplate;
 
     public OrderService(
         OrderRepository orderRepository,
         OptionRepository optionRepository,
         MemberRepository memberRepository,
-        KakaoMessageClient kakaoMessageClient
+        KakaoMessageClient kakaoMessageClient,
+        TransactionTemplate transactionTemplate
     ) {
         this.orderRepository = orderRepository;
         this.optionRepository = optionRepository;
         this.memberRepository = memberRepository;
         this.kakaoMessageClient = kakaoMessageClient;
+        this.transactionTemplate = transactionTemplate;
     }
 
     public Page<Order> getOrders(Long memberId, Pageable pageable) {
         return orderRepository.findByMemberId(memberId, pageable);
     }
 
-    @Transactional
     public Order createOrder(Member member, OrderRequest request) {
-        // validate option
-        Option option = optionRepository.findById(request.optionId())
-            .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다. id=" + request.optionId()));
+        Order saved = transactionTemplate.execute(status -> {
+            Option option = optionRepository.findById(request.optionId())
+                .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다. id=" + request.optionId()));
 
-        // subtract stock
-        option.subtractQuantity(request.quantity());
-        optionRepository.save(option);
+            option.subtractQuantity(request.quantity());
+            optionRepository.save(option);
 
-        // save order
-        Order saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
+            Order order = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
 
-        // deduct points
-        member.deductPoint(saved.getTotalPrice());
-        memberRepository.save(member);
+            member.deductPoint(order.getTotalPrice());
+            memberRepository.save(member);
 
-        // best-effort kakao notification
+            return order;
+        });
+
         sendKakaoMessageIfPossible(member, saved);
 
         return saved;
