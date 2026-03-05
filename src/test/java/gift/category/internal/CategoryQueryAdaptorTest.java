@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import gift.category.Category;
+import gift.category.CategoryDto;
 import gift.category.CategoryQueryPort;
 import gift.global.NotFoundException;
 import gift.support.TestCategoryRepository;
@@ -44,17 +45,20 @@ class CategoryQueryAdaptorTest {
     @DisplayName("존재하는 카테고리를 참조한다")
     void testGetReference() {
         // given
-        Category saved = createCategory("교환권", "#000000", "http://img", "설명");
+        Category given = createCategory("교환권", "#000000", "http://img", "설명");
 
         // when
         Category result = transactionTemplate.execute(
-                status -> categoryQueryPort.getReference(saved.getId())
+                status -> categoryQueryPort.getReference(given.getId())
         );
 
         // then
         assertThat(result).isNotNull();
-        assertThat(result.getId()).isEqualTo(saved.getId());
-        assertThat(result.getName()).isEqualTo("교환권");
+        assertThat(result.getId()).isEqualTo(given.getId());
+        assertThat(result.getName()).isEqualTo(given.getName());
+        assertThat(result.getColor()).isEqualTo(given.getColor());
+        assertThat(result.getImageUrl()).isEqualTo(given.getImageUrl());
+        assertThat(result.getDescription()).isEqualTo(given.getDescription());
     }
 
     private Category createCategory(
@@ -86,10 +90,11 @@ class CategoryQueryAdaptorTest {
     @DisplayName("트랜잭션 없이 getReference 를 호출하면 IllegalTransactionStateException 이 발생한다")
     void testGetReferenceWithoutTransaction() {
         // given
-        Category saved = createCategory("교환권", "#000000", "http://img", "설명");
+        Long categoryId = createCategory("교환권", "#000000", "http://img", "설명")
+                .getId();
 
         // when + then
-        assertThatThrownBy(() -> categoryQueryPort.getReference(saved.getId()))
+        assertThatThrownBy(() -> categoryQueryPort.getReference(categoryId))
                 .isInstanceOf(IllegalTransactionStateException.class);
     }
 
@@ -97,14 +102,19 @@ class CategoryQueryAdaptorTest {
     @DisplayName("전체 카테고리를 조회한다")
     void testFindAll() {
         // given
-        createCategory("교환권", "#000000", "http://img1", "설명1");
-        createCategory("상품권", "#FFFFFF", "http://img2", "설명2");
+        CategoryDto category1 = convertToDto(
+                createCategory("교환권", "#000000", "http://img1", "설명1")
+        );
+        CategoryDto category2 = convertToDto(
+                createCategory("상품권", "#FFFFFF", "http://img2", "설명2")
+        );
 
         // when
         List<CategoryDto> result = categoryQueryPort.findAll();
 
         // then
         assertThat(result).hasSize(2);
+        assertThat(result).containsExactlyInAnyOrder(category1, category2);
     }
 
     @Test
@@ -115,5 +125,15 @@ class CategoryQueryAdaptorTest {
 
         // then
         assertThat(result).isEmpty();
+    }
+
+    private static CategoryDto convertToDto(Category entity) {
+        Long id = entity.getId();
+        String name = entity.getName();
+        String color = entity.getColor();
+        String imageUrl = entity.getImageUrl();
+        String description = entity.getDescription();
+
+        return new CategoryDto(id, name, color, imageUrl, description);
     }
 }
