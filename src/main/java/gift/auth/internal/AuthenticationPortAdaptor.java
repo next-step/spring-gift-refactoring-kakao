@@ -2,6 +2,7 @@ package gift.auth.internal;
 
 import gift.auth.AuthenticationPort;
 import gift.global.NotFoundException;
+import gift.global.UnauthorizedException;
 import gift.member.MemberQueryPort;
 import io.jsonwebtoken.JwtException;
 import java.util.Optional;
@@ -16,21 +17,30 @@ public class AuthenticationPortAdaptor implements AuthenticationPort {
     private final MemberQueryPort memberQueryPort;
 
     @Override
-    public Optional<Long> getMemberIdFrom(String authorization) {
-        String token = removeBearerPrefix(authorization);
+    public Optional<Long> requestMemberIdFrom(String authorization) {
+        Long memberId;
 
-        Long memberId = null;
+        try {
+            memberId = this.getMemberIdFrom(authorization);
+        } catch (UnauthorizedException ignored) {
+            memberId = null;
+        }
+
+        return Optional.ofNullable(memberId);
+    }
+
+    @Override
+    public Long getMemberIdFrom(String authorization) {
+        String token = removeBearerPrefix(authorization);
 
         try {
             String memberEmail = jwtProvider.getEmail(token);
 
-            memberId = memberQueryPort.getIdByEmail(memberEmail);
+            return memberQueryPort.getIdByEmail(memberEmail);
 
-        } catch (JwtException | NotFoundException ignored) {
-
+        } catch (JwtException | NotFoundException e) {
+            throw new UnauthorizedException("Invalid authorization");
         }
-
-        return Optional.ofNullable(memberId);
     }
 
     private static String removeBearerPrefix(String authorization) {

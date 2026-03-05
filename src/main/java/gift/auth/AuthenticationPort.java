@@ -1,5 +1,6 @@
 package gift.auth;
 
+import gift.global.UnauthorizedException;
 import java.util.Optional;
 
 /**
@@ -14,4 +15,13 @@ public interface AuthenticationPort {
      * @return 유효한 {@code authorization} 이 아니면 {@code Optional.empty()}
      */
     Optional<Long> getMemberIdFrom(String authorization);
+
+    /**
+     * {@code Authorization} 에서 사용자 ID 를 요구한다. 인증 실패 시 예외를 던진다.
+     *
+     * @param authorization {@code HTTP} 요청의 {@code Authorization} 헤더 값
+     * @return 인증된 사용자 ID
+     * @throws UnauthorizedException 유효한 {@code authorization} 이 아니면
+     */
+    Long getMemberIdFrom(String authorization) throws UnauthorizedException;
 }
