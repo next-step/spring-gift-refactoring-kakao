@@ -2,6 +2,7 @@ package gift.member;
 
 import java.util.List;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class MemberService {
@@ -36,12 +37,14 @@ public class MemberService {
         return member;
     }
 
+    @Transactional
     public Member update(Long id, String email, String password) {
         Member member = findById(id);
         member.update(email, password);
         return memberRepository.save(member);
     }
 
+    @Transactional
     public Member chargePoint(Long id, int amount) {
         Member member = findById(id);
         member.chargePoint(amount);

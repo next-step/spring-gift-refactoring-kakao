@@ -120,3 +120,34 @@ Step 2에서 수행할 작업 식별:
 `OrderService.createOrder()`와 달리 이 메서드는 단일 `save()` 호출이므로 롤백 시나리오가 극적이지 않다. `@Transactional`을 추가하는 이유는 회원 조회 → 토큰 갱신 → 저장이 하나의 논리 단위임을 명시하고, JPA 영속성 컨텍스트를 적절히 관리하기 위함이다.
 
 ---
+
+## 4단계: MemberService.update, chargePoint 트랜잭션 경계 설정
+
+### 프롬프트
+
+> `MemberService.update()`, `chargePoint()` — 조회 + 수정이 하나의 단위
+
+### 변경 전/후 정의
+
+- **무엇을 바꾸는가**: `update()`와 `chargePoint()`에 `@Transactional` 추가 → 조회 + 수정 + 저장이 하나의 트랜잭션
+- **무엇을 바꾸지 않는가**: 회원 수정/포인트 충전의 비즈니스 로직
+- **무엇이 이를 증명하는가**: `MemberServiceTest` 4개 테스트
+
+### AI 활용 방식
+
+1. **테스트 먼저 작성**:
+   - `update_success()` — 수정 후 DB 재조회로 이메일/비밀번호 변경 확인
+   - `update_notFound()` — 존재하지 않는 회원 수정 시 예외
+   - `chargePoint_success()` — 충전 후 DB 재조회로 포인트 확인
+   - `chargePoint_invalidAmount_noChange()` — 0 이하 금액 충전 시 예외 + 기존 포인트 유지 확인
+2. **@Transactional 없이 테스트 통과 확인** (단일 save 패턴)
+3. **@Transactional 추가 후 테스트 재통과 확인**
+
+### 산출물
+
+| 파일 | 변경 | 종류 |
+|------|------|------|
+| `MemberServiceTest.java` | 신규 — 4개 테스트 | 테스트 |
+| `MemberService.java` | `@Transactional` 추가 (import 1줄 + 어노테이션 2줄) | 작동 변경 |
+
+---
