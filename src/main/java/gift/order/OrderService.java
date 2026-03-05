@@ -4,6 +4,7 @@ import gift.member.Member;
 import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,18 +17,18 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OptionRepository optionRepository;
     private final MemberRepository memberRepository;
-    private final KakaoMessageClient kakaoMessageClient;
+    private final ApplicationEventPublisher publisher;
 
     public OrderService(
         OrderRepository orderRepository,
         OptionRepository optionRepository,
         MemberRepository memberRepository,
-        KakaoMessageClient kakaoMessageClient
+        ApplicationEventPublisher publisher
     ) {
         this.orderRepository = orderRepository;
         this.optionRepository = optionRepository;
         this.memberRepository = memberRepository;
-        this.kakaoMessageClient = kakaoMessageClient;
+        this.publisher = publisher;
     }
 
     @Transactional(readOnly = true)
@@ -49,22 +50,19 @@ public class OrderService {
         member.deductPoint(price);
 
         Order saved = orderRepository.save(request.toEntity(option, member.getId(), price));
-        sendKakaoMessageIfPossible(member, saved, option);
-        return OrderResponse.from(saved);
-    }
 
-    private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {
-        if (!member.canSendKakaoMessage()) {
-            return;
+        if (member.canSendKakaoMessage()) {
+            var product = option.getProduct();
+            var message = new KakaoOrderMessage(
+                product.getName(),
+                option.getName(),
+                saved.getQuantity(),
+                saved.getTotalPrice(),
+                saved.getMessage()
+            );
+            publisher.publishEvent(new OrderCompletedEvent(member.getKakaoAccessToken(), message));
         }
-        var product = option.getProduct();
-        var message = new KakaoOrderMessage(
-            product.getName(),
-            option.getName(),
-            order.getQuantity(),
-            order.getTotalPrice(),
-            order.getMessage()
-        );
-        kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), message);
+
+        return OrderResponse.from(saved);
     }
 }
