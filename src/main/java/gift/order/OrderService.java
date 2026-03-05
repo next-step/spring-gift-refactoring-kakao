@@ -1,18 +1,14 @@
 package gift.order;
 
 import gift.member.Member;
-import gift.member.MemberRepository;
-import gift.option.Option;
 import gift.option.OptionRepository;
 import gift.product.Product;
-import gift.wish.WishRepository;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class OrderService {
@@ -20,20 +16,17 @@ public class OrderService {
 
   private final OrderRepository orderRepository;
   private final OptionRepository optionRepository;
-  private final WishRepository wishRepository;
-  private final MemberRepository memberRepository;
+  private final OrderTransactionService orderTransactionService;
   private final KakaoMessageClient kakaoMessageClient;
 
   public OrderService(
       OrderRepository orderRepository,
       OptionRepository optionRepository,
-      WishRepository wishRepository,
-      MemberRepository memberRepository,
+      OrderTransactionService orderTransactionService,
       KakaoMessageClient kakaoMessageClient) {
     this.orderRepository = orderRepository;
     this.optionRepository = optionRepository;
-    this.wishRepository = wishRepository;
-    this.memberRepository = memberRepository;
+    this.orderTransactionService = orderTransactionService;
     this.kakaoMessageClient = kakaoMessageClient;
   }
 
@@ -47,40 +40,22 @@ public class OrderService {
   // 3. deduct points
   // 4. save order
   // 5. cleanup wish
-  // 6. send kakao notification
-  @Transactional
+  // --- transaction boundary ---
+  // 6. send kakao notification (best-effort, outside transaction)
   public Optional<OrderResponse> createOrder(Member member, OrderRequest request) {
-    return optionRepository
-        .findById(request.optionId())
-        .map(
-            option -> {
-              // subtract stock
-              option.subtractQuantity(request.quantity());
-              optionRepository.save(option);
+    Optional<Order> orderOpt = orderTransactionService.executeOrder(member, request);
 
-              // save order
-              Order saved =
-                  orderRepository.save(
-                      new Order(option, member.getId(), request.quantity(), request.message()));
+    orderOpt.ifPresent(
+        order -> {
+          optionRepository
+              .findById(request.optionId())
+              .ifPresent(option -> sendKakaoMessageIfPossible(member, order, option));
+        });
 
-              // deduct points
-              member.deductPoint(saved.getTotalPrice());
-              memberRepository.save(member);
-
-              // cleanup wish
-              Long productId = option.getProduct().getId();
-              wishRepository
-                  .findByMemberIdAndProductId(member.getId(), productId)
-                  .ifPresent(wishRepository::delete);
-
-              // best-effort kakao notification
-              sendKakaoMessageIfPossible(member, saved, option);
-
-              return OrderResponse.from(saved);
-            });
+    return orderOpt.map(OrderResponse::from);
   }
 
-  private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {
+  private void sendKakaoMessageIfPossible(Member member, Order order, gift.option.Option option) {
     if (member.getKakaoAccessToken() == null) {
       return;
     }
