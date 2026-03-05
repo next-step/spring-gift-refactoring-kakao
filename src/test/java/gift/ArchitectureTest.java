@@ -42,9 +42,11 @@ class ArchitectureTest {
           .haveSimpleNameEndingWith("Repository");
 
   @ArchTest
-  static final ArchRule RestController는_Repository를_직접_사용하지_않는다 =
+  static final ArchRule Controller는_Repository를_직접_사용하지_않는다 =
       noClasses()
           .that()
+          .areAnnotatedWith(Controller.class)
+          .or()
           .areAnnotatedWith(RestController.class)
           .should()
           .dependOnClassesThat()
