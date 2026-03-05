@@ -80,6 +80,18 @@
 - [x] refactor(order): OrderService → OrderQueryService + OrderCommandService 분리
 - [x] test: 인수테스트를 조회/명령 단위로 분리
 
+### Phase 10: 단위 테스트 작성
+#### 도메인 엔티티
+- [ ] test(member): Member 도메인 로직 단위 테스트 (verifyPassword, chargePoint, deductPoint)
+- [ ] test(option): Option 도메인 로직 단위 테스트 (calculatePrice, subtractQuantity)
+#### 서비스
+- [ ] test(category): CategoryQueryService, CategoryCommandService 단위 테스트
+- [ ] test(member): MemberQueryService, MemberCommandService 단위 테스트
+- [ ] test(product): ProductQueryService, ProductCommandService 단위 테스트
+- [ ] test(option): OptionQueryService, OptionCommandService 단위 테스트
+- [ ] test(wish): WishQueryService, WishCommandService 단위 테스트
+- [ ] test(order): OrderQueryService, OrderCommandService 단위 테스트
+
 ## 구현 전략
 
 ### Phase 0: 테스트 코드 작성
@@ -155,6 +167,23 @@
   - Controller는 용도에 따라 QueryService 또는 CommandService를 주입받음
 - **순서**: 의존성 적은 도메인부터 (category → member → product → option → wish → order)
 - **원칙**: 구조 변경(`refactor`)이므로 외부 동작 불변. 기존 테스트 통과로 검증
+- **검증**: 각 커밋마다 `./gradlew test` 통과
+
+### Phase 10: 단위 테스트 작성
+- **목적**: 도메인 엔티티와 Service 계층의 비즈니스 로직을 격리 테스트하여, 인수테스트(통합)가 놓칠 수 있는 세밀한 분기와 엣지 케이스를 검증
+- **현황**: 인수테스트(MockMvc)만 존재. 로직이 복잡해질수록 통합테스트만으로는 실패 원인 추적이 어려움
+- **대상**:
+  - 도메인 엔티티: 검증/연산 로직이 있는 Member, Option
+  - 서비스: CQRS 분리된 12개 Service (6 QueryService + 6 CommandService)
+- **도구**: JUnit 5 + Mockito (`@ExtendWith(MockitoExtension.class)`, `@Mock`, `@InjectMocks`)
+- **테스트 범위**:
+  - 도메인 엔티티: 성공 케이스, 경계값, 예외 발생 조건 (Mockito 불필요, 순수 단위 테스트)
+    - `Member`: verifyPassword (성공/실패/null), chargePoint (성공/0이하), deductPoint (성공/잔액부족/0이하)
+    - `Option`: calculatePrice (정상 계산), subtractQuantity (성공/재고 부족)
+  - QueryService: 조회 성공, 존재하지 않는 리소스 예외
+  - CommandService: 생성/수정/삭제 성공, 유효성 검증 실패, 도메인 예외 발생
+- **네이밍**: `{Class}Test.java` (예: `MemberTest.java`, `CategoryQueryServiceTest.java`)
+- **순서**: 도메인 엔티티 먼저, 이후 의존성 적은 도메인부터 서비스 테스트 (category → member → product → option → wish → order)
 - **검증**: 각 커밋마다 `./gradlew test` 통과
 
 ## 진행 기록
