@@ -69,6 +69,29 @@ Feature: 상품 관리
     And 응답 body의 "price"가 6000이다
     And 응답 body의 "imageUrl"이 "http://example.com/new.png"이다
 
+  # --- Category Filter ---
+
+  @happy
+  Scenario: P-F1 카테고리별 상품 필터링 성공
+    Given "교환권" 카테고리에 상품 2개가 존재한다
+    When 해당 카테고리의 상품 목록 조회 요청을 보낸다
+    Then 응답 상태 코드는 200
+    And 응답 body의 "content" 배열 크기가 2이다
+
+  @happy @state
+  Scenario: P-F2 다른 카테고리 상품은 필터링되어 제외된다
+    Given "교환권" 카테고리에 "상품A" 상품이 존재한다
+    And "상품권" 카테고리에 "상품B" 상품이 존재한다
+    When "교환권" 카테고리의 상품 목록 조회 요청을 보낸다
+    Then 응답 상태 코드는 200
+    And 응답 body의 "content" 배열 크기가 1이다
+
+  @happy
+  Scenario: P-F3 존재하지 않는 카테고리로 필터링 시 빈 결과
+    When 존재하지 않는 카테고리의 상품 목록 조회 요청을 보낸다
+    Then 응답 상태 코드는 200
+    And 응답 body의 "content" 배열 크기가 0이다
+
   # --- Error Flow ---
 
   @error
