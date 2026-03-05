@@ -18,6 +18,8 @@ public interface OptionRepository extends JpaRepository<Option, Long> {
 
     boolean existsByProductIdAndName(Long productId, String name);
 
+    boolean existsByProductIdAndNameAndIdNot(Long productId, String name, Long optionId);
+
     List<Option> findAllByProductId(Long productId);
 
     long countByProductId(Long productId);

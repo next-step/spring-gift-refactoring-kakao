@@ -47,6 +47,25 @@ public class OptionService {
     }
 
     @Transactional
+    public OptionResponse updateOption(Long productId, Long optionId, OptionRequest updateRequest) {
+        productQueryPort.validateExists(productId);
+
+        String name = updateRequest.name();
+        int quantity = updateRequest.quantity();
+
+        if (optionRepo.existsByProductIdAndNameAndIdNot(productId, name, optionId)) {
+            throw new DuplicateOptionNameException();
+        }
+
+        Option option = optionRepo.findByIdAndProductId(optionId, productId)
+                .orElseThrow(NotFoundException::optionNotFound);
+
+        option.update(name, quantity);
+
+        return OptionResponse.from(option);
+    }
+
+    @Transactional
     public void deleteOption(Long productId, Long optionId) {
         productQueryPort.validateExists(productId);
 
