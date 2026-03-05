@@ -110,3 +110,6 @@ auth ↔ member 순환 참조 해소 — member 패키지에 TokenProvider 인�
 
 ## 프롬프트 33
 6-6. wish 테이블 UNIQUE 제약 추가 — V3 Flyway 마이그레이션으로 wish 테이블에 UNIQUE(member_id, product_id) 제약 추가. WishService.addWish()에서 save() 호출을 try-catch로 감싸 DataIntegrityViolationException → IllegalArgumentException 변환. 기존 app-level 중복 검사(200 OK 반환)는 유지하고, DB 제약은 race condition 안전망으로 동작.
+
+## 프롬프트 34
+6-7. 에러 메시지 언어 통일 — Member.chargePoint()의 영어 메시지와 MemberService의 영어 메시지 4개를 한국어로 변환. IllegalArgumentException 3종(4개소)은 응답 본문에 노출되므로 작동 변경, NoSuchElementException 1종(1개소)은 응답 본문 미노출이므로 구조 변경. 인수 테스트는 에러 메시지 본문을 단언하지 않아 수정 불필요.

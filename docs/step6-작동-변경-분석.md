@@ -495,10 +495,26 @@ public Order createOrder(Long memberId, Long optionId, int quantity, String mess
 
 **리팩토링 이점**: 변경 위험 통제 — 에러 메시지 변경이나 국제화 도입 시 기준이 명확해진다.
 
-**테스트 영향**: 인수 테스트에서 에러 메시지 본문을 검증하는 시나리오가 있다면 수정 필요.
+**테스트 영향**: 인수 테스트에서 에러 메시지 본문을 검증하는 시나리오가 없으므로 수정 불필요.
 
-**영향 범위**: `Member.java`, `MemberService.java` 및 에러 메시지를 포함하는 전 파일
+**영향 범위**: `Member.java`, `MemberService.java`
 **우선순위**: 낮음
+
+**구현 내역**:
+
+영어 메시지 4개를 한국어로 변환:
+
+| 파일 | 변경 전 | 변경 후 | 분류 |
+|------|---------|---------|------|
+| `Member.java:50` | `"Amount must be greater than zero."` | `"충전 금액은 1 이상이어야 합니다."` | 작동 변경 (응답 본문 노출) |
+| `MemberService.java:29` | `"Invalid email or password."` | `"이메일 또는 비밀번호가 올바르지 않습니다."` | 작동 변경 (응답 본문 노출) |
+| `MemberService.java:31` | `"Invalid email or password."` | `"이메일 또는 비밀번호가 올바르지 않습니다."` | 작동 변경 (응답 본문 노출) |
+| `MemberService.java:58` | `"Member not found. id="` | `"회원이 존재하지 않습니다. id="` | 구조 변경 (NoSuchElementException → `ResponseEntity<Void>`, 응답 본문 미노출) |
+| `MemberService.java:64` | `"Email is already registered."` | `"이미 등록된 이메일입니다."` | 작동 변경 (응답 본문 노출) |
+
+> **참고**: `NoSuchElementException` 메시지(`"Member not found. id="`)는 `GlobalExceptionHandler`에서 `ResponseEntity<Void>`(본문 없음)로 처리되므로 클라이언트 응답에 노출되지 않는다. 따라서 이 1건은 클라이언트 관점에서 작동 변경이 아닌 구조 변경이다.
+
+**검증 결과**: `./gradlew cucumberTest` — 20개 시나리오 전체 통과
 
 ---
 
