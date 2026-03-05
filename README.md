@@ -283,11 +283,11 @@
 ### 5. 중복 제거 및 코드 일관성
 
 #### 5-1. product 패키지 — ProductService 중복 메서드 통합 (구조)
-- [ ] `getProduct()` 삭제, `ProductController`에서 `getById()` 사용으로 변경
-- [ ] `createProduct(ProductRequest)`가 `validateName()` 후 `createProduct(String, int, String, Long)` 위임하도록 변경
-- [ ] `updateProduct(Long, ProductRequest)`가 `validateName()` 후 `updateProduct(Long, String, int, String, Long)` 위임하도록 변경
-- [ ] `updateProduct(Long, String, int, String, Long)`에서 불필요한 `productRepository.save()` 제거 (dirty checking 활용)
-- [ ] 기존 `ProductControllerTest` + `AdminProductControllerTest` 전체 통과 확인
+- [x] `getProduct()` 삭제, `ProductController`에서 `getById()` 사용으로 변경
+- [x] `createProduct(ProductRequest)`가 `validateName()` 후 `createProduct(String, int, String, Long)` 위임하도록 변경
+- [x] `updateProduct(Long, ProductRequest)`가 `validateName()` 후 `updateProduct(Long, String, int, String, Long)` 위임하도록 변경
+- [x] `updateProduct(Long, String, int, String, Long)`에서 불필요한 `productRepository.save()` 제거 (dirty checking 활용)
+- [x] 기존 `ProductControllerTest` + `AdminProductControllerTest` 전체 통과 확인
 
 #### 5-2. wish 패키지 — WishController 예외 처리를 @ExceptionHandler 방식으로 통일 (구조)
 - [ ] `WishService.removeWish()`에서 소유권 실패 시 `IllegalArgumentException` → `IllegalStateException` 변경

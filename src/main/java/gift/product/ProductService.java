@@ -49,7 +49,6 @@ public class ProductService {
         Category category = categoryRepository.findById(categoryId)
             .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
         product.update(name, price, imageUrl, category);
-        productRepository.save(product);
         return ProductResponse.from(product);
     }
 
@@ -62,31 +61,16 @@ public class ProductService {
         return productRepository.findAll(pageable).map(ProductResponse::from);
     }
 
-    public ProductResponse getProduct(Long id) {
-        Product product = productRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
-        return ProductResponse.from(product);
-    }
-
     @Transactional
     public ProductResponse createProduct(ProductRequest request) {
         validateName(request.name());
-        Category category = categoryRepository.findById(request.categoryId())
-            .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + request.categoryId()));
-        Product saved = productRepository.save(request.toEntity(category));
-        return ProductResponse.from(saved);
+        return createProduct(request.name(), request.price(), request.imageUrl(), request.categoryId());
     }
 
     @Transactional
     public ProductResponse updateProduct(Long id, ProductRequest request) {
         validateName(request.name());
-        Product product = productRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
-        Category category = categoryRepository.findById(request.categoryId())
-            .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + request.categoryId()));
-        product.update(request.name(), request.price(), request.imageUrl(), category);
-        productRepository.save(product);
-        return ProductResponse.from(product);
+        return updateProduct(id, request.name(), request.price(), request.imageUrl(), request.categoryId());
     }
 
     private void validateName(String name) {
