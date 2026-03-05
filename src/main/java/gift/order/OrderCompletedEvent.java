@@ -2,4 +2,4 @@ package gift.order;
 
 import gift.product.Product;
 
-public record OrderCompletedEvent(String accessToken, Order order, Product product) {}
+public record OrderCompletedEvent(Long memberId, String accessToken, Order order, Product product) {}
