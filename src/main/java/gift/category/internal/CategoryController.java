@@ -29,6 +29,16 @@ public class CategoryController {
                 .ok(responses);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<CategoryResponse> getCategory(
+            @PathVariable Long id
+    ) {
+        CategoryResponse response = categoryService.getCategory(id);
+
+        return ResponseEntity
+                .ok(response);
+    }
+
     @PostMapping
     public ResponseEntity<CategoryResponse> createCategory(
             @Valid @RequestBody CategoryRequest request
