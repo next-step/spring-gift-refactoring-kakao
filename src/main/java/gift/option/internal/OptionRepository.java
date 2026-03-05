@@ -15,4 +15,11 @@ public interface OptionRepository extends JpaRepository<Option, Long> {
     Optional<Option> findByIdAndProductId(Long optionId, Long productId);
 
     boolean existsByProductIdAndName(Long productId, String name);
+
+    @Query("""
+            select o from Option o
+            inner join fetch o.product
+                where o.id = :id
+            """)
+    Optional<Option> findByIdInnerJoinFetchProduct(Long id);
 }
