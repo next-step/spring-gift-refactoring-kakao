@@ -45,13 +45,8 @@ public class ProductService {
 
     @Transactional
     public ProductResponse create(String name, int price, String imageUrl, Long categoryId, boolean allowKakao) {
-        List<String> errors = ProductNameValidator.validate(name, allowKakao);
-        if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(String.join(", ", errors));
-        }
-
-        Category category = categoryRepository.findById(categoryId)
-            .orElseThrow(() -> new NoSuchElementException("카테고리를 찾을 수 없습니다. id=" + categoryId));
+        validateName(name, allowKakao);
+        Category category = findCategoryById(categoryId);
 
         Product saved = productRepository.save(new Product(name, price, imageUrl, category));
         return ProductResponse.from(saved);
@@ -59,13 +54,8 @@ public class ProductService {
 
     @Transactional
     public ProductResponse update(Long id, String name, int price, String imageUrl, Long categoryId, boolean allowKakao) {
-        List<String> errors = ProductNameValidator.validate(name, allowKakao);
-        if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(String.join(", ", errors));
-        }
-
-        Category category = categoryRepository.findById(categoryId)
-            .orElseThrow(() -> new NoSuchElementException("카테고리를 찾을 수 없습니다. id=" + categoryId));
+        validateName(name, allowKakao);
+        Category category = findCategoryById(categoryId);
 
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("상품을 찾을 수 없습니다. id=" + id));
@@ -73,6 +63,18 @@ public class ProductService {
         product.update(name, price, imageUrl, category);
         Product saved = productRepository.save(product);
         return ProductResponse.from(saved);
+    }
+
+    private void validateName(String name, boolean allowKakao) {
+        List<String> errors = ProductNameValidator.validate(name, allowKakao);
+        if (!errors.isEmpty()) {
+            throw new IllegalArgumentException(String.join(", ", errors));
+        }
+    }
+
+    private Category findCategoryById(Long categoryId) {
+        return categoryRepository.findById(categoryId)
+            .orElseThrow(() -> new NoSuchElementException("카테고리를 찾을 수 없습니다. id=" + categoryId));
     }
 
     @Transactional
