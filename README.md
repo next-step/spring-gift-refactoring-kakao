@@ -211,9 +211,9 @@
 ### 1. 도메인 책임 되찾기
 
 #### 1-1. wish 패키지 — 소유권 검증을 도메인으로 이동 (구조)
-- [ ] `Wish.isOwnedBy(Long memberId)` 도메인 메서드 추가
-- [ ] `WishService.removeWish()`에서 인라인 비교를 `wish.isOwnedBy(memberId)` 호출로 교체
-- [ ] 기존 `WishControllerTest` 전체 통과 확인
+- [x] `Wish.isOwnedBy(Long memberId)` 도메인 메서드 추가
+- [x] `WishService.removeWish()`에서 인라인 비교를 `wish.isOwnedBy(memberId)` 호출로 교체
+- [x] 기존 `WishControllerTest` 전체 통과 확인
 
 #### 1-2. option 패키지 — 주문 총액 계산을 도메인으로 이동 (구조)
 - [ ] `Option.calculateTotalPrice(int quantity)` 도메인 메서드 추가
