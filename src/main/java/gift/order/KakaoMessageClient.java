@@ -4,6 +4,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClient;
 
+import gift.product.Product;
+
 @Component
 public class KakaoMessageClient {
     private final RestClient restClient;
