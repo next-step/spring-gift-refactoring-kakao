@@ -174,7 +174,29 @@ class OrderControllerTest {
             .when()
                 .post("/api/orders")
             .then()
-                .statusCode(500);
+                .statusCode(400);
+
+        // 주문 미생성 확인
+        RestAssured
+            .given()
+                .header("Authorization", "Bearer " + token)
+                .queryParam("page", 0)
+                .queryParam("size", 10)
+            .when()
+                .get("/api/orders")
+            .then()
+                .statusCode(200)
+                .body("content", hasSize(0));
+
+        // 재고 미변경 확인 (quantity=1 유지)
+        RestAssured
+            .given()
+                .header("Authorization", "Bearer " + token)
+            .when()
+                .get("/api/products/1/options")
+            .then()
+                .statusCode(200)
+                .body("[0].quantity", equalTo(1));
     }
 
     @Test
@@ -197,6 +219,28 @@ class OrderControllerTest {
             .when()
                 .post("/api/orders")
             .then()
-                .statusCode(500);
+                .statusCode(400);
+
+        // 주문 미생성 확인
+        RestAssured
+            .given()
+                .header("Authorization", "Bearer " + token)
+                .queryParam("page", 0)
+                .queryParam("size", 10)
+            .when()
+                .get("/api/orders")
+            .then()
+                .statusCode(200)
+                .body("content", hasSize(0));
+
+        // 재고 미변경 확인 (quantity=10 유지)
+        RestAssured
+            .given()
+                .header("Authorization", "Bearer " + token)
+            .when()
+                .get("/api/products/1/options")
+            .then()
+                .statusCode(200)
+                .body("[0].quantity", equalTo(10));
     }
 }

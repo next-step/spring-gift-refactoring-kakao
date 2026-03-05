@@ -36,6 +36,11 @@ public class OrderController {
         return ResponseEntity.notFound().build();
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Void> handleBadRequest(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().build();
+    }
+
     @GetMapping
     public ResponseEntity<?> getOrders(
         @RequestHeader("Authorization") String authorization,

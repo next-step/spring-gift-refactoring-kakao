@@ -236,11 +236,11 @@
 - [x] 기존 `주문_생성_실패_옵션_미존재` 테스트가 404 반환 확인
 
 #### 2-2. order 패키지 — IllegalArgumentException 핸들러 추가, 500→400 (작동)
-- [ ] `OrderController`에 `@ExceptionHandler(IllegalArgumentException.class)` 추가
-- [ ] `OrderControllerTest`: `주문_생성_실패_재고_부족` statusCode `500` → `400` 변경
-- [ ] `OrderControllerTest`: `주문_생성_실패_포인트_부족` statusCode `500` → `400` 변경
-- [ ] 상태 재조회 검증 추가 (재고 부족 시 주문 미생성 + 재고 미변경)
-- [ ] 상태 재조회 검증 추가 (포인트 부족 시 주문 미생성 + 재고 미변경)
+- [x] `OrderController`에 `@ExceptionHandler(IllegalArgumentException.class)` 추가
+- [x] `OrderControllerTest`: `주문_생성_실패_재고_부족` statusCode `500` → `400` 변경
+- [x] `OrderControllerTest`: `주문_생성_실패_포인트_부족` statusCode `500` → `400` 변경
+- [x] 상태 재조회 검증 추가 (재고 부족 시 주문 미생성 + 재고 미변경)
+- [x] 상태 재조회 검증 추가 (포인트 부족 시 주문 미생성 + 재고 미변경)
 
 ### 3. 트랜잭션 경계 세우기
 
