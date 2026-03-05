@@ -93,12 +93,7 @@ public class AdminProductController {
         String imageUrl,
         Long categoryId
     ) {
-        model.addAttribute("errors", errors);
-        model.addAttribute("name", name);
-        model.addAttribute("price", price);
-        model.addAttribute("imageUrl", imageUrl);
-        model.addAttribute("categoryId", categoryId);
-        model.addAttribute("categories", adminProductService.findAllCategories());
+        populateFormCommon(model, errors, name, price, imageUrl, categoryId);
     }
 
     private void populateEditForm(
@@ -110,8 +105,19 @@ public class AdminProductController {
         String imageUrl,
         Long categoryId
     ) {
-        model.addAttribute("errors", errors);
+        populateFormCommon(model, errors, name, price, imageUrl, categoryId);
         model.addAttribute("product", product);
+    }
+
+    private void populateFormCommon(
+        Model model,
+        List<String> errors,
+        String name,
+        int price,
+        String imageUrl,
+        Long categoryId
+    ) {
+        model.addAttribute("errors", errors);
         model.addAttribute("name", name);
         model.addAttribute("price", price);
         model.addAttribute("imageUrl", imageUrl);

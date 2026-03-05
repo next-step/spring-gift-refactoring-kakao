@@ -229,3 +229,27 @@ step1에서 대부분 Controller의 Repository 직접 의존을 Service로 분�
 1. 소유권 판단 규칙이 도메인으로 응집되어 중복과 분산을 줄일 수 있다.
 2. 서비스는 인증 추출, 조회, 삭제 같은 흐름 조립에 집중할 수 있다.
 3. 권한 검증 규칙 변경 시 `Wish` 도메인 단일 지점 수정으로 영향 범위를 축소할 수 있다.
+
+---
+
+## 10. [구조 변경] AdminProductController 에러 폼 세팅 중복 제거
+
+### 10-1. 배경
+
+`AdminProductController`의 `populateNewFormError`, `populateEditForm`는 에러/입력값/카테고리 목록을 모델에 넣는 로직이 거의 동일했다.  
+동일 세팅이 두 메서드에 반복되어 변경 시 누락 가능성이 있어, 공통화가 필요했다.
+
+### 10-2. 수정사항
+
+| 항목 | 내용 |
+|---|---|
+| 공통 메서드 추출 | `populateFormCommon(Model, errors, name, price, imageUrl, categoryId)` 추가 |
+| new 폼 에러 메서드 정리 | `populateNewFormError`에서 공통 메서드 호출로 변경 |
+| edit 폼 에러 메서드 정리 | `populateEditForm`에서 공통 메서드 호출 후, 차이점인 `product`만 별도 세팅 |
+| 검증 | `AdminProductServiceTest` 실행으로 빌드/테스트 정상 통과 확인 |
+
+### 10-3. 기대효과
+
+1. 폼 에러 모델 세팅 중복이 제거되어 코드 가독성과 유지보수성이 향상된다.
+2. 공통 속성 변경 시 한 곳만 수정하면 되어 누락/불일치 위험을 줄일 수 있다.
+3. new/edit 폼의 차이점이 명확해져 테스트와 코드 리뷰 포인트가 단순해진다.
