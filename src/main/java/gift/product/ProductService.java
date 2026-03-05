@@ -33,24 +33,23 @@ public class ProductService {
 
     @Transactional
     public Product create(String name, int price, String imageUrl, Long categoryId, boolean allowKakao) {
-        validateName(name, allowKakao);
+        validateKakaoPolicy(name, allowKakao);
         Category category = categoryService.findById(categoryId);
         return productRepository.save(new Product(name, price, imageUrl, category));
     }
 
     @Transactional
     public Product update(Long id, String name, int price, String imageUrl, Long categoryId, boolean allowKakao) {
-        validateName(name, allowKakao);
+        validateKakaoPolicy(name, allowKakao);
         Product product = findById(id);
         Category category = categoryService.findById(categoryId);
         product.update(name, price, imageUrl, category);
         return productRepository.save(product);
     }
 
-    private void validateName(String name, boolean allowKakao) {
-        List<String> errors = ProductNameValidator.validate(name, allowKakao);
-        if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(String.join(", ", errors));
+    private void validateKakaoPolicy(String name, boolean allowKakao) {
+        if (!allowKakao && name != null && name.contains("카카오")) {
+            throw new IllegalArgumentException("\"카카오\"가 포함된 상품명은 담당 MD와 협의한 경우에만 사용할 수 있습니다.");
         }
     }
 

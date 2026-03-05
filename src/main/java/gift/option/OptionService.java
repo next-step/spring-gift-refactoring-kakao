@@ -35,7 +35,6 @@ public class OptionService {
 
     @Transactional
     public Option create(Long productId, String name, int quantity) {
-        validateName(name);
         Product product = productService.findById(productId);
 
         if (optionRepository.existsByProductIdAndName(productId, name)) {
@@ -57,10 +56,4 @@ public class OptionService {
         product.removeOption(option);
     }
 
-    private void validateName(String name) {
-        List<String> errors = OptionNameValidator.validate(name);
-        if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(String.join(", ", errors));
-        }
-    }
 }
