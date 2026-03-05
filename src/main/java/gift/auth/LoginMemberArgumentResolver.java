@@ -34,8 +34,7 @@ public class LoginMemberArgumentResolver implements HandlerMethodArgumentResolve
     ) {
         var authorization = webRequest.getHeader("Authorization");
         if (authorization == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                "Required request header 'Authorization' is not present");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
         }
 
         var member = authenticationResolver.extractMember(authorization);
