@@ -137,4 +137,27 @@ class MemberServiceTest {
 
         then(memberRepository).should().deleteById(1L);
     }
+
+    @Test
+    void findOrCreateByEmailAndUpdateKakaoToken_existingMember_updatesToken() {
+        given(memberRepository.findByEmail("test@test.com")).willReturn(Optional.of(member));
+        given(memberRepository.save(any(Member.class))).willAnswer(inv -> inv.getArgument(0));
+
+        var result = memberService.findOrCreateByEmailAndUpdateKakaoToken("test@test.com", "kakao-token");
+
+        assertThat(result.getKakaoAccessToken()).isEqualTo("kakao-token");
+        assertThat(result.getEmail()).isEqualTo("test@test.com");
+    }
+
+    @Test
+    void findOrCreateByEmailAndUpdateKakaoToken_newMember_createsWithToken() {
+        given(memberRepository.findByEmail("new@kakao.com")).willReturn(Optional.empty());
+        given(memberRepository.save(any(Member.class))).willAnswer(inv -> inv.getArgument(0));
+
+        var result = memberService.findOrCreateByEmailAndUpdateKakaoToken("new@kakao.com", "kakao-token");
+
+        assertThat(result.getEmail()).isEqualTo("new@kakao.com");
+        assertThat(result.getKakaoAccessToken()).isEqualTo("kakao-token");
+        assertThat(result.getPassword()).isNull();
+    }
 }

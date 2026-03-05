@@ -2,18 +2,15 @@ package gift.auth;
 
 import gift.TestFixtures;
 import gift.member.Member;
-import gift.member.MemberRepository;
+import gift.member.MemberService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.verify;
@@ -25,7 +22,7 @@ class KakaoAuthServiceTest {
     private KakaoLoginClient kakaoLoginClient;
 
     @Mock
-    private MemberRepository memberRepository;
+    private MemberService memberService;
 
     @Mock
     private JwtProvider jwtProvider;
@@ -41,59 +38,60 @@ class KakaoAuthServiceTest {
         given(kakaoLoginClient.requestUserInfo("kakao-token"))
             .willReturn(new KakaoLoginClient.KakaoUserResponse(
                 new KakaoLoginClient.KakaoUserResponse.KakaoAccount("user@kakao.com")));
-        given(memberRepository.findByEmail("user@kakao.com")).willReturn(Optional.of(member));
-        given(memberRepository.save(any(Member.class))).willAnswer(inv -> inv.getArgument(0));
+        given(memberService.findOrCreateByEmailAndUpdateKakaoToken("user@kakao.com", "kakao-token"))
+            .willReturn(member);
         given(jwtProvider.createToken("user@kakao.com")).willReturn("jwt-token");
 
         var result = kakaoAuthService.loginOrRegister("code123");
 
         assertThat(result.token()).isEqualTo("jwt-token");
-        assertThat(member.getKakaoAccessToken()).isEqualTo("kakao-token");
     }
 
     @Test
     void loginOrRegister_newMember_createsAndReturnsJwt() {
+        var member = TestFixtures.member(null, "new@kakao.com", null);
         given(kakaoLoginClient.requestAccessToken("code123"))
             .willReturn(new KakaoLoginClient.KakaoTokenResponse("kakao-token"));
         given(kakaoLoginClient.requestUserInfo("kakao-token"))
             .willReturn(new KakaoLoginClient.KakaoUserResponse(
                 new KakaoLoginClient.KakaoUserResponse.KakaoAccount("new@kakao.com")));
-        given(memberRepository.findByEmail("new@kakao.com")).willReturn(Optional.empty());
-        given(memberRepository.save(any(Member.class))).willAnswer(inv -> inv.getArgument(0));
+        given(memberService.findOrCreateByEmailAndUpdateKakaoToken("new@kakao.com", "kakao-token"))
+            .willReturn(member);
         given(jwtProvider.createToken("new@kakao.com")).willReturn("jwt-token");
 
         var result = kakaoAuthService.loginOrRegister("code123");
 
         assertThat(result.token()).isEqualTo("jwt-token");
-        then(memberRepository).should().save(any(Member.class));
+        then(memberService).should().findOrCreateByEmailAndUpdateKakaoToken("new@kakao.com", "kakao-token");
     }
 
     @Test
-    void loginOrRegister_savesKakaoAccessToken() {
+    void loginOrRegister_delegatesToMemberService() {
         var member = TestFixtures.member(1L, "user@kakao.com", null);
         given(kakaoLoginClient.requestAccessToken("code123"))
             .willReturn(new KakaoLoginClient.KakaoTokenResponse("new-kakao-token"));
         given(kakaoLoginClient.requestUserInfo("new-kakao-token"))
             .willReturn(new KakaoLoginClient.KakaoUserResponse(
                 new KakaoLoginClient.KakaoUserResponse.KakaoAccount("user@kakao.com")));
-        given(memberRepository.findByEmail("user@kakao.com")).willReturn(Optional.of(member));
-        given(memberRepository.save(any(Member.class))).willAnswer(inv -> inv.getArgument(0));
+        given(memberService.findOrCreateByEmailAndUpdateKakaoToken("user@kakao.com", "new-kakao-token"))
+            .willReturn(member);
         given(jwtProvider.createToken("user@kakao.com")).willReturn("jwt");
 
         kakaoAuthService.loginOrRegister("code123");
 
-        assertThat(member.getKakaoAccessToken()).isEqualTo("new-kakao-token");
+        then(memberService).should().findOrCreateByEmailAndUpdateKakaoToken("user@kakao.com", "new-kakao-token");
     }
 
     @Test
     void loginOrRegister_generatesJwtWithEmail() {
+        var member = TestFixtures.member(null, "test@kakao.com", null);
         given(kakaoLoginClient.requestAccessToken("code123"))
             .willReturn(new KakaoLoginClient.KakaoTokenResponse("kakao-token"));
         given(kakaoLoginClient.requestUserInfo("kakao-token"))
             .willReturn(new KakaoLoginClient.KakaoUserResponse(
                 new KakaoLoginClient.KakaoUserResponse.KakaoAccount("test@kakao.com")));
-        given(memberRepository.findByEmail("test@kakao.com")).willReturn(Optional.empty());
-        given(memberRepository.save(any(Member.class))).willAnswer(inv -> inv.getArgument(0));
+        given(memberService.findOrCreateByEmailAndUpdateKakaoToken("test@kakao.com", "kakao-token"))
+            .willReturn(member);
         given(jwtProvider.createToken("test@kakao.com")).willReturn("jwt");
 
         kakaoAuthService.loginOrRegister("code123");

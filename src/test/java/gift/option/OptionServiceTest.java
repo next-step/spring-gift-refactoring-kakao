@@ -102,6 +102,53 @@ class OptionServiceTest {
     }
 
     @Test
+    void update_happyPath_updatesNameAndQuantity() {
+        var request = new OptionRequest("수정 옵션", 200);
+        given(productRepository.findById(1L)).willReturn(Optional.of(product));
+        given(optionRepository.findById(1L)).willReturn(Optional.of(option));
+        given(optionRepository.existsByProductIdAndNameAndIdNot(1L, "수정 옵션", 1L)).willReturn(false);
+
+        var result = optionService.update(1L, 1L, request);
+
+        assertThat(result.getName()).isEqualTo("수정 옵션");
+        assertThat(result.getQuantity()).isEqualTo(200);
+    }
+
+    @Test
+    void update_duplicateName_throws() {
+        var request = new OptionRequest("기존 옵션", 200);
+        given(productRepository.findById(1L)).willReturn(Optional.of(product));
+        given(optionRepository.findById(1L)).willReturn(Optional.of(option));
+        given(optionRepository.existsByProductIdAndNameAndIdNot(1L, "기존 옵션", 1L)).willReturn(true);
+
+        assertThatThrownBy(() -> optionService.update(1L, 1L, request))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("이미 존재하는 옵션명");
+    }
+
+    @Test
+    void update_optionNotFound_throws() {
+        var request = new OptionRequest("수정 옵션", 200);
+        given(productRepository.findById(1L)).willReturn(Optional.of(product));
+        given(optionRepository.findById(99L)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> optionService.update(1L, 99L, request))
+            .isInstanceOf(NoSuchElementException.class);
+    }
+
+    @Test
+    void update_optionNotOwnedByProduct_throws() {
+        var otherProduct = TestFixtures.product(2L, "다른 상품", TestFixtures.category());
+        var foreignOption = TestFixtures.option(3L, otherProduct, "외부 옵션", 10);
+        var request = new OptionRequest("수정 옵션", 200);
+        given(productRepository.findById(1L)).willReturn(Optional.of(product));
+        given(optionRepository.findById(3L)).willReturn(Optional.of(foreignOption));
+
+        assertThatThrownBy(() -> optionService.update(1L, 3L, request))
+            .isInstanceOf(NoSuchElementException.class);
+    }
+
+    @Test
     void delete_happyPath_deletes() {
         var option2 = TestFixtures.option(2L, product, "추가 옵션", 50);
         given(productRepository.findById(1L)).willReturn(Optional.of(product));

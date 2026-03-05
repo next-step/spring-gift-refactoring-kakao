@@ -1,40 +1,31 @@
 package gift.auth;
 
 import gift.member.Member;
-import gift.member.MemberRepository;
-import jakarta.transaction.Transactional;
-
+import gift.member.MemberService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class KakaoAuthService {
     private final KakaoLoginClient kakaoLoginClient;
-    private final MemberRepository memberRepository;
+    private final MemberService memberService;
     private final JwtProvider jwtProvider;
 
-    public KakaoAuthService(KakaoLoginClient kakaoLoginClient, MemberRepository memberRepository, JwtProvider jwtProvider) {
+    public KakaoAuthService(KakaoLoginClient kakaoLoginClient, MemberService memberService, JwtProvider jwtProvider) {
         this.kakaoLoginClient = kakaoLoginClient;
-        this.memberRepository = memberRepository;
+        this.memberService = memberService;
         this.jwtProvider = jwtProvider;
     }
-
 
     public TokenResponse loginOrRegister(String code) {
         KakaoLoginClient.KakaoTokenResponse kakaoToken = kakaoLoginClient.requestAccessToken(code);
         KakaoLoginClient.KakaoUserResponse kakaoUser = kakaoLoginClient.requestUserInfo(kakaoToken.accessToken());
-        String email = kakaoUser.email();
-        Member member = updateMemberKakaoToken(email, kakaoToken);
+
+        Member member = memberService.findOrCreateByEmailAndUpdateKakaoToken(
+            kakaoUser.email(), kakaoToken.accessToken());
 
         String token = jwtProvider.createToken(member.getEmail());
         return new TokenResponse(token);
-    }
-
-    @Transactional
-    private Member updateMemberKakaoToken(String email, KakaoLoginClient.KakaoTokenResponse kakaoToken) {
-        Member member = memberRepository.findByEmail(email)
-            .orElseGet(() -> new Member(email));
-        member.updateKakaoAccessToken(kakaoToken.accessToken());
-        memberRepository.save(member);
-        return member;
     }
 }

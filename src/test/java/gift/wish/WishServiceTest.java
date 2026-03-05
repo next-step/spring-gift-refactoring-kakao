@@ -12,6 +12,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
+import org.springframework.data.domain.Sort;
+
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -19,6 +21,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
@@ -44,12 +47,25 @@ class WishServiceTest {
     @Test
     void findByMemberId_returnsPagedWishes() {
         var wish = TestFixtures.wish(1L, 1L, product);
-        var pageable = PageRequest.of(0, 10);
-        given(wishRepository.findByMemberId(1L, pageable)).willReturn(new PageImpl<>(List.of(wish)));
+        given(wishRepository.findByMemberId(any(Long.class), any(PageRequest.class)))
+            .willReturn(new PageImpl<>(List.of(wish)));
 
-        var result = wishService.findByMemberId(1L, pageable);
+        var result = wishService.findByMemberId(1L, PageRequest.of(0, 10));
 
         assertThat(result.getContent()).hasSize(1);
+    }
+
+    @Test
+    void findByMemberId_unsorted_appliesDefaultCreatedDateDesc() {
+        var wish = TestFixtures.wish(1L, 1L, product);
+        given(wishRepository.findByMemberId(any(Long.class), any(PageRequest.class)))
+            .willReturn(new PageImpl<>(List.of(wish)));
+
+        wishService.findByMemberId(1L, PageRequest.of(0, 10));
+
+        then(wishRepository).should().findByMemberId(any(Long.class),
+            argThat(p -> p.getSort().getOrderFor("createdDate") != null
+                && p.getSort().getOrderFor("createdDate").getDirection() == Sort.Direction.DESC));
     }
 
     @Test

@@ -8,9 +8,11 @@ import gift.option.OptionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
@@ -21,11 +23,8 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
@@ -40,7 +39,7 @@ class OrderServiceTest {
     private MemberRepository memberRepository;
 
     @Mock
-    private KakaoMessageClient kakaoMessageClient;
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private OrderService orderService;
@@ -130,7 +129,7 @@ class OrderServiceTest {
     }
 
     @Test
-    void placeOrder_withKakaoToken_sendsNotification() {
+    void placeOrder_publishesOrderPlacedEvent() {
         var kakaoMember = TestFixtures.kakaoMember(1L, "kakao@test.com", "kakao-token");
         kakaoMember.chargePoint(100000);
         var request = new OrderRequest(1L, 1, null);
@@ -140,11 +139,15 @@ class OrderServiceTest {
 
         orderService.placeOrder(kakaoMember, request);
 
-        then(kakaoMessageClient).should().sendToMe(eq("kakao-token"), any(Order.class), any());
+        var captor = ArgumentCaptor.forClass(OrderPlacedEvent.class);
+        then(eventPublisher).should().publishEvent(captor.capture());
+        var event = captor.getValue();
+        assertThat(event.kakaoAccessToken()).isEqualTo("kakao-token");
+        assertThat(event.product()).isEqualTo(option.getProduct());
     }
 
     @Test
-    void placeOrder_withoutKakaoToken_skipsNotification() {
+    void placeOrder_withoutKakaoToken_publishesEventWithNullToken() {
         var request = new OrderRequest(1L, 1, null);
         given(optionRepository.findById(1L)).willReturn(Optional.of(option));
         given(memberRepository.save(any(Member.class))).willAnswer(inv -> inv.getArgument(0));
@@ -152,23 +155,9 @@ class OrderServiceTest {
 
         orderService.placeOrder(member, request);
 
-        then(kakaoMessageClient).should(never()).sendToMe(any(), any(), any());
-    }
-
-    @Test
-    void placeOrder_notificationFails_orderStillSucceeds() {
-        var kakaoMember = TestFixtures.kakaoMember(1L, "kakao@test.com", "kakao-token");
-        kakaoMember.chargePoint(100000);
-        var request = new OrderRequest(1L, 1, null);
-        given(optionRepository.findById(1L)).willReturn(Optional.of(option));
-        given(memberRepository.save(any(Member.class))).willAnswer(inv -> inv.getArgument(0));
-        given(orderRepository.save(any(Order.class))).willAnswer(inv -> inv.getArgument(0));
-        doThrow(new RuntimeException("알림 실패")).when(kakaoMessageClient)
-            .sendToMe(any(), any(), any());
-
-        var result = orderService.placeOrder(kakaoMember, request);
-
-        assertThat(result).isNotNull();
+        var captor = ArgumentCaptor.forClass(OrderPlacedEvent.class);
+        then(eventPublisher).should().publishEvent(captor.capture());
+        assertThat(captor.getValue().kakaoAccessToken()).isNull();
     }
 
     @Test

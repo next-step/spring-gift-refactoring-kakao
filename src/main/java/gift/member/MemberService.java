@@ -72,4 +72,12 @@ public class MemberService {
     public void delete(Long id) {
         memberRepository.deleteById(id);
     }
+
+    @Transactional
+    public Member findOrCreateByEmailAndUpdateKakaoToken(String email, String accessToken) {
+        Member member = memberRepository.findByEmail(email)
+            .orElseGet(() -> new Member(email));
+        member.updateKakaoAccessToken(accessToken);
+        return memberRepository.save(member);
+    }
 }

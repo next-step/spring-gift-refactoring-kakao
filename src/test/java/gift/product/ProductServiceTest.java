@@ -55,6 +55,30 @@ class ProductServiceTest {
     }
 
     @Test
+    void findAll_withCategoryId_returnsFilteredPage() {
+        var pageable = PageRequest.of(0, 10);
+        var page = new PageImpl<>(List.of(product));
+        given(productRepository.findByCategoryId(1L, pageable)).willReturn(page);
+
+        var result = productService.findAll(1L, pageable);
+
+        assertThat(result.getContent()).hasSize(1);
+        then(productRepository).should().findByCategoryId(1L, pageable);
+    }
+
+    @Test
+    void findAll_withNullCategoryId_returnsAll() {
+        var pageable = PageRequest.of(0, 10);
+        var page = new PageImpl<>(List.of(product));
+        given(productRepository.findAll(pageable)).willReturn(page);
+
+        var result = productService.findAll(null, pageable);
+
+        assertThat(result.getContent()).hasSize(1);
+        then(productRepository).should().findAll(pageable);
+    }
+
+    @Test
     void findById_existing_returns() {
         given(productRepository.findById(1L)).willReturn(Optional.of(product));
 
