@@ -156,10 +156,10 @@ private void validateName(String name) {
 `ProductNameValidator`에 `validateOrThrow(String name)` 메서드를 추가하고 Controller의 private `validateName()`을 제거했다. `OptionController`는 DTO가 검증을 담당하므로 `validateName()` 제거 후 별도 호출 없음.
 
 ```
-gift.product.ProductNameValidator
+gift.product.validation.ProductNameValidator
   └── validateOrThrow(name)  ← throw 로직 포함, Controller private 메서드 대체
 
-gift.option.OptionController
+gift.option.controller.OptionController
   └── validateName() 제거  ← OptionRequest @Valid가 대체
 ```
 

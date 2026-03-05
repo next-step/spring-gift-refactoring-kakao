@@ -1,0 +1,20 @@
+package gift.member.dto;
+
+import gift.member.entity.Member;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+
+/**
+ * Request body for member registration and login.
+ *
+ * @author brian.kim
+ * @since 1.0
+ */
+public record MemberRequest(
+    @NotBlank @Email String email,
+    @NotBlank String password
+) {
+    public Member toEntity() {
+        return new Member(email, password);
+    }
+}
