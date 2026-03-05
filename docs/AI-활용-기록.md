@@ -59,3 +59,22 @@
   - 에러 메시지 변경은 API 응답 본문이 달라지므로 구조 변경이 아닌 작동 변경에 해당함 — 구조 변경 커밋에 섞지 말아야 함
   - 서비스 내부 중첩 타입이 컨트롤러에 `WishService.AddWishResult`로 노출되면 결합도가 높아짐 — 계층 간 계약은 별도 파일로 분리하는 것이 적절
   - `@RestControllerAdvice`를 전역 적용하면 기존에 `@ExceptionHandler`가 없던 컨트롤러의 작동이 바뀔 수 있음 (500→400) — `assignableTypes`로 범위를 한정하여 순수 구조 변경을 유지해야 함
+
+## 6단계: 리팩터링 완성하기
+
+- **활용 방식**: 리팩토링 전략을 먼저 수립하고, Phase별로 "테스트 먼저 → 구현 → 전체 테스트 확인 → 커밋" 사이클을 반복. 각 Phase마다 AI에게 "지금은 이것만" 범위를 명확히 지시하여 진행.
+- **수정 내용**:
+  - Phase 1: `OrderService.createOrder`에 `@Transactional` 적용 — 재고·포인트·주문 저장을 원자적으로 묶음
+  - Phase 2-1: `GlobalExceptionHandler`의 `assignableTypes` 제거하여 전역 적용 — `IllegalArgumentException` 발생 시 500→400
+  - Phase 2-2: 주문 완료 후 위시리스트 정리 구현 — `wishRepository.findByMemberIdAndProductId`로 조회 후 삭제
+  - Phase 3-1: `AdminProductController` → `ProductService` 위임 — 이름 검증, 카테고리 조회, 상품 CRUD를 서비스로 이동
+  - Phase 3-2: `AdminMemberController` → `MemberService` 위임 — 회원 CRUD, 포인트 충전을 서비스로 이동
+  - Phase 3-3: `KakaoAuthController` → `KakaoAuthService` 추출 — 자동가입, 토큰 업데이트, JWT 발급 로직 이동
+  - Phase 3-4: 가격 계산 중복 제거 — `Order.getTotalPrice()` 도메인 메서드 추가, `OrderService`와 `KakaoMessageClient`의 중복 계산 제거
+  - Phase 3-5: 인증 체크 중복 제거 — `AuthenticationResolver`가 null 대신 `UnauthorizedException`을 던지도록 변경, `GlobalExceptionHandler`에서 401 처리, 컨트롤러 5곳의 null 체크 보일러플레이트 제거
+- **학습 내용**:
+  - "테스트 먼저" 접근법이 작동 변경의 안전망으로 효과적 — 실패하는 테스트가 버그를 증명하고, 구현 후 통과로 수정을 증명
+  - 구조 변경(Phase 3)은 기존 인수 테스트가 안전망 역할을 충분히 함 — 새 테스트 없이 기존 테스트 통과만으로 검증 가능
+  - `@Transactional` 범위 결정 시 외부 호출(카카오 API)의 위치가 중요 — try-catch로 감싸져 있으면 트랜잭션 롤백을 유발하지 않으므로 메서드 전체 적용이 안전
+  - 인증 중복 제거 시 ArgumentResolver 대신 예외 기반 전환을 선택 — 변경 범위 최소화가 우선, Spring Security 도입 시 전체 교체될 부분이므로 과투자 방지
+  - Admin 컨트롤러의 서비스 위임 시, API용 메서드(DTO 반환)와 Admin용 메서드(엔티티 반환)가 같은 서비스에 공존 — 현 규모에서는 수용하되, 규모가 커지면 분리 검토 필요
