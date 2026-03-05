@@ -7,6 +7,7 @@ import java.util.NoSuchElementException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ProductService {
@@ -37,6 +38,7 @@ public class ProductService {
         return productRepository.save(new Product(name, price, imageUrl, category));
     }
 
+    @Transactional
     public Product update(Long id, String name, int price, String imageUrl, Long categoryId) {
         Product product = findById(id);
         Category category = categoryRepository.findById(categoryId)

@@ -151,3 +151,38 @@ Step 2에서 수행할 작업 식별:
 | `MemberService.java` | `@Transactional` 추가 (import 1줄 + 어노테이션 2줄) | 작동 변경 |
 
 ---
+
+## 5단계: ProductService.update, CategoryService.update 트랜잭션 경계 설정
+
+### 프롬프트
+
+> `ProductService.update()`, `CategoryService.update()` — 조회 + 수정이 하나의 단위. 한 번에 진행.
+
+### 변경 전/후 정의
+
+- **무엇을 바꾸는가**: 두 서비스의 `update()`에 `@Transactional` 추가
+- **무엇을 바꾸지 않는가**: 상품/카테고리 수정의 비즈니스 로직
+- **무엇이 이를 증명하는가**: `ProductServiceTest` 3개 + `CategoryServiceTest` 2개 테스트
+
+### AI 활용 방식
+
+1. **테스트 먼저 작성**:
+   - `ProductServiceTest`: 수정 성공(DB 재조회) + 상품 미존재 예외 + 카테고리 미존재 예외
+   - `CategoryServiceTest`: 수정 성공(DB 재조회) + 카테고리 미존재 예외
+2. **전체 테스트 실행 시 FK 제약 위반 발생**: 다른 테스트 클래스의 데이터가 남아있어 `categoryRepository.deleteAll()` 실패. `setUp`에 FK 역순 삭제(orders → wishes → options → products → categories) 추가하여 해결.
+3. **@Transactional 추가 후 전체 테스트 통과 확인** (`./gradlew clean test` BUILD SUCCESSFUL)
+
+### 산출물
+
+| 파일 | 변경 | 종류 |
+|------|------|------|
+| `ProductServiceTest.java` | 신규 — 3개 테스트 | 테스트 |
+| `CategoryServiceTest.java` | 신규 — 2개 테스트 | 테스트 |
+| `ProductService.java` | `@Transactional` 추가 (import 1줄 + 어노테이션 1줄) | 작동 변경 |
+| `CategoryService.java` | `@Transactional` 추가 (import 1줄 + 어노테이션 1줄) | 작동 변경 |
+
+### 교훈
+
+`@SpringBootTest`로 여러 테스트 클래스가 같은 H2 인스턴스를 공유할 때, `@BeforeEach`의 `deleteAll()` 순서가 FK 제약을 고려해야 한다. 삭제 순서: orders → wishes → options → products → categories → members (FK 역순).
+
+---
