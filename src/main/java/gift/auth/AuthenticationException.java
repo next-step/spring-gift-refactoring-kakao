@@ -1,7 +1,9 @@
 package gift.auth;
 
-public class AuthenticationException extends RuntimeException {
+import gift.common.BaseException;
+
+public class AuthenticationException extends BaseException {
     public AuthenticationException() {
-        super("Authentication failed.");
+        super(AuthErrorCode.AUTHENTICATION_FAILED);
     }
 }

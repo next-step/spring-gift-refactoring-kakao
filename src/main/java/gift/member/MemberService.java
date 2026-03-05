@@ -16,7 +16,7 @@ public class MemberService {
 
     public TokenResponse register(MemberRequest request) {
         if (memberRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("Email is already registered.");
+            throw new MemberException(MemberErrorCode.DUPLICATE_EMAIL);
         }
         Member member = memberRepository.save(request.toEntity());
         String token = jwtProvider.createToken(member.getEmail());
@@ -25,9 +25,9 @@ public class MemberService {
 
     public TokenResponse login(MemberRequest request) {
         Member member = memberRepository.findByEmail(request.email())
-            .orElseThrow(() -> new IllegalArgumentException("Invalid email or password."));
+            .orElseThrow(() -> new MemberException(MemberErrorCode.INVALID_CREDENTIALS));
         if (member.getPassword() == null || !member.getPassword().equals(request.password())) {
-            throw new IllegalArgumentException("Invalid email or password.");
+            throw new MemberException(MemberErrorCode.INVALID_CREDENTIALS);
         }
         String token = jwtProvider.createToken(member.getEmail());
         return new TokenResponse(token);

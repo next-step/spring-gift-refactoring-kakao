@@ -1,7 +1,9 @@
 package gift.auth;
 
-public class ForbiddenException extends RuntimeException {
+import gift.common.BaseException;
+
+public class ForbiddenException extends BaseException {
     public ForbiddenException() {
-        super("Access denied.");
+        super(AuthErrorCode.ACCESS_DENIED);
     }
 }
