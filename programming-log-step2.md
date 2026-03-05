@@ -75,3 +75,31 @@ Service 계층에 읽기/쓰기 작업이 혼재되어 있었지만 트랜잭션
 1. 조회 경로는 readOnly 트랜잭션으로 불필요한 변경 감지를 줄일 수 있다.
 2. 쓰기 경로는 명시적 트랜잭션으로 데이터 정합성을 보장하기 쉬워진다.
 3. 메서드 단위 트랜잭션 의도가 코드에 드러나 유지보수성이 높아진다.
+
+---
+
+## 4. [TDD] 전체 도메인 단위 테스트 작성
+
+### 4-1. 배경
+
+예외 체계 전환, Service 분리, 트랜잭션 정책 적용 이후 도메인(비즈니스) 로직이 서비스 계층에 집중되었다.  
+구조 변경 이후 회귀를 빠르게 감지하고, 이후 동작 변경 단계에서 안전하게 리팩토링하기 위해 도메인 단위 테스트를 보강했다.
++ step1에서 빠뜨린 단위 테스트도 함께 추가
+
+### 4-2. 수정사항
+
+| 항목 | 내용 |
+|---|---|
+| member | `MemberTest`, `MemberServiceTest`, `AdminMemberServiceTest` 추가 |
+| auth | `KakaoAuthServiceTest`, `AuthenticationResolverTest` 추가 |
+| product | `ProductTest`, `ProductServiceTest` 추가 |
+| category | `CategoryTest`, `CategoryServiceTest` 추가 |
+| option | `OptionTest`, `OptionServiceTest` 추가 |
+| order | `OrderServiceTest` 추가 |
+| wish | `WishServiceTest` 추가 |
+| 검증 범위 | 도메인 검증 로직, 서비스 예외 흐름, 저장소 상호작용, 주요 성공/실패 시나리오 검증 |
+
+### 4-3. 기대효과
+
+1. 서비스 계층 변경 시 의도치 않은 동작 변화를 테스트로 차단할 수 있다.
+2. 2단계 동작 변경(트랜잭션/비즈니스 로직 확장) 시 안전한 리팩토링 기반을 확보할 수 있다.
