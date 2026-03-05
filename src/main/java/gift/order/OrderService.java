@@ -39,10 +39,8 @@ public class OrderService {
 
     @Transactional
     public OrderResponse createOrder(Member member, OrderRequest request) {
-        var option = optionRepository.findById(request.optionId()).orElse(null);
-        if (option == null) {
-            return null;
-        }
+        var option = optionRepository.findById(request.optionId())
+            .orElseThrow(() -> new java.util.NoSuchElementException("옵션을 찾을 수 없습니다: " + request.optionId()));
 
         option.subtractQuantity(request.quantity());
         optionRepository.save(option);

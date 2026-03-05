@@ -230,10 +230,10 @@
 ### 2. 누락된 작동 구현
 
 #### 2-1. order 패키지 — null 반환을 예외로 전환 (구조)
-- [ ] `OrderService`에서 `orElse(null)` + null 체크를 `orElseThrow(NoSuchElementException)` 으로 변경
-- [ ] `OrderController`에서 `response == null` 체크 제거
-- [ ] `OrderController`에 `@ExceptionHandler(NoSuchElementException.class)` 추가
-- [ ] 기존 `주문_생성_실패_옵션_미존재` 테스트가 404 반환 확인
+- [x] `OrderService`에서 `orElse(null)` + null 체크를 `orElseThrow(NoSuchElementException)` 으로 변경
+- [x] `OrderController`에서 `response == null` 체크 제거
+- [x] `OrderController`에 `@ExceptionHandler(NoSuchElementException.class)` 추가
+- [x] 기존 `주문_생성_실패_옵션_미존재` 테스트가 404 반환 확인
 
 #### 2-2. order 패키지 — IllegalArgumentException 핸들러 추가, 500→400 (작동)
 - [ ] `OrderController`에 `@ExceptionHandler(IllegalArgumentException.class)` 추가
