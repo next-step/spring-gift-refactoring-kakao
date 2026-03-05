@@ -29,7 +29,8 @@ spring-gift-refactoring-kakao/
 │   │   │   │   └── TokenResponse.java
 │   │   │   ├── config/
 │   │   │   │   ├── WebMvcConfig.java
-│   │   │   │   └── GlobalExceptionHandler.java
+│   │   │   │   ├── GlobalExceptionHandler.java
+│   │   │   │   └── NotFoundExceptionHandler.java
 │   │   │   ├── category/
 │   │   │   │   ├── Category.java
 │   │   │   │   ├── CategoryController.java
@@ -130,9 +131,11 @@ spring-gift-refactoring-kakao/
         ├── plan/
         │   ├── PLAN.md
         │   ├── PHASE1-인증_로직_추출.md
-        │   └── PHASE2-예외_핸들러_중앙화.md
+        │   ├── PHASE2-예외_핸들러_중앙화.md
+        │   └── PHASE3-null_반환_예외_전환.md
         └── adr/
-            └── ADR1-인증_로직_추출_방식.md
+            ├── ADR1-인증_로직_추출_방식.md
+            └── ADR2-예외_처리_전략.md
 ```
 
 ## 기술 스택
@@ -175,7 +178,8 @@ spring-gift-refactoring-kakao/
 | 클래스 | 역할 |
 |--------|------|
 | WebMvcConfig | WebMvcConfigurer — ArgumentResolver 등록 |
-| GlobalExceptionHandler | @RestControllerAdvice — 예외 핸들러 중앙 관리 |
+| GlobalExceptionHandler | @RestControllerAdvice — IllegalArgumentException → 400 핸들러 |
+| NotFoundExceptionHandler | @RestControllerAdvice — NoSuchElementException → 404 핸들러 |
 
 ### category - 상품 카테고리 관리
 
