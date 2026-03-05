@@ -133,3 +133,31 @@
 - `gift.auth.KakaoLoginClient`, `gift.auth.KakaoLoginProperties`, `gift.order.KakaoMessageClient` → `gift.infrastructure.kakao` 패키지로 이동
 - `KakaoAuthService`, `OrderService`의 import 경로 업데이트
 - `./gradlew spotlessApply build` — 테스트 9개 모두 통과 확인
+
+## 세션: 2026-03-05 — 코드 리뷰 (미구현 의도 + 트랜잭션 경계)
+
+### 프롬프트 1: 미구현 의도 탐색
+> 기존 코드에 의도가 남아있지만 구현되지 않은 작동이 있는지 찾아봐
+
+- 전체 소스 탐색 수행
+- `Option.calculateTotalPrice()` + `Member.deductPoint()`로 가격 계산/차감은 하지만 `OrderResponse`에 가격 정보가 누락되어 있음을 발견
+
+### 프롬프트 2: 트랜잭션 경계 점검
+> 트랜잭션 경계는 잘 잡혀있는가?
+
+- `OrderService.placeOrder()`에서 외부 HTTP 호출(`kakaoMessageClient.send()`)이 `@Transactional` 내부에 포함된 문제 발견
+- 카카오 API 실패 시 전체 롤백 + `@Retryable` 3회 재시도로 최대 1.5초 DB 커넥션/락 점유 위험
+- 해결 방향: 트랜잭션 커밋 후 메시지 전송 분리 필요
+
+### 프롬프트 3: 카카오 메시지 전송을 트랜잭션 밖으로 분리
+> kakaoMessageClient.send 이거를 트랜잭션 밖으로 빼줘. 트랜잭션이 성공한 경우에만 메시지가 나갈 수 있도록 수정해줘.
+
+- `TransactionSynchronization.afterCommit()` 콜백으로 1차 구현 후 빌드 통과 확인
+
+### 프롬프트 4: 가독성 개선
+> 좀 더 가독성 좋게 작성할 수는 없나?
+
+- `TransactionSynchronization` 익명 클래스 → Spring 이벤트 기반으로 리팩토링
+- `OrderCompletedEvent` record 생성, `OrderCompletedEventListener`에서 `@TransactionalEventListener`(기본 AFTER_COMMIT)로 처리
+- `OrderService`에서 `kakaoMessageClient` 의존성 제거, `ApplicationEventPublisher`로 이벤트 발행만 담당
+- `./gradlew spotlessApply build` — 빌드 + 테스트 통과 확인

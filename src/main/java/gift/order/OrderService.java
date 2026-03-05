@@ -1,11 +1,11 @@
 package gift.order;
 
-import gift.infrastructure.kakao.KakaoMessageClient;
 import gift.member.Member;
 import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
 import java.util.NoSuchElementException;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,17 +17,17 @@ public class OrderService {
   private final OrderRepository orderRepository;
   private final OptionRepository optionRepository;
   private final MemberRepository memberRepository;
-  private final KakaoMessageClient kakaoMessageClient;
+  private final ApplicationEventPublisher eventPublisher;
 
   public OrderService(
       OrderRepository orderRepository,
       OptionRepository optionRepository,
       MemberRepository memberRepository,
-      KakaoMessageClient kakaoMessageClient) {
+      ApplicationEventPublisher eventPublisher) {
     this.orderRepository = orderRepository;
     this.optionRepository = optionRepository;
     this.memberRepository = memberRepository;
-    this.kakaoMessageClient = kakaoMessageClient;
+    this.eventPublisher = eventPublisher;
   }
 
   public Page<Order> findByMemberId(Long memberId, Pageable pageable) {
@@ -53,7 +53,7 @@ public class OrderService {
 
     Order saved = orderRepository.save(new Order(option, memberId, quantity, message));
 
-    kakaoMessageClient.send(member, saved, option);
+    eventPublisher.publishEvent(new OrderCompletedEvent(member, saved, option));
 
     return saved;
   }
