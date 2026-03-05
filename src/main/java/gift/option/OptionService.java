@@ -28,6 +28,13 @@ public class OptionService {
         return optionRepository.findById(id).orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다. id=" + id));
     }
 
+    @Transactional
+    public Option findByIdForUpdate(Long id) {
+        return optionRepository
+                .findByIdForUpdate(id)
+                .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다. id=" + id));
+    }
+
     @Transactional(readOnly = true)
     public List<Option> findByProductId(Long productId) {
         productService.findById(productId);

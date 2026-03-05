@@ -264,9 +264,9 @@
 > 동시 주문 시 재고/포인트가 음수가 될 수 있다. 비관적 잠금으로 도메인 모델/에러 메시지를 보존하면서 동시성을 제어한다.
 > OrderService가 최종 형태일 때 적용하여 잠금 범위를 한 번에 확정한다.
 
-- [ ] OptionRepository, MemberRepository에 `findByIdForUpdate()` + `@Lock(PESSIMISTIC_WRITE)` 추가
-- [ ] OptionService, MemberService에 `findByIdForUpdate()` wrapper 추가
-- [ ] OrderService에서 `findById()` → `findByIdForUpdate()` 변경 (2곳)
-- [ ] V4 마이그레이션으로 CHECK 제약 추가 (quantity >= 0, point >= 0)
-- [ ] 전체 테스트 실행 → 통과 확인
+- [x] OptionRepository, MemberRepository에 `findByIdForUpdate()` + `@Lock(PESSIMISTIC_WRITE)` 추가
+- [x] OptionService, MemberService에 `findByIdForUpdate()` wrapper 추가
+- [x] OrderService에서 `findById()` → `findByIdForUpdate()` 변경 (2곳)
+- [x] V4 마이그레이션으로 CHECK 제약 추가 (quantity >= 0, point >= 0)
+- [x] 전체 테스트 실행 → 통과 확인
 

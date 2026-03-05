@@ -653,6 +653,8 @@ line 43: memberService.findById(memberId)     → memberService.findByIdForUpdat
 
 **테스트 영향**: 단일 스레드 동작은 동일하므로 기존 인수 테스트 통과. 동시성 테스트는 Cucumber E2E로 불가 — 향후 JUnit 통합 테스트로 별도 검증.
 
+**검증 결과**: `./gradlew cucumberTest` — 21개 시나리오 전체 통과
+
 ---
 
 ## 6. 현행 유지 항목

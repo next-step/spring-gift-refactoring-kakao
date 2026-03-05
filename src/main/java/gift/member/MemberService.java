@@ -57,6 +57,13 @@ public class MemberService {
     }
 
     @Transactional
+    public Member findByIdForUpdate(Long id) {
+        return memberRepository
+                .findByIdForUpdate(id)
+                .orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다. id=" + id));
+    }
+
+    @Transactional
     public Member create(String email, String password) {
         if (memberRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("이미 등록된 이메일입니다.");

@@ -122,3 +122,6 @@ auth ↔ member 순환 참조 해소 — member 패키지에 TokenProvider 인�
 
 ## 프롬프트 37
 6-9. 주문 시 위시 삭제 — 주문 생성 시 해당 상품이 위시리스트에 있으면 자동 삭제. WishRepository에 deleteByMemberIdAndProductId() 추가, WishService에 removeWishByMemberIdAndProductId() 추가, OrderService에 WishService 의존 추가하여 주문 저장 후 위시 삭제 호출. 위시가 없으면 아무 일도 안 함(soft delete). 작업 10(동시성 제어) 전에 OrderService를 최종 형태로 완성하여 잠금 범위 재조정 방지.
+
+## 프롬프트 38
+6-10. 동시성 제어 — 비관적 잠금(SELECT FOR UPDATE) 적용. OptionRepository/MemberRepository에 findByIdForUpdate() + @Lock(PESSIMISTIC_WRITE) 추가. OptionService/MemberService에 findByIdForUpdate() wrapper 추가. OrderService.createOrder()에서 findById() → findByIdForUpdate() 변경(2곳). 잠금 순서: Option → Member(데드락 방지). V4 Flyway 마이그레이션으로 DB CHECK 제약(quantity >= 0, point >= 0) 추가하여 최종 안전망 확보. (ADR-004)

@@ -39,12 +39,12 @@ public class OrderService {
 
     @Transactional
     public Order createOrder(Long memberId, Long optionId, int quantity, String message) {
-        Option option = optionService.findById(optionId);
+        Option option = optionService.findByIdForUpdate(optionId);
 
         option.subtractQuantity(quantity);
         optionService.save(option);
 
-        Member member = memberService.findById(memberId);
+        Member member = memberService.findByIdForUpdate(memberId);
         int price = option.getProduct().getPrice() * quantity;
         member.deductPoint(price);
         memberService.save(member);
