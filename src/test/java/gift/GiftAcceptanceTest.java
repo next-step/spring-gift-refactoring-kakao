@@ -9,8 +9,10 @@ import io.restassured.response.Response;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.jdbc.Sql;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -20,12 +22,20 @@ class GiftAcceptanceTest {
 
   @LocalServerPort int port;
 
+  @Autowired JdbcTemplate jdbcTemplate;
+
   String token;
 
   @BeforeEach
   void setUp() {
     RestAssured.port = port;
-    token = AcceptanceTestSupport.로그인하고_토큰을_받는다("sender@test.com", "password");
+    ExtractableResponse<Response> response =
+        AcceptanceTestSupport.회원을_등록한다("sender@test.com", "password");
+    token = response.jsonPath().getString("token");
+    Long memberId =
+        jdbcTemplate.queryForObject(
+            "SELECT id FROM member WHERE email = ?", Long.class, "sender@test.com");
+    jdbcTemplate.update("UPDATE member SET point = 100000 WHERE id = ?", memberId);
   }
 
   /** G1: 재고가 충분할 때 주문에 성공한다. - 옵션1(재고 10) 에 수량 1을 주문 → 201 응답 */

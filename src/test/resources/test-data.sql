@@ -10,6 +10,3 @@ INSERT INTO product (id, name, price, image_url, category_id) VALUES (2, '커피
 INSERT INTO options (id, name, quantity, product_id) VALUES (1, '초콜릿 기본', 10, 1);
 INSERT INTO options (id, name, quantity, product_id) VALUES (2, '커피 기본', 1, 2);
 
--- 회원
-INSERT INTO member (id, email, password, point) VALUES (1, 'sender@test.com', 'password', 100000);
-INSERT INTO member (id, email, password, point) VALUES (2, 'receiver@test.com', 'password', 0);
