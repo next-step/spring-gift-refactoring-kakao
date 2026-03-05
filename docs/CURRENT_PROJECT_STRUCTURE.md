@@ -23,8 +23,12 @@ spring-gift-refactoring-kakao/
 │   │   │   │   ├── KakaoLoginClient.java
 │   │   │   │   ├── KakaoLoginProperties.java
 │   │   │   │   ├── AuthenticationResolver.java
+│   │   │   │   ├── LoginMember.java
+│   │   │   │   ├── LoginMemberArgumentResolver.java
 │   │   │   │   ├── JwtProvider.java
 │   │   │   │   └── TokenResponse.java
+│   │   │   ├── config/
+│   │   │   │   └── WebMvcConfig.java
 │   │   │   ├── category/
 │   │   │   │   ├── Category.java
 │   │   │   │   ├── CategoryController.java
@@ -160,7 +164,15 @@ spring-gift-refactoring-kakao/
 | KakaoAuthService | 카카오 OAuth 인증 흐름 (URL 구성, 콜백 처리, 회원 동기화) |
 | KakaoLoginClient | 카카오 API 호출 (토큰, 사용자 정보) |
 | KakaoLoginProperties | 카카오 설정 값 (clientId, clientSecret, redirectUri) |
+| LoginMember | 인증된 회원 주입용 커스텀 어노테이션 |
+| LoginMemberArgumentResolver | @LoginMember 파라미터 해석 — 인증 로직 실행 + Member 반환 |
 | TokenResponse | JWT 토큰 응답 DTO |
+
+### config - 설정
+
+| 클래스 | 역할 |
+|--------|------|
+| WebMvcConfig | WebMvcConfigurer — ArgumentResolver 등록 |
 
 ### category - 상품 카테고리 관리
 
