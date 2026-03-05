@@ -5,8 +5,10 @@ import gift.option.Option;
 import gift.option.OptionCommandPort;
 import gift.option.OptionQueryPort;
 import gift.order.Order;
+import gift.order.OrderCreatedEvent;
 import gift.product.ProductDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedModel;
@@ -21,6 +23,7 @@ public class OrderService {
     private final OptionQueryPort optionQueryPort;
     private final OptionCommandPort optionCommandPort;
     private final MemberCommandPort memberCommandPort;
+    private final ApplicationEventPublisher eventPublisher;
 
     public PagedModel<OrderResponse> getOrders(Long memberId, Pageable pageable) {
         Page<OrderResponse> pageResponse = orderRepo.findByMemberId(memberId, pageable)
@@ -53,6 +56,10 @@ public class OrderService {
                 .build();
 
         Order newEntity = orderRepo.save(build);
+
+        eventPublisher.publishEvent(new OrderCreatedEvent(
+                memberId, product.id(), newEntity.getId()
+        ));
 
         return OrderResponse.from(newEntity);
     }
