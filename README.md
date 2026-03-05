@@ -128,10 +128,10 @@
 > 근거: OrderService가 KakaoMessageClient 구체 클래스에 직접 의존한다.
 > 도메인 서비스가 특정 벤더(Kakao)에 결합되어 있으며, 메시지 채널 변경 시 OrderService를 수정해야 한다.
 
-- [ ] OrderMessageClient 인터페이스 생성 (order 패키지)
-- [ ] KakaoMessageClient가 OrderMessageClient를 구현하도록 변경
-- [ ] OrderService의 의존을 KakaoMessageClient → OrderMessageClient로 변경
-- [ ] 전체 테스트 실행 → 통과 확인
+- [x] OrderMessageClient 인터페이스 생성 (order 패키지)
+- [x] KakaoMessageClient가 OrderMessageClient를 구현하도록 변경
+- [x] OrderService의 의존을 KakaoMessageClient → OrderMessageClient로 변경
+- [x] 전체 테스트 실행 → 통과 확인
 
 #### 5-5. auth ↔ member 순환 참조 해소 — 의존성 역전
 

@@ -74,3 +74,6 @@ KakaoAuthService 추출 — KakaoAuthController에 남아있는 비즈니스 로
 
 ## 프롬프트 21
 save() 위임 복원 — 프롬프트 19에서 save() 제거(dirty checking 전환)는 요청 범위("Service 위임") 밖의 부수적 작업이므로 복원. OptionService.save(), MemberService.save() 위임 메서드 추가. OrderService에서 optionService.save(option), memberService.save(member) 호출 복원. dirty checking 주석 제거.
+
+## 프롬프트 22
+외부 인프라 인터페이스 추출 — OrderMessageClient 인터페이스를 생성하여 OrderService의 KakaoMessageClient 직접 의존을 인터페이스 의존으로 역전. KakaoMessageClient가 OrderMessageClient를 구현하도록 변경. OrderService에서 벤더명(Kakao) 제거.
