@@ -9,7 +9,11 @@ public class SpecialCharacterRule implements ProductNameRule {
 
     @Override
     public boolean notValid(String productName) {
-        return productName == null || !ALLOWED_PATTERN.matcher(productName).matches();
+        if (productName == null) {
+            return false;
+        }
+
+        return !ALLOWED_PATTERN.matcher(productName).matches();
     }
 
     @Override
