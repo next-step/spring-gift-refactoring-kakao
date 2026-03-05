@@ -60,4 +60,14 @@ class OptionTest {
 
         assertEquals(3000L, option.calculateTotalPrice(3));
     }
+
+    @Test
+    @DisplayName("calculateTotalPrice는 int 범위를 초과해도 올바른 결과를 반환한다")
+    void calculateTotalPriceNoOverflow() {
+        Category category = new Category("카테고리", "#000000", "http://img.test/c.png", "설명");
+        Product product = new Product("고가 상품", 100_000, "http://img.test/p.png", category);
+        Option option = new Option(product, "대량 옵션", 30_000);
+
+        assertEquals(3_000_000_000L, option.calculateTotalPrice(30_000));
+    }
 }
