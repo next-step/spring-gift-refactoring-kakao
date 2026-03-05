@@ -5,7 +5,6 @@ import gift.member.Member;
 import gift.member.MemberService;
 import gift.option.Option;
 import gift.option.OptionRepository;
-import gift.product.Product;
 import gift.wish.WishService;
 import java.util.NoSuchElementException;
 import org.slf4j.Logger;
@@ -64,18 +63,17 @@ public class OrderService {
 
     Order saved = orderRepository.save(new Order(option, memberId, quantity, message));
 
-    sendKakaoMessageIfPossible(member, saved, option);
+    sendKakaoMessageIfPossible(member, saved);
 
     return saved;
   }
 
-  private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {
+  private void sendKakaoMessageIfPossible(Member member, Order order) {
     if (member.getKakaoAccessToken() == null) {
       return;
     }
     try {
-      Product product = option.getProduct();
-      kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
+      kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order);
     } catch (Exception e) {
       log.warn("카카오 메시지 전송에 실패했습니다. orderId={}, memberId={}", order.getId(), member.getId(), e);
     }

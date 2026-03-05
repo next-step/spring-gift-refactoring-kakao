@@ -2,7 +2,6 @@ package gift.infrastructure.kakao;
 
 import gift.auth.AuthConstants;
 import gift.order.Order;
-import gift.product.Product;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -19,8 +18,8 @@ public class KakaoMessageClient {
     this.restClient = builder.build();
   }
 
-  public void sendToMe(String accessToken, Order order, Product product) {
-    String templateObject = buildTemplate(order, product);
+  public void sendToMe(String accessToken, Order order) {
+    String templateObject = buildTemplate(order);
 
     LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
     params.add("template_object", templateObject);
@@ -35,8 +34,11 @@ public class KakaoMessageClient {
         .toBodilessEntity();
   }
 
-  private String buildTemplate(Order order, Product product) {
-    String totalPrice = String.format("%,d", product.getPrice() * order.getQuantity());
+  private String buildTemplate(Order order) {
+    String productName = order.getOption().getProduct().getName();
+    String optionName = order.getOption().getName();
+    int totalPrice = order.getOption().calculateTotalPrice(order.getQuantity());
+    String formattedPrice = String.format("%,d", totalPrice);
     String message =
         order.getMessage() != null && !order.getMessage().isBlank()
             ? "\\n\\n💌 " + order.getMessage()
@@ -49,11 +51,6 @@ public class KakaoMessageClient {
                 "button_title": "선물 확인하기"
             }
             """
-        .formatted(
-            product.getName(),
-            order.getOption().getName(),
-            order.getQuantity(),
-            totalPrice,
-            message);
+        .formatted(productName, optionName, order.getQuantity(), formattedPrice, message);
   }
 }
