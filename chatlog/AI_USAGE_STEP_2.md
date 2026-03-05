@@ -436,3 +436,95 @@ productService.create(name, price, imageUrl, categoryId, true);
 - **검증 책임은 성격에 따라 계층을 나눠야 한다**: "카카오" 제한처럼 호출자(API vs Admin)에 따라 달라지는 검증은 컨트롤러 계층(DTO + Bean Validation)에서, 길이/특수문자 같은 도메인 규칙은 서비스에서 처리하는 것이 자연스럽다
 
 ---
+
+## 10단계: 전역 예외 처리로 컨트롤러 try-catch 제거 (구조 변경)
+
+### 프롬프트
+
+> 컨트롤러마다 try-catch 반복되는 거 @RestControllerAdvice로 전역 처리하자
+
+### 변경 전/후 정의
+
+- **무엇을 바꾸는가**: 5개 컨트롤러에 분산된 예외 처리를 `GlobalExceptionHandler` 한 곳으로 통합
+- **무엇을 바꾸지 않는가**: HTTP 응답 (NoSuchElementException → 404, IllegalArgumentException → 400, IllegalStateException → 403)
+- **무엇이 이를 증명하는가**: 기존 전체 테스트 + Cucumber 시나리오 통과
+
+### 변경 전 (컨트롤러마다 try-catch 반복)
+
+```java
+// ProductController — 3개 메서드에서 동일 패턴
+@GetMapping("/{id}")
+public ResponseEntity<ProductResponse> getProduct(@PathVariable Long id) {
+    try {
+        return ResponseEntity.ok(ProductResponse.from(productService.findById(id)));
+    } catch (NoSuchElementException e) {
+        return ResponseEntity.notFound().build();
+    }
+}
+
+@ExceptionHandler(IllegalArgumentException.class)
+public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
+    return ResponseEntity.badRequest().body(e.getMessage());
+}
+
+// OptionController, CategoryController, WishController, OrderController에서도 동일 패턴 반복
+```
+
+### 변경 후 (전역 한 곳에서 처리)
+
+```java
+// GlobalExceptionHandler — 모든 @RestController에 적용
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity<Void> handleNotFound(NoSuchElementException e) {
+        return ResponseEntity.notFound().build();
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleBadRequest(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Void> handleForbidden(IllegalStateException e) {
+        return ResponseEntity.status(403).build();
+    }
+}
+
+// ProductController — try-catch 제거, 서비스 위임만 남음
+@GetMapping("/{id}")
+public ResponseEntity<ProductResponse> getProduct(@PathVariable Long id) {
+    return ResponseEntity.ok(ProductResponse.from(productService.findById(id)));
+}
+```
+
+### AI 활용 방식
+
+1. 전체 컨트롤러 코드를 읽고 예외 처리 패턴 분류:
+   - `NoSuchElementException → 404`: ProductController(3), OptionController(3), CategoryController(1), WishController(2), OrderController(1) = **10곳**
+   - `IllegalArgumentException → 400`: ProductController(1), OptionController(1) = **2곳** (`@ExceptionHandler`)
+   - `IllegalStateException → 403`: WishController(1) = **1곳**
+2. `GlobalExceptionHandler.java` 신규 작성 — 3가지 예외 타입 전역 처리
+3. 5개 컨트롤러에서 try-catch 블록과 `@ExceptionHandler` 메서드 제거
+4. 미사용 `NoSuchElementException` import 정리
+5. **빌드 + 전체 테스트 통과 확인** (`./gradlew clean build`, `./gradlew test` BUILD SUCCESSFUL)
+
+### 산출물
+
+| 파일 | 변경 | 종류 |
+|------|------|------|
+| `GlobalExceptionHandler.java` | 신규 — `@RestControllerAdvice` 전역 예외 핸들러 | 구조 변경 |
+| `ProductController.java` | try-catch 3개 + `@ExceptionHandler` 1개 제거 | 구조 변경 |
+| `OptionController.java` | try-catch 3개 + `@ExceptionHandler` 1개 제거 | 구조 변경 |
+| `CategoryController.java` | try-catch 1개 제거 | 구조 변경 |
+| `WishController.java` | try-catch 2개 제거 | 구조 변경 |
+| `OrderController.java` | try-catch 1개 제거 | 구조 변경 |
+
+### 효과
+
+- **try-catch 10개 + @ExceptionHandler 2개 제거**: 컨트롤러가 비즈니스 위임에만 집중
+- **예외 처리 정책 한 곳에서 관리**: 새 예외 타입 추가나 응답 형식 변경 시 `GlobalExceptionHandler`만 수정
+- **일관성 보장**: 모든 컨트롤러에서 동일한 예외에 동일한 HTTP 상태 코드 반환
+
+---
