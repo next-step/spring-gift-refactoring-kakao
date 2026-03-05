@@ -11,7 +11,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -20,40 +19,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Transactional
-class ProductAcceptanceTest {
+class ProductCommandAcceptanceTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @Test
-    @DisplayName("상품 목록을 페이지네이션으로 조회한다")
-    void getProducts() throws Exception {
-        mockMvc.perform(get("/api/products")
-                .param("page", "0")
-                .param("size", "10"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.content").isArray());
-    }
-
-    @Test
-    @DisplayName("상품을 단건 조회한다")
-    void getProduct() throws Exception {
-        mockMvc.perform(get("/api/products/{id}", 1L))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.id").value(1))
-            .andExpect(jsonPath("$.name").isNotEmpty());
-    }
-
-    @Test
-    @DisplayName("존재하지 않는 상품을 조회하면 404를 반환한다")
-    void getProduct_NotFound() throws Exception {
-        mockMvc.perform(get("/api/products/{id}", 999L))
-            .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.code").value("PRODUCT_NOT_FOUND"));
-    }
 
     @Test
     @DisplayName("새로운 상품을 생성한다")
