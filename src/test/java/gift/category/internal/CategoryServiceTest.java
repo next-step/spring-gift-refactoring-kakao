@@ -75,7 +75,41 @@ class CategoryServiceTest {
         assertThat(responses).isEmpty();
     }
 
-    // TODO : 여
+    @Test
+    @DisplayName("카테고리를 단건 조회한다")
+    void testGetCategory() {
+        // given
+        Long categoryId = 1L;
+        Category category = createCategory(
+                categoryId, "교환권", "#FF0000",
+                "http://img.png", "설명"
+        );
+
+        given(categoryRepo.findById(categoryId))
+                .willReturn(Optional.of(category));
+
+        // when
+        CategoryResponse response = categoryService.getCategory(categoryId);
+
+        // then
+        assertThat(response.id()).isEqualTo(categoryId);
+        assertThat(response.name()).isEqualTo(category.getName());
+        assertThat(response.color()).isEqualTo(category.getColor());
+        assertThat(response.imageUrl()).isEqualTo(category.getImageUrl());
+        assertThat(response.description()).isEqualTo(category.getDescription());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 카테고리 조회 시 NotFoundException 이 발생한다")
+    void testGetCategoryNotFound() {
+        // given
+        given(categoryRepo.findById(NOT_EXISTING_ID))
+                .willReturn(Optional.empty());
+
+        // when + then
+        assertThatThrownBy(() -> categoryService.getCategory(NOT_EXISTING_ID))
+                .isInstanceOf(NotFoundException.class);
+    }
 
     @Test
     @DisplayName("카테고리를 생성한다")
