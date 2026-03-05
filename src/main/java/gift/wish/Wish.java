@@ -1,5 +1,6 @@
 package gift.wish;
 
+import gift.member.Member;
 import gift.product.Product;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -13,8 +14,10 @@ public class Wish {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    /* 회원 ID (단순 FK, 엔티티 참조 없음) */
-    private Long memberId;
+
+    @ManyToOne
+    @JoinColumn(name = "member_id")
+    private Member member;
 
     @ManyToOne
     @JoinColumn(name = "product_id")
@@ -23,21 +26,21 @@ public class Wish {
     protected Wish() {
     }
 
-    public Wish(Long memberId, Product product) {
-        this.memberId = memberId;
+    public Wish(Member member, Product product) {
+        this.member = member;
         this.product = product;
     }
 
     public boolean belongsToMember(Long memberId) {
-        return this.memberId.equals(memberId);
+        return this.member.getId().equals(memberId);
     }
 
     public Long getId() {
         return id;
     }
 
-    public Long getMemberId() {
-        return memberId;
+    public Member getMember() {
+        return member;
     }
 
     public Product getProduct() {

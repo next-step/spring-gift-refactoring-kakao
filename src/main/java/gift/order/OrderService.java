@@ -49,7 +49,7 @@ public class OrderService {
         int price = option.calculateTotalPrice(request.quantity());
         member.deductPoint(price);
 
-        Order saved = orderRepository.save(request.toEntity(option, member.getId(), price));
+        Order saved = orderRepository.save(request.toEntity(option, member, price));
 
         if (member.canSendKakaoMessage()) {
             var product = option.getProduct();
