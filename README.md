@@ -71,6 +71,15 @@
 - [x] refactor(option): 주문 금액 계산 로직을 Option 엔티티로 이동
 - [x] refactor(member): 비밀번호 검증 로직을 Member 엔티티로 이동
 
+### Phase 9: CQRS 패턴 적용 — 조회/명령 서비스 분리
+- [x] refactor(category): CategoryService → CategoryQueryService + CategoryCommandService 분리
+- [x] refactor(member): MemberService → MemberQueryService + MemberCommandService 분리
+- [x] refactor(product): ProductService → ProductQueryService + ProductCommandService 분리
+- [x] refactor(option): OptionService → OptionQueryService + OptionCommandService 분리
+- [x] refactor(wish): WishService → WishQueryService + WishCommandService 분리
+- [x] refactor(order): OrderService → OrderQueryService + OrderCommandService 분리
+- [x] test: 인수테스트를 조회/명령 단위로 분리
+
 ## 구현 전략
 
 ### Phase 0: 테스트 코드 작성
@@ -126,6 +135,25 @@
 - **대상 식별 결과**:
   - `OrderService:49` `option.getProduct().getPrice() * quantity` → getter 조합 산술 연산 → `Option.calculatePrice(quantity)`로 이동
   - `MemberService:37-39` `member.getPassword() == null || !...equals(password)` → getter 비교 검증 → `Member.verifyPassword(password)`로 이동
+- **원칙**: 구조 변경(`refactor`)이므로 외부 동작 불변. 기존 테스트 통과로 검증
+- **검증**: 각 커밋마다 `./gradlew test` 통과
+
+### Phase 9: CQRS 패턴 적용 — 조회/명령 서비스 분리
+- **목적**: 코드의 의도를 명확히 하여 유지 보수를 쉽게 하고, 유효성 검증(명령)과 조회 성능(조회) 등 각 영역의 관심사를 분리
+- **현황 분석**:
+  | Service | Query 메서드 | Command 메서드 |
+  |---------|-------------|---------------|
+  | CategoryService | findAll | save, update, deleteById |
+  | MemberService | findAll, findById, existsByEmail, login | register, update, chargePoint, deleteById |
+  | ProductService | findAll(Pageable), findAll, findById | save, update, deleteById |
+  | OptionService | findByProductId | createOption, deleteOption |
+  | WishService | findByMemberId, findByMemberIdAndProductId, findById | addWish, delete |
+  | OrderService | findByMemberId | createOrder |
+- **분리 규칙**:
+  - QueryService: `@Transactional(readOnly = true)` 유지, 조회 메서드만 포함
+  - CommandService: `@Transactional` 쓰기 메서드만 포함, 필요 시 QueryService 의존 가능
+  - Controller는 용도에 따라 QueryService 또는 CommandService를 주입받음
+- **순서**: 의존성 적은 도메인부터 (category → member → product → option → wish → order)
 - **원칙**: 구조 변경(`refactor`)이므로 외부 동작 불변. 기존 테스트 통과로 검증
 - **검증**: 각 커밋마다 `./gradlew test` 통과
 
