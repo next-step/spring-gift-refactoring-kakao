@@ -28,10 +28,13 @@ public class AuthenticationResolver {
         try {
             final String token = authorization.replace("Bearer ", "");
             final String email = jwtProvider.getEmail(token);
-            return memberRepository.findByEmail(email).orElse(null);
+            return memberRepository.findByEmail(email)
+                .orElseThrow(() -> new UnauthorizedException("인증된 회원을 찾을 수 없습니다."));
+        } catch (UnauthorizedException e) {
+            throw e;
         } catch (Exception e) {
             log.debug("인증 토큰 파싱 실패: {}", e.getMessage());
-            return null;
+            throw new UnauthorizedException("유효하지 않은 인증 토큰입니다.");
         }
     }
 }

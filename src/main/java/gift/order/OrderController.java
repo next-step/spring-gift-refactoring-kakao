@@ -5,7 +5,6 @@ import gift.member.Member;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,9 +32,6 @@ public class OrderController {
         Pageable pageable
     ) {
         Member member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
         Page<OrderResponse> orders = orderService.getOrders(member.getId(), pageable);
         return ResponseEntity.ok(orders);
     }
@@ -46,9 +42,6 @@ public class OrderController {
         @Valid @RequestBody OrderRequest request
     ) {
         Member member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
 
         return orderService.createOrder(member, request)
             .map(response -> ResponseEntity.created(URI.create("/api/orders/" + response.id()))

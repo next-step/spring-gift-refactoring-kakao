@@ -35,9 +35,6 @@ public class WishController {
         Pageable pageable
     ) {
         Member member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
         Page<WishResponse> wishes = wishService.getWishes(member.getId(), pageable);
         return ResponseEntity.ok(wishes);
     }
@@ -48,9 +45,6 @@ public class WishController {
         @Valid @RequestBody WishRequest request
     ) {
         Member member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
 
         return wishService.addWish(member.getId(), request)
             .map(result -> {
@@ -69,9 +63,6 @@ public class WishController {
         @PathVariable Long id
     ) {
         Member member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
 
         return wishService.removeWish(member.getId(), id)
             .map(result -> switch (result) {
