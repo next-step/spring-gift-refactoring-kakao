@@ -292,7 +292,7 @@ class OrderAcceptanceTest {
                 .when()
                 .post("/api/orders")
                 .then()
-                .statusCode(500); // IllegalArgumentException이 처리되지 않아 500 반환
+                .statusCode(400);
         }
 
         @Test
@@ -320,7 +320,7 @@ class OrderAcceptanceTest {
                 .when()
                 .post("/api/orders")
                 .then()
-                .statusCode(500);
+                .statusCode(400);
 
             // Then: 재고가 원래대로 유지되어야 한다
             int stockAfter = optionRepository.findById(option.getId()).orElseThrow().getQuantity();
@@ -350,7 +350,7 @@ class OrderAcceptanceTest {
                 .when()
                 .post("/api/orders")
                 .then()
-                .statusCode(500); // IllegalArgumentException이 처리되지 않아 500 반환
+                .statusCode(400);
         }
 
         @Test
