@@ -75,6 +75,32 @@ class OptionControllerTest {
     }
 
     @Test
+    @DisplayName("PUT /api/products/{productId}/options/{optionId} - 옵션을 수정하면 200을 반환한다")
+    void updateOption() {
+        given()
+            .contentType(ContentType.JSON)
+            .body(Map.of("name", "수정 옵션", "quantity", 20))
+        .when()
+            .put("/api/products/1/options/1")
+        .then()
+            .statusCode(200)
+            .body("name", equalTo("수정 옵션"))
+            .body("quantity", equalTo(20));
+    }
+
+    @Test
+    @DisplayName("PUT /api/products/{productId}/options/{optionId} - 존재하지 않는 옵션이면 404를 반환한다")
+    void updateOptionNotFound() {
+        given()
+            .contentType(ContentType.JSON)
+            .body(Map.of("name", "수정 옵션", "quantity", 20))
+        .when()
+            .put("/api/products/1/options/99999")
+        .then()
+            .statusCode(404);
+    }
+
+    @Test
     @DisplayName("DELETE - 옵션이 2개 이상이면 삭제 후 204를 반환한다")
     void deleteOption() {
         // setup-data.sql에 옵션 2개 (id=1, id=2) 존재

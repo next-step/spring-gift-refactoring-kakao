@@ -47,6 +47,10 @@ public class Product {
         this.category = category;
     }
 
+    public boolean hasId(Long id) {
+        return this.id.equals(id);
+    }
+
     public Long getId() {
         return id;
     }

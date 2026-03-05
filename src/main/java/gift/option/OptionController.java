@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -51,6 +52,20 @@ public class OptionController {
             URI location = URI.create("/api/products/" + productId + "/options/" + saved.getId());
             return ResponseEntity.created(location)
                 .body(OptionResponse.from(saved));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping(path = "/{optionId}")
+    public ResponseEntity<OptionResponse> updateOption(
+        @PathVariable Long productId,
+        @PathVariable Long optionId,
+        @Valid @RequestBody OptionRequest request
+    ) {
+        try {
+            Option updated = optionService.update(productId, optionId, request.name(), request.quantity());
+            return ResponseEntity.ok(OptionResponse.from(updated));
         } catch (NoSuchElementException e) {
             return ResponseEntity.notFound().build();
         }

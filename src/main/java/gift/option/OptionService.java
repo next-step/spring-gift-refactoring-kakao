@@ -38,6 +38,19 @@ public class OptionService {
     }
 
     @Transactional
+    public Option update(Long productId, Long optionId, String name, int quantity) {
+        validateName(name);
+        findProduct(productId);
+
+        Option option = optionRepository.findById(optionId)
+            .filter(o -> o.belongsTo(productId))
+            .orElseThrow(() -> new NoSuchElementException("옵션을 찾을 수 없습니다. id=" + optionId));
+
+        option.update(name, quantity);
+        return optionRepository.save(option);
+    }
+
+    @Transactional
     public void delete(Long productId, Long optionId) {
         findProduct(productId);
 
@@ -47,7 +60,7 @@ public class OptionService {
         }
 
         Option option = optionRepository.findById(optionId)
-            .filter(o -> o.getProduct().getId().equals(productId))
+            .filter(o -> o.belongsTo(productId))
             .orElseThrow(() -> new NoSuchElementException("옵션을 찾을 수 없습니다. id=" + optionId));
 
         optionRepository.delete(option);
