@@ -13,74 +13,73 @@ import jakarta.persistence.Id;
  */
 @Entity
 public class Member {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    private String email;
+  private String email;
 
-    private String password;
+  private String password;
 
-    private String kakaoAccessToken;
+  private String kakaoAccessToken;
 
-    private int point;
+  private int point;
 
-    protected Member() {
+  protected Member() {}
+
+  public Member(String email, String password) {
+    this.email = email;
+    this.password = password;
+  }
+
+  public Member(String email) {
+    this.email = email;
+  }
+
+  public void update(String email, String password) {
+    this.email = email;
+    this.password = password;
+  }
+
+  public void updateKakaoAccessToken(String kakaoAccessToken) {
+    this.kakaoAccessToken = kakaoAccessToken;
+  }
+
+  public void chargePoint(int amount) {
+    if (amount <= 0) {
+      throw new IllegalArgumentException("금액은 1 이상이어야 합니다.");
     }
+    this.point += amount;
+  }
 
-    public Member(String email, String password) {
-        this.email = email;
-        this.password = password;
+  // point deduction for order payment
+  public void deductPoint(int amount) {
+    if (amount <= 0) {
+      throw new IllegalArgumentException("차감 금액은 1 이상이어야 합니다.");
     }
+    if (amount > this.point) {
+      throw new IllegalArgumentException("포인트가 부족합니다.");
+    }
+    this.point -= amount;
+  }
 
-    public Member(String email) {
-        this.email = email;
-    }
+  public Long getId() {
+    return id;
+  }
 
-    public void update(String email, String password) {
-        this.email = email;
-        this.password = password;
-    }
+  public String getEmail() {
+    return email;
+  }
 
-    public void updateKakaoAccessToken(String kakaoAccessToken) {
-        this.kakaoAccessToken = kakaoAccessToken;
-    }
+  public String getPassword() {
+    return password;
+  }
 
-    public void chargePoint(int amount) {
-        if (amount <= 0) {
-            throw new IllegalArgumentException("금액은 1 이상이어야 합니다.");
-        }
-        this.point += amount;
-    }
+  public String getKakaoAccessToken() {
+    return kakaoAccessToken;
+  }
 
-    // point deduction for order payment
-    public void deductPoint(int amount) {
-        if (amount <= 0) {
-            throw new IllegalArgumentException("차감 금액은 1 이상이어야 합니다.");
-        }
-        if (amount > this.point) {
-            throw new IllegalArgumentException("포인트가 부족합니다.");
-        }
-        this.point -= amount;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public String getKakaoAccessToken() {
-        return kakaoAccessToken;
-    }
-
-    public int getPoint() {
-        return point;
-    }
+  public int getPoint() {
+    return point;
+  }
 }

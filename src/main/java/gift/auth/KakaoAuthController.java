@@ -17,17 +17,18 @@ import org.springframework.web.util.UriComponentsBuilder;
 @RestController
 @RequestMapping("/api/auth/kakao")
 public class KakaoAuthController {
-    private final KakaoLoginProperties properties;
-    private final KakaoAuthService kakaoAuthService;
+  private final KakaoLoginProperties properties;
+  private final KakaoAuthService kakaoAuthService;
 
-    public KakaoAuthController(KakaoLoginProperties properties, KakaoAuthService kakaoAuthService) {
-        this.properties = properties;
-        this.kakaoAuthService = kakaoAuthService;
-    }
+  public KakaoAuthController(KakaoLoginProperties properties, KakaoAuthService kakaoAuthService) {
+    this.properties = properties;
+    this.kakaoAuthService = kakaoAuthService;
+  }
 
-    @GetMapping("/login")
-    public ResponseEntity<Void> login() {
-        String kakaoAuthUrl = UriComponentsBuilder.fromUriString("https://kauth.kakao.com/oauth/authorize")
+  @GetMapping("/login")
+  public ResponseEntity<Void> login() {
+    String kakaoAuthUrl =
+        UriComponentsBuilder.fromUriString("https://kauth.kakao.com/oauth/authorize")
             .queryParam("response_type", "code")
             .queryParam("client_id", properties.clientId())
             .queryParam("redirect_uri", properties.redirectUri())
@@ -35,14 +36,14 @@ public class KakaoAuthController {
             .build()
             .toUriString();
 
-        return ResponseEntity.status(HttpStatus.FOUND)
-            .header(HttpHeaders.LOCATION, kakaoAuthUrl)
-            .build();
-    }
+    return ResponseEntity.status(HttpStatus.FOUND)
+        .header(HttpHeaders.LOCATION, kakaoAuthUrl)
+        .build();
+  }
 
-    @GetMapping("/callback")
-    public ResponseEntity<TokenResponse> callback(@RequestParam("code") String code) {
-        TokenResponse token = kakaoAuthService.processCallback(code);
-        return ResponseEntity.ok(token);
-    }
+  @GetMapping("/callback")
+  public ResponseEntity<TokenResponse> callback(@RequestParam("code") String code) {
+    TokenResponse token = kakaoAuthService.processCallback(code);
+    return ResponseEntity.ok(token);
+  }
 }

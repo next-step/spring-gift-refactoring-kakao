@@ -9,13 +9,13 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
-        return ResponseEntity.badRequest().body(e.getMessage());
-    }
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
+    return ResponseEntity.badRequest().body(e.getMessage());
+  }
 
-    @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<String> handleUnauthorized(UnauthorizedException e) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
-    }
+  @ExceptionHandler(UnauthorizedException.class)
+  public ResponseEntity<String> handleUnauthorized(UnauthorizedException e) {
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+  }
 }

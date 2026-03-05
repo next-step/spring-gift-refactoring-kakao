@@ -1,6 +1,8 @@
 package gift.option;
 
 import jakarta.validation.Valid;
+import java.net.URI;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,45 +12,42 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.net.URI;
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/products/{productId}/options")
 public class OptionController {
-    private final OptionService optionService;
+  private final OptionService optionService;
 
-    public OptionController(OptionService optionService) {
-        this.optionService = optionService;
-    }
+  public OptionController(OptionService optionService) {
+    this.optionService = optionService;
+  }
 
-    @GetMapping
-    public ResponseEntity<List<OptionResponse>> getOptions(@PathVariable Long productId) {
-        return optionService.getOptions(productId)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
-    }
+  @GetMapping
+  public ResponseEntity<List<OptionResponse>> getOptions(@PathVariable Long productId) {
+    return optionService
+        .getOptions(productId)
+        .map(ResponseEntity::ok)
+        .orElse(ResponseEntity.notFound().build());
+  }
 
-    @PostMapping
-    public ResponseEntity<OptionResponse> createOption(
-        @PathVariable Long productId,
-        @Valid @RequestBody OptionRequest request
-    ) {
-        return optionService.createOption(productId, request)
-            .map(response -> {
-                URI location = URI.create("/api/products/" + productId + "/options/" + response.id());
-                return ResponseEntity.created(location).body(response);
+  @PostMapping
+  public ResponseEntity<OptionResponse> createOption(
+      @PathVariable Long productId, @Valid @RequestBody OptionRequest request) {
+    return optionService
+        .createOption(productId, request)
+        .map(
+            response -> {
+              URI location = URI.create("/api/products/" + productId + "/options/" + response.id());
+              return ResponseEntity.created(location).body(response);
             })
-            .orElse(ResponseEntity.notFound().build());
-    }
+        .orElse(ResponseEntity.notFound().build());
+  }
 
-    @DeleteMapping("/{optionId}")
-    public ResponseEntity<Void> deleteOption(
-        @PathVariable Long productId,
-        @PathVariable Long optionId
-    ) {
-        return optionService.deleteOption(productId, optionId)
-            .map(success -> ResponseEntity.noContent().<Void>build())
-            .orElse(ResponseEntity.notFound().build());
-    }
+  @DeleteMapping("/{optionId}")
+  public ResponseEntity<Void> deleteOption(
+      @PathVariable Long productId, @PathVariable Long optionId) {
+    return optionService
+        .deleteOption(productId, optionId)
+        .map(success -> ResponseEntity.noContent().<Void>build())
+        .orElse(ResponseEntity.notFound().build());
+  }
 }

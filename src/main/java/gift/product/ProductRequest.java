@@ -9,9 +9,8 @@ public record ProductRequest(
     @NotBlank String name,
     @Positive int price,
     @NotBlank String imageUrl,
-    @NotNull Long categoryId
-) {
-    public Product toEntity(Category category) {
-        return new Product(name, price, imageUrl, category);
-    }
+    @NotNull Long categoryId) {
+  public Product toEntity(Category category) {
+    return new Product(name, price, imageUrl, category);
+  }
 }
