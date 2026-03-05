@@ -419,6 +419,8 @@ public Order createOrder(Long memberId, Long optionId, int quantity, String mess
 **영향 범위**: `Option.java`
 **우선순위**: 높음
 
+**검증 결과**: `./gradlew cucumberTest` — 17개 시나리오 전체 통과
+
 ---
 
 ### 작업 4: 삭제 시 FK 위반 처리

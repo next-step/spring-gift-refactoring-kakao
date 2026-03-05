@@ -95,3 +95,6 @@ auth ↔ member 순환 참조 해소 — member 패키지에 TokenProvider 인�
 
 ## 프롬프트 28
 6-2. 트랜잭션에서 외부 API 호출 분리 — OrderService.createOrder()의 @Transactional 내 sendMessageIfPossible() 호출을 @TransactionalEventListener(AFTER_COMMIT)로 분리. OrderCreatedEvent 도메인 이벤트 record 신규 생성, OrderMessageEventListener가 커밋 후 메시지 전송 담당. OrderService에서 OrderMessageClient 의존 제거 → ApplicationEventPublisher로 대체.
+
+## 프롬프트 29
+6-3. Option.subtractQuantity 음수/영 검증 추가 — subtractQuantity(int amount)에 amount <= 0 guard clause 추가. Member.deductPoint()와 동일한 방어 패턴 적용. 도메인 객체가 자신의 불변식을 스스로 보호하도록 변경.

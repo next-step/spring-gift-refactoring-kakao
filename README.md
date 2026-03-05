@@ -196,8 +196,8 @@
 > 근거: amount <= 0 검증이 없어 음수 전달 시 재고가 증가한다.
 > Member.deductPoint()에는 동일한 방어가 있으나 Option에는 누락.
 
-- [ ] Option.subtractQuantity()에 amount <= 0 검증 추가
-- [ ] 전체 테스트 실행 → 통과 확인
+- [x] Option.subtractQuantity()에 amount <= 0 검증 추가
+- [x] 전체 테스트 실행 → 통과 확인
 
 #### 6-4. 삭제 시 FK 위반 처리 — Restrict + 사전 검증
 
