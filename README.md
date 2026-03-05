@@ -191,7 +191,7 @@ Spring Boot 기반의 선물하기 서비스. 사용자가 카테고리와 상�
 
 - [x] `OrderService.createOrder()` — 재고 차감 + 포인트 차감 + 주문 저장이 원자적으로 처리되어야 함
   - **증거**: 포인트 부족 시 재고가 롤백되는지 테스트로 검증 (현재는 재고만 차감되는 버그 존재)
-- [ ] `KakaoAuthService.processCallback()` — 회원 조회/생성 + 카카오 토큰 저장
+- [x] `KakaoAuthService.processCallback()` — 회원 조회/생성 + 카카오 토큰 저장
 - [ ] `MemberService.update()`, `chargePoint()` — 조회 + 수정이 하나의 단위
 - [ ] `ProductService.update()` — 조회 + 수정이 하나의 단위
 - [ ] `CategoryService.update()` — 조회 + 수정이 하나의 단위

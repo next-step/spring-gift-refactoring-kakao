@@ -87,3 +87,36 @@ Step 2에서 수행할 작업 식별:
 | 정상 주문 성공 | PASS | PASS |
 
 ---
+
+## 3단계: KakaoAuthService.processCallback 트랜잭션 경계 설정
+
+### 프롬프트
+
+> `KakaoAuthService.processCallback()` — 회원 조회/생성 + 카카오 토큰 저장
+
+### 변경 전/후 정의
+
+- **무엇을 바꾸는가**: `processCallback()`에 `@Transactional` 추가 → 회원 조회/생성 + 토큰 저장이 하나의 트랜잭션으로 처리
+- **무엇을 바꾸지 않는가**: 카카오 OAuth 콜백 흐름 (토큰 교환 → 사용자 정보 조회 → 회원 처리 → JWT 발급)
+- **무엇이 이를 증명하는가**: `KakaoAuthServiceTest` 2개 테스트
+
+### AI 활용 방식
+
+1. **테스트 먼저 작성**: `KakaoLoginClient`를 `@MockitoBean`으로 mock하여 외부 API 의존성 제거
+   - `processCallback_newMember_createsWithToken()` — 신규 회원 생성 + 토큰 저장 + JWT 발급 검증 (DB 재조회)
+   - `processCallback_existingMember_updatesToken()` — 기존 회원 토큰 갱신 + 기존 데이터(포인트) 유지 + 중복 생성 없음 검증
+2. **@Transactional 없이 테스트 실행**: 단일 save 호출이라 기본 동작은 하지만, 논리적 단위로서 트랜잭션 경계가 필요
+3. **@Transactional 추가 후 테스트 재통과 확인**
+
+### 산출물
+
+| 파일 | 변경 | 종류 |
+|------|------|------|
+| `KakaoAuthServiceTest.java` | 신규 — 2개 테스트 (신규 회원 + 기존 회원) | 테스트 |
+| `KakaoAuthService.java` | `@Transactional` 추가 (import 1줄 + 어노테이션 1줄) | 작동 변경 |
+
+### 참고
+
+`OrderService.createOrder()`와 달리 이 메서드는 단일 `save()` 호출이므로 롤백 시나리오가 극적이지 않다. `@Transactional`을 추가하는 이유는 회원 조회 → 토큰 갱신 → 저장이 하나의 논리 단위임을 명시하고, JPA 영속성 컨텍스트를 적절히 관리하기 위함이다.
+
+---
