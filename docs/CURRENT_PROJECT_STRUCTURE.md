@@ -69,6 +69,7 @@ spring-gift-refactoring-kakao/
 │   │   │   │   ├── OrderRepository.java
 │   │   │   │   ├── OrderRequest.java
 │   │   │   │   ├── OrderResponse.java
+│   │   │   │   ├── MessageClient.java
 │   │   │   │   └── KakaoMessageClient.java
 │   │   │   └── wish/
 │   │   │       ├── Wish.java
@@ -134,10 +135,12 @@ spring-gift-refactoring-kakao/
         │   ├── PHASE2-예외_핸들러_중앙화.md
         │   ├── PHASE3-null_반환_예외_전환.md
         │   ├── PHASE4-트랜잭션_경계_추가.md
-        │   └── PHASE5-Order_예외_처리_개선.md
+        │   ├── PHASE5-Order_예외_처리_개선.md
+        │   └── PHASE6-메시지_클라이언트_인터페이스_추출.md
         └── adr/
             ├── ADR1-인증_로직_추출_방식.md
-            └── ADR2-예외_처리_전략.md
+            ├── ADR2-예외_처리_전략.md
+            └── ADR4-메시지_클라이언트_인터페이스_설계.md
 ```
 
 ## 기술 스택
@@ -224,7 +227,8 @@ spring-gift-refactoring-kakao/
 | OrderController | REST API (주문 생성, 내 주문 조회) |
 | OrderService | 주문 비즈니스 로직 (재고 차감, 포인트 차감, 카카오 알림) |
 | OrderRepository | JpaRepository (회원별 페이징 조회) |
-| KakaoMessageClient | 카카오톡 나에게 보내기 API 호출 |
+| MessageClient | 메시지 발송 인터페이스 |
+| KakaoMessageClient | MessageClient 구현체 — 카카오톡 나에게 보내기 API 호출 |
 | OrderRequest / OrderResponse | 요청/응답 DTO |
 
 ### wish - 찜 리스트
