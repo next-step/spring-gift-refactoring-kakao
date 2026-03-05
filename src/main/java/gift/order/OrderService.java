@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -49,6 +50,7 @@ public class OrderService {
     // 4. save order
     // 5. cleanup wish
     // 6. send kakao notification
+    @Transactional
     public Optional<OrderResponse> createOrder(Member member, OrderRequest request) {
         return optionRepository.findById(request.optionId())
             .map(option -> {
