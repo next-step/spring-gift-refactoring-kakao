@@ -82,15 +82,15 @@
 
 ### Phase 10: 단위 테스트 작성
 #### 도메인 엔티티
-- [ ] test(member): Member 도메인 로직 단위 테스트 (verifyPassword, chargePoint, deductPoint)
-- [ ] test(option): Option 도메인 로직 단위 테스트 (calculatePrice, subtractQuantity)
+- [x] test(member): Member 도메인 로직 단위 테스트 (verifyPassword, chargePoint, deductPoint)
+- [x] test(option): Option 도메인 로직 단위 테스트 (calculatePrice, subtractQuantity)
 #### 서비스
-- [ ] test(category): CategoryQueryService, CategoryCommandService 단위 테스트
-- [ ] test(member): MemberQueryService, MemberCommandService 단위 테스트
-- [ ] test(product): ProductQueryService, ProductCommandService 단위 테스트
-- [ ] test(option): OptionQueryService, OptionCommandService 단위 테스트
-- [ ] test(wish): WishQueryService, WishCommandService 단위 테스트
-- [ ] test(order): OrderQueryService, OrderCommandService 단위 테스트
+- [x] test(category): CategoryQueryService, CategoryCommandService 단위 테스트
+- [x] test(member): MemberQueryService, MemberCommandService 단위 테스트
+- [x] test(product): ProductQueryService, ProductCommandService 단위 테스트
+- [x] test(option): OptionQueryService, OptionCommandService 단위 테스트
+- [x] test(wish): WishQueryService, WishCommandService 단위 테스트
+- [x] test(order): OrderQueryService, OrderCommandService 단위 테스트
 
 ## 구현 전략
 
