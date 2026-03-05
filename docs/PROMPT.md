@@ -119,3 +119,6 @@ auth ↔ member 순환 참조 해소 — member 패키지에 TokenProvider 인�
 
 ## 프롬프트 36
 6-8. 에러 응답 본문 통일 — ErrorResponse record 도입하여 GlobalExceptionHandler 6개 핸들러 모두 ResponseEntity<ErrorResponse>를 반환하도록 변경. 401/403/404는 body 없음 → JSON body 추가, 400/409는 plain text → JSON 변환. Content-Type이 application/json으로 통일되어 클라이언트가 성공/실패 응답을 동일한 방식으로 파싱 가능. (ADR-003)
+
+## 프롬프트 37
+6-9. 주문 시 위시 삭제 — 주문 생성 시 해당 상품이 위시리스트에 있으면 자동 삭제. WishRepository에 deleteByMemberIdAndProductId() 추가, WishService에 removeWishByMemberIdAndProductId() 추가, OrderService에 WishService 의존 추가하여 주문 저장 후 위시 삭제 호출. 위시가 없으면 아무 일도 안 함(soft delete). 작업 10(동시성 제어) 전에 OrderService를 최종 형태로 완성하여 잠금 범위 재조정 방지.

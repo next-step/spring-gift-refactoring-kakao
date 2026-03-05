@@ -55,4 +55,9 @@ public class WishService {
 
         wishRepository.delete(wish);
     }
+
+    @Transactional
+    public void removeWishByMemberIdAndProductId(Long memberId, Long productId) {
+        wishRepository.deleteByMemberIdAndProductId(memberId, productId);
+    }
 }

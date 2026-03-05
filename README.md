@@ -252,11 +252,11 @@
 > WishRepository.findByMemberIdAndProductId()가 존재하지만 OrderService에서 호출하지 않는다.
 > 작업 10 전에 OrderService를 최종 형태로 완성하여 잠금 범위 재조정을 방지한다.
 
-- [ ] WishRepository에 `deleteByMemberIdAndProductId()` 추가
-- [ ] WishService에 `removeWishByMemberIdAndProductId()` 메서드 추가
-- [ ] OrderService에서 주문 저장 후 위시 삭제 호출
-- [ ] 인수 테스트 시나리오 추가 (주문 시 위시리스트에서 해당 상품 삭제 검증)
-- [ ] 전체 테스트 실행 → 통과 확인
+- [x] WishRepository에 `deleteByMemberIdAndProductId()` 추가
+- [x] WishService에 `removeWishByMemberIdAndProductId()` 메서드 추가
+- [x] OrderService에서 주문 저장 후 위시 삭제 호출
+- [x] 인수 테스트 시나리오 추가 (주문 시 위시리스트에서 해당 상품 삭제 검증)
+- [x] 전체 테스트 실행 → 통과 확인
 
 #### 6-10. 동시성 제어 — 비관적 잠금 (SELECT FOR UPDATE)
 

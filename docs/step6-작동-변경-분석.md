@@ -596,6 +596,8 @@ wishService.removeWishByMemberIdAndProductId(memberId, productId);
 
 **테스트 영향**: 기존 인수 테스트 통과 유지 + 신규 시나리오 1개 추가.
 
+**검증 결과**: `./gradlew cucumberTest` — 21개 시나리오 전체 통과 (기존 20 + 신규 1)
+
 ---
 
 ### 작업 10: 동시성 제어 (3-3)
