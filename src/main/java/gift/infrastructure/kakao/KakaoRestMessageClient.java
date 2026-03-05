@@ -31,8 +31,7 @@ public class KakaoRestMessageClient implements KakaoMessageClient {
     if (member.getKakaoAccessToken() == null) {
       return;
     }
-    Product product = option.getProduct();
-    String templateObject = buildTemplate(order, product);
+    String templateObject = buildTemplate(order, option);
 
     LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
     params.add("template_object", templateObject);
@@ -53,8 +52,9 @@ public class KakaoRestMessageClient implements KakaoMessageClient {
     throw new KakaoMessageException("카카오 메시지 전송에 실패했습니다.", e);
   }
 
-  private String buildTemplate(Order order, Product product) {
-    String totalPrice = String.format("%,d", product.getPrice() * order.getQuantity());
+  private String buildTemplate(Order order, Option option) {
+    Product product = option.getProduct();
+    String totalPrice = String.format("%,d", option.calculateTotalPrice(order.getQuantity()));
     String message =
         order.getMessage() != null && !order.getMessage().isBlank()
             ? "\\n\\n💌 " + order.getMessage()

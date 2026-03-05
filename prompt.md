@@ -196,3 +196,10 @@
 - `GiftAcceptanceTest`에 `위시에_담은_상품을_주문하면_위시에서_삭제된다()` 테스트 추가
 - 위시 등록(201) → 주문(201) → 위시 목록 조회 → content가 비어있는지 검증
 - `./gradlew test --tests "gift.GiftAcceptanceTest"` — 6개 테스트 모두 통과 확인
+
+### 프롬프트 9: 가격 계산 중복 제거
+> String.format 가격 계산이 Option.calculateTotalPrice 랑 중복되는데 합칠 수 있을까?
+
+- `KakaoRestMessageClient.buildTemplate()`의 `product.getPrice() * order.getQuantity()` → `option.calculateTotalPrice(order.getQuantity())`로 교체
+- 가격 계산 로직이 `Option.calculateTotalPrice()` 한 곳으로 통일
+- `./gradlew spotlessApply build` — 빌드 + 테스트 통과 확인
