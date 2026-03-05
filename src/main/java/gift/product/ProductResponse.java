@@ -5,7 +5,8 @@ public record ProductResponse(
     String name,
     int price,
     String imageUrl,
-    Long categoryId
+    Long categoryId,
+    String categoryName
 ) {
     public static ProductResponse from(Product product) {
         var category = product.getCategory();
@@ -14,7 +15,8 @@ public record ProductResponse(
             product.getName(),
             product.getPrice(),
             product.getImageUrl(),
-            category.getId()
+            category.getId(),
+            category.getName()
         );
     }
 }

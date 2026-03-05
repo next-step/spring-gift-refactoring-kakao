@@ -24,7 +24,7 @@ public class AdminProductController {
 
     @GetMapping
     public String list(Model model) {
-        model.addAttribute("products", productService.findAllEntities());
+        model.addAttribute("products", productService.findAllResponses());
         return "product/list";
     }
 
@@ -54,7 +54,7 @@ public class AdminProductController {
 
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
-        model.addAttribute("product", productService.findEntityById(id));
+        model.addAttribute("product", productService.findById(id));
         model.addAttribute("categories", categoryService.findAll());
         return "product/edit";
     }
@@ -70,7 +70,7 @@ public class AdminProductController {
     ) {
         List<String> errors = productService.validateProductName(name, true);
         if (!errors.isEmpty()) {
-            populateEditForm(model, productService.findEntityById(id), errors, name, price, imageUrl, categoryId);
+            populateEditForm(model, productService.findById(id), errors, name, price, imageUrl, categoryId);
             return "product/edit";
         }
 
@@ -102,7 +102,7 @@ public class AdminProductController {
 
     private void populateEditForm(
         Model model,
-        Product product,
+        ProductResponse product,
         List<String> errors,
         String name,
         int price,

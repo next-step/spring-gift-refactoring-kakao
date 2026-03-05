@@ -26,8 +26,10 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public List<Product> findAllEntities() {
-        return productRepository.findAll();
+    public List<ProductResponse> findAllResponses() {
+        return productRepository.findAll().stream()
+            .map(ProductResponse::from)
+            .toList();
     }
 
     @Transactional(readOnly = true)
@@ -35,12 +37,6 @@ public class ProductService {
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("상품을 찾을 수 없습니다. id=" + id));
         return ProductResponse.from(product);
-    }
-
-    @Transactional(readOnly = true)
-    public Product findEntityById(Long id) {
-        return productRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("상품을 찾을 수 없습니다. id=" + id));
     }
 
     public List<String> validateProductName(String name, boolean allowKakao) {
