@@ -144,3 +144,40 @@ Step 2의 작동 변경을 검증할 테스트를 작성해야 한다. 서비스
 
 - 컴파일 에러를 일으키는 Red 테스트(존재하지 않는 메서드 호출)는 0단계에서 선행 작성할 수 없다. 해당 메서드 구현 단계에서 함께 작성한다.
 - 테스트 데이터는 `@Sql`로 관리하며, `setup-data.sql` / `cleanup.sql` 패턴을 따른다.
+
+---
+
+## ADR-005: 외부 HTTP 호출과 트랜잭션 경계 분리
+
+### 상태
+
+결정됨
+
+### 맥락
+
+`OrderService.createOrder()`와 `KakaoAuthService.loginWithKakao()`에 `@Transactional`을 적용했으나, 트랜잭션 내부에서 외부 HTTP 호출(카카오 API)이 실행되고 있었다. 카카오 API 응답이 느려지면 DB 커넥션을 그만큼 오래 점유하게 되어 커넥션 풀 고갈 위험이 있다.
+
+### 선택지
+
+| 선택지 | 장점 | 단점 |
+|--------|------|------|
+| (A) 현재 구조 유지 (`@Transactional` + 외부 호출) | 구현 단순 | DB 커넥션을 외부 호출 동안 점유 |
+| **(B) `TransactionTemplate`으로 DB 작업만 감싸기** | 트랜잭션 경계가 명시적, DB 커넥션 즉시 반환 | `@Transactional` 대비 코드가 약간 복잡 |
+| (C) `@TransactionalEventListener(AFTER_COMMIT)` | 관심사 분리가 깔끔 | 이벤트 클래스 + 리스너 도입으로 구조 복잡 |
+| (D) 별도 서비스 클래스 분리 | Spring 프록시 문제 없음 | 클래스 증가 |
+
+### 결정
+
+**(B) `TransactionTemplate`** — 외부 HTTP 호출을 트랜잭션 밖에 두고, DB 작업만 `TransactionTemplate`으로 감싼다.
+
+### 근거
+
+- 새 클래스나 이벤트 인프라 없이 한 메서드 안에서 트랜잭션 경계를 명시적으로 제어할 수 있다.
+- `@Transactional`의 self-invocation 문제(Spring 프록시 우회)를 고려할 필요가 없다.
+- (C)는 이벤트 클래스 도입이 현재 규모에서 과잉이고, (D)는 클래스가 늘어난다.
+
+### 영향
+
+- `OrderService`: DB 작업(재고 차감·포인트 차감·주문 저장·위시 삭제)은 트랜잭션 내에서 실행되고, 카카오 알림은 커밋 후 전송된다.
+- `KakaoAuthService`: 카카오 토큰 교환·사용자 조회는 트랜잭션 밖에서 실행되고, 회원 저장·토큰 갱신만 트랜잭션 내에서 실행된다.
+- ADR-001의 결정(`@Transactional` 적용)을 `TransactionTemplate`으로 대체하지만, 트랜잭션 보장 범위는 동일하다.
