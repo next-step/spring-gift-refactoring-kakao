@@ -215,3 +215,14 @@
 - Flyway 마이그레이션 `V3__Encrypt_member_password.sql` 추가: `password` 컬럼 → `password_hash` + `password_salt` 컬럼
 - 테스트 수정: SQL 시드 회원 → API 회원 등록 방식으로 전환, 포인트 충전은 JdbcTemplate 직접 UPDATE
 - `./gradlew spotlessApply test` — 10개 테스트 모두 통과 확인
+
+### 프롬프트 11: PR 본문 작성
+> 커밋보고 작업한 내용 pr 작성해줘
+
+- 커밋 이력 18개를 분석하여 PR 본문 작성 (트랜잭션 경계, 코드 스타일 통일, 도메인 로직 개선, 비밀번호 암호화, 테스트)
+
+### 프롬프트 12: ADR 작성
+> 지금 까지 작업 한 것 중에 ADR 작성할 만한게 있으려나? → 작성해줘
+
+- `docs/adr/001-외부-API-호출-트랜잭션-분리.md` — 컨트롤러 직접 호출 / afterCommit 콜백 / 이벤트 리스너 3가지 대안 비교, 이벤트 방식 채택
+- `docs/adr/002-비밀번호-암호화-전략.md` — BCrypt / SCrypt / SHA-256+salt 3가지 대안 비교, SHA-256+salt 값 객체 채택
