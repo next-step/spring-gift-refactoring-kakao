@@ -228,10 +228,10 @@
 - [x] 기존 `AdminProductControllerTest` 전체 통과 확인
 
 #### 1-4. order 패키지 — KakaoMessageClient 가격 계산을 도메인 메서드로 위임 (구조)
-- [ ] `KakaoMessageClient.sendToMe()` 시그니처에서 `Product` 파라미터 제거 (`Order`에서 접근 가능)
-- [ ] `buildTemplate()`에서 `product.getPrice() * order.getQuantity()` → `order.getOption().calculateTotalPrice(order.getQuantity())` 교체
-- [ ] `OrderService.sendKakaoMessageIfPossible()`에서 `product` 변수 제거
-- [ ] 기존 `OrderControllerTest` 전체 통과 확인
+- [x] `KakaoMessageClient.sendToMe()` 시그니처에서 `Product` 파라미터 제거 (`Order`에서 접근 가능)
+- [x] `buildTemplate()`에서 `product.getPrice() * order.getQuantity()` → `order.getOption().calculateTotalPrice(order.getQuantity())` 교체
+- [x] `OrderService.sendKakaoMessageIfPossible()`에서 `product` 변수 제거
+- [x] 기존 `OrderControllerTest` 전체 통과 확인
 
 ### 2. 누락된 작동 구현
 

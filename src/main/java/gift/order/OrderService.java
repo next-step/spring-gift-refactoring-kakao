@@ -60,8 +60,7 @@ public class OrderService {
         }
         try {
             var order = orderRepository.findById(orderId).orElseThrow();
-            var product = order.getOption().getProduct();
-            kakaoMessageClient.sendToMe(kakaoAccessToken, order, product);
+            kakaoMessageClient.sendToMe(kakaoAccessToken, order);
         } catch (Exception e) {
             log.warn("메시지 전송에 실패했습니다: orderId={}", orderId, e);
         }
