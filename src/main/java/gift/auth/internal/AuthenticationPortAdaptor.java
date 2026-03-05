@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class AuthenticationPortImpl implements AuthenticationPort {
+public class AuthenticationPortAdaptor implements AuthenticationPort {
 
     private final JwtProvider jwtProvider;
 

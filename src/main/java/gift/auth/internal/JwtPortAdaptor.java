@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class JwtPortImpl implements JwtPort {
+public class JwtPortAdaptor implements JwtPort {
 
     private final JwtProvider jwtProvider;
 
