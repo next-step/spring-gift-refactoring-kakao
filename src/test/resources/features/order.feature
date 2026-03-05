@@ -26,7 +26,7 @@ Feature: 주문 API
     Then 응답 코드는 200이다
     And 응답의 주문 목록 크기는 1이다
 
-  Scenario: 포인트 부족으로 주문 실패
+  Scenario: 포인트 부족으로 주문 실패 시 재고가 원상복구된다
     Given 이메일 "poor@test.com", 비밀번호 "password1"로 가입한 회원이 있고
     And "poor@test.com" 회원의 포인트가 0원이고
     And 카테고리 "전자기기", 색상 "#1E90FF", 이미지 "https://img.com/e.jpg"가 등록되어 있고
@@ -35,3 +35,4 @@ Feature: 주문 API
     And 이메일 "poor@test.com", 비밀번호 "password1"로 로그인되어 있고
     When 옵션 "블루 256GB"를 1개, 메시지 "주문합니다"로 주문을 요청하면
     Then 응답 코드는 500이다
+    And 옵션 "블루 256GB"의 재고는 30이다

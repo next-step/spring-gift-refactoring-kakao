@@ -112,6 +112,14 @@ public class OrderStepDefinitions {
         return headers;
     }
 
+    @Then("옵션 {string}의 재고는 {int}이다")
+    public void 옵션_재고_확인(String optionName, int expectedQuantity) {
+        int quantity = jdbcTemplate.queryForObject(
+            "SELECT quantity FROM option WHERE name = ?", Integer.class, optionName
+        );
+        assertThat(quantity).isEqualTo(expectedQuantity);
+    }
+
     private Long getOptionId(String optionName) {
         return jdbcTemplate.queryForObject("SELECT id FROM option WHERE name = ?", Long.class, optionName);
     }

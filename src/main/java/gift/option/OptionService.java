@@ -4,12 +4,14 @@ import gift.product.Product;
 import gift.product.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
 
 @RequiredArgsConstructor
 @Service
+@Transactional(readOnly = true)
 public class OptionService {
     private final OptionRepository optionRepository;
     private final ProductService productService;
@@ -24,12 +26,14 @@ public class OptionService {
                 .orElseThrow(() -> new NoSuchElementException("옵션을 찾을 수 없습니다. id: " + id));
     }
 
+    @Transactional
     public Option subtractQuantity(Long id, int amount) {
         Option option = findById(id);
         option.subtractQuantity(amount);
         return optionRepository.save(option);
     }
 
+    @Transactional
     public Option create(Long productId, String name, int quantity) {
         validateName(name);
         Product product = productService.findById(productId);
@@ -41,6 +45,7 @@ public class OptionService {
         return optionRepository.save(new Option(product, name, quantity));
     }
 
+    @Transactional
     public void delete(Long productId, Long optionId) {
         productService.findById(productId);
 

@@ -9,9 +9,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
+@Transactional(readOnly = true)
 public class OrderService {
     private final OrderRepository orderRepository;
     private final OptionService optionService;
@@ -22,6 +24,7 @@ public class OrderService {
         return orderRepository.findByMemberId(memberId, pageable);
     }
 
+    @Transactional
     public Order createOrder(Long memberId, Long optionId, int quantity, String message) {
         Option option = optionService.subtractQuantity(optionId, quantity);
 
