@@ -48,8 +48,8 @@ public class OptionService {
         .findById(productId)
         .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
 
-    List<Option> options = optionRepository.findByProductId(productId);
-    if (options.size() <= MIN_OPTION_COUNT) {
+    long optionCount = optionRepository.countByProductId(productId);
+    if (optionCount <= MIN_OPTION_COUNT) {
       throw new IllegalArgumentException("옵션이 1개인 상품은 옵션을 삭제할 수 없습니다.");
     }
 
