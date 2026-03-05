@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Service
@@ -17,6 +18,33 @@ public class ProductService {
     public ProductService(ProductRepository productRepository, CategoryRepository categoryRepository) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
+    }
+
+    public List<Product> findAllProducts() {
+        return productRepository.findAll();
+    }
+
+    public Optional<Product> findProductById(Long id) {
+        return productRepository.findById(id);
+    }
+
+    public List<String> validateName(String name, boolean allowKakao) {
+        return ProductNameValidator.validate(name, allowKakao);
+    }
+
+    public Product saveProduct(String name, int price, String imageUrl, Long categoryId) {
+        Category category = categoryRepository.findById(categoryId)
+            .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
+        return productRepository.save(new Product(name, price, imageUrl, category));
+    }
+
+    public Product updateProduct(Long id, String name, int price, String imageUrl, Long categoryId) {
+        Product product = productRepository.findById(id)
+            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
+        Category category = categoryRepository.findById(categoryId)
+            .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
+        product.update(name, price, imageUrl, category);
+        return productRepository.save(product);
     }
 
     public Page<ProductResponse> getAllProducts(Pageable pageable) {
