@@ -261,10 +261,10 @@
 ### 4. 외부 API 호출을 트랜잭션 밖으로 분리
 
 #### 4-1. auth 패키지 — KakaoAuthService 외부 호출 분리 (구조)
-- [ ] `KakaoAuthService`에서 `@Transactional` 제거
-- [ ] `MemberRepository` 의존을 `MemberService` 의존으로 변경
-- [ ] `MemberService.findOrCreateByKakaoLogin()` 메서드 추가
-- [ ] 기존 `KakaoAuthControllerTest` 전체 통과 확인
+- [x] `KakaoAuthService`에서 `@Transactional` 제거
+- [x] `MemberRepository` 의존을 `MemberService` 의존으로 변경
+- [x] `MemberService.findOrCreateByKakaoLogin()` 메서드 추가
+- [x] 기존 `KakaoAuthControllerTest` 전체 통과 확인
 
 #### 4-2. order 패키지 — 카카오 메시지 전송을 트랜잭션 밖으로 분리 (구조)
 > 의존: 커밋 3-2 이후 수행
