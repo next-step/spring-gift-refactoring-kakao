@@ -40,7 +40,7 @@ public class OrderService {
     @Transactional
     public Order createOrder(Member member, OrderRequest request) {
         final Option option = optionRepository
-                .findById(request.optionId())
+                .findByIdForUpdate(request.optionId())
                 .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다."));
 
         option.subtractQuantity(request.quantity());
