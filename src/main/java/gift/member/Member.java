@@ -4,8 +4,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Member {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -18,9 +23,6 @@ public class Member {
     private String kakaoAccessToken;
 
     private int point;
-
-    protected Member() {
-    }
 
     public Member(String email, String password) {
         this.email = email;
@@ -55,25 +57,5 @@ public class Member {
             throw new MemberException(MemberErrorCode.INSUFFICIENT_POINT);
         }
         this.point -= amount;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public String getKakaoAccessToken() {
-        return kakaoAccessToken;
-    }
-
-    public int getPoint() {
-        return point;
     }
 }

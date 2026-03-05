@@ -1,6 +1,6 @@
 # step2 리팩토링 로그
 
-## 1. 예외처리
+## 1. [작동 변경] 예외처리
 
 ### 1-1. 배경
 
@@ -27,3 +27,27 @@ Service 계층 도입 이후 예외 처리가 Controller별 `@ExceptionHandler`�
 1. 예외 응답 정책을 전역에서 통합 관리할 수 있다.
 2. 도메인별 에러코드로 상태코드/메시지 의도가 명확해지고, 응답 바디 포맷이 일관된다.
 3. Controller는 요청/응답 흐름에 집중하고, 예외 처리 중복을 줄일 수 있다.
+
+---
+
+## 2. [구조 변경] lombok적용
+
+### 2-1. 배경
+
+엔티티 클래스에 getter/기본 생성자 보일러플레이트가 반복되어 코드량이 증가하고 가독성이 떨어졌다.  
+JPA 요구사항(기본 생성자)은 유지하면서 반복 코드를 줄이기 위해 Lombok을 도입했다.
+
+### 2-2. 수정사항
+
+| 항목 | 내용 |
+|---|---|
+| 의존성 추가 | `build.gradle.kts`에 `lombok` (`compileOnly`, `annotationProcessor`, `testCompileOnly`, `testAnnotationProcessor`) 추가 |
+| 엔티티 적용 | `Category`, `Product`, `Option`, `Order`, `Wish`, `Member`에 `@Getter`, `@NoArgsConstructor(access = AccessLevel.PROTECTED)` 적용 |
+| 코드 정리 | 수동 getter 및 protected 기본 생성자 제거 |
+| 검증 | `JAVA_HOME=$(/usr/libexec/java_home -v 21) ./gradlew test` → `BUILD SUCCESSFUL` |
+
+### 2-3. 기대효과
+
+1. 엔티티 보일러플레이트를 줄여 코드 가독성과 유지보수성을 높일 수 있다.
+2. JPA 제약(`protected` 기본 생성자)은 유지하면서 표현을 단순화할 수 있다.
+3. 변경 시 핵심 도메인 로직에 집중하기 쉬워진다.
