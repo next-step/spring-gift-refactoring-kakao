@@ -1,5 +1,7 @@
 package gift.common;
 
+import gift.category.CategoryErrorCode;
+import gift.category.CategoryException;
 import gift.product.ProductErrorCode;
 import gift.product.ProductException;
 import org.springframework.http.HttpStatus;
@@ -13,15 +15,16 @@ import java.util.NoSuchElementException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(CategoryException.class)
+    public ResponseEntity<ErrorResponse> handleCategoryException(CategoryException e) {
+        CategoryErrorCode errorCode = (CategoryErrorCode) e.getErrorCode();
+        return ResponseEntity.status(errorCode.getHttpStatus())
+            .body(new ErrorResponse(errorCode.getHttpStatus().value(), errorCode.getMessage()));
+    }
+
     @ExceptionHandler(ProductException.class)
-    public ResponseEntity<?> handleProductException(ProductException e) {
+    public ResponseEntity<ErrorResponse> handleProductException(ProductException e) {
         ProductErrorCode errorCode = (ProductErrorCode) e.getErrorCode();
-        if (errorCode == ProductErrorCode.INVALID_PRODUCT_NAME) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-        if (errorCode == ProductErrorCode.PRODUCT_NOT_FOUND || errorCode == ProductErrorCode.CATEGORY_NOT_FOUND) {
-            return ResponseEntity.notFound().build();
-        }
         return ResponseEntity.status(errorCode.getHttpStatus())
             .body(new ErrorResponse(errorCode.getHttpStatus().value(), errorCode.getMessage()));
     }

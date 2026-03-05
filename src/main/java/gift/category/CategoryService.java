@@ -25,6 +25,11 @@ public class CategoryService {
         return categoryRepository.findById(id);
     }
 
+    public Category findByIdOrThrow(Long id) {
+        return categoryRepository.findById(id)
+            .orElseThrow(() -> new CategoryException(CategoryErrorCode.CATEGORY_NOT_FOUND));
+    }
+
     public void deleteById(Long id) {
         categoryRepository.deleteById(id);
     }
