@@ -1,11 +1,11 @@
 package gift.category;
 
+import gift.common.exception.ApplicationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @RequiredArgsConstructor
 @Service
@@ -19,7 +19,7 @@ public class CategoryService {
 
     public Category findById(Long id) {
         return categoryRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("카테고리를 찾을 수 없습니다. id: " + id));
+                .orElseThrow(() -> new ApplicationException(CategoryErrorCode.NOT_FOUND));
     }
 
     @Transactional
