@@ -1,6 +1,6 @@
 package gift.wish;
 
-import gift.product.ProductRepository;
+import gift.product.ProductService;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,11 +11,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class WishService {
   private final WishRepository wishRepository;
-  private final ProductRepository productRepository;
+  private final ProductService productService;
 
-  public WishService(WishRepository wishRepository, ProductRepository productRepository) {
+  public WishService(WishRepository wishRepository, ProductService productService) {
     this.wishRepository = wishRepository;
-    this.productRepository = productRepository;
+    this.productService = productService;
   }
 
   public Page<Wish> findByMemberId(Long memberId, Pageable pageable) {
@@ -24,7 +24,7 @@ public class WishService {
 
   @Transactional
   public Optional<AddWishResult> addWish(Long memberId, Long productId) {
-    return productRepository
+    return productService
         .findById(productId)
         .map(
             product ->
