@@ -47,18 +47,14 @@ public class OptionService {
 
     @Transactional
     public void delete(Long productId, Long optionId) {
-        productService.findById(productId);
+        Product product = productService.findById(productId);
 
-        List<Option> options = optionRepository.findByProductId(productId);
-        if (options.size() <= 1) {
-            throw new IllegalArgumentException("옵션이 1개인 상품은 옵션을 삭제할 수 없습니다.");
-        }
-
-        Option option = optionRepository.findById(optionId)
-                .filter(o -> o.getProduct().getId().equals(productId))
+        Option option = product.getOptions().stream()
+                .filter(o -> o.getId().equals(optionId))
+                .findFirst()
                 .orElseThrow(() -> new NoSuchElementException("옵션을 찾을 수 없습니다. id: " + optionId));
 
-        optionRepository.delete(option);
+        product.removeOption(option);
     }
 
     private void validateName(String name) {
