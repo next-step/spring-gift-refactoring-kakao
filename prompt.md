@@ -178,6 +178,14 @@
 ### 프롬프트 6: 비밀번호 검증 로직을 Member 엔티티로 이동
 > 비밀번호 검증로직을 Member 로 옮기면 어떨까?
 
-- `MemberService.login()`의 비밀번호 비교 로직을 `Member.authenticate(password)` 메서드로 추출
+- `MemberService.login()`의 비밀번호 비교 로직을 `Member.validatePassword(password)` 메서드로 추출
 - 자기 상태 기반 검증(`chargePoint`, `deductPoint`와 동일 패턴)이 엔티티에 모이도록 통일
+- `./gradlew spotlessApply build` — 빌드 + 테스트 통과 확인
+
+### 프롬프트 7: 주문 시 위시리스트 자동 삭제
+> wish 에 있던 상품을 구매하면 wish 에서 삭제하는 로직이 필요 할 것 같은데
+
+- `OrderService.placeOrder()`에 `WishRepository` 의존성 추가
+- 주문 저장 후 `wishRepository.findByMemberIdAndProductId()` → `ifPresent(delete)` 로직 추가
+- 위시가 없는 경우 무시, 같은 트랜잭션 안에서 원자적 처리
 - `./gradlew spotlessApply build` — 빌드 + 테스트 통과 확인
