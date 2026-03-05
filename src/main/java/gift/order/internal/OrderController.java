@@ -23,9 +23,6 @@ public class OrderController {
     private final OrderService orderService;
     private final AuthenticationPort authenticationPort;
 
-    private final OrderMessageBuilder orderMessageBuilder;
-    private final KakaoMessagingService kakaoMessagingService;
-
     @GetMapping
     public ResponseEntity<PagedModel<OrderResponse>> getOrders(
             @RequestHeader("Authorization") String authorization,
@@ -51,17 +48,6 @@ public class OrderController {
         OrderResponse response = orderService.createOrder(memberId, request);
 
         Long orderId = response.id();
-
-        // TODO: cleanup wish
-
-        // send kakao notification if possible
-        try {
-            OrderMessageDto orderMessageDto = orderMessageBuilder.buildFrom(orderId);
-
-            kakaoMessagingService.sendDefaultTemplateMessageTo(memberId, orderMessageDto);
-        } catch (Exception ignored) {
-
-        }
 
         return ResponseEntity
                 .created(URI.create("/api/orders/" + orderId))
