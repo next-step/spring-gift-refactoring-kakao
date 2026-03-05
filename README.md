@@ -139,10 +139,11 @@
 > auth 패키지에 인터페이스를 두면 member → auth 의존이 남아 순환이 해소되지 않는다.
 > member 패키지에 TokenProvider 인터페이스를 배치하여 의존 방향을 역전시킨다 (DIP).
 
-- [ ] member 패키지에 TokenProvider 인터페이스 생성 (createToken 메서드)
-- [ ] JwtProvider가 member.TokenProvider를 구현하도록 변경
-- [ ] MemberService의 의존을 auth.JwtProvider → member.TokenProvider로 변경
-- [ ] 전체 테스트 실행 → 통과 확인
+- [x] member 패키지에 TokenProvider 인터페이스 생성 (createToken 메서드)
+- [x] JwtProvider가 member.TokenProvider를 구현하도록 변경
+- [x] MemberService의 의존을 auth.JwtProvider → member.TokenProvider로 변경
+- [x] TokenResponse를 auth → member 패키지로 이동 (MemberController → TokenResponse 순환도 해소)
+- [x] 전체 테스트 실행 → 통과 확인
 
 #### 5-6. 도메인 책임 이동 — Member.matchesPassword()
 

@@ -77,3 +77,6 @@ save() 위임 복원 — 프롬프트 19에서 save() 제거(dirty checking 전�
 
 ## 프롬프트 22
 외부 인프라 인터페이스 추출 — OrderMessageClient 인터페이스를 생성하여 OrderService의 KakaoMessageClient 직접 의존을 인터페이스 의존으로 역전. KakaoMessageClient가 OrderMessageClient를 구현하도록 변경. OrderService에서 벤더명(Kakao) 제거.
+
+## 프롬프트 23
+auth ↔ member 순환 참조 해소 — member 패키지에 TokenProvider 인터페이스를 생성하고 auth.JwtProvider가 이를 구현하도록 변경. MemberService의 의존을 auth.JwtProvider → member.TokenProvider로 역전. TokenResponse를 auth → member 패키지로 이동하여 MemberController → TokenResponse 순환도 해소. member 패키지에서 auth 패키지 import 0건 달성.

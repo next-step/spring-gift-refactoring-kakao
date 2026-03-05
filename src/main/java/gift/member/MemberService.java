@@ -1,6 +1,5 @@
 package gift.member;
 
-import gift.auth.JwtProvider;
 import java.util.List;
 import java.util.NoSuchElementException;
 import org.springframework.stereotype.Service;
@@ -9,11 +8,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class MemberService {
     private final MemberRepository memberRepository;
-    private final JwtProvider jwtProvider;
+    private final TokenProvider tokenProvider;
 
-    public MemberService(MemberRepository memberRepository, JwtProvider jwtProvider) {
+    public MemberService(MemberRepository memberRepository, TokenProvider tokenProvider) {
         this.memberRepository = memberRepository;
-        this.jwtProvider = jwtProvider;
+        this.tokenProvider = tokenProvider;
     }
 
     @Transactional
@@ -22,7 +21,7 @@ public class MemberService {
             throw new IllegalArgumentException("Email is already registered.");
         }
         Member member = memberRepository.save(new Member(email, password));
-        return jwtProvider.createToken(member.getEmail());
+        return tokenProvider.createToken(member.getEmail());
     }
 
     @Transactional(readOnly = true)
@@ -33,7 +32,7 @@ public class MemberService {
         if (member.getPassword() == null || !member.getPassword().equals(password)) {
             throw new IllegalArgumentException("Invalid email or password.");
         }
-        return jwtProvider.createToken(member.getEmail());
+        return tokenProvider.createToken(member.getEmail());
     }
 
     @Transactional
@@ -41,7 +40,7 @@ public class MemberService {
         Member member = memberRepository.findByEmail(email).orElseGet(() -> new Member(email));
         member.updateKakaoAccessToken(kakaoAccessToken);
         memberRepository.save(member);
-        return jwtProvider.createToken(member.getEmail());
+        return tokenProvider.createToken(member.getEmail());
     }
 
     @Transactional(readOnly = true)

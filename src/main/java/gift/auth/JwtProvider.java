@@ -1,5 +1,6 @@
 package gift.auth;
 
+import gift.member.TokenProvider;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import java.util.Date;
@@ -14,7 +15,7 @@ import org.springframework.stereotype.Component;
  * @since 1.0
  */
 @Component
-public class JwtProvider {
+public class JwtProvider implements TokenProvider {
     private final SecretKey key;
     private final long expiration;
 
@@ -44,6 +45,7 @@ public class JwtProvider {
      * @param email the email to store as the token's subject
      * @return the compact JWT token string
      */
+    @Override
     public String createToken(String email) {
         final Date now = new Date();
         final Date expiryDate = new Date(now.getTime() + expiration);
