@@ -216,10 +216,10 @@
 - [x] 기존 `WishControllerTest` 전체 통과 확인
 
 #### 1-2. option 패키지 — 주문 총액 계산을 도메인으로 이동 (구조)
-- [ ] `Option.calculateTotalPrice(int quantity)` 도메인 메서드 추가
-- [ ] `OrderService`에서 `option.calculateTotalPrice(request.quantity())` 호출로 교체
-- [ ] ADR 작성: `docs/adr/001-price-calculation-location.md`
-- [ ] 기존 `OrderControllerTest` 전체 통과 확인
+- [x] `Option.calculateTotalPrice(int quantity)` 도메인 메서드 추가
+- [x] `OrderService`에서 `option.calculateTotalPrice(request.quantity())` 호출로 교체
+- [x] ADR 작성: `docs/adr/001-price-calculation-location.md`
+- [x] 기존 `OrderControllerTest` 전체 통과 확인
 
 #### 1-3. product 패키지 — 카테고리 조회를 CategoryService로 이동 (구조)
 - [ ] `AdminProductController`에 `CategoryService` 주입 추가
