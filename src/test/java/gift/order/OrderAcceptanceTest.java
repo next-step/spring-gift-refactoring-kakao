@@ -296,6 +296,38 @@ class OrderAcceptanceTest {
         }
 
         @Test
+        @DisplayName("실패: 포인트 부족으로 주문 실패 시 재고가 차감되지 않아야 한다")
+        void fail_insufficientPoints_shouldNotSubtractStock() {
+            // Given: 포인트 부족한 회원
+            Member poorMember = memberRepository.save(new Member("poor2@example.com", "password"));
+            poorMember.chargePoint(100); // 100 포인트만 (상품가격 1000원보다 적음)
+            memberRepository.save(poorMember);
+            String poorToken = getToken("poor2@example.com", "password");
+
+            int stockBefore = optionRepository.findById(option.getId()).orElseThrow().getQuantity();
+
+            // When: 주문 시도 (가격 1000 > 포인트 100 → 실패)
+            RestAssured.given()
+                .header("Authorization", "Bearer " + poorToken)
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "optionId": %d,
+                        "quantity": 1,
+                        "message": "메시지"
+                    }
+                    """.formatted(option.getId()))
+                .when()
+                .post("/api/orders")
+                .then()
+                .statusCode(500);
+
+            // Then: 재고가 원래대로 유지되어야 한다
+            int stockAfter = optionRepository.findById(option.getId()).orElseThrow().getQuantity();
+            assertThat(stockAfter).isEqualTo(stockBefore);
+        }
+
+        @Test
         @DisplayName("실패: 포인트가 부족하면 400을 반환한다")
         void fail_insufficientPoints() {
             // Given: 포인트 부족한 회원
