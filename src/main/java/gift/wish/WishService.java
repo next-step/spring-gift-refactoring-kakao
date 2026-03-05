@@ -5,6 +5,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.NoSuchElementException;
+
 @Service
 public class WishService {
     private final WishRepository wishRepository;
@@ -20,10 +22,8 @@ public class WishService {
     }
 
     public WishAddResult add(Long memberId, WishRequest request) {
-        var product = productRepository.findById(request.productId()).orElse(null);
-        if (product == null) {
-            return null;
-        }
+        var product = productRepository.findById(request.productId())
+            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + request.productId()));
 
         var existing = wishRepository.findByMemberIdAndProductId(memberId, product.getId()).orElse(null);
         if (existing != null) {

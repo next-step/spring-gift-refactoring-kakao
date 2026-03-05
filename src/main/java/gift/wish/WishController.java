@@ -37,10 +37,6 @@ public class WishController {
         @Valid @RequestBody WishRequest request
     ) {
         var result = wishService.add(member.getId(), request);
-        if (result == null) {
-            return ResponseEntity.notFound().build();
-        }
-
         if (result.created()) {
             return ResponseEntity.created(URI.create("/api/wishes/" + result.wish().getId()))
                 .body(WishResponse.from(result.wish()));
