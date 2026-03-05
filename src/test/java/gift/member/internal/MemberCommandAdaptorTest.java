@@ -1,6 +1,7 @@
 package gift.member.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import gift.global.NotFoundException;
@@ -48,8 +49,9 @@ class MemberCommandAdaptorTest {
         )
                 .getId();
 
-        // when
-        memberCommandPort.deductPoint(memberId, deductAmount);
+        // when + then
+        assertThatCode(() -> memberCommandPort.deductPoint(memberId, deductAmount))
+                .doesNotThrowAnyException();
 
         // then
         Member find = getMember(memberId);
