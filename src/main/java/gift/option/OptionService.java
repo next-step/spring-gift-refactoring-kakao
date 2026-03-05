@@ -4,6 +4,7 @@ import gift.product.ProductRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 public class OptionService {
@@ -16,20 +17,16 @@ public class OptionService {
     }
 
     public List<Option> findByProductId(Long productId) {
-        var product = productRepository.findById(productId).orElse(null);
-        if (product == null) {
-            return null;
-        }
+        productRepository.findById(productId)
+            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
         return optionRepository.findByProductId(productId);
     }
 
     public Option create(Long productId, OptionRequest request) {
         validateName(request.name());
 
-        var product = productRepository.findById(productId).orElse(null);
-        if (product == null) {
-            return null;
-        }
+        var product = productRepository.findById(productId)
+            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
 
         if (optionRepository.existsByProductIdAndName(productId, request.name())) {
             throw new IllegalArgumentException("이미 존재하는 옵션명입니다.");
@@ -38,24 +35,22 @@ public class OptionService {
         return optionRepository.save(new Option(product, request.name(), request.quantity()));
     }
 
-    public Option delete(Long productId, Long optionId) {
-        var product = productRepository.findById(productId).orElse(null);
-        if (product == null) {
-            return null;
-        }
+    public void delete(Long productId, Long optionId) {
+        productRepository.findById(productId)
+            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
 
         var options = optionRepository.findByProductId(productId);
         if (options.size() <= 1) {
             throw new IllegalArgumentException("옵션이 1개인 상품은 옵션을 삭제할 수 없습니다.");
         }
 
-        var option = optionRepository.findById(optionId).orElse(null);
-        if (option == null || !option.getProduct().getId().equals(productId)) {
-            return null;
+        var option = optionRepository.findById(optionId)
+            .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다. id=" + optionId));
+        if (!option.getProduct().getId().equals(productId)) {
+            throw new NoSuchElementException("해당 상품의 옵션이 아닙니다. productId=" + productId + ", optionId=" + optionId);
         }
 
         optionRepository.delete(option);
-        return option;
     }
 
     private void validateName(String name) {
