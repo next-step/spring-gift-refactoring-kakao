@@ -51,7 +51,7 @@ class ProductServiceTest {
                 .willReturn(Page.empty());
 
         // when
-        PagedModel<ProductResponse> response = productService.getProducts(pageable);
+        PagedModel<ProductResponse> response = productService.getProducts(null, pageable);
 
         // then
         then(productRepo).should()
@@ -65,6 +65,29 @@ class ProductServiceTest {
         assertThat(metadata.number()).isEqualTo(pageNumber);
         assertThat(metadata.totalElements()).isZero();
         assertThat(metadata.totalPages()).isOne();
+    }
+
+    @Test
+    @DisplayName("카테고리 ID로 상품 목록을 필터링 조회한다")
+    void testGetProductsWithCategoryFilter() {
+        // given
+        Long categoryId = 1L;
+        int pageNumber = 0;
+        int pageSize = 10;
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+
+        given(productRepo.findByCategoryId(categoryId, pageable))
+                .willReturn(Page.empty());
+
+        // when
+        PagedModel<ProductResponse> response = productService.getProducts(categoryId, pageable);
+
+        // then
+        then(productRepo).should()
+                .findByCategoryId(categoryId, pageable);
+
+        assertThat(response.getContent())
+                .isNotNull().isEmpty();
     }
 
     @Test
