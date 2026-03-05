@@ -105,3 +105,41 @@ Wish, Order 엔티티가 Member를 `Long memberId`로만 참조하면서 주석�
 - Request DTO: 비즈니스 규칙 어노테이션(`@Min`, `@Max`, `@Email`, `@Positive`) 제거, 형식 검사(`@NotBlank`, `@NotNull`)만 유지
 - `ProductNameValidator`, `OptionNameValidator` 삭제
 - `AdminProductController`: 서비스 예외 catch 방식으로 전환
+
+## ADR-005: 커스텀 예외 체계
+
+### 문제 상황
+표준 Java 예외(`IllegalArgumentException`, `NoSuchElementException`, `IllegalStateException`)를 사용하고 있었다.
+- 각 컨트롤러에 `@ExceptionHandler`가 중복 정의되어 있었다.
+- `IllegalStateException`이 인증 실패(401)와 위시 소유권 거부(403)에 동시 사용되어 같은 예외 타입인데 상태 코드가 달라야 하는 모호함이 있었다.
+- 컨트롤러마다 try-catch가 산재해 있었다.
+
+### 논의 후보
+1. **오류별 예외 클래스** — `DuplicateEmailException`, `InsufficientStockException` 등 오류 종류마다 클래스를 만듦. 가장 세밀한 구분이 가능하지만 클래스 수가 폭발적으로 증가.
+2. **도메인별 예외 클래스** — `MemberException`, `ProductException` 등 도메인마다 예외 클래스를 만들고 각각 ErrorCode를 가짐.
+3. **단일 ApplicationException + 도메인별 ErrorCode** — 예외 클래스는 하나만 두고, 도메인별 `ErrorCode` enum으로 구분.
+
+### 결정
+> **3번 채택. 단일 `ApplicationException`에 도메인별 `ErrorCode` enum을 조합한다.**
+
+### 이유
+- 도메인별 예외 클래스로 catch를 분기하는 실제 사용처가 없다. `AdminProductController`도 `catch (ApplicationException e)`로 충분하다.
+- `GlobalExceptionHandler`가 `ApplicationException` 하나만 처리하면 되므로 구조가 단순하다.
+- 오류의 구분은 예외 클래스가 아닌 `ErrorCode`의 코드(`PRODUCT_001`)와 `HttpStatus`로 충분히 표현된다.
+- 도메인별 예외 클래스는 YAGNI — 필요해지는 시점에 도입해도 늦지 않다.
+
+### ErrorCode 세분화 기준
+- 같은 필드라도 HTTP 상태 코드가 다르면 별도 코드로 분리한다. (예: `INSUFFICIENT_POINT` 400 vs `NOT_FOUND` 404)
+- 같은 필드의 검증 실패는 하나의 코드로 통합하되, 구체적인 원인은 메시지로 구분한다. (예: `INVALID_NAME` 하나에 "필수입니다" / "15자 초과" / "특수문자" 메시지를 동적으로 전달)
+- `ApplicationException(ErrorCode, String message)` 생성자를 통해 기본 메시지를 덮어쓸 수 있다.
+
+### 구조
+- `ErrorCode` 인터페이스 (HttpStatus, code, message) + 도메인별 enum 구현 (`AuthErrorCode`, `MemberErrorCode`, ...)
+- `ApplicationException` (RuntimeException 상속, ErrorCode 보유)
+- `GlobalExceptionHandler` (@RestControllerAdvice)
+- `ErrorResponse` 응답 DTO (code, message)
+
+### 변경 내용
+- `GlobalExceptionHandler` 도입, 모든 컨트롤러의 `@ExceptionHandler`와 try-catch 제거
+- 모든 `IllegalArgumentException`, `NoSuchElementException`, `IllegalStateException` → `ApplicationException` 전환
+- `AdminProductController`: `catch (IllegalArgumentException)` → `catch (ApplicationException)`
