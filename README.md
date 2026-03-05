@@ -154,11 +154,12 @@ Step 1에서 정리한 구조 위에 작동 변경을 수행한다. 모든 변�
 **도메인 단위 테스트:**
 - [x] `OptionTest` — `calculateTotalPrice` 단위 테스트 — 4단계에서 메서드와 함께 작성, Green
 
-#### 1단계: @Transactional 적용
+#### 1단계: @Transactional 적용 → TransactionTemplate으로 전환
 
-- [x] `OrderService.createOrder()`에 `@Transactional` 추가 → `createOrderInsufficientPointsRollsBackStock` Green
-- [x] `KakaoAuthService.loginWithKakao()`에 `@Transactional` 추가 → `KakaoAuthServiceTest` Green 유지
-- 나머지 서비스는 모두 단일 저장/삭제 작업이라 `@Transactional` 불필요 확인
+- [x] `OrderService.createOrder()`에 트랜잭션 적용 → `createOrderInsufficientPointsRollsBackStock` Green
+- [x] `KakaoAuthService.loginWithKakao()`에 트랜잭션 적용 → `KakaoAuthServiceTest` Green 유지
+- [x] 리뷰 반영: `@Transactional` → `TransactionTemplate`으로 전환, 외부 HTTP 호출을 트랜잭션 밖으로 분리 (ADR-005)
+- 나머지 서비스는 모두 단일 저장/삭제 작업이라 트랜잭션 불필요 확인
 
 #### 2단계: 주문 시 위시리스트 자동 삭제
 
@@ -218,13 +219,13 @@ Step 1에서 정리한 구조 위에 작동 변경을 수행한다. 모든 변�
 | `OrderControllerTest.createOrderDeletesWish` | 통합 | Red | `// TODO: cleanup wish` 미구현 |
 | `OptionTest.calculateTotalPrice` | 도메인 단위 | — | 메서드 미존재로 컴파일 에러, 4단계에서 함께 작성 |
 
-#### 1단계: @Transactional 적용
+#### 1단계: @Transactional 적용 → TransactionTemplate으로 전환
 
 | 항목 | 내용 |
 |------|------|
-| `OrderService.createOrder()` | `@Transactional` 추가 — 재고 차감·포인트 차감·주문 저장이 하나의 트랜잭션으로 묶임 |
-| `KakaoAuthService.loginWithKakao()` | `@Transactional` 추가 — 회원 생성/토큰 갱신이 원자적으로 처리됨 |
-| 나머지 5개 서비스 | 모두 단일 저장/삭제 작업이라 `@Transactional` 불필요 확인 (ADR-001) |
+| `OrderService.createOrder()` | `TransactionTemplate`으로 DB 작업만 트랜잭션 처리, 카카오 알림은 커밋 후 전송 |
+| `KakaoAuthService.loginWithKakao()` | 카카오 토큰 교환·사용자 조회는 트랜잭션 밖, 회원 저장·토큰 갱신만 `TransactionTemplate`으로 처리 |
+| 나머지 5개 서비스 | 모두 단일 저장/삭제 작업이라 트랜잭션 불필요 확인 (ADR-001) |
 
 #### 2단계: 주문 시 위시리스트 자동 삭제
 
@@ -288,6 +289,12 @@ Step 1에서 정리한 구조 위에 작동 변경을 수행한다. 모든 변�
 | `AdminProductController` | `ProductNameValidator` 직접 호출 제거, `productService.create/update(... , true)` 위임 + try-catch로 폼 에러 UX 유지 |
 | `ProductService` | `create/update`에 `allowKakao` 오버로드 추가, `validateName` private 변경 |
 | `ProductServiceTest` (신규) | `allowKakao=true` → "카카오" 허용, `allowKakao=false` → 거부 검증 |
+
+#### 코드 리뷰 반영
+
+| 항목 | 내용 |
+|------|------|
+| 외부 HTTP 호출 트랜잭션 분리 | `@Transactional` → `TransactionTemplate` 전환. 카카오 API 응답 지연 시 DB 커넥션 점유 문제 해소 (ADR-005) |
 
 ### 학습한 점
 
