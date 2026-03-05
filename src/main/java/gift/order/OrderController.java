@@ -45,8 +45,4 @@ public class OrderController {
         }
     }
 
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<Void> handleUnauthorized(IllegalStateException e) {
-        return ResponseEntity.status(401).build();
-    }
 }
