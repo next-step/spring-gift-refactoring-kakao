@@ -11,12 +11,15 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
@@ -97,6 +100,20 @@ class OptionAcceptanceTest {
             .delete("/api/products/" + product.getId() + "/options/" + extraOption.getId())
         .then()
             .statusCode(204);
+    }
+
+    @ParameterizedTest(name = "잘못된 이름 \"{0}\"으로 옵션을 생성하면 400을 반환한다")
+    @MethodSource("invalidOptionNames")
+    void createOptionWithInvalidName(String name) {
+        createOptionRequest(name, 50)
+            .statusCode(400);
+    }
+
+    static Stream<String> invalidOptionNames() {
+        return Stream.of(
+            "a".repeat(51),  // 50자 초과
+            "옵션!@#"         // 허용되지 않는 특수문자
+        );
     }
 
     @Test

@@ -9,6 +9,8 @@ import gift.option.Option;
 import gift.option.OptionRepository;
 import gift.product.Product;
 import gift.product.ProductRepository;
+import gift.wish.Wish;
+import gift.wish.WishRepository;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.ValidatableResponse;
@@ -24,6 +26,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 
@@ -47,6 +50,9 @@ class OrderAcceptanceTest {
 
     @Autowired
     private MemberRepository memberRepository;
+
+    @Autowired
+    private WishRepository wishRepository;
 
     @Autowired
     private JwtProvider jwtProvider;
@@ -73,6 +79,7 @@ class OrderAcceptanceTest {
     @AfterEach
     void tearDown() {
         orderRepository.deleteAllInBatch();
+        wishRepository.deleteAllInBatch();
         optionRepository.deleteAllInBatch();
         productRepository.deleteAllInBatch();
         categoryRepository.deleteAllInBatch();
@@ -138,6 +145,73 @@ class OrderAcceptanceTest {
     void createOrderWithZeroQuantity() {
         createOrderRequest(token, option.getId(), 0, "선물")
             .statusCode(400);
+    }
+
+    @Test
+    @DisplayName("주문 후 옵션 재고가 주문 수량만큼 차감된다")
+    void createOrderSubtractsStock() {
+        int initialQuantity = option.getQuantity();
+        int orderQuantity = 3;
+
+        createOrderRequest(token, option.getId(), orderQuantity, "선물").statusCode(201);
+
+        Option updated = optionRepository.findById(option.getId()).orElseThrow();
+        assertThat(updated.getQuantity()).isEqualTo(initialQuantity - orderQuantity);
+    }
+
+    @Test
+    @DisplayName("주문 후 회원 포인트가 결제 금액만큼 차감된다")
+    void createOrderDeductsPoints() {
+        int initialPoint = member.getPoint();
+        int orderQuantity = 2;
+        int expectedDeduction = option.getProduct().getPrice() * orderQuantity;
+
+        createOrderRequest(token, option.getId(), orderQuantity, "선물").statusCode(201);
+
+        Member updated = memberRepository.findById(member.getId()).orElseThrow();
+        assertThat(updated.getPoint()).isEqualTo(initialPoint - expectedDeduction);
+    }
+
+    @Test
+    @DisplayName("재고보다 많은 수량을 주문하면 500을 반환한다")
+    void createOrderWithInsufficientStock() {
+        createOrderRequest(token, option.getId(), 999, "선물")
+            .statusCode(500);
+    }
+
+    @Test
+    @DisplayName("포인트가 부족하면 500을 반환한다")
+    void createOrderWithInsufficientPoints() {
+        // member has 100000 points, product price is 5000
+        // ordering 21 units = 105000 > 100000
+        createOrderRequest(token, option.getId(), 21, "선물")
+            .statusCode(500);
+    }
+
+    @Test
+    @DisplayName("포인트 부족으로 주문 실패 시 재고가 롤백된다")
+    void createOrderRollsBackStockOnInsufficientPoints() {
+        int initialQuantity = option.getQuantity();
+
+        // 재고(100)는 충분하지만 포인트(100000)가 부족한 주문: 21 * 5000 = 105000
+        createOrderRequest(token, option.getId(), 21, "선물").statusCode(500);
+
+        Option updated = optionRepository.findById(option.getId()).orElseThrow();
+        assertThat(updated.getQuantity()).isEqualTo(initialQuantity);
+    }
+
+    @Test
+    @DisplayName("주문 완료 시 해당 상품의 위시가 삭제된다")
+    void createOrderCleansUpWish() {
+        // 위시 추가
+        wishRepository.save(new Wish(member.getId(), option.getProduct()));
+
+        // 주문
+        createOrderRequest(token, option.getId(), 1, "선물").statusCode(201);
+
+        // 위시 삭제 확인
+        var wishes = wishRepository.findByMemberIdAndProductId(member.getId(), option.getProduct().getId());
+        assertThat(wishes).isEmpty();
     }
 
     private ValidatableResponse createOrderRequest(String authToken, Long optionId, int quantity, String message) {
