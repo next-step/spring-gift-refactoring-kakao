@@ -4,7 +4,7 @@ import gift.member.Member;
 import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
-import gift.wish.WishRepository;
+import gift.wish.WishService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +23,7 @@ public class OrderService {
     private final OptionRepository optionRepository;
     private final MemberRepository memberRepository;
     private final KakaoMessageClient kakaoMessageClient;
-    private final WishRepository wishRepository;
+    private final WishService wishService;
     private final TransactionTemplate transactionTemplate;
 
     public OrderService(
@@ -31,14 +31,14 @@ public class OrderService {
         OptionRepository optionRepository,
         MemberRepository memberRepository,
         KakaoMessageClient kakaoMessageClient,
-        WishRepository wishRepository,
+        WishService wishService,
         TransactionTemplate transactionTemplate
     ) {
         this.orderRepository = orderRepository;
         this.optionRepository = optionRepository;
         this.memberRepository = memberRepository;
         this.kakaoMessageClient = kakaoMessageClient;
-        this.wishRepository = wishRepository;
+        this.wishService = wishService;
         this.transactionTemplate = transactionTemplate;
     }
 
@@ -68,7 +68,7 @@ public class OrderService {
             memberRepository.save(member);
 
             Order saved = orderRepository.save(new Order(option, member.getId(), quantity, message));
-            wishRepository.deleteByMemberIdAndProductId(member.getId(), option.getProduct().getId());
+            wishService.removeByMemberAndProduct(member.getId(), option.getProduct().getId());
 
             return new OrderResult(saved, option);
         });
