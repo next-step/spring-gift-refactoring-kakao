@@ -236,3 +236,37 @@
 - [x] 프로젝트 전체 에러 메시지를 단일 언어로 통일
 - [x] 전체 테스트 실행 → 통과 확인
 
+#### 6-8. 에러 응답 본문 통일 — JSON `{"message": "..."}`
+
+> 근거: 401/403/404는 body 없음, 400/409는 plain text String body로 에러 응답 형식이 불일관하다.
+> 모든 핸들러가 동일한 JSON 구조를 반환해야 클라이언트가 성공/실패 응답을 동일한 방식으로 파싱할 수 있다.
+> API 계약을 먼저 확립하여 이후 작업에서 발생하는 에러도 통일된 형식으로 반환한다.
+
+- [ ] ErrorResponse record 생성 (`public record ErrorResponse(String message) {}`)
+- [ ] GlobalExceptionHandler 6개 핸들러 반환 타입을 `ResponseEntity<ErrorResponse>`로 통일
+- [ ] 전체 테스트 실행 → 통과 확인
+
+#### 6-9. 주문 시 위시 삭제
+
+> 근거: 주문 생성 시 해당 상품에 대한 위시를 자동 삭제하지 않는다.
+> WishRepository.findByMemberIdAndProductId()가 존재하지만 OrderService에서 호출하지 않는다.
+> 작업 10 전에 OrderService를 최종 형태로 완성하여 잠금 범위 재조정을 방지한다.
+
+- [ ] WishRepository에 `deleteByMemberIdAndProductId()` 추가
+- [ ] WishService에 `removeWishByMemberIdAndProductId()` 메서드 추가
+- [ ] OrderService에서 주문 저장 후 위시 삭제 호출
+- [ ] 인수 테스트 시나리오 추가 (주문 시 위시리스트에서 해당 상품 삭제 검증)
+- [ ] 전체 테스트 실행 → 통과 확인
+
+#### 6-10. 동시성 제어 — 비관적 잠금 (SELECT FOR UPDATE)
+
+> 근거: Option.subtractQuantity()와 Member.deductPoint()에 read-then-write race condition이 존재한다.
+> 동시 주문 시 재고/포인트가 음수가 될 수 있다. 비관적 잠금으로 도메인 모델/에러 메시지를 보존하면서 동시성을 제어한다.
+> OrderService가 최종 형태일 때 적용하여 잠금 범위를 한 번에 확정한다.
+
+- [ ] OptionRepository, MemberRepository에 `findByIdForUpdate()` + `@Lock(PESSIMISTIC_WRITE)` 추가
+- [ ] OptionService, MemberService에 `findByIdForUpdate()` wrapper 추가
+- [ ] OrderService에서 `findById()` → `findByIdForUpdate()` 변경 (2곳)
+- [ ] V4 마이그레이션으로 CHECK 제약 추가 (quantity >= 0, point >= 0)
+- [ ] 전체 테스트 실행 → 통과 확인
+

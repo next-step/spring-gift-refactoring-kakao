@@ -518,15 +518,150 @@ public Order createOrder(Long memberId, Long optionId, int quantity, String mess
 
 ---
 
+### 작업 8: 에러 응답 본문 통일 (3-5)
+
+**목표**: 모든 예외 핸들러가 `{"message": "..."}` JSON 구조를 반환하도록 통일.
+
+**현재 상태**: 401/403/404는 body 없음, 400/409는 plain text String body.
+
+**리팩토링 이점**: API 계약을 먼저 확립. 이후 작업에서 발생하는 에러도 통일된 형식으로 반환됨.
+
+**변경 파일**:
+
+| 파일 | 변경 |
+|------|------|
+| `src/main/java/gift/ErrorResponse.java` (신규) | `public record ErrorResponse(String message) {}` |
+| `src/main/java/gift/GlobalExceptionHandler.java` | 6개 핸들러 모두 `ResponseEntity<ErrorResponse>` 반환 |
+
+**핸들러별 변경**:
+
+| 핸들러 | 변경 전 | 변경 후 |
+|--------|---------|---------|
+| `handleUnauthorized` | `ResponseEntity<Void>` | `ResponseEntity<ErrorResponse>` + body(e.getMessage()) |
+| `handleNotFound` | `ResponseEntity<Void>` | `ResponseEntity<ErrorResponse>` + body(e.getMessage()) |
+| `handleIllegalArgument` | `ResponseEntity<String>` | `ResponseEntity<ErrorResponse>` + wrap |
+| `handleForbidden` | `ResponseEntity<Void>` | `ResponseEntity<ErrorResponse>` + body(e.getMessage()) |
+| `handleMethodArgumentNotValid` | `ResponseEntity<String>` | `ResponseEntity<ErrorResponse>` + wrap |
+| `handleDataIntegrityViolation` | `ResponseEntity<String>` | `ResponseEntity<ErrorResponse>` + wrap |
+
+**테스트 영향**: 인수 테스트는 상태 코드만 단언하므로 통과 유지.
+
+**ADR**: ADR-003 참조
+
+---
+
+### 작업 9: 주문 시 위시 삭제 (3-10)
+
+**목표**: 주문 생성 시 해당 상품이 위시리스트에 있으면 자동 삭제.
+
+**현재 상태**: `OrderService.createOrder()`에 위시 삭제 로직 없음. `WishRepository.findByMemberIdAndProductId()` 존재하지만 미사용.
+
+**리팩토링 이점**: 작업 10 전에 OrderService를 최종 형태로 완성. 잠금 범위 재조정 불필요.
+
+**변경 파일**:
+
+| 파일 | 변경 |
+|------|------|
+| `src/main/java/gift/wish/WishRepository.java` | `void deleteByMemberIdAndProductId(Long, Long)` 추가 |
+| `src/main/java/gift/wish/WishService.java` | `removeWishByMemberIdAndProductId()` 메서드 추가 |
+| `src/main/java/gift/order/OrderService.java` | WishService 의존 추가, 주문 저장 후 위시 삭제 호출 |
+| `src/test/resources/features/gift.feature` | 시나리오 1개 추가 |
+
+**OrderService 변경**:
+
+```java
+// 기존 코드 (line 48) 이후, publishEvent (line 50) 이전에 추가:
+Long productId = option.getProduct().getId();
+wishService.removeWishByMemberIdAndProductId(memberId, productId);
+```
+
+- 위시 없으면 아무 일도 안 함 (soft delete — Spring Data derived delete는 매칭 없으면 무시)
+- UNIQUE 제약(V3)으로 최대 1건만 삭제됨
+
+**인수 테스트 시나리오** (gift.feature에 추가):
+
+```gherkin
+시나리오: 주문하면 위시리스트에서 해당 상품이 삭제된다
+  만일 해당 상품을 위시리스트에 추가한다
+  그리고 회원이 1개를 주문한다
+  그러면 주문이 성공한다
+  그리고 위시리스트가 비어있다
+```
+
+4개 스텝 모두 기존 정의 재사용 (WishStepDefinitions:19, GiftStepDefinitions:67, GiftStepDefinitions:149, WishStepDefinitions:163). 새 스텝 정의 불필요.
+
+**순환 참조 검증**: OrderService → WishService → ProductService. OrderService → OptionService → ProductService. 순환 없음.
+
+**테스트 영향**: 기존 인수 테스트 통과 유지 + 신규 시나리오 1개 추가.
+
+---
+
+### 작업 10: 동시성 제어 (3-3)
+
+**목표**: `Option.subtractQuantity()`와 `Member.deductPoint()`의 read-then-write race condition 방지.
+
+**현재 상태**: `@Version` 없음, `@Lock` 없음, DB CHECK 제약 없음. 동시 주문 시 재고/포인트가 음수가 될 수 있음.
+
+**리팩토링 이점**: OrderService가 최종 형태일 때 적용하여 잠금 범위를 한 번에 확정.
+
+**전략**: 비관적 잠금 (ADR-004 참조)
+
+**변경 파일**:
+
+| 파일 | 변경 |
+|------|------|
+| `src/main/java/gift/option/OptionRepository.java` | `findByIdForUpdate()` + `@Lock(PESSIMISTIC_WRITE)` |
+| `src/main/java/gift/member/MemberRepository.java` | `findByIdForUpdate()` + `@Lock(PESSIMISTIC_WRITE)` |
+| `src/main/java/gift/option/OptionService.java` | `findByIdForUpdate()` wrapper |
+| `src/main/java/gift/member/MemberService.java` | `findByIdForUpdate()` wrapper |
+| `src/main/java/gift/order/OrderService.java` | `findById()` → `findByIdForUpdate()` (2곳) |
+| `src/main/resources/db/migration/V4__Add_check_constraints.sql` (신규) | CHECK 제약 |
+
+**Repository 추가 메서드**:
+
+```java
+// OptionRepository.java
+@Lock(LockModeType.PESSIMISTIC_WRITE)
+@Query("SELECT o FROM Option o WHERE o.id = :id")
+Optional<Option> findByIdForUpdate(@Param("id") Long id);
+
+// MemberRepository.java
+@Lock(LockModeType.PESSIMISTIC_WRITE)
+@Query("SELECT m FROM Member m WHERE m.id = :id")
+Optional<Member> findByIdForUpdate(@Param("id") Long id);
+```
+
+**DB 마이그레이션 (V4)**:
+
+```sql
+ALTER TABLE options ADD CONSTRAINT chk_option_quantity_non_negative CHECK (quantity >= 0);
+ALTER TABLE member ADD CONSTRAINT chk_member_point_non_negative CHECK (point >= 0);
+```
+
+**OrderService 변경 (2줄)**:
+
+```
+line 38: optionService.findById(optionId)     → optionService.findByIdForUpdate(optionId)
+line 43: memberService.findById(memberId)     → memberService.findByIdForUpdate(memberId)
+```
+
+**잠금 순서**: Option → Member (일관된 순서 유지로 데드락 방지. createOrder()만 두 엔티티를 동시 잠금)
+
+**테스트 영향**: 단일 스레드 동작은 동일하므로 기존 인수 테스트 통과. 동시성 테스트는 Cucumber E2E로 불가 — 향후 JUnit 통합 테스트로 별도 검증.
+
+---
+
 ## 6. 현행 유지 항목
 
 분석 결과 작동 변경이 불필요하거나, 현 시점에서 변경 비용 대비 이점이 낮은 항목을 정리한다.
 
-| 항목 | 현재 상태 | 사유 |
-|------|----------|------|
-| 동시성 제어 (3-3) | 잠금 없음 | 낙관적/비관적 잠금 도입은 성능 특성을 변경하며, 트랜잭션 재시도 로직이 필요하다. 현재 트래픽 수준에서 race condition 발생 확률이 낮고, 도입 시 전체 조회-수정 패턴을 재검토해야 한다. 독립된 작업으로 별도 계획이 필요하므로 이번 범위에서 제외한다. |
-| 주문 시 위시 삭제 (3-10) | 위시 유지 | 비즈니스 요구사항 확인이 필요하다. "주문해도 위시에 남겨두고 재주문할 수 있다"가 의도된 정책일 수 있다. 요구사항이 확인되기 전까지 현행 유지한다. |
-| 에러 응답 본문 통일 (3-5) | 예외별 상이 | 작업 5(MethodArgumentNotValidException 핸들러)와 작업 7(메시지 언어 통일)을 먼저 수행하면 자연스럽게 재검토 시점이 된다. 별도 작업으로 분리하지 않고 작업 5 수행 시 함께 결정한다. |
+> **갱신 (2026-03-05)**: 아래 3건은 작업 8/9/10으로 승격되었다. 구현 계획은 "5. 작업 목록"을 참조한다.
+
+| 항목 | 현재 상태 | 사유 | 승격 |
+|------|----------|------|------|
+| 동시성 제어 (3-3) | 잠금 없음 | 낙관적/비관적 잠금 도입은 성능 특성을 변경하며, 트랜잭션 재시도 로직이 필요하다. 현재 트래픽 수준에서 race condition 발생 확률이 낮고, 도입 시 전체 조회-수정 패턴을 재검토해야 한다. 독립된 작업으로 별도 계획이 필요하므로 이번 범위에서 제외한다. | → **작업 10** |
+| 주문 시 위시 삭제 (3-10) | 위시 유지 | 비즈니스 요구사항 확인이 필요하다. "주문해도 위시에 남겨두고 재주문할 수 있다"가 의도된 정책일 수 있다. 요구사항이 확인되기 전까지 현행 유지한다. | → **작업 9** |
+| 에러 응답 본문 통일 (3-5) | 예외별 상이 | 작업 5(MethodArgumentNotValidException 핸들러)와 작업 7(메시지 언어 통일)을 먼저 수행하면 자연스럽게 재검토 시점이 된다. 별도 작업으로 분리하지 않고 작업 5 수행 시 함께 결정한다. | → **작업 8** |
 
 ---
 
@@ -555,3 +690,30 @@ public Order createOrder(Long memberId, Long optionId, int quantity, String mess
 - **결정**: A안 — `@TransactionalEventListener`
 - **근거**: 메시지 전송은 주문의 부수 효과이며, 실패해도 주문을 롤백하지 않는다(현재 `catch (Exception ignored)`가 이를 증명). 이벤트로 분리하면 OrderService는 "주문 완료됨" 이벤트를 발행할 뿐이고, 메시지 전송은 리스너가 담당한다. 이는 현재 `sendMessageIfPossible`의 의도("가능하면 보낸다")와 정확히 일치한다. B안은 컨트롤러에 비즈니스 흐름이 노출되고, C안은 선언적/프로그래밍 방식이 혼용된다.
 - **결과**: `OrderCreatedEvent` 도메인 이벤트 클래스를 생성하고, 메시지 전송을 `@TransactionalEventListener`로 이동한다. `OrderService.createOrder()`에서 `sendMessageIfPossible()` 호출을 제거한다.
+
+### ADR-003: 에러 응답 형식 — JSON `{"message": "..."}`
+
+- **맥락**: 예외 핸들러의 응답 형식이 통일되지 않았다. 401/403/404는 body 없음, 400/409는 plain text String body.
+- **선택지**:
+  - A: plain text String body 유지 — 현행 유지. Content-Type이 `text/plain`과 `application/json`으로 혼재.
+  - B: JSON `{"message": "..."}` — `ErrorResponse` record 도입. Content-Type 통일(`application/json`), 기계 파싱 용이, 성공/실패 응답 형식 일관성.
+  - C: RFC 7807 Problem Details — Spring Boot 3 기본 지원. 풍부한 에러 정보. 현재 프로젝트 규모에 과잉.
+- **결정**: B안 — JSON `{"message": "..."}`
+- **근거**: Content-Type이 `application/json`으로 통일되어 클라이언트가 성공/실패 응답을 동일한 방식으로 파싱할 수 있다. `ErrorResponse` record 하나로 모든 핸들러의 반환 타입을 통일하므로 구현이 단순하다. RFC 7807은 현재 프로젝트 규모에 과잉이며, 필요 시 `ErrorResponse`를 확장하면 된다.
+- **결과**: `ErrorResponse` record를 생성하고, 6개 핸들러 모두 `ResponseEntity<ErrorResponse>`를 반환하도록 변경한다.
+
+### ADR-004: 동시성 제어 — 비관적 잠금 (SELECT FOR UPDATE)
+
+- **맥락**: `Option.subtractQuantity()`와 `Member.deductPoint()`에 read-then-write race condition이 존재한다. 동시 주문 시 재고/포인트가 음수가 될 수 있다.
+- **선택지**:
+  - A: 원자적 SQL UPDATE (`UPDATE ... SET quantity = quantity - :amount WHERE quantity >= :amount`) — SQL WHERE절에서 검증. 도메인 객체가 검증 책임을 잃음. `@Modifying(clearAutomatically=true)` 필수로 JPA 1차 캐시 이슈 발생. OrderService 15줄+ 재작성 필요. 에러 메시지 세분화 불가.
+  - B: 비관적 잠금 (`@Lock(PESSIMISTIC_WRITE)`) — SELECT FOR UPDATE로 row-level X lock. 도메인 모델/에러 메시지 보존. JPA dirty checking 정상 동작. OrderService 2줄만 변경.
+  - C: 낙관적 잠금 (`@Version`) — version 불일치 시 재시도. spring-retry 의존 추가, version 컬럼 마이그레이션 필요. 이벤트 중복 발행 위험.
+- **결정**: B안 — 비관적 잠금
+- **근거**:
+  1. SQL 라운드트립이 3안 모두 동일(5문). 원자적 SQL의 "성능 이점"은 엔티티 재조회가 필요한 이 흐름에서 사라진다.
+  2. 프로젝트 방향(검증을 도메인 객체로 이동: 작업 3, 프롬프트 24)과 일치한다. 원자적 SQL은 역행.
+  3. OrderService에서 2줄만 변경하여 코드 변경이 최소이다.
+  4. `@Modifying` 캐시 관리 불필요. JPA와 자연스럽게 동작한다.
+  5. 잠금 경합: 트랜잭션 짧고(외부 API 분리됨) 범위 좁아(2행) 무시 가능.
+- **결과**: `OptionRepository`, `MemberRepository`에 `findByIdForUpdate()` 추가. `OrderService.createOrder()`에서 `findById()` → `findByIdForUpdate()` 변경(2곳). V4 마이그레이션으로 CHECK 제약 추가.
