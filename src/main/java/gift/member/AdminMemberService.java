@@ -29,6 +29,11 @@ public class AdminMemberService {
         return memberRepository.findById(id);
     }
 
+    public Member findByIdOrThrow(Long id) {
+        return memberRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Member not found. id=" + id));
+    }
+
     public void deleteById(Long id) {
         memberRepository.deleteById(id);
     }

@@ -52,8 +52,7 @@ public class AdminMemberController {
 
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
-        Member member = adminMemberService.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Member not found. id=" + id));
+        Member member = adminMemberService.findByIdOrThrow(id);
         model.addAttribute("member", member);
         return "member/edit";
     }
@@ -64,8 +63,7 @@ public class AdminMemberController {
         @RequestParam String email,
         @RequestParam String password
     ) {
-        Member member = adminMemberService.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Member not found. id=" + id));
+        Member member = adminMemberService.findByIdOrThrow(id);
         member.update(email, password);
         adminMemberService.save(member);
         return "redirect:/admin/members";
@@ -76,8 +74,7 @@ public class AdminMemberController {
         @PathVariable Long id,
         @RequestParam int amount
     ) {
-        Member member = adminMemberService.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Member not found. id=" + id));
+        Member member = adminMemberService.findByIdOrThrow(id);
         member.chargePoint(amount);
         adminMemberService.save(member);
         return "redirect:/admin/members";
