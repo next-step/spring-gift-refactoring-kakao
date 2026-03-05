@@ -29,7 +29,7 @@ class KakaoMessageClient {
     }
 
     private String buildTemplate(Order order, Product product) {
-        String totalPrice = String.format("%,d", product.getPrice() * order.getQuantity());
+        String totalPrice = String.format("%,d", order.getTotalPrice());
         String message = order.getMessage() != null && !order.getMessage().isBlank()
             ? "\\n\\n💌 " + order.getMessage()
             : "";

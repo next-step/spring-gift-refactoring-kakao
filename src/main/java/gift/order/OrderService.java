@@ -58,13 +58,12 @@ public class OrderService {
                 option.subtractQuantity(request.quantity());
                 optionRepository.save(option);
 
-                // deduct points
-                int price = option.getProduct().getPrice() * request.quantity();
-                member.deductPoint(price);
-                memberRepository.save(member);
-
                 // save order
                 Order saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
+
+                // deduct points
+                member.deductPoint(saved.getTotalPrice());
+                memberRepository.save(member);
 
                 // cleanup wish
                 Long productId = option.getProduct().getId();
