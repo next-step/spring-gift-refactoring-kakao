@@ -116,7 +116,17 @@ spring-gift-refactoring-kakao/
 │
 └── docs/
     ├── TEST_PLAN.md
-    └── PROJECT_STRUCTURE.md
+    ├── TEST_STRATEGY.md
+    ├── CODE_STYLE_CONVENTION.md
+    ├── INITIAL_PROJECT_STRUCTURE.md
+    ├── CURRENT_PROJECT_STRUCTURE.md
+    ├── PROMPT.md
+    └── step2/
+        ├── plan/
+        │   ├── PLAN.md
+        │   └── PHASE1-인증_로직_추출.md
+        └── adr/
+            └── ADR1-인증_로직_추출_방식.md
 ```
 
 ## 기술 스택
