@@ -251,12 +251,12 @@
 - [x] 기존 `ProductControllerTest` + `AdminProductControllerTest` 전체 통과 확인
 
 #### 3-2. order 패키지 — Member를 트랜잭션 내부에서 조회 (작동)
-- [ ] `OrderService.createOrder(Member member, ...)` → `createOrder(Long memberId, ...)` 시그니처 변경
-- [ ] 트랜잭션 내에서 `memberRepository.findById(memberId)` 호출 추가
-- [ ] managed 엔티티이므로 `optionRepository.save()`, `memberRepository.save()` 명시 호출 제거
-- [ ] `OrderController`에서 `member.getId()` 전달로 변경
-- [ ] ADR 작성: `docs/adr/002-order-transaction-boundary.md`
-- [ ] 상태 재조회 검증 추가 (주문 성공 시 재고 차감 확인)
+- [x] `OrderService.createOrder(Member member, ...)` → `createOrder(Long memberId, ...)` 시그니처 변경
+- [x] 트랜잭션 내에서 `memberRepository.findById(memberId)` 호출 추가
+- [x] managed 엔티티이므로 `optionRepository.save()`, `memberRepository.save()` 명시 호출 제거
+- [x] `OrderController`에서 `member.getId()` 전달로 변경
+- [x] ADR 작성: `docs/adr/002-order-transaction-boundary.md`
+- [x] 상태 재조회 검증 추가 (주문 성공 시 재고 차감 확인)
 
 ### 4. 외부 API 호출을 트랜잭션 밖으로 분리
 
@@ -275,5 +275,5 @@
 
 ### ADR 목록
 - [x] `docs/adr/001-price-calculation-location.md` — 가격 계산 로직 위치 결정 (커밋 1-2)
-- [ ] `docs/adr/002-order-transaction-boundary.md` — 주문 생성 시 Member 조회 전략 (커밋 3-2)
+- [x] `docs/adr/002-order-transaction-boundary.md` — 주문 생성 시 Member 조회 전략 (커밋 3-2)
 - [ ] `docs/adr/003-external-api-outside-transaction.md` — 외부 API 호출을 트랜잭션 밖으로 분리 (커밋 4-1, 4-2)

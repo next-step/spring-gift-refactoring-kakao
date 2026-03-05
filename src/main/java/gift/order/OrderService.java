@@ -38,18 +38,19 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderResponse createOrder(Member member, OrderRequest request) {
+    public OrderResponse createOrder(Long memberId, OrderRequest request) {
+        var member = memberRepository.findById(memberId)
+            .orElseThrow(() -> new java.util.NoSuchElementException("회원을 찾을 수 없습니다: " + memberId));
+
         var option = optionRepository.findById(request.optionId())
             .orElseThrow(() -> new java.util.NoSuchElementException("옵션을 찾을 수 없습니다: " + request.optionId()));
 
         option.subtractQuantity(request.quantity());
-        optionRepository.save(option);
 
         var price = option.calculateTotalPrice(request.quantity());
         member.deductPoint(price);
-        memberRepository.save(member);
 
-        var saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
+        var saved = orderRepository.save(new Order(option, memberId, request.quantity(), request.message()));
 
         sendKakaoMessageIfPossible(member, saved, option);
         return OrderResponse.from(saved);

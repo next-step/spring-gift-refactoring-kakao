@@ -64,7 +64,7 @@ public class OrderController {
             return ResponseEntity.status(401).build();
         }
 
-        var response = orderService.createOrder(member, request);
+        var response = orderService.createOrder(member.getId(), request);
 
         return ResponseEntity.created(URI.create("/api/orders/" + response.id()))
             .body(response);
