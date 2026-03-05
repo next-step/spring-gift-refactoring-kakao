@@ -136,10 +136,12 @@ spring-gift-refactoring-kakao/
         │   ├── PHASE3-null_반환_예외_전환.md
         │   ├── PHASE4-트랜잭션_경계_추가.md
         │   ├── PHASE5-Order_예외_처리_개선.md
-        │   └── PHASE6-메시지_클라이언트_인터페이스_추출.md
+        │   ├── PHASE6-메시지_클라이언트_인터페이스_추출.md
+        │   └── PHASE7-Admin_메서드_분리.md
         └── adr/
             ├── ADR1-인증_로직_추출_방식.md
             ├── ADR2-예외_처리_전략.md
+            ├── ADR3-Admin_메서드_분리_방식.md
             └── ADR4-메시지_클라이언트_인터페이스_설계.md
 ```
 
