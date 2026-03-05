@@ -17,10 +17,7 @@ public class MemberService {
 
     @Transactional
     public String register(String email, String password) {
-        if (memberRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("Email is already registered.");
-        }
-        Member member = memberRepository.save(new Member(email, password));
+        Member member = create(email, password);
         return tokenProvider.createToken(member.getEmail());
     }
 

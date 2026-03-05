@@ -86,3 +86,6 @@ auth ↔ member 순환 참조 해소 — member 패키지에 TokenProvider 인�
 
 ## 프롬프트 25
 작동 변경 분석 보고서 생성 — 구조 변경(step5) 완료 후, 입출력이 바뀌는 작동 변경이 필요한 영역을 분석. TODO 미완성 코드, 트랜잭션 문제, 예외 처리 불일관, 도메인 검증 누락, 삭제 정책, 누락된 비즈니스 로직, 코드 중복 등 12개 항목 식별. docs/step6-작동-변경-분석.md에 보고서 작성.
+
+## 프롬프트 26
+5-7. MemberService.register()에서 create() 재사용 — register()와 create()의 중복 로직(이메일 중복 검증 + Member 저장)을 제거. register()가 create()를 내부 호출하고 토큰 생성만 추가하여 변경 지점을 1곳으로 수렴. API 입출력 변경 없음.
