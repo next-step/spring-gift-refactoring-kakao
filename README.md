@@ -227,6 +227,12 @@
 - [x] `ProductService.findAllCategories()` 메서드 삭제
 - [x] 기존 `AdminProductControllerTest` 전체 통과 확인
 
+#### 1-4. order 패키지 — KakaoMessageClient 가격 계산을 도메인 메서드로 위임 (구조)
+- [ ] `KakaoMessageClient.sendToMe()` 시그니처에서 `Product` 파라미터 제거 (`Order`에서 접근 가능)
+- [ ] `buildTemplate()`에서 `product.getPrice() * order.getQuantity()` → `order.getOption().calculateTotalPrice(order.getQuantity())` 교체
+- [ ] `OrderService.sendKakaoMessageIfPossible()`에서 `product` 변수 제거
+- [ ] 기존 `OrderControllerTest` 전체 통과 확인
+
 ### 2. 누락된 작동 구현
 
 #### 2-1. order 패키지 — null 반환을 예외로 전환 (구조)
@@ -257,6 +263,7 @@
 - [x] `OrderController`에서 `member.getId()` 전달로 변경
 - [x] ADR 작성: `docs/adr/002-order-transaction-boundary.md`
 - [x] 상태 재조회 검증 추가 (주문 성공 시 재고 차감 확인)
+- [ ] 상태 재조회 검증 추가 (주문 성공 시 포인트 차감 확인: 초기 1,000,000 - 주문 20,000 = 980,000)
 
 ### 4. 외부 API 호출을 트랜잭션 밖으로 분리
 
@@ -272,6 +279,21 @@
 - [x] `sendKakaoMessageIfPossible()`을 public으로 변경, 시그니처를 `(String kakaoAccessToken, Long orderId)`로 변경
 - [x] `OrderController`에서 `createOrder()` 호출 후 `sendKakaoMessageIfPossible()` 별도 호출
 - [x] 기존 `OrderControllerTest` 전체 통과 확인
+
+### 5. 중복 제거 및 코드 일관성
+
+#### 5-1. product 패키지 — ProductService 중복 메서드 통합 (구조)
+- [ ] `getProduct()` 삭제, `ProductController`에서 `getById()` 사용으로 변경
+- [ ] `createProduct(ProductRequest)`가 `validateName()` 후 `createProduct(String, int, String, Long)` 위임하도록 변경
+- [ ] `updateProduct(Long, ProductRequest)`가 `validateName()` 후 `updateProduct(Long, String, int, String, Long)` 위임하도록 변경
+- [ ] `updateProduct(Long, String, int, String, Long)`에서 불필요한 `productRepository.save()` 제거 (dirty checking 활용)
+- [ ] 기존 `ProductControllerTest` + `AdminProductControllerTest` 전체 통과 확인
+
+#### 5-2. wish 패키지 — WishController 예외 처리를 @ExceptionHandler 방식으로 통일 (구조)
+- [ ] `WishService.removeWish()`에서 소유권 실패 시 `IllegalArgumentException` → `IllegalStateException` 변경
+- [ ] `WishController`에서 try-catch 제거
+- [ ] `WishController`에 `@ExceptionHandler` 추가: `NoSuchElementException`→404, `IllegalArgumentException`→400, `IllegalStateException`→403
+- [ ] 기존 `WishControllerTest` 전체 통과 확인 (외부 동작 변화 없음)
 
 ### ADR 목록
 - [x] `docs/adr/001-price-calculation-location.md` — 가격 계산 로직 위치 결정 (커밋 1-2)
