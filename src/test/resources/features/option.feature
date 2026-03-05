@@ -46,6 +46,12 @@ Feature: 옵션 API
     When 상품 "아이폰16"에 옵션 "블루 256GB", 수량 10으로 생성을 요청하면
     Then 응답 코드는 400이다
 
+  Scenario: 수량 0으로 옵션 생성
+    Given 카테고리 "전자기기", 색상 "#1E90FF", 이미지 "https://img.com/e.jpg"가 등록되어 있고
+    And 상품 "아이폰16", 가격 1350000, 이미지 "https://img.com/ip.jpg", 카테고리 "전자기기"가 등록되어 있고
+    When 상품 "아이폰16"에 옵션 "블루 256GB", 수량 0으로 생성을 요청하면
+    Then 응답 코드는 400이다
+
   Scenario: 마지막 옵션 삭제 시도
     Given 카테고리 "전자기기", 색상 "#1E90FF", 이미지 "https://img.com/e.jpg"가 등록되어 있고
     And 상품 "아이패드", 가격 900000, 이미지 "https://img.com/ipad.jpg", 카테고리 "전자기기"가 등록되어 있고

@@ -54,6 +54,11 @@ Feature: 상품 API
     When 상품 "아이폰!@#", 가격 1000, 이미지 "https://img.com/s.jpg", 카테고리 "전자기기"로 생성을 요청하면
     Then 응답 코드는 400이다
 
+  Scenario: 가격 0원으로 상품 생성
+    Given 카테고리 "전자기기", 색상 "#1E90FF", 이미지 "https://img.com/e.jpg"가 등록되어 있고
+    When 상품 "무료상품", 가격 0, 이미지 "https://img.com/free.jpg", 카테고리 "전자기기"로 생성을 요청하면
+    Then 응답 코드는 400이다
+
   Scenario: 삭제한 상품 조회
     Given 카테고리 "전자기기", 색상 "#1E90FF", 이미지 "https://img.com/e.jpg"가 등록되어 있고
     And 상품 "삭제용상품2", 가격 10000, 이미지 "https://img.com/del2.jpg", 카테고리 "전자기기"가 등록되어 있고
