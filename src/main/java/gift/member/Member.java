@@ -1,5 +1,6 @@
 package gift.member;
 
+import gift.common.exception.ApplicationException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -34,11 +35,8 @@ public class Member {
     }
 
     private void validateEmail(String email) {
-        if (email == null || email.isBlank()) {
-            throw new IllegalArgumentException("이메일은 필수입니다.");
-        }
-        if (!email.contains("@")) {
-            throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
+        if (email == null || email.isBlank() || !email.contains("@")) {
+            throw new ApplicationException(MemberErrorCode.INVALID_EMAIL);
         }
     }
 
@@ -57,7 +55,7 @@ public class Member {
 
     public void chargePoint(int amount) {
         if (amount <= 0) {
-            throw new IllegalArgumentException("충전 금액은 1 이상이어야 합니다.");
+            throw new ApplicationException(MemberErrorCode.INVALID_POINT_AMOUNT);
         }
         this.point += amount;
     }
@@ -68,10 +66,10 @@ public class Member {
      */
     public void deductPoint(int amount) {
         if (amount <= 0) {
-            throw new IllegalArgumentException("차감 금액은 1 이상이어야 합니다.");
+            throw new ApplicationException(MemberErrorCode.INVALID_POINT_AMOUNT);
         }
         if (amount > this.point) {
-            throw new IllegalArgumentException("포인트가 부족합니다.");
+            throw new ApplicationException(MemberErrorCode.INSUFFICIENT_POINT);
         }
         this.point -= amount;
     }

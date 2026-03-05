@@ -1,11 +1,11 @@
 package gift.member;
 
+import gift.common.exception.ApplicationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @RequiredArgsConstructor
 @Service
@@ -19,13 +19,13 @@ public class MemberService {
 
     public Member findById(Long id) {
         return memberRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다. id: " + id));
+                .orElseThrow(() -> new ApplicationException(MemberErrorCode.NOT_FOUND));
     }
 
     @Transactional
     public Member create(String email, String password) {
         if (memberRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("이미 등록된 이메일입니다.");
+            throw new ApplicationException(MemberErrorCode.DUPLICATE_EMAIL);
         }
         return memberRepository.save(new Member(email, password));
     }
@@ -35,7 +35,7 @@ public class MemberService {
                 .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다."));
 
         if (!member.matchesPassword(password)) {
-            throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
+            throw new ApplicationException(MemberErrorCode.INVALID_CREDENTIALS);
         }
 
         return member;
