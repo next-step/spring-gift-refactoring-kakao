@@ -268,12 +268,12 @@
 
 #### 4-2. order 패키지 — 카카오 메시지 전송을 트랜잭션 밖으로 분리 (구조)
 > 의존: 커밋 3-2 이후 수행
-- [ ] `OrderService.createOrder()`에서 `sendKakaoMessageIfPossible()` 호출 제거
-- [ ] `sendKakaoMessageIfPossible()`을 public으로 변경, 시그니처를 `(String kakaoAccessToken, Long orderId)`로 변경
-- [ ] `OrderController`에서 `createOrder()` 호출 후 `sendKakaoMessageIfPossible()` 별도 호출
-- [ ] 기존 `OrderControllerTest` 전체 통과 확인
+- [x] `OrderService.createOrder()`에서 `sendKakaoMessageIfPossible()` 호출 제거
+- [x] `sendKakaoMessageIfPossible()`을 public으로 변경, 시그니처를 `(String kakaoAccessToken, Long orderId)`로 변경
+- [x] `OrderController`에서 `createOrder()` 호출 후 `sendKakaoMessageIfPossible()` 별도 호출
+- [x] 기존 `OrderControllerTest` 전체 통과 확인
 
 ### ADR 목록
 - [x] `docs/adr/001-price-calculation-location.md` — 가격 계산 로직 위치 결정 (커밋 1-2)
 - [x] `docs/adr/002-order-transaction-boundary.md` — 주문 생성 시 Member 조회 전략 (커밋 3-2)
-- [ ] `docs/adr/003-external-api-outside-transaction.md` — 외부 API 호출을 트랜잭션 밖으로 분리 (커밋 4-1, 4-2)
+- [x] `docs/adr/003-external-api-outside-transaction.md` — 외부 API 호출을 트랜잭션 밖으로 분리 (커밋 4-1, 4-2)

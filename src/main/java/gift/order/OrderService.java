@@ -7,7 +7,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import gift.member.Member;
 import gift.member.MemberRepository;
 import gift.option.OptionRepository;
 
@@ -52,19 +51,19 @@ public class OrderService {
 
         var saved = orderRepository.save(new Order(option, memberId, request.quantity(), request.message()));
 
-        sendKakaoMessageIfPossible(member, saved, option);
         return OrderResponse.from(saved);
     }
 
-    private void sendKakaoMessageIfPossible(Member member, Order order, gift.option.Option option) {
-        if (member.getKakaoAccessToken() == null) {
+    public void sendKakaoMessageIfPossible(String kakaoAccessToken, Long orderId) {
+        if (kakaoAccessToken == null) {
             return;
         }
         try {
-            var product = option.getProduct();
-            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
+            var order = orderRepository.findById(orderId).orElseThrow();
+            var product = order.getOption().getProduct();
+            kakaoMessageClient.sendToMe(kakaoAccessToken, order, product);
         } catch (Exception e) {
-            log.warn("메시지 전송에 실패했습니다: orderId={}, memberId={}", order.getId(), member.getId(), e);
+            log.warn("메시지 전송에 실패했습니다: orderId={}", orderId, e);
         }
     }
 }
