@@ -40,6 +40,7 @@ public class ProductService {
     }
 
     public Product createFromAdmin(String name, int price, String imageUrl, Long categoryId) {
+        validateName(name, true);
         var category = categoryRepository.findById(categoryId)
             .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
         return productRepository.save(new Product(name, price, imageUrl, category));
@@ -56,6 +57,7 @@ public class ProductService {
     }
 
     public Product updateFromAdmin(Long id, String name, int price, String imageUrl, Long categoryId) {
+        validateName(name, true);
         var product = productRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
         var category = categoryRepository.findById(categoryId)
@@ -73,7 +75,11 @@ public class ProductService {
     }
 
     private void validateName(String name) {
-        var errors = ProductNameValidator.validate(name);
+        validateName(name, false);
+    }
+
+    private void validateName(String name, boolean allowKakao) {
+        var errors = ProductNameValidator.validate(name, allowKakao);
         if (!errors.isEmpty()) {
             throw new IllegalArgumentException(String.join(", ", errors));
         }
