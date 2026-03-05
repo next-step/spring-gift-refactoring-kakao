@@ -3,6 +3,7 @@ package gift.wish.internal;
 import gift.global.ForbiddenException;
 import gift.global.NotFoundException;
 import gift.product.Product;
+import gift.product.ProductQueryPort;
 import gift.wish.Wish;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class WishService {
 
     private final WishRepository wishRepo;
-    private final WishProductRepository productRepo;
+    private final ProductQueryPort productQueryPort;
 
     public PagedModel<WishResponse> getWishes(Long memberId, Pageable pageable) {
         Page<WishResponse> pageResponse = wishRepo.findByMemberIdInnerJoinFetchProduct(
@@ -33,8 +34,7 @@ public class WishService {
     public AddWishResponseDto addWish(Long memberId, WishRequest request) {
         Long productId = request.productId();
 
-        Product product = productRepo.findById(productId)
-                .orElseThrow(NotFoundException::productNotFound);
+        Product product = productQueryPort.getReference(productId);
 
         Optional<Wish> opt = wishRepo.findByMemberIdAndProductIdInnerJoinFetchProduct(
                 memberId, productId
