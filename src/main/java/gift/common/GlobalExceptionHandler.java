@@ -8,6 +8,8 @@ import gift.order.OrderErrorCode;
 import gift.order.OrderException;
 import gift.product.ProductErrorCode;
 import gift.product.ProductException;
+import gift.wish.WishErrorCode;
+import gift.wish.WishException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -43,6 +45,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(OrderException.class)
     public ResponseEntity<ErrorResponse> handleOrderException(OrderException e) {
         OrderErrorCode errorCode = (OrderErrorCode) e.getErrorCode();
+        return ResponseEntity.status(errorCode.getHttpStatus())
+            .body(new ErrorResponse(errorCode.getHttpStatus().value(), errorCode.getMessage()));
+    }
+
+    @ExceptionHandler(WishException.class)
+    public ResponseEntity<ErrorResponse> handleWishException(WishException e) {
+        WishErrorCode errorCode = (WishErrorCode) e.getErrorCode();
         return ResponseEntity.status(errorCode.getHttpStatus())
             .body(new ErrorResponse(errorCode.getHttpStatus().value(), errorCode.getMessage()));
     }

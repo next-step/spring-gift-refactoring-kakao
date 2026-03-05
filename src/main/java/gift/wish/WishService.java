@@ -10,8 +10,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.NoSuchElementException;
-
 @Service
 public class WishService {
     private final WishRepository wishRepository;
@@ -36,7 +34,7 @@ public class WishService {
     public AddWishResult addWish(String authorization, WishRequest request) {
         Member member = extractMember(authorization);
         Product product = productRepository.findById(request.productId())
-            .orElseThrow(() -> new NoSuchElementException("Product not found."));
+            .orElseThrow(() -> new WishException(WishErrorCode.PRODUCT_NOT_FOUND));
         return wishRepository.findByMemberIdAndProductId(member.getId(), product.getId())
             .map(existing -> new AddWishResult(WishResponse.from(existing), false))
             .orElseGet(() -> new AddWishResult(
@@ -46,7 +44,7 @@ public class WishService {
     public void removeWish(String authorization, Long id) {
         Member member = extractMember(authorization);
         Wish wish = wishRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("Wish not found."));
+            .orElseThrow(() -> new WishException(WishErrorCode.WISH_NOT_FOUND));
         if (!wish.getMemberId().equals(member.getId())) {
             throw new ForbiddenException();
         }

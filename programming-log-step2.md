@@ -18,7 +18,8 @@ Service 계층 도입 이후 예외 처리가 Controller별 `@ExceptionHandler`�
 | category 도메인 | `CategoryErrorCode`, `CategoryException` 추가, `CategoryController`/`CategoryService` 예외를 `CategoryException`으로 전환 |
 | option 도메인 | `OptionErrorCode`, `OptionException` 추가, `Option`/`OptionService` 예외를 `OptionException`으로 전환 |
 | order 도메인 | `OrderErrorCode`, `OrderException` 추가, `OrderService` 예외를 `OrderException`으로 전환 |
-| 컨트롤러 정리 | `MemberController`, `ProductController`, `OptionController`, `OrderController` 로컬 `@ExceptionHandler` 제거(전역 처리로 이관) |
+| wish 도메인 | `WishErrorCode`, `WishException` 추가, `WishService` 예외를 `WishException`으로 전환 |
+| 컨트롤러 정리 | `MemberController`, `ProductController`, `OptionController`, `OrderController`, `WishController` 로컬 `@ExceptionHandler` 제거(전역 처리로 이관) |
 | 전역 매핑 확장 | `GlobalExceptionHandler`에 도메인 예외 매핑을 확장하고 `ErrorResponse(status, message)` 형식으로 통일 |
 
 ### 1-3. 기대효과
