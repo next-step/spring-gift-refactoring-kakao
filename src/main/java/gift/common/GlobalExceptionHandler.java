@@ -2,6 +2,10 @@ package gift.common;
 
 import gift.category.CategoryErrorCode;
 import gift.category.CategoryException;
+import gift.option.OptionErrorCode;
+import gift.option.OptionException;
+import gift.order.OrderErrorCode;
+import gift.order.OrderException;
 import gift.product.ProductErrorCode;
 import gift.product.ProductException;
 import org.springframework.http.HttpStatus;
@@ -25,6 +29,20 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ProductException.class)
     public ResponseEntity<ErrorResponse> handleProductException(ProductException e) {
         ProductErrorCode errorCode = (ProductErrorCode) e.getErrorCode();
+        return ResponseEntity.status(errorCode.getHttpStatus())
+            .body(new ErrorResponse(errorCode.getHttpStatus().value(), errorCode.getMessage()));
+    }
+
+    @ExceptionHandler(OptionException.class)
+    public ResponseEntity<ErrorResponse> handleOptionException(OptionException e) {
+        OptionErrorCode errorCode = (OptionErrorCode) e.getErrorCode();
+        return ResponseEntity.status(errorCode.getHttpStatus())
+            .body(new ErrorResponse(errorCode.getHttpStatus().value(), errorCode.getMessage()));
+    }
+
+    @ExceptionHandler(OrderException.class)
+    public ResponseEntity<ErrorResponse> handleOrderException(OrderException e) {
+        OrderErrorCode errorCode = (OrderErrorCode) e.getErrorCode();
         return ResponseEntity.status(errorCode.getHttpStatus())
             .body(new ErrorResponse(errorCode.getHttpStatus().value(), errorCode.getMessage()));
     }

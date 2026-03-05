@@ -5,7 +5,6 @@ import gift.product.ProductRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @Service
 public class OptionService {
@@ -19,7 +18,7 @@ public class OptionService {
 
     public List<OptionResponse> getOptions(Long productId) {
         productRepository.findById(productId)
-            .orElseThrow(() -> new NoSuchElementException("Product not found."));
+            .orElseThrow(() -> new OptionException(OptionErrorCode.PRODUCT_NOT_FOUND));
         return optionRepository.findByProductId(productId).stream()
             .map(OptionResponse::from)
             .toList();
@@ -27,9 +26,9 @@ public class OptionService {
 
     public OptionResponse createOption(Long productId, OptionRequest request) {
         Product product = productRepository.findById(productId)
-            .orElseThrow(() -> new NoSuchElementException("Product not found."));
+            .orElseThrow(() -> new OptionException(OptionErrorCode.PRODUCT_NOT_FOUND));
         if (optionRepository.existsByProductIdAndName(productId, request.name())) {
-            throw new IllegalArgumentException("이미 존재하는 옵션명입니다.");
+            throw new OptionException(OptionErrorCode.DUPLICATE_OPTION_NAME);
         }
         Option saved = optionRepository.save(request.toEntity(product));
         return OptionResponse.from(saved);
@@ -37,14 +36,14 @@ public class OptionService {
 
     public void deleteOption(Long productId, Long optionId) {
         productRepository.findById(productId)
-            .orElseThrow(() -> new NoSuchElementException("Product not found."));
+            .orElseThrow(() -> new OptionException(OptionErrorCode.PRODUCT_NOT_FOUND));
         List<Option> options = optionRepository.findByProductId(productId);
         if (options.size() <= 1) {
-            throw new IllegalArgumentException("옵션이 1개인 상품은 옵션을 삭제할 수 없습니다.");
+            throw new OptionException(OptionErrorCode.CANNOT_DELETE_LAST_OPTION);
         }
         Option option = optionRepository.findById(optionId)
             .filter(o -> o.getProduct().getId().equals(productId))
-            .orElseThrow(() -> new NoSuchElementException("Option not found."));
+            .orElseThrow(() -> new OptionException(OptionErrorCode.OPTION_NOT_FOUND));
         optionRepository.delete(option);
     }
 }

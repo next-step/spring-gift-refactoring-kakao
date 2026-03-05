@@ -11,8 +11,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.NoSuchElementException;
-
 @Service
 public class OrderService {
     private final OrderRepository orderRepository;
@@ -44,7 +42,7 @@ public class OrderService {
         Member member = extractMember(authorization);
 
         Option option = optionRepository.findById(request.optionId())
-            .orElseThrow(() -> new NoSuchElementException("Option not found."));
+            .orElseThrow(() -> new OrderException(OrderErrorCode.OPTION_NOT_FOUND));
 
         option.subtractQuantity(request.quantity());
         optionRepository.save(option);

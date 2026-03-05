@@ -1,12 +1,9 @@
 package gift.order;
 
-import gift.auth.AuthenticationException;
-import org.springframework.http.HttpStatus;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -41,10 +38,5 @@ public class OrderController {
         OrderResponse response = orderService.createOrder(authorization, request);
         return ResponseEntity.created(URI.create("/api/orders/" + response.id()))
             .body(response);
-    }
-
-    @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<Void> handleAuthentication(AuthenticationException e) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 }
