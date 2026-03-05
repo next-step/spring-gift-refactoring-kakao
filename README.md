@@ -222,10 +222,10 @@
 - [x] 기존 `OrderControllerTest` 전체 통과 확인
 
 #### 1-3. product 패키지 — 카테고리 조회를 CategoryService로 이동 (구조)
-- [ ] `AdminProductController`에 `CategoryService` 주입 추가
-- [ ] `productService.findAllCategories()` 3곳을 `categoryService.findAll()`로 교체
-- [ ] `ProductService.findAllCategories()` 메서드 삭제
-- [ ] 기존 `AdminProductControllerTest` 전체 통과 확인
+- [x] `AdminProductController`에 `CategoryService` 주입 추가
+- [x] `productService.findAllCategories()` 3곳을 `categoryService.findAll()`로 교체
+- [x] `ProductService.findAllCategories()` 메서드 삭제
+- [x] 기존 `AdminProductControllerTest` 전체 통과 확인
 
 ### 2. 누락된 작동 구현
 
@@ -274,6 +274,6 @@
 - [ ] 기존 `OrderControllerTest` 전체 통과 확인
 
 ### ADR 목록
-- [ ] `docs/adr/001-price-calculation-location.md` — 가격 계산 로직 위치 결정 (커밋 1-2)
+- [x] `docs/adr/001-price-calculation-location.md` — 가격 계산 로직 위치 결정 (커밋 1-2)
 - [ ] `docs/adr/002-order-transaction-boundary.md` — 주문 생성 시 Member 조회 전략 (커밋 3-2)
 - [ ] `docs/adr/003-external-api-outside-transaction.md` — 외부 API 호출을 트랜잭션 밖으로 분리 (커밋 4-1, 4-2)

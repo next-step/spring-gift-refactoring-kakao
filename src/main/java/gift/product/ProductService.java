@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import gift.category.Category;
 import gift.category.CategoryRepository;
-import gift.category.CategoryResponse;
 
 @Service
 @Transactional
@@ -94,12 +93,5 @@ public class ProductService {
         if (!errors.isEmpty()) {
             throw new IllegalArgumentException(String.join(", ", errors));
         }
-    }
-
-    @Transactional(readOnly = true)
-    public List<CategoryResponse> findAllCategories() {
-        return categoryRepository.findAll().stream()
-            .map(CategoryResponse::from)
-            .toList();
     }
 }
