@@ -1,5 +1,6 @@
 package gift.option;
 
+import gift.common.exception.ApplicationException;
 import gift.product.Product;
 import gift.product.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -7,7 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @RequiredArgsConstructor
 @Service
@@ -23,7 +23,7 @@ public class OptionService {
 
     public Option findById(Long id) {
         return optionRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("옵션을 찾을 수 없습니다. id: " + id));
+                .orElseThrow(() -> new ApplicationException(OptionErrorCode.NOT_FOUND));
     }
 
     @Transactional
@@ -38,7 +38,7 @@ public class OptionService {
         Product product = productService.findById(productId);
 
         if (optionRepository.existsByProductIdAndName(productId, name)) {
-            throw new IllegalArgumentException("이미 존재하는 옵션명입니다.");
+            throw new ApplicationException(OptionErrorCode.DUPLICATE_NAME);
         }
 
         return optionRepository.save(new Option(product, name, quantity));
@@ -51,7 +51,7 @@ public class OptionService {
         Option option = product.getOptions().stream()
                 .filter(o -> o.getId().equals(optionId))
                 .findFirst()
-                .orElseThrow(() -> new NoSuchElementException("옵션을 찾을 수 없습니다. id: " + optionId));
+                .orElseThrow(() -> new ApplicationException(OptionErrorCode.NOT_FOUND));
 
         product.removeOption(option);
     }

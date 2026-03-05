@@ -1,5 +1,6 @@
 package gift.option;
 
+import gift.common.exception.ApplicationException;
 import gift.product.Product;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -41,19 +42,21 @@ public class Option {
 
     private void validateQuantity(int quantity) {
         if (quantity < 1 || quantity > MAX_QUANTITY) {
-            throw new IllegalArgumentException("옵션 수량은 1 이상 " + MAX_QUANTITY + " 이하여야 합니다.");
+            throw new ApplicationException(OptionErrorCode.INVALID_QUANTITY);
         }
     }
 
     private void validateName(String name) {
         if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("옵션 이름은 필수입니다.");
+            throw new ApplicationException(OptionErrorCode.INVALID_NAME, "옵션 이름은 필수입니다.");
         }
         if (name.length() > MAX_NAME_LENGTH) {
-            throw new IllegalArgumentException("옵션 이름은 공백을 포함하여 최대 50자까지 입력할 수 있습니다.");
+            throw new ApplicationException(OptionErrorCode.INVALID_NAME,
+                    "옵션 이름은 공백을 포함하여 최대 50자까지 입력할 수 있습니다.");
         }
         if (!ALLOWED_NAME_PATTERN.matcher(name).matches()) {
-            throw new IllegalArgumentException("옵션 이름에 허용되지 않는 특수 문자가 포함되어 있습니다. 사용 가능: ( ), [ ], +, -, &, /, _");
+            throw new ApplicationException(OptionErrorCode.INVALID_NAME,
+                    "옵션 이름에 허용되지 않는 특수 문자가 포함되어 있습니다. 사용 가능: ( ), [ ], +, -, &, /, _");
         }
     }
 
@@ -63,7 +66,7 @@ public class Option {
 
     public void subtractQuantity(int amount) {
         if (amount > this.quantity) {
-            throw new IllegalArgumentException("차감할 수량이 현재 재고보다 많습니다.");
+            throw new ApplicationException(OptionErrorCode.INSUFFICIENT_STOCK);
         }
         this.quantity -= amount;
     }
