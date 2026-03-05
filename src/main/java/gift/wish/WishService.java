@@ -3,6 +3,7 @@ package gift.wish;
 import gift.product.Product;
 import gift.product.ProductService;
 import java.util.NoSuchElementException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -34,8 +35,12 @@ public class WishService {
             return new AddWishResult(existing, false);
         }
 
-        Wish saved = wishRepository.save(new Wish(memberId, product));
-        return new AddWishResult(saved, true);
+        try {
+            Wish saved = wishRepository.save(new Wish(memberId, product));
+            return new AddWishResult(saved, true);
+        } catch (DataIntegrityViolationException e) {
+            throw new IllegalArgumentException("이미 위시리스트에 추가된 상품입니다.");
+        }
     }
 
     @Transactional

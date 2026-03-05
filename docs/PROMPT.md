@@ -107,3 +107,6 @@ auth ↔ member 순환 참조 해소 — member 패키지에 TokenProvider 인�
 
 ## 프롬프트 32
 6-5. MethodArgumentNotValidException 핸들러 추가 — GlobalExceptionHandler에 Bean Validation 실패 핸들러 추가. BindingResult.getFieldErrors()에서 필드명 + 기본 메시지를 조합하여 ResponseEntity<String> 400 반환. 기존 IllegalArgumentException 핸들러와 동일한 응답 형식 유지.
+
+## 프롬프트 33
+6-6. wish 테이블 UNIQUE 제약 추가 — V3 Flyway 마이그레이션으로 wish 테이블에 UNIQUE(member_id, product_id) 제약 추가. WishService.addWish()에서 save() 호출을 try-catch로 감싸 DataIntegrityViolationException → IllegalArgumentException 변환. 기존 app-level 중복 검사(200 OK 반환)는 유지하고, DB 제약은 race condition 안전망으로 동작.

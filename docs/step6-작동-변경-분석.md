@@ -478,6 +478,15 @@ public Order createOrder(Long memberId, Long optionId, int quantity, String mess
 **영향 범위**: DB 마이그레이션, `WishService.java` (예외 처리 보완)
 **우선순위**: 중간
 
+**구현 내역**:
+- `V3__Add_wish_unique_constraint.sql`: `ALTER TABLE wish ADD CONSTRAINT uk_wish_member_product UNIQUE (member_id, product_id)`
+- `WishService.addWish()`: `save()` 호출을 try-catch로 감싸 `DataIntegrityViolationException` → `IllegalArgumentException("이미 위시리스트에 추가된 상품입니다.")` 변환
+- 기존 app-level 중복 검사(`findByMemberIdAndProductId` → 200 OK) 유지. DB UNIQUE 제약은 race condition 안전망
+- `DataIntegrityViolationException` 후 Hibernate 세션이 오류 상태이므로 기존 위시 재조회 불가 → `IllegalArgumentException`(→ 400)으로 변환
+- IDENTITY 전략이므로 `save()` 시점에 즉시 INSERT 실행 → 별도 `flush()` 불필요
+
+**검증 결과**: `./gradlew cucumberTest` — 20개 시나리오 전체 통과
+
 ---
 
 ### 작업 7: 에러 메시지 언어 통일

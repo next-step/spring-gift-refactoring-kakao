@@ -224,9 +224,9 @@
 > 근거: (member_id, product_id) UNIQUE 제약이 없어 동시 요청 시 중복 위시가 생성될 수 있다.
 > 애플리케이션 레벨 중복 검사만으로는 race condition에 취약하다.
 
-- [ ] Flyway 마이그레이션으로 UNIQUE(member_id, product_id) 제약 추가
-- [ ] WishService에서 DB 제약 위반 예외 처리 보완
-- [ ] 전체 테스트 실행 → 통과 확인
+- [x] Flyway 마이그레이션으로 UNIQUE(member_id, product_id) 제약 추가
+- [x] WishService에서 DB 제약 위반 예외 처리 보완
+- [x] 전체 테스트 실행 → 통과 확인
 
 #### 6-7. 에러 메시지 언어 통일
 
