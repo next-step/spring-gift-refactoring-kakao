@@ -548,6 +548,8 @@ public Order createOrder(Long memberId, Long optionId, int quantity, String mess
 
 **ADR**: ADR-003 참조
 
+**검증 결과**: `./gradlew cucumberTest` — 20개 시나리오 전체 통과
+
 ---
 
 ### 작업 9: 주문 시 위시 삭제 (3-10)

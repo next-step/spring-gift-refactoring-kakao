@@ -116,3 +116,6 @@ auth ↔ member 순환 참조 해소 — member 패키지에 TokenProvider 인�
 
 ## 프롬프트 35
 현행 유지 항목 3건(동시성 제어, 주문 시 위시 삭제, 에러 응답 본문 통일) 작업 전환 — "6. 현행 유지 항목"의 3건을 작업 8/9/10으로 승격. 작업 순서: 8(에러 응답 본문 통일) → 9(주문 시 위시 삭제) → 10(동시성 제어). ADR-003(에러 응답 형식: JSON {"message":"..."}), ADR-004(동시성 제어: 비관적 잠금) 추가. 코드 변경 없이 문서만 갱신.
+
+## 프롬프트 36
+6-8. 에러 응답 본문 통일 — ErrorResponse record 도입하여 GlobalExceptionHandler 6개 핸들러 모두 ResponseEntity<ErrorResponse>를 반환하도록 변경. 401/403/404는 body 없음 → JSON body 추가, 400/409는 plain text → JSON 변환. Content-Type이 application/json으로 통일되어 클라이언트가 성공/실패 응답을 동일한 방식으로 파싱 가능. (ADR-003)

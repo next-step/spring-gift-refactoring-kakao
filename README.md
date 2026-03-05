@@ -242,9 +242,9 @@
 > 모든 핸들러가 동일한 JSON 구조를 반환해야 클라이언트가 성공/실패 응답을 동일한 방식으로 파싱할 수 있다.
 > API 계약을 먼저 확립하여 이후 작업에서 발생하는 에러도 통일된 형식으로 반환한다.
 
-- [ ] ErrorResponse record 생성 (`public record ErrorResponse(String message) {}`)
-- [ ] GlobalExceptionHandler 6개 핸들러 반환 타입을 `ResponseEntity<ErrorResponse>`로 통일
-- [ ] 전체 테스트 실행 → 통과 확인
+- [x] ErrorResponse record 생성 (`public record ErrorResponse(String message) {}`)
+- [x] GlobalExceptionHandler 6개 핸들러 반환 타입을 `ResponseEntity<ErrorResponse>`로 통일
+- [x] 전체 테스트 실행 → 통과 확인
 
 #### 6-9. 주문 시 위시 삭제
 
