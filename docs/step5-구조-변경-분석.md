@@ -383,6 +383,54 @@ if (member.getPassword() == null || !member.getPassword().equals(password)) {
 
 ---
 
+### 작업 7: MemberService.register()에서 create() 재사용
+
+#### 근거
+
+`MemberService`에 `register()`와 `create()` 두 메서드가 동일한 로직(이메일 중복 검증 + Member 저장)을 중복한다.
+
+```java
+// register() — MemberController에서 호출, String(토큰) 반환
+public String register(String email, String password) {
+    if (memberRepository.existsByEmail(email)) {
+        throw new IllegalArgumentException("Email is already registered.");
+    }
+    Member member = memberRepository.save(new Member(email, password));
+    return tokenProvider.createToken(member.getEmail());
+}
+
+// create() — AdminMemberController에서 호출, Member 반환
+public Member create(String email, String password) {
+    if (memberRepository.existsByEmail(email)) {
+        throw new IllegalArgumentException("Email is already registered.");
+    }
+    return memberRepository.save(new Member(email, password));
+}
+```
+
+#### 문제
+
+**변경 지점이 2곳이다.** 이메일 중복 검증 로직을 변경(예: 예외 메시지 수정, 검증 조건 추가)하면 `register()`와 `create()` 두 곳을 동일하게 수정해야 한다. 한 곳을 누락하면 동일한 비즈니스 규칙이 API에 따라 다르게 동작한다.
+
+이 작업에는 ADR이 필요 없다. `register()`가 `create()`의 상위 집합(생성 + 토큰 발급)이므로, 내부 호출로 중복을 제거하는 것이 유일한 합리적 선택이다.
+
+#### 트랜잭션 고려
+
+`register()`와 `create()` 모두 `@Transactional`이 선언되어 있다. 같은 클래스 내 호출이므로 Spring AOP 프록시가 `create()`의 `@Transactional`을 적용하지 않으며, `register()`의 `@Transactional`이 전체를 감싼다. 기존과 동일한 트랜잭션 경계를 유지한다.
+
+#### 작업 내용
+
+1. `register()`의 중복 로직(existsByEmail + save)을 `create()` 호출로 대체
+2. `create()`는 변경 없음
+
+#### 검증
+
+인수 테스트 18개 전체 통과. `member.feature`의 회원가입 성공(토큰 반환) 및 중복 이메일 실패 시나리오가 `register()` → `create()` 위임 경로를 커버한다.
+
+**영향 범위**: MemberService
+
+---
+
 ## 4. 현행 유지 항목
 
 분석 결과 구조 변경이 불필요하거나, 이번 작업 범위 밖인 항목을 정리한다.
@@ -408,9 +456,12 @@ if (member.getPassword() == null || !member.getPassword().equals(password)) {
 | 4 | 외부 인프라 인터페이스 추출 (OrderMessageClient) | 없음 | OrderService, KakaoMessageClient |
 | 5 | auth ↔ member 순환 해소 (의존성 역전 — member에 TokenProvider 인터페이스) | 없음 | member 패키지, auth 패키지, MemberService |
 | 6 | 도메인 책임 이동 (Member.matchesPassword) | 없음 | Member, MemberService |
+| 7 | MemberService.register()에서 create() 재사용 | 없음 | MemberService |
 
 **순서 근거**
 - 작업 1 → 2: `@ControllerAdvice`가 있어야 `HandlerMethodArgumentResolver`의 인증 실패 예외를 처리할 수 있다.
 - 작업 3~6: 서로 독립적이다. 영향 범위가 넓은 것(크로스 패키지 의존, 3개 서비스 수정)을 먼저, 좁은 것(단일 메서드 이동)을 마지막에 배치한다.
+- 작업 7: step6 작동 변경 분석에서 구조 변경으로 재분류된 항목. API 입출력이 변경되지 않으므로 구조 변경에 해당한다.
 
 **검증 전략**: 각 작업 완료 후 인수 테스트를 실행하여, 입력과 출력이 변경되지 않았음을 확인한다. (작업 6에서 시나리오 1개 추가되어 최종 18개.)
+

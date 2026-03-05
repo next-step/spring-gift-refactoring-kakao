@@ -83,3 +83,6 @@ auth ↔ member 순환 참조 해소 — member 패키지에 TokenProvider 인�
 
 ## 프롬프트 24
 도메인 책임 이동 — Member 엔티티에 matchesPassword(String) 메서드를 추가하고, MemberService.login()에서 getPassword()로 내부 상태를 꺼내 직접 비교하던 로직을 matchesPassword() 호출로 대체. 비밀번호 검증 책임을 도메인 객체로 이동.
+
+## 프롬프트 25
+작동 변경 분석 보고서 생성 — 구조 변경(step5) 완료 후, 입출력이 바뀌는 작동 변경이 필요한 영역을 분석. TODO 미완성 코드, 트랜잭션 문제, 예외 처리 불일관, 도메인 검증 누락, 삭제 정책, 누락된 비즈니스 로직, 코드 중복 등 12개 항목 식별. docs/step6-작동-변경-분석.md에 보고서 작성.

@@ -154,3 +154,83 @@
 - [x] MemberService.login()에서 직접 비교를 matchesPassword() 호출로 대체
 - [x] "틀린 비밀번호로 로그인하면 실패한다" 인수 테스트 시나리오 추가
 - [x] 전체 테스트 실행 → 통과 확인
+
+#### 5-7. MemberService.register()에서 create() 재사용
+
+> 근거: register()와 create()가 동일한 이메일 중복 검증 + 저장 로직을 중복한다.
+> register()가 create()를 호출하고 토큰 생성만 추가하면 변경 지점이 1곳으로 수렴한다.
+> 입력(email, password)과 출력(토큰)이 동일하게 유지되며, 내부 호출 구조만 바뀐다.
+
+- [ ] register()가 create()를 내부 호출하도록 변경
+- [ ] 전체 테스트 실행 → 통과 확인
+
+---
+
+### 6단계: 작동 변경 — 정책 수정, 검증 추가, 예외 처리 개선
+
+> 목적: 입출력이 달라지는 변경을 수행한다.
+> 정책 변경, 트랜잭션 경계 수정, 예외 처리 방식 변경, 도메인 검증 추가, DB 제약 추가 등.
+> 각 변경에 대해 기존 인수 테스트를 수정하거나 새 시나리오를 추가한다.
+
+#### 6-1. Authorization 헤더 누락 시 401 반환
+
+> 근거: Authorization 헤더 누락 시 MissingRequestHeaderException → 400을 반환한다.
+> 의미적으로 인증 자격 증명 누락은 401이 맞다 (RFC 7235). TODO 주석으로 인지된 상태.
+
+- [ ] AuthenticationResolver에서 MissingRequestHeaderException 대신 AuthenticationException을 던져 401 반환
+- [ ] 인수 테스트 수정 (인증 헤더 누락 시 400 → 401)
+- [ ] 전체 테스트 실행 → 통과 확인
+
+#### 6-2. 트랜잭션에서 외부 API 호출 분리
+
+> 근거: OrderService.createOrder()의 @Transactional 내에서 Kakao API를 호출한다.
+> 외부 API 타임아웃 동안 DB 커넥션이 점유되며, 메시지 전송은 주문의 부수 효과이므로 트랜잭션 커밋 후로 분리한다.
+
+- [ ] OrderCreatedEvent 도메인 이벤트 클래스 생성
+- [ ] 메시지 전송을 @TransactionalEventListener(phase = AFTER_COMMIT)로 이동
+- [ ] OrderService.createOrder()에서 sendMessageIfPossible() 제거, 이벤트 발행으로 대체
+- [ ] 전체 테스트 실행 → 통과 확인
+
+#### 6-3. Option.subtractQuantity 음수/영 검증 추가
+
+> 근거: amount <= 0 검증이 없어 음수 전달 시 재고가 증가한다.
+> Member.deductPoint()에는 동일한 방어가 있으나 Option에는 누락.
+
+- [ ] Option.subtractQuantity()에 amount <= 0 검증 추가
+- [ ] 전체 테스트 실행 → 통과 확인
+
+#### 6-4. 삭제 시 FK 위반 처리 — Restrict + 사전 검증
+
+> 근거: 하위 엔티티가 있는 상위 엔티티 삭제 시 DataIntegrityViolationException → 500 에러.
+> DB의 FK 기본 정책(Restrict)에 맞춰 애플리케이션에서 사전 검증 후 의미 있는 응답을 반환한다.
+
+- [ ] 각 Service의 delete()에 하위 엔티티 존재 검사 추가 (Category→Product, Product→Option/Wish, Option→Order, Member→Order/Wish)
+- [ ] GlobalExceptionHandler에 DataIntegrityViolationException → 409 안전망 추가
+- [ ] 삭제 실패 시나리오 인수 테스트 추가
+- [ ] 전체 테스트 실행 → 통과 확인
+
+#### 6-5. MethodArgumentNotValidException 핸들러 추가
+
+> 근거: 9개 엔드포인트에서 @Valid를 사용하나 GlobalExceptionHandler에 핸들러가 없다.
+> Bean Validation 실패 시 Spring 기본 응답과 IllegalArgumentException 응답의 형식이 다르다.
+
+- [ ] GlobalExceptionHandler에 MethodArgumentNotValidException → 400 핸들러 추가
+- [ ] 전체 테스트 실행 → 통과 확인
+
+#### 6-6. wish 테이블 UNIQUE 제약 추가
+
+> 근거: (member_id, product_id) UNIQUE 제약이 없어 동시 요청 시 중복 위시가 생성될 수 있다.
+> 애플리케이션 레벨 중복 검사만으로는 race condition에 취약하다.
+
+- [ ] Flyway 마이그레이션으로 UNIQUE(member_id, product_id) 제약 추가
+- [ ] WishService에서 DB 제약 위반 예외 처리 보완
+- [ ] 전체 테스트 실행 → 통과 확인
+
+#### 6-7. 에러 메시지 언어 통일
+
+> 근거: Member.chargePoint()는 영어, deductPoint()는 한국어 등 에러 메시지 언어가 혼재한다.
+> IllegalArgumentException 메시지가 API 응답에 노출되므로 일관성이 필요하다.
+
+- [ ] 프로젝트 전체 에러 메시지를 단일 언어로 통일
+- [ ] 전체 테스트 실행 → 통과 확인
+
