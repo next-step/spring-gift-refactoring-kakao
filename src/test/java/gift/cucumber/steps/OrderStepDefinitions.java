@@ -133,4 +133,13 @@ public class OrderStepDefinitions {
         );
         assertThat(actual).isEqualTo(expectedPoint);
     }
+
+    @그러면("주문 금액이 {int}원이다")
+    public void 주문_금액이_n원이다(int expectedTotalPrice) {
+        Integer actual = jdbcTemplate.queryForObject(
+            "SELECT total_price FROM orders WHERE member_id = (SELECT id FROM member WHERE email = ?) ORDER BY id DESC LIMIT 1",
+            Integer.class, TEST_EMAIL
+        );
+        assertThat(actual).isEqualTo(expectedTotalPrice);
+    }
 }

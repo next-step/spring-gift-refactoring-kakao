@@ -61,7 +61,7 @@ public class OrderService {
             option.getProduct().getName(),
             option.getName(),
             order.getQuantity(),
-            option.calculateTotalPrice(order.getQuantity()),
+            order.getTotalPrice(),
             order.getMessage()
         );
         kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), message);
