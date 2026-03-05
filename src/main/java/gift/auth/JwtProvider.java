@@ -1,5 +1,7 @@
 package gift.auth;
 
+import gift.error.UnauthorizedException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,12 +26,16 @@ public class JwtProvider {
 
     /* 서명된 JWT 토큰에서 이메일(subject)을 추출한다 */
     public String getEmail(String token) {
-        return Jwts.parser()
-            .verifyWith(key)
-            .build()
-            .parseSignedClaims(token)
-            .getPayload()
-            .getSubject();
+        try {
+            return Jwts.parser()
+                .verifyWith(key)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getSubject();
+        } catch (JwtException e) {
+            throw new UnauthorizedException("인증에 실패했습니다.");
+        }
     }
 
     /* 주어진 이메일로 새로운 서명된 JWT 토큰을 생성한다 */

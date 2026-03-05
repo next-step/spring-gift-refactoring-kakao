@@ -16,16 +16,10 @@ public class AuthenticationResolver {
     }
 
     public Long extractMemberId(String authorization) {
-        try {
-            final String token = authorization.replace("Bearer ", "");
-            final String email = jwtProvider.getEmail(token);
-            return memberRepository.findByEmail(email)
-                .orElseThrow(() -> new UnauthorizedException("인증에 실패했습니다."))
-                .getId();
-        } catch (UnauthorizedException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new UnauthorizedException("인증에 실패했습니다.");
-        }
+        final String token = authorization.replace("Bearer ", "");
+        final String email = jwtProvider.getEmail(token);
+        return memberRepository.findByEmail(email)
+            .orElseThrow(() -> new UnauthorizedException("인증에 실패했습니다."))
+            .getId();
     }
 }
