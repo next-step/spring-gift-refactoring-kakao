@@ -6,9 +6,11 @@ import gift.option.entity.Option;
 import gift.option.exception.OptionErrorCode;
 import gift.option.exception.OptionException;
 import gift.option.repository.OptionRepository;
+import gift.product.exception.ProductErrorCode;
+import gift.product.exception.ProductException;
 import gift.option.service.OptionService;
 import gift.product.entity.Product;
-import gift.product.repository.ProductRepository;
+import gift.product.service.ProductService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,7 +32,7 @@ class OptionServiceTest {
     private OptionRepository optionRepository;
 
     @Mock
-    private ProductRepository productRepository;
+    private ProductService productService;
 
     @InjectMocks
     private OptionService optionService;
@@ -38,7 +40,7 @@ class OptionServiceTest {
     @Test
     @DisplayName("옵션 조회 시 상품이 없으면 PRODUCT_NOT_FOUND 예외를 던진다")
     void getOptions_productNotFound_throwsException() {
-        when(productRepository.findById(1L)).thenReturn(Optional.empty());
+        when(productService.findByIdOrThrow(1L)).thenThrow(new ProductException(ProductErrorCode.PRODUCT_NOT_FOUND));
 
         OptionException exception = assertThrows(OptionException.class, () -> optionService.getOptions(1L));
 
@@ -50,7 +52,7 @@ class OptionServiceTest {
     void createOption_duplicateName_throwsException() {
         Product product = new Product("아메리카노", 4500, "http://image.png", new Category("음료", "#000000", "http://image.png", null));
         OptionRequest request = new OptionRequest("기본 옵션", 10);
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productService.findByIdOrThrow(1L)).thenReturn(product);
         when(optionRepository.existsByProductIdAndName(1L, request.name())).thenReturn(true);
 
         OptionException exception = assertThrows(OptionException.class, () -> optionService.createOption(1L, request));
@@ -62,7 +64,7 @@ class OptionServiceTest {
     @DisplayName("옵션 삭제 시 옵션이 1개뿐이면 CANNOT_DELETE_LAST_OPTION 예외를 던진다")
     void deleteOption_lastOption_throwsException() {
         Product product = new Product("아메리카노", 4500, "http://image.png", new Category("음료", "#000000", "http://image.png", null));
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productService.findByIdOrThrow(1L)).thenReturn(product);
         when(optionRepository.findByProductId(1L)).thenReturn(List.of(new Option(product, "기본 옵션", 10)));
 
         OptionException exception = assertThrows(OptionException.class, () -> optionService.deleteOption(1L, 1L));
@@ -79,7 +81,7 @@ class OptionServiceTest {
         ReflectionTestUtils.setField(otherProduct, "id", 2L);
         Option target = new Option(otherProduct, "다른 상품 옵션", 10);
 
-        when(productRepository.findById(1L)).thenReturn(Optional.of(requestProduct));
+        when(productService.findByIdOrThrow(1L)).thenReturn(requestProduct);
         when(optionRepository.findByProductId(1L)).thenReturn(List.of(
             new Option(requestProduct, "기본 옵션", 10),
             new Option(requestProduct, "추가 옵션", 5)

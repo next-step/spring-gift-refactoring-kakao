@@ -1,7 +1,7 @@
 package gift.product.service;
 
 import gift.category.entity.Category;
-import gift.category.repository.CategoryRepository;
+import gift.category.service.CategoryService;
 import gift.product.entity.Product;
 import gift.product.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,19 +16,19 @@ import java.util.NoSuchElementException;
 @Transactional(readOnly = true)
 public class AdminProductService {
     private final ProductRepository productRepository;
-    private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
 
     public List<Product> findAllProducts() {
         return productRepository.findAll();
     }
 
     public List<Category> findAllCategories() {
-        return categoryRepository.findAll();
+        return categoryService.findAll();
     }
 
     @Transactional
     public void createProduct(String name, int price, String imageUrl, Long categoryId) {
-        Category category = categoryRepository.findById(categoryId)
+        Category category = categoryService.findById(categoryId)
             .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
         productRepository.save(new Product(name, price, imageUrl, category));
     }
@@ -41,7 +41,7 @@ public class AdminProductService {
     @Transactional
     public void updateProduct(Long id, String name, int price, String imageUrl, Long categoryId) {
         Product product = findProductOrThrow(id);
-        Category category = categoryRepository.findById(categoryId)
+        Category category = categoryService.findById(categoryId)
             .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
 
         product.update(name, price, imageUrl, category);

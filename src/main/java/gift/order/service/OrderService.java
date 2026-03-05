@@ -6,16 +6,16 @@ import gift.external.ExternalProvider;
 import gift.message.MessageClient;
 import gift.message.MessageClientRegistry;
 import gift.member.entity.Member;
-import gift.member.repository.MemberRepository;
+import gift.member.service.MemberService;
 import gift.option.entity.Option;
-import gift.option.repository.OptionRepository;
+import gift.option.service.OptionService;
 import gift.order.dto.OrderRequest;
 import gift.order.dto.OrderResponse;
 import gift.order.entity.Order;
 import gift.order.exception.OrderErrorCode;
 import gift.order.exception.OrderException;
 import gift.order.repository.OrderRepository;
-import gift.wish.repository.WishRepository;
+import gift.wish.service.WishService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,9 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class OrderService {
     private final OrderRepository orderRepository;
-    private final OptionRepository optionRepository;
-    private final MemberRepository memberRepository;
-    private final WishRepository wishRepository;
+    private final OptionService optionService;
+    private final MemberService memberService;
+    private final WishService wishService;
     private final AuthenticationResolver authenticationResolver;
     private final MessageClientRegistry messageClientRegistry;
 
@@ -42,20 +42,20 @@ public class OrderService {
     public OrderResponse createOrder(String authorization, OrderRequest request) {
         Member member = extractMember(authorization);
 
-        Option option = optionRepository.findById(request.optionId())
+        Option option = optionService.findById(request.optionId())
             .orElseThrow(() -> new OrderException(OrderErrorCode.OPTION_NOT_FOUND));
 
         option.subtractQuantity(request.quantity());
-        optionRepository.save(option);
+        optionService.save(option);
 
         int price = option.getProduct().getPrice() * request.quantity();
         member.deductPoint(price);
-        memberRepository.save(member);
+        memberService.save(member);
 
         Order order = new Order(option, member.getId(), request.quantity(), request.message());
         Order saved = orderRepository.save(order);
 
-        wishRepository.deleteByMemberIdAndProductId(member.getId(), option.getProduct().getId());
+        wishService.removeWishByMemberAndProduct(member.getId(), option.getProduct().getId());
 
         sendKakaoMessageIfPossible(member, saved, option);
 

@@ -1,7 +1,7 @@
 package gift.product;
 
 import gift.category.entity.Category;
-import gift.category.repository.CategoryRepository;
+import gift.category.service.CategoryService;
 import gift.product.dto.ProductRequest;
 import gift.product.dto.ProductResponse;
 import gift.product.entity.Product;
@@ -29,7 +29,7 @@ class ProductServiceTest {
     private ProductRepository productRepository;
 
     @Mock
-    private CategoryRepository categoryRepository;
+    private CategoryService categoryService;
 
     @InjectMocks
     private ProductService productService;
@@ -48,7 +48,7 @@ class ProductServiceTest {
     @DisplayName("상품 생성 시 카테고리가 없으면 CATEGORY_NOT_FOUND 예외를 던진다")
     void createProduct_categoryNotFound_throwsException() {
         ProductRequest request = new ProductRequest("아메리카노", 4500, "http://image.png", 1L);
-        when(categoryRepository.findById(request.categoryId())).thenReturn(Optional.empty());
+        when(categoryService.findById(request.categoryId())).thenReturn(Optional.empty());
 
         ProductException exception = assertThrows(ProductException.class, () -> productService.createProduct(request));
 
@@ -71,7 +71,7 @@ class ProductServiceTest {
         Category category = new Category("음료", "#000000", "http://image.png", null);
         ProductRequest request = new ProductRequest("아메리카노", 4500, "http://image.png", 1L);
         Product saved = new Product(request.name(), request.price(), request.imageUrl(), category);
-        when(categoryRepository.findById(request.categoryId())).thenReturn(Optional.of(category));
+        when(categoryService.findById(request.categoryId())).thenReturn(Optional.of(category));
         when(productRepository.save(any(Product.class))).thenReturn(saved);
 
         ProductResponse response = productService.createProduct(request);

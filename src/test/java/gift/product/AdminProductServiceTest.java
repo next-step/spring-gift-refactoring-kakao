@@ -1,7 +1,7 @@
 package gift.product;
 
 import gift.category.entity.Category;
-import gift.category.repository.CategoryRepository;
+import gift.category.service.CategoryService;
 import gift.product.entity.Product;
 import gift.product.repository.ProductRepository;
 import gift.product.service.AdminProductService;
@@ -27,7 +27,7 @@ class AdminProductServiceTest {
     private ProductRepository productRepository;
 
     @Mock
-    private CategoryRepository categoryRepository;
+    private CategoryService categoryService;
 
     @InjectMocks
     private AdminProductService adminProductService;
@@ -35,7 +35,7 @@ class AdminProductServiceTest {
     @Test
     @DisplayName("상품 생성 시 카테고리가 없으면 예외를 던진다")
     void createProduct_categoryNotFound_throwsException() {
-        when(categoryRepository.findById(1L)).thenReturn(Optional.empty());
+        when(categoryService.findById(1L)).thenReturn(Optional.empty());
 
         NoSuchElementException exception = assertThrows(
             NoSuchElementException.class,
@@ -65,7 +65,7 @@ class AdminProductServiceTest {
         Product product = new Product("케이크", 7000, "http://cake.png", oldCategory);
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-        when(categoryRepository.findById(10L)).thenReturn(Optional.empty());
+        when(categoryService.findById(10L)).thenReturn(Optional.empty());
 
         NoSuchElementException exception = assertThrows(
             NoSuchElementException.class,
@@ -83,7 +83,7 @@ class AdminProductServiceTest {
         Product product = new Product("케이크", 7000, "http://cake.png", oldCategory);
 
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
-        when(categoryRepository.findById(2L)).thenReturn(Optional.of(newCategory));
+        when(categoryService.findById(2L)).thenReturn(Optional.of(newCategory));
         when(productRepository.save(any(Product.class))).thenReturn(product);
 
         adminProductService.updateProduct(1L, "아메리카노", 4500, "http://image.png", 2L);

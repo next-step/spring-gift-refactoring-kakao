@@ -5,9 +5,9 @@ import gift.auth.jwt.AuthenticationResolver;
 import gift.category.entity.Category;
 import gift.message.MessageClientRegistry;
 import gift.member.entity.Member;
-import gift.member.repository.MemberRepository;
+import gift.member.service.MemberService;
 import gift.option.entity.Option;
-import gift.option.repository.OptionRepository;
+import gift.option.service.OptionService;
 import gift.order.dto.OrderRequest;
 import gift.order.dto.OrderResponse;
 import gift.order.entity.Order;
@@ -16,7 +16,7 @@ import gift.order.exception.OrderException;
 import gift.order.repository.OrderRepository;
 import gift.order.service.OrderService;
 import gift.product.entity.Product;
-import gift.wish.repository.WishRepository;
+import gift.wish.service.WishService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -40,13 +40,13 @@ class OrderServiceTest {
     private OrderRepository orderRepository;
 
     @Mock
-    private OptionRepository optionRepository;
+    private OptionService optionService;
 
     @Mock
-    private MemberRepository memberRepository;
+    private MemberService memberService;
 
     @Mock
-    private WishRepository wishRepository;
+    private WishService wishService;
 
     @Mock
     private AuthenticationResolver authenticationResolver;
@@ -70,7 +70,7 @@ class OrderServiceTest {
     void createOrder_optionNotFound_throwsException() {
         Member member = new Member("test@example.com", "password");
         when(authenticationResolver.extractMember("Bearer token")).thenReturn(member);
-        when(optionRepository.findById(1L)).thenReturn(Optional.empty());
+        when(optionService.findById(1L)).thenReturn(Optional.empty());
 
         OrderException exception = assertThrows(
             OrderException.class,
@@ -93,17 +93,17 @@ class OrderServiceTest {
         Order savedOrder = new Order(option, 1L, request.quantity(), request.message());
 
         when(authenticationResolver.extractMember("Bearer token")).thenReturn(member);
-        when(optionRepository.findById(request.optionId())).thenReturn(Optional.of(option));
+        when(optionService.findById(request.optionId())).thenReturn(Optional.of(option));
         when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
 
         OrderResponse response = orderService.createOrder("Bearer token", request);
 
         assertEquals(request.quantity(), response.quantity());
         assertEquals(request.message(), response.message());
-        verify(optionRepository).save(option);
-        verify(memberRepository).save(member);
+        verify(optionService).save(option);
+        verify(memberService).save(member);
         verify(orderRepository).save(any(Order.class));
-        verify(wishRepository).deleteByMemberIdAndProductId(1L, 10L);
+        verify(wishService).removeWishByMemberAndProduct(1L, 10L);
     }
 
     @Test
@@ -119,10 +119,10 @@ class OrderServiceTest {
         Order savedOrder = new Order(option, 1L, request.quantity(), request.message());
 
         when(authenticationResolver.extractMember("Bearer token")).thenReturn(member);
-        when(optionRepository.findById(request.optionId())).thenReturn(Optional.of(option));
+        when(optionService.findById(request.optionId())).thenReturn(Optional.of(option));
         when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
         doThrow(new RuntimeException("wish delete failed"))
-            .when(wishRepository).deleteByMemberIdAndProductId(1L, 10L);
+            .when(wishService).removeWishByMemberAndProduct(1L, 10L);
 
         assertThrows(RuntimeException.class, () -> orderService.createOrder("Bearer token", request));
     }

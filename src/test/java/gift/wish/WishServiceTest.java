@@ -6,7 +6,9 @@ import gift.auth.exception.ForbiddenException;
 import gift.category.entity.Category;
 import gift.member.entity.Member;
 import gift.product.entity.Product;
-import gift.product.repository.ProductRepository;
+import gift.product.exception.ProductErrorCode;
+import gift.product.exception.ProductException;
+import gift.product.service.ProductService;
 import gift.wish.dto.AddWishResult;
 import gift.wish.dto.WishRequest;
 import gift.wish.entity.Wish;
@@ -38,7 +40,7 @@ class WishServiceTest {
     private WishRepository wishRepository;
 
     @Mock
-    private ProductRepository productRepository;
+    private ProductService productService;
 
     @Mock
     private AuthenticationResolver authenticationResolver;
@@ -59,7 +61,7 @@ class WishServiceTest {
     void addWish_productNotFound_throwsException() {
         Member member = new Member("test@example.com", "password");
         when(authenticationResolver.extractMember("Bearer token")).thenReturn(member);
-        when(productRepository.findById(1L)).thenReturn(Optional.empty());
+        when(productService.findByIdOrThrow(1L)).thenThrow(new ProductException(ProductErrorCode.PRODUCT_NOT_FOUND));
 
         WishException exception = assertThrows(
             WishException.class,
@@ -79,7 +81,7 @@ class WishServiceTest {
         Wish existing = new Wish(1L, product);
 
         when(authenticationResolver.extractMember("Bearer token")).thenReturn(member);
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productService.findByIdOrThrow(1L)).thenReturn(product);
         when(wishRepository.findByMemberIdAndProductId(1L, 10L)).thenReturn(Optional.of(existing));
 
         AddWishResult result = wishService.addWish("Bearer token", new WishRequest(1L));
@@ -97,7 +99,7 @@ class WishServiceTest {
         Wish savedWish = new Wish(1L, product);
 
         when(authenticationResolver.extractMember("Bearer token")).thenReturn(member);
-        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productService.findByIdOrThrow(1L)).thenReturn(product);
         when(wishRepository.findByMemberIdAndProductId(any(), any())).thenReturn(Optional.empty());
         when(wishRepository.save(any(Wish.class))).thenReturn(savedWish);
 

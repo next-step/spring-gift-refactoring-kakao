@@ -37,4 +37,9 @@ public class MemberService {
         String token = jwtProvider.createToken(member.getEmail());
         return new TokenResponse(token);
     }
+
+    @Transactional
+    public Member save(Member member) {
+        return memberRepository.save(member);
+    }
 }

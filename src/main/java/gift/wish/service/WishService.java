@@ -4,7 +4,9 @@ import gift.auth.exception.AuthenticationException;
 import gift.auth.jwt.AuthenticationResolver;
 import gift.member.entity.Member;
 import gift.product.entity.Product;
-import gift.product.repository.ProductRepository;
+import gift.product.exception.ProductErrorCode;
+import gift.product.exception.ProductException;
+import gift.product.service.ProductService;
 import gift.wish.dto.AddWishResult;
 import gift.wish.dto.WishRequest;
 import gift.wish.dto.WishResponse;
@@ -23,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class WishService {
     private final WishRepository wishRepository;
-    private final ProductRepository productRepository;
+    private final ProductService productService;
     private final AuthenticationResolver authenticationResolver;
 
     public Page<WishResponse> getWishes(String authorization, Pageable pageable) {
@@ -34,8 +36,7 @@ public class WishService {
     @Transactional
     public AddWishResult addWish(String authorization, WishRequest request) {
         Member member = extractMember(authorization);
-        Product product = productRepository.findById(request.productId())
-            .orElseThrow(() -> new WishException(WishErrorCode.PRODUCT_NOT_FOUND));
+        Product product = findProductOrThrow(request.productId());
         return wishRepository.findByMemberIdAndProductId(member.getId(), product.getId())
             .map(existing -> new AddWishResult(WishResponse.from(existing), false))
             .orElseGet(() -> new AddWishResult(
@@ -51,11 +52,27 @@ public class WishService {
         wishRepository.delete(wish);
     }
 
+    @Transactional
+    public void removeWishByMemberAndProduct(Long memberId, Long productId) {
+        wishRepository.deleteByMemberIdAndProductId(memberId, productId);
+    }
+
     private Member extractMember(String authorization) {
         Member member = authenticationResolver.extractMember(authorization);
         if (member == null) {
             throw new AuthenticationException();
         }
         return member;
+    }
+
+    private Product findProductOrThrow(Long productId) {
+        try {
+            return productService.findByIdOrThrow(productId);
+        } catch (ProductException exception) {
+            if (exception.getErrorCode() == ProductErrorCode.PRODUCT_NOT_FOUND) {
+                throw new WishException(WishErrorCode.PRODUCT_NOT_FOUND);
+            }
+            throw exception;
+        }
     }
 }

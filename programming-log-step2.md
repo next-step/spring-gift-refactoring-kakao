@@ -253,3 +253,30 @@ step1에서 대부분 Controller의 Repository 직접 의존을 Service로 분�
 1. 폼 에러 모델 세팅 중복이 제거되어 코드 가독성과 유지보수성이 향상된다.
 2. 공통 속성 변경 시 한 곳만 수정하면 되어 누락/불일치 위험을 줄일 수 있다.
 3. new/edit 폼의 차이점이 명확해져 테스트와 코드 리뷰 포인트가 단순해진다.
+
+---
+
+## 11. [구조 변경] 서비스 간 위임으로 교차 Repository 직접 의존 제거
+
+### 11-1. 배경
+
+여러 Service가 다른 도메인의 Repository를 직접 의존하고 있어, 도메인 경계가 느슨해지고 의존 방향이 복잡해질 여지가 있었다.  
+서비스는 흐름 조립에 집중하고, 도메인 데이터 접근은 각 도메인 Service를 통해 위임하도록 구조를 정리했다.
+
+### 11-2. 수정사항
+
+| 항목 | 내용 |
+|---|---|
+| WishService 전환 | `ProductRepository` 직접 의존 제거, `ProductService`로 상품 조회 위임 |
+| OptionService 전환 | `ProductRepository` 직접 의존 제거, `ProductService`로 상품 조회 위임 |
+| OrderService 전환 | `OptionRepository`, `MemberRepository`, `WishRepository` 직접 의존 제거 후 `OptionService`, `MemberService`, `WishService` 위임 |
+| ProductService 전환 | `CategoryRepository` 직접 의존 제거, `CategoryService`로 카테고리 조회 위임 |
+| AdminProductService 전환 | `CategoryRepository` 직접 의존 제거, `CategoryService`로 카테고리 조회 위임 |
+| 보조 메서드 추가 | 위임 경로를 위해 `ProductService#findByIdOrThrow`, `OptionService#findById/save`, `MemberService#save`, `WishService#removeWishByMemberAndProduct` 추가 |
+| 테스트 반영 | `Product/Option/Wish/Order` 서비스 테스트의 mock 의존성을 repository 기준에서 service 기준으로 전환 |
+
+### 11-3. 기대효과
+
+1. 교차 도메인 데이터 접근 경로가 Service 레이어로 통일되어 구조 일관성이 높아진다.
+2. Repository 변경 영향이 해당 도메인 Service 내부로 한정되어 유지보수성이 개선된다.
+3. 서비스 책임이 “흐름 조립” 중심으로 정리되어 도메인 경계가 더 명확해진다.
