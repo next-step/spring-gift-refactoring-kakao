@@ -4,6 +4,7 @@ import gift.product.Product;
 import gift.product.ProductService;
 import java.util.List;
 import java.util.NoSuchElementException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,11 +50,6 @@ public class OptionService {
     public void delete(Long productId, Long optionId) {
         productService.findById(productId);
 
-        List<Option> options = optionRepository.findByProductId(productId);
-        if (options.size() <= 1) {
-            throw new IllegalArgumentException("옵션이 1개인 상품은 옵션을 삭제할 수 없습니다.");
-        }
-
         Option option = optionRepository
                 .findById(optionId)
                 .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다. id=" + optionId));
@@ -61,7 +57,17 @@ public class OptionService {
             throw new NoSuchElementException("해당 상품의 옵션이 아닙니다. optionId=" + optionId);
         }
 
-        optionRepository.delete(option);
+        List<Option> options = optionRepository.findByProductId(productId);
+        if (options.size() <= 1) {
+            throw new IllegalArgumentException("옵션이 1개인 상품은 옵션을 삭제할 수 없습니다.");
+        }
+
+        try {
+            optionRepository.delete(option);
+            optionRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new IllegalArgumentException("해당 옵션을 참조하는 데이터가 존재하여 삭제할 수 없습니다.");
+        }
     }
 
     private void validateName(String name) {

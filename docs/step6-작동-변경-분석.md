@@ -431,8 +431,18 @@ public Order createOrder(Long memberId, Long optionId, int quantity, String mess
 
 **테스트 영향**: 새 테스트 시나리오 추가 (하위 엔티티가 있는 상태에서 삭제 시 4xx 반환).
 
-**영향 범위**: `GlobalExceptionHandler.java`, 또는 각 Service의 `delete()` 메서드
+**영향 범위**: 각 Service의 `delete()` 메서드, `GlobalExceptionHandler.java` (안전망)
 **우선순위**: 높음
+
+**구현 방식**: Restrict + 예외 포착 (ADR-001 참조). `deleteById()` + `flush()` 후 `DataIntegrityViolationException`을 잡아 `IllegalArgumentException`으로 변환. `existsBy*` 사전 검증은 크로스 패키지 Repository 참조(5-3 원칙 위반)와 불필요한 추가 조회 문제로 채택하지 않음.
+
+**변경 내역**:
+- `existsBy*` 메서드 6개 제거 (`ProductRepository`, `WishRepository`, `OrderRepository`)
+- 크로스 패키지 Repository 주입 4건 제거 (`CategoryService`←`ProductRepository`, `ProductService`←`WishRepository`/`OrderRepository`, `OptionService`←`OrderRepository`, `MemberService`←`OrderRepository`/`WishRepository`)
+- 각 Service `delete()`를 try-catch 패턴으로 변경
+- `GlobalExceptionHandler`에 `DataIntegrityViolationException` → 409 안전망 유지
+
+**검증 결과**: `./gradlew cucumberTest` — 20개 시나리오 전체 통과 (기존 17 + 삭제 실패 3)
 
 ---
 
@@ -489,16 +499,18 @@ public Order createOrder(Long memberId, Long optionId, int quantity, String mess
 
 ## 7. ADR
 
-### ADR-001: 삭제 정책 — Restrict + 사전 검증
+### ADR-001: 삭제 정책 — Restrict + 예외 포착
 
 - **맥락**: 상위 엔티티 삭제 시 FK 위반으로 500이 발생한다. 삭제 정책을 정해야 한다.
 - **선택지**:
   - A: ON DELETE CASCADE — 상위 삭제 시 하위 자동 삭제. 구현 단순. 의도치 않은 대량 삭제 위험 (Category 삭제 시 모든 Product, Option, Order, Wish가 연쇄 삭제).
-  - B: Restrict + 사전 검증 — 하위 엔티티 존재 시 삭제 거부 (409 Conflict). 데이터 안전. 삭제 전 하위 엔티티를 먼저 정리해야 하는 번거로움.
-  - C: Soft delete — 실제 삭제 대신 `deleted` 플래그. 데이터 보존. 조회 쿼리 전체에 `WHERE deleted = false` 추가 필요, 복잡도 증가.
-- **결정**: B안 — Restrict + 사전 검증
-- **근거**: 현재 DB 스키마의 FK가 이미 Restrict(기본값)이다. 애플리케이션에서 하위 엔티티 존재를 먼저 확인하고 의미 있는 에러(409)를 반환하면, DB 레벨의 Restrict와 정합성이 맞다. CASCADE는 주문/위시가 연쇄 삭제되는 위험이 크고, soft delete는 현재 요구사항 대비 과도하다.
-- **결과**: 각 Service의 `delete()` 메서드에 하위 엔티티 존재 검사를 추가한다. `GlobalExceptionHandler`에 `DataIntegrityViolationException` → 409 핸들러를 안전망으로 추가한다.
+  - B: Restrict + 사전 검증 (`existsBy*`) — 하위 엔티티 존재 시 삭제 거부. 원인별 세분화된 에러 메시지. 크로스 패키지 Repository 주입 필요 (5-3 원칙 위반), 매 삭제마다 추가 SELECT, race condition에 취약.
+  - C: Restrict + 예외 포착 (try-catch) — 삭제 시도 후 FK 위반을 잡아 변환. 추가 조회 없음, 크로스 패키지 참조 불필요, race condition에 안전. 엔티티 단위 메시지만 가능.
+  - D: Soft delete — 실제 삭제 대신 `deleted` 플래그. 데이터 보존. 조회 쿼리 전체에 `WHERE deleted = false` 추가 필요, 복잡도 증가.
+- **결정**: C안 — Restrict + 예외 포착 (초기에 B안 선택 후 C안으로 전환)
+- **전환 사유**: B안(사전 검증)은 크로스 패키지 Repository 주입 4건이 필요하여 5-3 원칙(크로스 패키지 Repository 참조 금지)과 충돌했다. 또한 매 삭제마다 1~2회 SELECT가 추가 실행되는 불필요한 오버헤드가 있었다.
+- **근거**: 현재 DB 스키마의 FK가 이미 Restrict(기본값)이다. 삭제를 시도하고 `DataIntegrityViolationException`을 잡아 `IllegalArgumentException`으로 변환하면, DB 제약이 직접 보호하므로 race condition에도 안전하다. `deleteById()` 후 `flush()`를 호출하여 같은 메서드 내에서 예외를 포착한다.
+- **결과**: 각 Service의 `delete()` 메서드에 try-catch 패턴을 적용한다. `existsBy*` 메서드 6개와 크로스 패키지 Repository 주입 4건을 제거한다. `GlobalExceptionHandler`에 `DataIntegrityViolationException` → 409 핸들러를 안전망으로 유지한다.
 
 ### ADR-002: 트랜잭션 외부 API 분리 방식
 

@@ -199,15 +199,17 @@
 - [x] Option.subtractQuantity()에 amount <= 0 검증 추가
 - [x] 전체 테스트 실행 → 통과 확인
 
-#### 6-4. 삭제 시 FK 위반 처리 — Restrict + 사전 검증
+#### 6-4. 삭제 시 FK 위반 처리 — Restrict + 예외 포착
 
 > 근거: 하위 엔티티가 있는 상위 엔티티 삭제 시 DataIntegrityViolationException → 500 에러.
-> DB의 FK 기본 정책(Restrict)에 맞춰 애플리케이션에서 사전 검증 후 의미 있는 응답을 반환한다.
+> DB의 FK 기본 정책(Restrict)에 맞춰 삭제 시도 후 FK 위반을 잡아 의미 있는 응답을 반환한다.
+> 초기에 사전 검증(existsBy*) 방식을 적용했으나, 크로스 패키지 Repository 참조(5-3 원칙 위반)와 불필요한 추가 조회 문제로 예외 포착 방식으로 전환.
 
-- [ ] 각 Service의 delete()에 하위 엔티티 존재 검사 추가 (Category→Product, Product→Option/Wish, Option→Order, Member→Order/Wish)
-- [ ] GlobalExceptionHandler에 DataIntegrityViolationException → 409 안전망 추가
-- [ ] 삭제 실패 시나리오 인수 테스트 추가
-- [ ] 전체 테스트 실행 → 통과 확인
+- [x] 각 Service의 delete()를 try { deleteById(); flush(); } catch (DataIntegrityViolationException) 패턴으로 변경
+- [x] existsBy* 메서드 6개 제거, 크로스 패키지 Repository 주입 4건 제거
+- [x] GlobalExceptionHandler에 DataIntegrityViolationException → 409 안전망 유지
+- [x] 삭제 실패 시나리오 인수 테스트 추가
+- [x] 전체 테스트 실행 → 통과 확인
 
 #### 6-5. MethodArgumentNotValidException 핸들러 추가
 

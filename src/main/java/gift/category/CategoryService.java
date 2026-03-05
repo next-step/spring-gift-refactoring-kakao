@@ -2,6 +2,7 @@ package gift.category;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +40,11 @@ public class CategoryService {
 
     @Transactional
     public void delete(Long id) {
-        categoryRepository.deleteById(id);
+        try {
+            categoryRepository.deleteById(id);
+            categoryRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new IllegalArgumentException("해당 카테고리를 참조하는 데이터가 존재하여 삭제할 수 없습니다.");
+        }
     }
 }

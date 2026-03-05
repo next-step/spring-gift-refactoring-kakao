@@ -165,6 +165,26 @@ public class ProductStepDefinitions {
         assertThat(context.getStatusCode()).isEqualTo(204);
     }
 
+    @그러면("상품 삭제가 실패한다")
+    public void 상품_삭제가_실패한다() {
+        assertThat(context.getStatusCode()).isEqualTo(400);
+    }
+
+    @그리고("상품 목록에 {string}이 포함되어 있다")
+    public void 상품_목록에_이름이_포함되어_있다(String name) {
+        var response = RestAssured.given()
+                .log()
+                .all()
+                .when()
+                .get("/api/products")
+                .then()
+                .log()
+                .all()
+                .extract();
+        List<String> names = response.jsonPath().getList("content.name", String.class);
+        assertThat(names).contains(name);
+    }
+
     @그리고("상품 목록이 비어있다")
     public void 상품_목록이_비어있다() {
         var response = RestAssured.given()

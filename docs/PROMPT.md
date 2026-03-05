@@ -98,3 +98,9 @@ auth ↔ member 순환 참조 해소 — member 패키지에 TokenProvider 인�
 
 ## 프롬프트 29
 6-3. Option.subtractQuantity 음수/영 검증 추가 — subtractQuantity(int amount)에 amount <= 0 guard clause 추가. Member.deductPoint()와 동일한 방어 패턴 적용. 도메인 객체가 자신의 불변식을 스스로 보호하도록 변경.
+
+## 프롬프트 30
+6-4. 삭제 시 FK 위반 처리 — ADR-001(Restrict + 사전 검증)에 따라 각 Service의 delete()에서 하위 엔티티 존재를 사전 검증하고 IllegalArgumentException(→400)으로 거부. CategoryService→ProductRepository, ProductService→WishRepository/OrderRepository, OptionService→OrderRepository, MemberService→OrderRepository/WishRepository. GlobalExceptionHandler에 DataIntegrityViolationException→409 안전망 추가. 삭제 실패 인수 테스트 3개 추가.
+
+## 프롬프트 31
+6-4 보정: 사전 검증 → 예외 포착 방식으로 전환 — 크로스 패키지 Repository 참조(5-3 원칙 위반) 및 불필요한 추가 조회 문제를 해결. existsBy* 메서드 6개 제거, 각 Service의 delete()를 try { deleteById(); flush(); } catch (DataIntegrityViolationException) 패턴으로 변경. 크로스 패키지 Repository 주입 4건 모두 제거. 별도 문서 생성 없이 기존 문서(step6-작동-변경-분석.md ADR-001/작업 4, README.md)를 업데이트.

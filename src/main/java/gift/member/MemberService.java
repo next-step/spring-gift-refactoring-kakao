@@ -2,6 +2,7 @@ package gift.member;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -81,6 +82,11 @@ public class MemberService {
 
     @Transactional
     public void delete(Long id) {
-        memberRepository.deleteById(id);
+        try {
+            memberRepository.deleteById(id);
+            memberRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new IllegalArgumentException("해당 회원을 참조하는 데이터가 존재하여 삭제할 수 없습니다.");
+        }
     }
 }
