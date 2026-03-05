@@ -1,7 +1,7 @@
 package gift.product;
 
 import gift.category.Category;
-import gift.category.CategoryRepository;
+import gift.category.CategoryService;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -14,12 +14,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ProductService {
   private final ProductRepository productRepository;
-  private final CategoryRepository categoryRepository;
+  private final CategoryService categoryService;
 
-  public ProductService(
-      ProductRepository productRepository, CategoryRepository categoryRepository) {
+  public ProductService(ProductRepository productRepository, CategoryService categoryService) {
     this.productRepository = productRepository;
-    this.categoryRepository = categoryRepository;
+    this.categoryService = categoryService;
   }
 
   public Page<Product> findAll(Pageable pageable) {
@@ -38,7 +37,7 @@ public class ProductService {
   public Product create(String name, int price, String imageUrl, Long categoryId) {
     validateNameOrThrow(name);
     Category category =
-        categoryRepository
+        categoryService
             .findById(categoryId)
             .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
     return productRepository.save(new Product(name, price, imageUrl, category));
@@ -49,7 +48,7 @@ public class ProductService {
       Long id, String name, int price, String imageUrl, Long categoryId) {
     validateNameOrThrow(name);
     Category category =
-        categoryRepository
+        categoryService
             .findById(categoryId)
             .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
     return productRepository

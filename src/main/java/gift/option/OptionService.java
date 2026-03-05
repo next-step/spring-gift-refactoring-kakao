@@ -1,7 +1,7 @@
 package gift.option;
 
 import gift.product.Product;
-import gift.product.ProductRepository;
+import gift.product.ProductService;
 import java.util.List;
 import java.util.NoSuchElementException;
 import org.springframework.stereotype.Service;
@@ -13,15 +13,15 @@ public class OptionService {
   private static final int MIN_OPTION_COUNT = 1;
 
   private final OptionRepository optionRepository;
-  private final ProductRepository productRepository;
+  private final ProductService productService;
 
-  public OptionService(OptionRepository optionRepository, ProductRepository productRepository) {
+  public OptionService(OptionRepository optionRepository, ProductService productService) {
     this.optionRepository = optionRepository;
-    this.productRepository = productRepository;
+    this.productService = productService;
   }
 
   public List<Option> findByProductId(Long productId) {
-    productRepository
+    productService
         .findById(productId)
         .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
     return optionRepository.findByProductId(productId);
@@ -31,7 +31,7 @@ public class OptionService {
   public Option create(Long productId, String name, int quantity) {
     validateNameOrThrow(name);
     Product product =
-        productRepository
+        productService
             .findById(productId)
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
 
@@ -44,7 +44,7 @@ public class OptionService {
 
   @Transactional
   public boolean delete(Long productId, Long optionId) {
-    productRepository
+    productService
         .findById(productId)
         .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
 
