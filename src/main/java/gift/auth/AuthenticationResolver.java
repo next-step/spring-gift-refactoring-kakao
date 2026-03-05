@@ -1,11 +1,10 @@
 package gift.auth;
 
 import gift.error.UnauthorizedException;
-import gift.member.Member;
 import gift.member.MemberRepository;
 import org.springframework.stereotype.Component;
 
-/* 인증 헤더에서 회원 정보를 추출하는 컴포넌트 */
+/* 인증 헤더에서 회원 ID를 추출하는 컴포넌트 */
 @Component
 public class AuthenticationResolver {
     private final JwtProvider jwtProvider;
@@ -16,12 +15,13 @@ public class AuthenticationResolver {
         this.memberRepository = memberRepository;
     }
 
-    public Member extractMember(String authorization) {
+    public Long extractMemberId(String authorization) {
         try {
             final String token = authorization.replace("Bearer ", "");
             final String email = jwtProvider.getEmail(token);
             return memberRepository.findByEmail(email)
-                .orElseThrow(() -> new UnauthorizedException("인증에 실패했습니다."));
+                .orElseThrow(() -> new UnauthorizedException("인증에 실패했습니다."))
+                .getId();
         } catch (UnauthorizedException e) {
             throw e;
         } catch (Exception e) {

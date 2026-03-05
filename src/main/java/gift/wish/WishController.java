@@ -32,8 +32,8 @@ public class WishController {
         @RequestHeader("Authorization") String authorization,
         Pageable pageable
     ) {
-        var member = authenticationResolver.extractMember(authorization);
-        return ResponseEntity.ok(wishService.findByMemberId(member.getId(), pageable));
+        var memberId = authenticationResolver.extractMemberId(authorization);
+        return ResponseEntity.ok(wishService.findByMemberId(memberId, pageable));
     }
 
     @PostMapping
@@ -41,8 +41,8 @@ public class WishController {
         @RequestHeader("Authorization") String authorization,
         @Valid @RequestBody WishRequest request
     ) {
-        var member = authenticationResolver.extractMember(authorization);
-        var result = wishService.addWish(member.getId(), request);
+        var memberId = authenticationResolver.extractMemberId(authorization);
+        var result = wishService.addWish(memberId, request);
 
         if (result.isNew()) {
             return ResponseEntity.created(URI.create("/api/wishes/" + result.response().id()))
@@ -56,8 +56,8 @@ public class WishController {
         @RequestHeader("Authorization") String authorization,
         @PathVariable Long id
     ) {
-        var member = authenticationResolver.extractMember(authorization);
-        wishService.removeWish(member.getId(), id);
+        var memberId = authenticationResolver.extractMemberId(authorization);
+        wishService.removeWish(memberId, id);
         return ResponseEntity.noContent().build();
     }
 }
