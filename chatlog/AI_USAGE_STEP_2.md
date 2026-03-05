@@ -584,3 +584,30 @@ member.deductPoint(option.calculatePrice(quantity));
 - **가격 계산 캡슐화**: 계산 로직이 바뀌어도(할인, 세금 등) `Option` 한 곳만 수정하면 됨
 
 ---
+
+## 12단계: 잔여 중복/불일치 정리 (코드 정리)
+
+### 프롬프트
+
+> 더 깔끔하게 만들 수 있는 부분 점검해줘
+
+### 변경 내용
+
+10단계에서 `GlobalExceptionHandler`를 도입했지만 미처 정리하지 못한 부분 2가지를 발견하여 정리:
+
+1. **`MemberController`의 로컬 `@ExceptionHandler` 제거**
+   - `GlobalExceptionHandler`에서 `IllegalArgumentException → 400`을 이미 전역 처리하는데, `MemberController`에 동일한 로컬 핸들러가 남아있었음
+   - 로컬 핸들러와 미사용 `ExceptionHandler` import 제거
+
+2. **`OptionController`의 `Collectors.toList()` → `.toList()` 통일**
+   - `CategoryController` 등 다른 컨트롤러는 Java 16+의 `.toList()`를 사용하는데, `OptionController`만 `Collectors.toList()`를 사용
+   - `.toList()`로 통일하고 미사용 `Collectors` import 제거
+
+### 산출물
+
+| 파일 | 변경 | 종류 |
+|------|------|------|
+| `MemberController.java` | `@ExceptionHandler` 메서드 + import 제거 | 코드 정리 |
+| `OptionController.java` | `Collectors.toList()` → `.toList()` + import 제거 | 코드 정리 |
+
+---

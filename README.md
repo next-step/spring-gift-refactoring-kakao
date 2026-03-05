@@ -220,10 +220,13 @@ Spring Boot 기반의 선물하기 서비스. 사용자가 카테고리와 상�
   - 현재: `ProductController`, `OptionController`, `CategoryController`, `WishController`, `OrderController` 5곳에서 동일한 `NoSuchElementException → 404`, `IllegalArgumentException → 400` 패턴 반복
   - 변경: `@RestControllerAdvice`로 전역 예외 핸들러를 만들어 한 곳에서 처리
   - **효과**: 컨트롤러가 비즈니스 위임에만 집중, 예외 처리 정책이 한 곳에서 관리됨
-- [ ] **개선 4: 주문 총액 계산을 도메인 객체로 이동** (Tell, Don't Ask)
+- [x] **개선 4: 주문 총액 계산을 도메인 객체로 이동** (Tell, Don't Ask)
   - 현재: `OrderService`에서 `option.getProduct().getPrice() * quantity`로 getter 체이닝하여 직접 계산
   - 변경: `Option.calculatePrice(quantity)` 메서드 추가, 서비스는 객체에게 위임
   - **효과**: 디미터 법칙 준수, 가격 계산 로직이 도메인 객체 안에 캡슐화
+- [x] **개선 5: 잔여 중복/불일치 정리** (코드 정리)
+  - `MemberController`에 남아있던 로컬 `@ExceptionHandler` 제거 (GlobalExceptionHandler가 이미 처리)
+  - `OptionController`에서 `Collectors.toList()` → `.toList()`로 통일 (CategoryController 등과 일관성)
 
 ### 진행 원칙
 

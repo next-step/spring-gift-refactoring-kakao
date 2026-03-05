@@ -3,7 +3,6 @@ package gift.option;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,7 +29,7 @@ public class OptionController {
     public ResponseEntity<List<OptionResponse>> getOptions(@PathVariable Long productId) {
         List<OptionResponse> options = optionService.getOptions(productId).stream()
             .map(OptionResponse::from)
-            .collect(Collectors.toList());
+            .toList();
         return ResponseEntity.ok(options);
     }
 
