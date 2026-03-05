@@ -1,7 +1,8 @@
 package gift.auth.internal;
 
 import gift.auth.AuthenticationPort;
-import gift.member.Member;
+import gift.global.NotFoundException;
+import gift.member.MemberQueryPort;
 import io.jsonwebtoken.JwtException;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -12,8 +13,7 @@ import org.springframework.stereotype.Component;
 public class AuthenticationPortAdaptor implements AuthenticationPort {
 
     private final JwtProvider jwtProvider;
-
-    private final AuthMemberRepository memberRepo;
+    private final MemberQueryPort memberQueryPort;
 
     @Override
     public Optional<Long> getMemberIdFrom(String authorization) {
@@ -24,9 +24,9 @@ public class AuthenticationPortAdaptor implements AuthenticationPort {
         try {
             String memberEmail = jwtProvider.getEmail(token);
 
-            memberId = memberRepo.findByEmail(memberEmail).map(Member::getId).orElse(null);
+            memberId = memberQueryPort.getIdByEmail(memberEmail);
 
-        } catch (JwtException ignored) {
+        } catch (JwtException | NotFoundException ignored) {
 
         }
 
