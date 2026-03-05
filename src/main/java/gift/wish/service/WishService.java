@@ -2,7 +2,6 @@ package gift.wish.service;
 
 import gift.auth.exception.AuthenticationException;
 import gift.auth.jwt.AuthenticationResolver;
-import gift.auth.exception.ForbiddenException;
 import gift.member.entity.Member;
 import gift.product.entity.Product;
 import gift.product.repository.ProductRepository;
@@ -48,9 +47,7 @@ public class WishService {
         Member member = extractMember(authorization);
         Wish wish = wishRepository.findById(id)
             .orElseThrow(() -> new WishException(WishErrorCode.WISH_NOT_FOUND));
-        if (!wish.getMemberId().equals(member.getId())) {
-            throw new ForbiddenException();
-        }
+        wish.assertOwner(member.getId());
         wishRepository.delete(wish);
     }
 

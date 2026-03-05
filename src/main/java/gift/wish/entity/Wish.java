@@ -1,5 +1,6 @@
 package gift.wish.entity;
 
+import gift.auth.exception.ForbiddenException;
 import gift.product.entity.Product;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -28,5 +29,11 @@ public class Wish {
     public Wish(Long memberId, Product product) {
         this.memberId = memberId;
         this.product = product;
+    }
+
+    public void assertOwner(Long memberId) {
+        if (!this.memberId.equals(memberId)) {
+            throw new ForbiddenException();
+        }
     }
 }
