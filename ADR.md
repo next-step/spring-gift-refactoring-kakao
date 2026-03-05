@@ -47,3 +47,27 @@ DDL(Flyway)에 not null, 길이 제약 등이 명시되어 있지만, JPA 엔티
 ### 변경 내용
 - Product, Wish, Order: `@JoinColumn`에 `nullable = false` 추가
 - Option: 기존 `@Column(nullable = false, length = 50)`, `@Column(nullable = false)` 제거
+
+## ADR-003: FK 참조 전략
+
+### 문제 상황
+Wish, Order 엔티티가 Member를 `Long memberId`로만 참조하면서 주석에 "느슨한 결합 유지"라고 명시했지만, DDL에는 FK 제약이 정의되어 있어 실제로는 느슨한 결합이 아닌 하이브리드 상태였다. <br>
+다른 관계(Product→Category, Wish→Product, Order→Option, Option→Product)는 모두 `@ManyToOne`을 사용하므로 일관성이 없었다.
+
+### 논의 후보
+1. **모두 `@ManyToOne`으로 통일** — Wish, Order에 `@ManyToOne Member` 추가. JPA 관계 전략을 일관되게 맞춤.
+2. **현재 유지(하이브리드 공식화)** — Member 엔티티 연관관계에 한해서만 `Long memberId` 유지, DDL FK 유지. ADR로 의도를 문서화.
+3. **모두 ID로 통일** — 모든 관계를 Long ID로 변경. DDL FK 제거 필요. JPA의 관계 관리(cascade, 객체 그래프 탐색)를 포기.
+
+### 결정
+> **1번 채택. 모든 FK 참조를 `@ManyToOne`으로 통일한다.**
+
+### 이유
+- 모놀리스에서 JPA를 사용하면서 관계를 끊는 것은 JPA의 핵심 장점(cascade, 객체 그래프 탐색, dirty checking)을 포기하는 것이다.
+- 3번(모두 ID)은 DDL FK 제거까지 필요하여 변경 범위가 과도하고, 서비스 레이어가 크게 복잡해진다.
+- 2번(하이브리드)은 DDL에 FK가 있으면서 JPA에서 관계를 인식하지 못하는 모순이 남는다.
+- 1번은 기존 DDL 변경 없이 엔티티만 수정하면 되므로 변경 범위가 적절하다.
+
+### 변경 내용
+- Wish, Order: `Long memberId` → `@ManyToOne @JoinColumn(name = "member_id", nullable = false) Member member`
+- WishService: `MemberService` 의존 추가 (Wish 생성 시 Member 조회 필요)

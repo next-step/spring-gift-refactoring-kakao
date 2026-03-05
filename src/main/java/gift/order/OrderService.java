@@ -28,7 +28,7 @@ public class OrderService {
         int price = option.getProduct().getPrice() * quantity;
         Member member = memberService.deductPoint(memberId, price);
 
-        Order saved = orderRepository.save(new Order(option, memberId, quantity, message));
+        Order saved = orderRepository.save(new Order(option, member, quantity, message));
 
         // TODO: 위시 정리 구현 필요
 

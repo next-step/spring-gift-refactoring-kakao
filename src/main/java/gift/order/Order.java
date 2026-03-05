@@ -1,5 +1,6 @@
 package gift.order;
 
+import gift.member.Member;
 import gift.option.Option;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -20,15 +21,18 @@ public class Order {
     @ManyToOne
     @JoinColumn(name = "option_id", nullable = false)
     private Option option;
-    // Member 엔티티를 직접 참조하지 않고 ID만 저장하여 느슨한 결합 유지
-    private Long memberId;
+
+    @ManyToOne
+    @JoinColumn(name = "member_id", nullable = false)
+    private Member member;
+
     private int quantity;
     private String message;
     private LocalDateTime orderDateTime;
 
-    public Order(Option option, Long memberId, int quantity, String message) {
+    public Order(Option option, Member member, int quantity, String message) {
         this.option = option;
-        this.memberId = memberId;
+        this.member = member;
         this.quantity = quantity;
         this.message = message;
         this.orderDateTime = LocalDateTime.now();

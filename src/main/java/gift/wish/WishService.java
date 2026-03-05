@@ -1,5 +1,7 @@
 package gift.wish;
 
+import gift.member.Member;
+import gift.member.MemberService;
 import gift.product.Product;
 import gift.product.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +17,7 @@ import java.util.Optional;
 public class WishService {
     private final WishRepository wishRepository;
     private final ProductService productService;
+    private final MemberService memberService;
 
     public Page<Wish> findByMemberId(Long memberId, Pageable pageable) {
         return wishRepository.findByMemberId(memberId, pageable);
@@ -25,15 +28,16 @@ public class WishService {
     }
 
     public Wish create(Long memberId, Long productId) {
+        Member member = memberService.findById(memberId);
         Product product = productService.findById(productId);
-        return wishRepository.save(new Wish(memberId, product));
+        return wishRepository.save(new Wish(member, product));
     }
 
     public void removeWish(Long id, Long memberId) {
         Wish wish = wishRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("위시를 찾을 수 없습니다. id: " + id));
 
-        if (!wish.getMemberId().equals(memberId)) {
+        if (!wish.getMember().getId().equals(memberId)) {
             throw new IllegalStateException("본인의 위시만 삭제할 수 있습니다.");
         }
 
