@@ -89,6 +89,16 @@ class OrderControllerTest {
                 .body("quantity", equalTo(2))
                 .body("message", equalTo("테스트 주문"))
                 .body("orderDateTime", notNullValue());
+
+        // 재고 차감 확인 (초기 10 - 주문 2 = 8)
+        RestAssured
+            .given()
+                .header("Authorization", "Bearer " + token)
+            .when()
+                .get("/api/products/1/options")
+            .then()
+                .statusCode(200)
+                .body("[0].quantity", equalTo(8));
     }
 
     @Test
