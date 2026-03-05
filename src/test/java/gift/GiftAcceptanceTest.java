@@ -155,7 +155,7 @@ class GiftAcceptanceTest {
     assertThat(response.statusCode()).isEqualTo(404);
   }
 
-  /** G5: Authorization 헤더 없이 주문하면 실패한다. - Authorization 헤더 누락 → 400 응답 */
+  /** G5: Authorization 헤더 없이 주문하면 실패한다. - Authorization 헤더 누락 → 401 응답 */
   @Test
   void 인증_헤더_없이_선물하면_실패한다() {
     // when — Authorization 헤더 없이 요청
@@ -176,8 +176,8 @@ class GiftAcceptanceTest {
             .all()
             .extract();
 
-    // then (MissingRequestHeaderException → 400)
-    assertThat(response.statusCode()).isEqualTo(400);
+    // then (UnauthorizedException → 401)
+    assertThat(response.statusCode()).isEqualTo(401);
   }
 
   /**
