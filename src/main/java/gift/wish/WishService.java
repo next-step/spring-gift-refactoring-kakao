@@ -1,5 +1,6 @@
 package gift.wish;
 
+import gift.common.exception.ApplicationException;
 import gift.member.Member;
 import gift.member.MemberService;
 import gift.product.Product;
@@ -10,7 +11,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -39,7 +39,7 @@ public class WishService {
     @Transactional
     public void removeWish(Long id, Long memberId) {
         Wish wish = wishRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("위시를 찾을 수 없습니다. id: " + id));
+                .orElseThrow(() -> new ApplicationException(WishErrorCode.NOT_FOUND));
 
         wish.validateOwner(memberId);
 

@@ -1,5 +1,6 @@
 package gift.wish;
 
+import gift.common.exception.ApplicationException;
 import gift.member.Member;
 import gift.product.Product;
 import jakarta.persistence.*;
@@ -31,7 +32,7 @@ public class Wish {
 
     public void validateOwner(Long memberId) {
         if (!this.member.getId().equals(memberId)) {
-            throw new IllegalStateException("본인의 위시만 삭제할 수 있습니다.");
+            throw new ApplicationException(WishErrorCode.NOT_OWNER);
         }
     }
 

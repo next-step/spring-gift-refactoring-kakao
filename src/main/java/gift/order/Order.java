@@ -1,5 +1,6 @@
 package gift.order;
 
+import gift.common.exception.ApplicationException;
 import gift.member.Member;
 import gift.option.Option;
 import jakarta.persistence.*;
@@ -41,7 +42,7 @@ public class Order {
 
     private void validateQuantity(int quantity) {
         if (quantity < 1) {
-            throw new IllegalArgumentException("주문 수량은 1 이상이어야 합니다.");
+            throw new ApplicationException(OrderErrorCode.INVALID_QUANTITY);
         }
     }
 
