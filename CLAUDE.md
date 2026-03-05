@@ -2,49 +2,61 @@
 
 이 파일은 Claude Code (claude.ai/code)가 이 저장소에서 작업할 때 참고하는 가이드입니다.
 
+## 현재 작업
+
+**Step 2: 작동 변경** 완료, 리뷰 반영 대기 중. 상세 계획은 `docs/step2-plan.md`, 체크리스트는 `README.md`, ADR은 `docs/step2-adr.md` 참조.
+
+## Step 2 목표
+
+작동 변경을 안전하게 수행하고, 그 결과를 증거로 보여준다.
+
+- **트랜잭션 경계 세우기** — 여러 저장 작업이 하나의 논리 작업이라면, 중간 실패에서 부분 반영이 발생하지 않도록 경계를 설정한다.
+- **누락된 작동 구현** — 기존 코드에 의도가 남아 있었지만 구현되지 않은 작동을 완료한다. 새로운 작동은 반드시 테스트 또는 검증 가능한 증거로 확인한다.
+- **도메인 책임 되찾기** — 작동을 유지하면서도 책임과 계산, 판단을 올바른 위치로 이동해 누수와 중복을 줄인다.
+
 ## 작업 원칙
 
 ### 계획 우선
-- 계획 파일(`README.md` 체크리스트 등)에 다음 작업이 명시되어 있어야 코드 수정을 시작한다.
-- "다음 변경 1개"처럼 범위를 제한하고, 지금 할 일이 명확한 상태에서만 진행한다.
+- `README.md` 체크리스트에서 다음 단계 1개를 확인한 뒤 코드 수정을 시작한다.
+- `docs/step2-plan.md`에 해당 단계의 변경 파일, 코드 스니펫이 정리되어 있다.
+- 변경 전에 **"무엇을 바꾸는지, 무엇을 바꾸지 않는지, 무엇이 이를 증명하는지"**를 확인하고 시작한다.
+
+### 작동 변경은 증거와 함께
+- 예외가 발생하는지만 확인하는 것으로 충분하지 않다.
+- **상태를 재조회하거나 결과를 관찰 가능한 방식으로 검증**해야 한다.
+
+### 구조 변경과 작동 변경 분리
+- 한 커밋에는 구조 변경 또는 작동 변경 중 하나만 담는다.
+- 구조 변경 커밋과 작동 변경 커밋을 분리한다.
 
 ### TDD 루프 유지
 - Red → Green → Refactor 순서로 진행한다.
 - 최소 요구 사항: **변경 후 전체 테스트 통과** (`./gradlew test`).
-- 테스트를 회피하거나 비활성화하지 않는다. 그런 흔적이 보이면 즉시 되돌린다.
+- 테스트를 회피하거나 비활성화하지 않는다.
 
-### 구조 변경과 작동 변경 분리
-- 구조 변경(리팩터링)은 구조만, 작동 변경(기능 추가/수정)은 작동만 다룬다.
-- 한 커밋에는 둘 중 하나만 담는다.
+### ADR
+- 선택지가 2개 이상이고 트레이드오프가 있었던 경우
+- 팀이 반복해서 따라야 할 규칙이나 경계를 정한 경우
+- 테스트 전략과 검증 방식이 결정의 핵심이었던 경우
+- → 위 조건 중 하나라도 해당하면 `docs/step2-adr.md`에 ADR을 작성한다.
 
 ### 과잉 금지
-- 요청하지 않은 기능, 불필요한 추상화, 반복·복잡도 증가를 만들지 않는다.
+- 요청하지 않은 기능, 불필요한 추상화를 만들지 않는다.
 - AI 산출물은 초안일 뿐이다. 의도하지 않은 변경이 있으면 즉시 제거한다.
+- `git diff`를 자주 확인해 의도하지 않은 변경이 들어오지 않도록 통제한다.
 
 ### 커밋 규칙
 - 커밋은 목적 1개, 설명 가능한 단일 논리 단위로 구성한다.
 - `git diff`를 보고 30초 안에 커밋 의도를 설명할 수 없으면 더 쪼갠다.
 
-### 스타일
-- 스타일 이슈는 도구로 해결한다: IDE 포매터, 린터 등 우선 사용.
-
 ## 빌드 및 개발 명령어
 
 ```bash
-# 빌드
-./gradlew build
-
-# 애플리케이션 실행
-./gradlew bootRun
-
-# 전체 테스트 실행
-./gradlew test
-
-# 특정 테스트 클래스 실행
-./gradlew test --tests "fully.qualified.ClassName"
-
-# 특정 테스트 메서드 실행
-./gradlew test --tests "fully.qualified.ClassName.methodName"
+./gradlew build        # 빌드
+./gradlew bootRun      # 애플리케이션 실행
+./gradlew test         # 전체 테스트 실행
+./gradlew test --tests "fully.qualified.ClassName"           # 특정 클래스
+./gradlew test --tests "fully.qualified.ClassName.methodName" # 특정 메서드
 ```
 
 ## 아키텍처
@@ -53,38 +65,27 @@
 
 **데이터베이스:** H2 (개발/테스트), MySQL (운영). Flyway로 마이그레이션 관리 (`src/main/resources/db/migration/`)
 
-**인증:** JWT 토큰 (jjwt 라이브러리) + 카카오 OAuth2 로그인. 인증이 필요한 엔드포인트는 `AuthenticationResolver`가 `Authorization` 헤더에서 회원 정보를 추출한다.
+**인증:** JWT 토큰 (jjwt) + 카카오 OAuth2. `AuthenticationResolver`(`HandlerMethodArgumentResolver`)가 `Authorization` 헤더에서 회원 정보를 추출하여 컨트롤러 `Member` 파라미터에 주입한다.
 
-### 도메인 구조 (`gift/` 패키지)
+### 레이어 구조
 
-| 패키지      | 설명 |
-|------------|------|
-| `auth`     | JWT 발급/검증, 카카오 OAuth2 로그인 흐름, 인증 리졸버 |
-| `member`   | 회원 계정 (이메일/비밀번호, 카카오 토큰, 포인트 잔액) |
-| `category` | 상품 카테고리 |
-| `product`  | 상품 (카테고리에 소속, 여러 옵션 보유). 커스텀 이름 검증기 (최대 15자, 허용 문자 제한, "카카오" 기본 차단) |
-| `option`   | 상품 옵션 (재고 수량 관리). 커스텀 이름 검증기 (최대 50자) |
-| `order`    | 선물 주문 — 포인트 차감, 재고 차감, 카카오톡 알림 전송 (실패 시 무시) |
-| `wish`     | 회원 위시리스트 (회원 ↔ 상품) |
+각 도메인 패키지(`auth`, `member`, `category`, `product`, `option`, `order`, `wish`)는 **Entity → Repository → Service → Controller + DTO** 구조를 따른다.
 
-각 패키지는 **Entity → Repository → Controller + Request/Response DTO** 구조를 따른다.
-
-### 컨트롤러 유형
-- **REST API 컨트롤러** (`/api/...`) — 클라이언트 앱용 JSON 엔드포인트
-- **관리자 MVC 컨트롤러** (`/admin/...`) — Thymeleaf 서버 렌더링 페이지 (회원, 상품 관리)
+- **REST API 컨트롤러** (`/api/...`) — JSON 엔드포인트
+- **관리자 MVC 컨트롤러** (`/admin/...`) — Thymeleaf 서버 렌더링
 
 ### 주요 흐름
-- **주문 생성:** 인증 확인 → 옵션 검증 → 재고 차감 → 회원 포인트 차감 → 주문 저장 → 위시리스트 정리 → 카카오 메시지 전송 (실패 허용)
-- **카카오 로그인:** 카카오 리다이렉트 → 인가 코드로 콜백 → 액세스 토큰 교환 → 회원 자동 등록 또는 갱신 → JWT 발급
+- **주문 생성:** 인증 → 옵션 검증 → 재고 차감 → 포인트 차감 → 주문 저장 → 위시 정리 → 카카오 알림 (실패 허용)
+- **카카오 로그인:** 인가 코드 → 액세스 토큰 교환 → 회원 자동 등록/갱신 → JWT 발급
 
 ## 환경 변수
 
-`application.properties`에 기본값이 설정되어 있음:
-- `JWT_SECRET` / `JWT_EXPIRATION` — JWT 서명 키 및 토큰 만료 시간
-- `KAKAO_CLIENT_ID` / `KAKAO_CLIENT_SECRET` / `KAKAO_REDIRECT_URI` — 카카오 OAuth2 인증 정보
+`application.properties`에 기본값 설정:
+- `JWT_SECRET` / `JWT_EXPIRATION`
+- `KAKAO_CLIENT_ID` / `KAKAO_CLIENT_SECRET` / `KAKAO_REDIRECT_URI`
 
 ## 프로젝트 컨벤션
 
 - 언어: **Java**
-- Bean Validation (`spring-boot-starter-validation`)과 커스텀 `ConstraintValidator` 구현체로 검증 수행
-- 페이지네이션 엔드포인트는 Spring의 `Pageable` 사용
+- Bean Validation + 커스텀 `ConstraintValidator`로 검증 수행
+- 페이지네이션은 Spring `Pageable` 사용

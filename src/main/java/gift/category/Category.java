@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Version;
 
 @Entity
 public class Category {
@@ -14,6 +15,8 @@ public class Category {
     private String color;
     private String imageUrl;
     private String description;
+    @Version
+    private Long version;
 
     protected Category() {
     }

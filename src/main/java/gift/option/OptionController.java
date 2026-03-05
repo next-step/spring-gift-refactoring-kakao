@@ -4,7 +4,6 @@ import jakarta.validation.Valid;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 /**
  * Each product must have at least one option at all times.
@@ -31,14 +29,10 @@ public class OptionController {
 
     @GetMapping
     public ResponseEntity<List<OptionResponse>> getOptions(@PathVariable Long productId) {
-        try {
-            List<OptionResponse> options = optionService.findByProductId(productId).stream()
-                .map(OptionResponse::from)
-                .toList();
-            return ResponseEntity.ok(options);
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        }
+        List<OptionResponse> options = optionService.findByProductId(productId).stream()
+            .map(OptionResponse::from)
+            .toList();
+        return ResponseEntity.ok(options);
     }
 
     @PostMapping
@@ -46,14 +40,10 @@ public class OptionController {
         @PathVariable Long productId,
         @Valid @RequestBody OptionRequest request
     ) {
-        try {
-            Option saved = optionService.create(productId, request.name(), request.quantity());
-            URI location = URI.create("/api/products/" + productId + "/options/" + saved.getId());
-            return ResponseEntity.created(location)
-                .body(OptionResponse.from(saved));
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        }
+        Option saved = optionService.create(productId, request.name(), request.quantity());
+        URI location = URI.create("/api/products/" + productId + "/options/" + saved.getId());
+        return ResponseEntity.created(location)
+            .body(OptionResponse.from(saved));
     }
 
     @DeleteMapping(path = "/{optionId}")
@@ -61,16 +51,7 @@ public class OptionController {
         @PathVariable Long productId,
         @PathVariable Long optionId
     ) {
-        try {
-            optionService.delete(productId, optionId);
-            return ResponseEntity.noContent().build();
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
-        return ResponseEntity.badRequest().body(e.getMessage());
+        optionService.delete(productId, optionId);
+        return ResponseEntity.noContent().build();
     }
 }

@@ -9,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 
 @Entity
 @Table(name = "options")
@@ -26,6 +27,8 @@ public class Option {
 
     @Column(nullable = false)
     private int quantity;
+    @Version
+    private Long version;
 
     protected Option() {
     }
@@ -37,6 +40,9 @@ public class Option {
     }
 
     public void subtractQuantity(int amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("차감 수량은 1 이상이어야 합니다.");
+        }
         if (amount > this.quantity) {
             throw new IllegalArgumentException("차감할 수량이 현재 재고보다 많습니다.");
         }
@@ -57,5 +63,9 @@ public class Option {
 
     public int getQuantity() {
         return quantity;
+    }
+
+    public long calculateTotalPrice(int quantity) {
+        return (long) product.getPrice() * quantity;
     }
 }

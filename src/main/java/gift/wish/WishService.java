@@ -38,6 +38,10 @@ public class WishService {
         return new WishResult(saved, true);
     }
 
+    public void removeByMemberAndProduct(Long memberId, Long productId) {
+        wishRepository.deleteByMemberIdAndProductId(memberId, productId);
+    }
+
     public void removeWish(Long memberId, Long wishId) {
         Wish wish = wishRepository.findById(wishId)
             .orElseThrow(() -> new NoSuchElementException("위시를 찾을 수 없습니다. id=" + wishId));

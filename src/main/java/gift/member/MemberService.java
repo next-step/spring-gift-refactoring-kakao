@@ -18,9 +18,7 @@ public class MemberService {
     }
 
     public TokenResponse register(String email, String password) {
-        if (memberRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("이미 등록된 이메일입니다.");
-        }
+        validateEmailNotDuplicated(email);
 
         Member member = memberRepository.save(new Member(email, password));
         String token = jwtProvider.createToken(member.getEmail());
@@ -49,9 +47,7 @@ public class MemberService {
     }
 
     public void create(String email, String password) {
-        if (memberRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("이미 등록된 이메일입니다.");
-        }
+        validateEmailNotDuplicated(email);
         memberRepository.save(new Member(email, password));
     }
 
@@ -69,5 +65,11 @@ public class MemberService {
 
     public void delete(Long id) {
         memberRepository.deleteById(id);
+    }
+
+    private void validateEmailNotDuplicated(String email) {
+        if (memberRepository.existsByEmail(email)) {
+            throw new IllegalArgumentException("이미 등록된 이메일입니다.");
+        }
     }
 }

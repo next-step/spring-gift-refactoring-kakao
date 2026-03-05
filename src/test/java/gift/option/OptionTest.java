@@ -43,4 +43,31 @@ class OptionTest {
 
         assertThrows(IllegalArgumentException.class, () -> option.subtractQuantity(11));
     }
+
+    @Test
+    @DisplayName("0 이하의 수량을 차감하면 예외가 발생한다")
+    void subtractZeroOrNegativeThrows() {
+        Option option = createOption(10);
+
+        assertThrows(IllegalArgumentException.class, () -> option.subtractQuantity(0));
+        assertThrows(IllegalArgumentException.class, () -> option.subtractQuantity(-1));
+    }
+
+    @Test
+    @DisplayName("calculateTotalPrice는 상품 가격 × 수량을 반환한다")
+    void calculateTotalPrice() {
+        Option option = createOption(100);
+
+        assertEquals(3000L, option.calculateTotalPrice(3));
+    }
+
+    @Test
+    @DisplayName("calculateTotalPrice는 int 범위를 초과해도 올바른 결과를 반환한다")
+    void calculateTotalPriceNoOverflow() {
+        Category category = new Category("카테고리", "#000000", "http://img.test/c.png", "설명");
+        Product product = new Product("고가 상품", 100_000, "http://img.test/p.png", category);
+        Option option = new Option(product, "대량 옵션", 30_000);
+
+        assertEquals(3_000_000_000L, option.calculateTotalPrice(30_000));
+    }
 }
