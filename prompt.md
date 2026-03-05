@@ -189,3 +189,10 @@
 - 주문 저장 후 `wishRepository.findByMemberIdAndProductId()` → `ifPresent(delete)` 로직 추가
 - 위시가 없는 경우 무시, 같은 트랜잭션 안에서 원자적 처리
 - `./gradlew spotlessApply build` — 빌드 + 테스트 통과 확인
+
+### 프롬프트 8: 위시 자동 삭제 테스트 코드 작성
+> 방금 추가한거 테스트 코드 작성해줘
+
+- `GiftAcceptanceTest`에 `위시에_담은_상품을_주문하면_위시에서_삭제된다()` 테스트 추가
+- 위시 등록(201) → 주문(201) → 위시 목록 조회 → content가 비어있는지 검증
+- `./gradlew test --tests "gift.GiftAcceptanceTest"` — 6개 테스트 모두 통과 확인
