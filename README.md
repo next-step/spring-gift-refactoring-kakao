@@ -215,7 +215,11 @@ Spring Boot 기반의 선물하기 서비스. 사용자가 카테고리와 상�
 - [x] **개선 2: 상품 이름 검증을 서비스로 이동** (중복 제거)
   - 현재: `ProductController.createProduct()`와 `updateProduct()`에서 각각 `validateName()` 호출
   - 변경: `ProductService.create()`와 `update()` 안에서 검증 수행
-  - **효과**: 검증 로직 중복 제거, 서비스가 비즈니스 규칙(이름 제약) 책임. Admin은 `allowKakao=true` 정책이 다르므로 서비스 메서드 오버로드 또는 파라미터로 분리
+  - **효과**: 검증 로직 중복 제거, 서비스는 도메인 규칙(길이, 특수문자)만 담당, "카카오" 제한은 DTO `@ValidProductName` 어노테이션으로 분리하여 Admin은 자연스럽게 허용
+- [ ] **개선 3: 전역 예외 처리로 컨트롤러 try-catch 제거** (중복 제거)
+  - 현재: `ProductController`, `OptionController`, `CategoryController`, `WishController`, `OrderController` 5곳에서 동일한 `NoSuchElementException → 404`, `IllegalArgumentException → 400` 패턴 반복
+  - 변경: `@RestControllerAdvice`로 전역 예외 핸들러를 만들어 한 곳에서 처리
+  - **효과**: 컨트롤러가 비즈니스 위임에만 집중, 예외 처리 정책이 한 곳에서 관리됨
 
 ### 진행 원칙
 
