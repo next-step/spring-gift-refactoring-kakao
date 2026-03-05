@@ -39,20 +39,18 @@ public class AdminProductController {
         @RequestParam Long categoryId,
         Model model
     ) {
-        List<String> errors = ProductNameValidator.validate(name, true);
-        if (!errors.isEmpty()) {
-            populateNewForm(model, errors, name, price, imageUrl, categoryId);
+        try {
+            productService.create(new ProductRequest(name, price, imageUrl, categoryId), true);
+            return "redirect:/admin/products";
+        } catch (IllegalArgumentException e) {
+            populateNewForm(model, List.of(e.getMessage()), name, price, imageUrl, categoryId);
             return "product/new";
         }
-
-        productService.saveProduct(name, price, imageUrl, categoryId);
-        return "redirect:/admin/products";
     }
 
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
-        Product product = productService.findById(id)
-            .orElseThrow(() -> new java.util.NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
+        Product product = productService.getById(id);
         model.addAttribute("product", product);
         model.addAttribute("categories", productService.findAllCategories());
         return "product/edit";
@@ -67,17 +65,14 @@ public class AdminProductController {
         @RequestParam Long categoryId,
         Model model
     ) {
-        Product product = productService.findById(id)
-            .orElseThrow(() -> new java.util.NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
-
-        List<String> errors = ProductNameValidator.validate(name, true);
-        if (!errors.isEmpty()) {
-            populateEditForm(model, product, errors, name, price, imageUrl, categoryId);
+        try {
+            productService.update(id, new ProductRequest(name, price, imageUrl, categoryId), true);
+            return "redirect:/admin/products";
+        } catch (IllegalArgumentException e) {
+            Product product = productService.getById(id);
+            populateEditForm(model, product, List.of(e.getMessage()), name, price, imageUrl, categoryId);
             return "product/edit";
         }
-
-        productService.updateProduct(id, name, price, imageUrl, categoryId);
-        return "redirect:/admin/products";
     }
 
     @PostMapping("/{id}/delete")

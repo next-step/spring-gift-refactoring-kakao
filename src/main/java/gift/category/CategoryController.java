@@ -45,7 +45,7 @@ public class CategoryController {
     ) {
         return categoryService.update(id, request)
             .map(category -> ResponseEntity.ok(CategoryResponse.from(category)))
-            .orElse(ResponseEntity.notFound().build());
+            .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @DeleteMapping("/{id}")

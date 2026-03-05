@@ -1,7 +1,7 @@
 package gift.wish;
 
 import gift.product.Product;
-import gift.product.ProductRepository;
+import gift.product.ProductService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -12,11 +12,11 @@ import java.util.Optional;
 @Service
 public class WishService {
     private final WishRepository wishRepository;
-    private final ProductRepository productRepository;
+    private final ProductService productService;
 
-    public WishService(WishRepository wishRepository, ProductRepository productRepository) {
+    public WishService(WishRepository wishRepository, ProductService productService) {
         this.wishRepository = wishRepository;
-        this.productRepository = productRepository;
+        this.productService = productService;
     }
 
     public Page<Wish> findByMemberId(Long memberId, Pageable pageable) {
@@ -27,10 +27,12 @@ public class WishService {
         return wishRepository.findByMemberIdAndProductId(memberId, productId);
     }
 
-    public Wish create(Long memberId, Long productId) {
-        Product product = productRepository.findById(productId)
-            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
-        return wishRepository.save(new Wish(memberId, product));
+    public Wish addWish(Long memberId, Long productId) {
+        return wishRepository.findByMemberIdAndProductId(memberId, productId)
+            .orElseGet(() -> {
+                Product product = productService.getById(productId);
+                return wishRepository.save(new Wish(memberId, product));
+            });
     }
 
     public void remove(Long memberId, Long wishId) {

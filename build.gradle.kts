@@ -69,6 +69,9 @@ tasks.withType<Test> {
 
 tasks.named<Test>("test") {
     exclude("gift/acceptance/**")
+    useJUnitPlatform {
+        excludeEngines("cucumber")
+    }
 }
 
 tasks.register<Exec>("dockerBuild") {
