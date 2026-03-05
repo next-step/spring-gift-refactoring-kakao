@@ -50,3 +50,40 @@ Step 2에서 수행할 작업 식별:
 | `chatlog/AI_USAGE_STEP_2.md` | 본 문서 (AI 활용 기록 시작) |
 
 ---
+
+## 2단계: OrderService.createOrder 트랜잭션 경계 설정
+
+### 프롬프트
+
+> `OrderService.createOrder()` — 재고 차감 + 포인트 차감 + 주문 저장이 원자적으로 처리되어야 함
+
+### 변경 전/후 정의
+
+- **무엇을 바꾸는가**: `createOrder()`에 `@Transactional` 추가 → 포인트 부족 시 재고 차감이 롤백됨
+- **무엇을 바꾸지 않는가**: 정상 주문 흐름 (재고 차감 + 포인트 차감 + 주문 저장 + 카카오 알림)
+- **무엇이 이를 증명하는가**: `OrderServiceTest` 2개 테스트
+
+### AI 활용 방식
+
+1. **테스트 먼저 작성** (Red):
+   - `OrderServiceTest.createOrder_insufficientPoints_rollbacksStock()` — 포인트 1000원, 상품 500원 × 3개 = 1500원 주문 시도 → 포인트 부족 예외 → 재고/포인트/주문 모두 원래 상태 확인
+   - `OrderServiceTest.createOrder_success()` — 정상 주문 성공 시 재고/포인트 차감 확인
+2. **테스트 실행으로 버그 확인**: `@Transactional` 없는 상태에서 롤백 테스트 실패 (재고 10 → 7로 차감됨, 포인트만 실패)
+3. **최소 변경 적용** (Green): `OrderService.java`에 `@Transactional` import + 어노테이션 2줄만 추가
+4. **git diff 확인**: 프로덕션 코드 변경이 2줄(import + 어노테이션)뿐인지 확인
+
+### 산출물
+
+| 파일 | 변경 | 종류 |
+|------|------|------|
+| `OrderServiceTest.java` | 신규 — 2개 테스트 (롤백 증명 + 정상 주문) | 테스트 |
+| `OrderService.java` | `@Transactional` 추가 (import 1줄 + 어노테이션 1줄) | 작동 변경 |
+
+### 테스트 결과
+
+| 테스트 | @Transactional 전 | @Transactional 후 |
+|--------|-------------------|-------------------|
+| 포인트 부족 시 재고 롤백 | **FAIL** (재고 10→7) | **PASS** (재고 10 유지) |
+| 정상 주문 성공 | PASS | PASS |
+
+---

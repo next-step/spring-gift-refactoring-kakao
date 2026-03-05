@@ -8,6 +8,7 @@ import java.util.NoSuchElementException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class OrderService {
@@ -33,6 +34,7 @@ public class OrderService {
     }
 
     // TODO: 주문 완료 후 위시리스트에서 해당 상품 자동 제거 (미구현)
+    @Transactional
     public Order createOrder(Member member, Long optionId, int quantity, String message) {
         Option option = optionRepository.findById(optionId)
             .orElseThrow(() -> new NoSuchElementException("Option not found"));
