@@ -4,6 +4,8 @@ import gift.support.DataManipulator;
 import io.cucumber.java.After;
 import io.cucumber.java.Before;
 import io.restassured.RestAssured;
+import io.restassured.filter.log.RequestLoggingFilter;
+import io.restassured.filter.log.ResponseLoggingFilter;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
 public class CucumberHooks {
@@ -24,6 +26,10 @@ public class CucumberHooks {
     public void setUp() {
         RestAssured.reset();
         RestAssured.port = port;
+        RestAssured.filters(
+                new RequestLoggingFilter(),
+                new ResponseLoggingFilter()
+        );
     }
 
     @After(order = 0)

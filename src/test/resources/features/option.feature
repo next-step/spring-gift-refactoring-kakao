@@ -32,6 +32,17 @@ Feature: 옵션 관리
     Then 응답 상태 코드는 204
     And 응답 body가 없다
 
+  @happy
+  Scenario: O-4 옵션 수정 성공
+    Given "교환권" 카테고리에 "아메리카노" 상품이 존재한다
+    And 해당 상품에 수량 100인 "TALL" 옵션이 존재한다
+    When 해당 옵션 수정 요청을 보낸다
+      | name   | quantity |
+      | GRANDE | 200      |
+    Then 응답 상태 코드는 200
+    And 응답 body의 "name"이 "GRANDE"이다
+    And 응답 body의 "quantity"가 200이다
+
   # --- State Verification ---
 
   @happy @state
@@ -44,6 +55,18 @@ Feature: 옵션 관리
     Then 응답 상태 코드는 201
     When 해당 상품의 옵션 목록 조회 요청을 보낸다
     Then 응답 body는 크기가 2인 배열이다
+
+  @happy @state
+  Scenario: O-S3 옵션 수정 후 목록 재조회 시 변경 반영
+    Given "교환권" 카테고리에 "아메리카노" 상품이 존재한다
+    And 해당 상품에 수량 100인 "TALL" 옵션이 존재한다
+    When 해당 옵션 수정 요청을 보낸다
+      | name   | quantity |
+      | GRANDE | 200      |
+    Then 응답 상태 코드는 200
+    When 해당 상품의 옵션 목록 조회 요청을 보낸다
+    Then 응답 상태 코드는 200
+    And 응답 body에 "GRANDE" 가 포함된다
 
   @happy @state
   Scenario: O-S2 옵션 삭제 후 목록에서 제거된다
@@ -110,6 +133,31 @@ Feature: 옵션 관리
       | 옵션!@# | 100      |
     Then 응답 상태 코드는 400
     And 응답 body에 "허용되지 않는 특수 문자" 가 포함된다
+
+  @error
+  Scenario: O-E9 존재하지 않는 상품의 옵션 수정 시도
+    When 존재하지 않는 상품의 옵션 수정 요청을 보낸다
+      | name   | quantity |
+      | GRANDE | 200      |
+    Then 응답 상태 코드는 404
+
+  @error
+  Scenario: O-E10 존재하지 않는 옵션 수정 시도
+    Given "교환권" 카테고리에 "아메리카노" 상품이 존재한다
+    When 해당 상품의 존재하지 않는 옵션 수정 요청을 보낸다
+      | name   | quantity |
+      | GRANDE | 200      |
+    Then 응답 상태 코드는 404
+
+  @error
+  Scenario: O-E11 옵션 수정 시 다른 옵션과 이름 중복
+    Given "교환권" 카테고리에 "아메리카노" 상품이 존재한다
+    And 해당 상품에 "TALL", "GRANDE" 2개의 옵션이 존재한다
+    When "TALL" 옵션을 다음과 같이 수정 요청을 보낸다
+      | name   | quantity |
+      | GRANDE | 200      |
+    Then 응답 상태 코드는 400
+    And 응답 body에 "이미 존재하는 옵션명" 가 포함된다
 
   @error
   Scenario: O-E8 다른 상품의 옵션 삭제 시도
