@@ -34,10 +34,6 @@ public class OrderController {
         @Valid @RequestBody OrderRequest request
     ) {
         var saved = orderService.create(member, request);
-        if (saved == null) {
-            return ResponseEntity.notFound().build();
-        }
-
         return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
             .body(OrderResponse.from(saved));
     }
