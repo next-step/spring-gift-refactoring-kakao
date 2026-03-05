@@ -42,6 +42,29 @@ public class OptionService {
             });
   }
 
+  public Optional<OptionResponse> updateOption(Long productId, Long optionId, OptionRequest request) {
+    validateName(request.name());
+
+    Optional<Product> productOpt = productRepository.findById(productId);
+    if (productOpt.isEmpty()) {
+      return Optional.empty();
+    }
+
+    return optionRepository
+        .findById(optionId)
+        .filter(option -> option.getProduct().getId().equals(productId))
+        .map(
+            option -> {
+              if (!option.getName().equals(request.name())
+                  && optionRepository.existsByProductIdAndName(productId, request.name())) {
+                throw new IllegalArgumentException("이미 존재하는 옵션명입니다.");
+              }
+              option.update(request.name(), request.quantity());
+              optionRepository.save(option);
+              return OptionResponse.from(option);
+            });
+  }
+
   public Optional<Boolean> deleteOption(Long productId, Long optionId) {
     Optional<Product> productOpt = productRepository.findById(productId);
     if (productOpt.isEmpty()) {

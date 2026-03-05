@@ -266,6 +266,143 @@ class OptionAcceptanceTest {
   }
 
   @Nested
+  @DisplayName("옵션 수정")
+  class UpdateOption {
+
+    @Test
+    @DisplayName("성공: 옵션의 이름과 수량을 수정한다")
+    void success() {
+      // Given
+      Option option = optionRepository.save(new Option(product, "기존 옵션", 100));
+
+      // When & Then
+      RestAssured.given()
+          .contentType(ContentType.JSON)
+          .body(
+              """
+                    {
+                        "name": "수정된 옵션",
+                        "quantity": 200
+                    }
+                    """)
+          .when()
+          .put("/api/products/" + product.getId() + "/options/" + option.getId())
+          .then()
+          .statusCode(200)
+          .body("id", equalTo(option.getId().intValue()))
+          .body("name", equalTo("수정된 옵션"))
+          .body("quantity", equalTo(200));
+    }
+
+    @Test
+    @DisplayName("실패: 존재하지 않는 상품의 옵션을 수정하면 404를 반환한다")
+    void fail_productNotFound() {
+      RestAssured.given()
+          .contentType(ContentType.JSON)
+          .body(
+              """
+                    {
+                        "name": "수정된 옵션",
+                        "quantity": 200
+                    }
+                    """)
+          .when()
+          .put("/api/products/999999/options/1")
+          .then()
+          .statusCode(404);
+    }
+
+    @Test
+    @DisplayName("실패: 존재하지 않는 옵션을 수정하면 404를 반환한다")
+    void fail_optionNotFound() {
+      RestAssured.given()
+          .contentType(ContentType.JSON)
+          .body(
+              """
+                    {
+                        "name": "수정된 옵션",
+                        "quantity": 200
+                    }
+                    """)
+          .when()
+          .put("/api/products/" + product.getId() + "/options/999999")
+          .then()
+          .statusCode(404);
+    }
+
+    @Test
+    @DisplayName("실패: 동일 상품의 다른 옵션과 이름이 중복되면 400을 반환한다")
+    void fail_duplicateName() {
+      // Given
+      optionRepository.save(new Option(product, "옵션A", 100));
+      Option optionB = optionRepository.save(new Option(product, "옵션B", 200));
+
+      // When & Then: 옵션B의 이름을 옵션A로 수정 시도
+      RestAssured.given()
+          .contentType(ContentType.JSON)
+          .body(
+              """
+                    {
+                        "name": "옵션A",
+                        "quantity": 200
+                    }
+                    """)
+          .when()
+          .put("/api/products/" + product.getId() + "/options/" + optionB.getId())
+          .then()
+          .statusCode(400)
+          .body(containsString("이미 존재하는 옵션명"));
+    }
+
+    @Test
+    @DisplayName("실패: 허용되지 않은 특수문자가 포함되면 400을 반환한다")
+    void fail_invalidSpecialChars() {
+      // Given
+      Option option = optionRepository.save(new Option(product, "기존 옵션", 100));
+
+      // When & Then
+      RestAssured.given()
+          .contentType(ContentType.JSON)
+          .body(
+              """
+                    {
+                        "name": "옵션@#$%",
+                        "quantity": 100
+                    }
+                    """)
+          .when()
+          .put("/api/products/" + product.getId() + "/options/" + option.getId())
+          .then()
+          .statusCode(400)
+          .body(containsString("허용되지 않는 특수 문자"));
+    }
+
+    @Test
+    @DisplayName("성공: 같은 이름으로 수정해도 자기 자신이면 허용한다")
+    void success_sameName() {
+      // Given
+      Option option = optionRepository.save(new Option(product, "기존 옵션", 100));
+
+      // When & Then: 이름은 유지하고 수량만 변경
+      RestAssured.given()
+          .contentType(ContentType.JSON)
+          .body(
+              """
+                    {
+                        "name": "기존 옵션",
+                        "quantity": 500
+                    }
+                    """)
+          .when()
+          .put("/api/products/" + product.getId() + "/options/" + option.getId())
+          .then()
+          .statusCode(200)
+          .body("name", equalTo("기존 옵션"))
+          .body("quantity", equalTo(500));
+    }
+  }
+
+  @Nested
   @DisplayName("옵션 삭제")
   class DeleteOption {
 
