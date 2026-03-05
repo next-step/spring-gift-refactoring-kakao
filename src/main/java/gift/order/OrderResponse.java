@@ -11,9 +11,10 @@ public record OrderResponse(
     String message
 ) {
     public static OrderResponse from(Order order) {
+        var option = order.getOption();
         return new OrderResponse(
             order.getId(),
-            order.getOption().getId(),
+            option.getId(),
             order.getQuantity(),
             order.getTotalPrice(),
             order.getOrderDateTime(),

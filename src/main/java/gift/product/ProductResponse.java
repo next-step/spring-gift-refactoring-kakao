@@ -8,12 +8,13 @@ public record ProductResponse(
     Long categoryId
 ) {
     public static ProductResponse from(Product product) {
+        var category = product.getCategory();
         return new ProductResponse(
             product.getId(),
             product.getName(),
             product.getPrice(),
             product.getImageUrl(),
-            product.getCategory().getId()
+            category.getId()
         );
     }
 }

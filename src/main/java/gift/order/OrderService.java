@@ -57,8 +57,9 @@ public class OrderService {
         if (!member.canSendKakaoMessage()) {
             return;
         }
+        var product = option.getProduct();
         var message = new KakaoOrderMessage(
-            option.getProduct().getName(),
+            product.getName(),
             option.getName(),
             order.getQuantity(),
             order.getTotalPrice(),
