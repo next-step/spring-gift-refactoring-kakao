@@ -20,28 +20,33 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {
-    private final ProductService productService;
+    private final ProductQueryService productQueryService;
+    private final ProductCommandService productCommandService;
 
-    public ProductController(ProductService productService) {
-        this.productService = productService;
+    public ProductController(
+        ProductQueryService productQueryService,
+        ProductCommandService productCommandService
+    ) {
+        this.productQueryService = productQueryService;
+        this.productCommandService = productCommandService;
     }
 
     @GetMapping
     public ResponseEntity<Page<ProductResponse>> getProducts(Pageable pageable) {
-        Page<ProductResponse> products = productService.findAll(pageable).map(ProductResponse::from);
+        Page<ProductResponse> products = productQueryService.findAll(pageable).map(ProductResponse::from);
         return ResponseEntity.ok(products);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> getProduct(@PathVariable Long id) {
-        Product product = productService.findById(id);
+        Product product = productQueryService.findById(id);
         return ResponseEntity.ok(ProductResponse.from(product));
     }
 
     @PostMapping
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductRequest request) {
         validateName(request.name());
-        Product saved = productService.save(
+        Product saved = productCommandService.save(
             request.name(), request.price(), request.imageUrl(), request.categoryId()
         );
         return ResponseEntity.created(URI.create("/api/products/" + saved.getId()))
@@ -54,7 +59,7 @@ public class ProductController {
         @Valid @RequestBody ProductRequest request
     ) {
         validateName(request.name());
-        Product saved = productService.update(
+        Product saved = productCommandService.update(
             id, request.name(), request.price(), request.imageUrl(), request.categoryId()
         );
         return ResponseEntity.ok(ProductResponse.from(saved));
@@ -62,7 +67,7 @@ public class ProductController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
-        productService.deleteById(id);
+        productCommandService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 
