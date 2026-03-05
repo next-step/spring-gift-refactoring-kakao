@@ -1,6 +1,9 @@
 package gift.auth.internal;
 
-import gift.member.Member;
+import gift.global.NotFoundException;
+import gift.member.MemberCommandPort;
+import gift.member.MemberInfo;
+import gift.member.MemberQueryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -9,25 +12,33 @@ import org.springframework.stereotype.Service;
 public class KakaoAuthService {
 
     private final KakaoLoginClient kakaoLoginClient;
-    private final AuthMemberRepository memberRepository;
+    private final MemberQueryPort memberQueryPort;
+    private final MemberCommandPort memberCommandPort;
     private final JwtProvider jwtProvider;
 
     public TokenResponse loginWithKakao(String code) {
-        KakaoLoginClient.KakaoTokenResponse kakaoToken = kakaoLoginClient.requestAccessToken(code);
-        KakaoLoginClient.KakaoUserResponse kakaoUser = kakaoLoginClient.requestUserInfo(
-                kakaoToken.accessToken());
-        String email = kakaoUser.email();
+        String accessToken = this.requestAccessTokenByCode(code);
+        String email = this.requestUserEmailByAccessToken(accessToken);
 
-        Member member = memberRepository.findByEmail(email)
-                .orElseGet(() -> Member.builder()
-                        .email(email)
-                        .build());
+        try {
+            Long memberId = memberQueryPort.getIdByEmail(email);
+            memberCommandPort.updateKakaoAccessToken(memberId, accessToken);
+        } catch (NotFoundException e) {
+            memberCommandPort.create(new MemberInfo(email, null, accessToken));
+        }
 
-        member.updateKakaoAccessToken(kakaoToken.accessToken());
-        memberRepository.save(member);
-
-        String token = jwtProvider.createToken(member.getEmail());
+        String token = jwtProvider.createToken(email);
 
         return new TokenResponse(token);
+    }
+
+    private String requestAccessTokenByCode(String code) {
+        return kakaoLoginClient.requestAccessToken(code)
+                .accessToken();
+    }
+
+    private String requestUserEmailByAccessToken(String accessToken) {
+        return kakaoLoginClient.requestUserInfo(accessToken)
+                .email();
     }
 }
