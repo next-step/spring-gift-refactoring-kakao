@@ -35,7 +35,13 @@ public class ProductService {
 
   @Transactional
   public Product create(String name, int price, String imageUrl, Long categoryId) {
-    validateNameOrThrow(name);
+    return create(name, price, imageUrl, categoryId, false);
+  }
+
+  @Transactional
+  public Product create(
+      String name, int price, String imageUrl, Long categoryId, boolean allowKakao) {
+    validateNameOrThrow(name, allowKakao);
     Category category =
         categoryService
             .findById(categoryId)
@@ -46,7 +52,13 @@ public class ProductService {
   @Transactional
   public Optional<Product> update(
       Long id, String name, int price, String imageUrl, Long categoryId) {
-    validateNameOrThrow(name);
+    return update(id, name, price, imageUrl, categoryId, false);
+  }
+
+  @Transactional
+  public Optional<Product> update(
+      Long id, String name, int price, String imageUrl, Long categoryId, boolean allowKakao) {
+    validateNameOrThrow(name, allowKakao);
     Category category =
         categoryService
             .findById(categoryId)
@@ -65,8 +77,8 @@ public class ProductService {
     productRepository.deleteById(id);
   }
 
-  private void validateNameOrThrow(String name) {
-    List<String> errors = ProductNameValidator.validate(name);
+  private void validateNameOrThrow(String name, boolean allowKakao) {
+    List<String> errors = ProductNameValidator.validate(name, allowKakao);
     if (!errors.isEmpty()) {
       throw new IllegalArgumentException(String.join(", ", errors));
     }

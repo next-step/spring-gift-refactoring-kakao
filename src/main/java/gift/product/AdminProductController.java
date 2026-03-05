@@ -47,7 +47,7 @@ public class AdminProductController {
       return "product/new";
     }
 
-    productService.create(name, price, imageUrl, categoryId);
+    productService.create(name, price, imageUrl, categoryId, true);
     return "redirect:/admin/products";
   }
 
@@ -81,7 +81,7 @@ public class AdminProductController {
       return "product/edit";
     }
 
-    productService.update(id, name, price, imageUrl, categoryId);
+    productService.update(id, name, price, imageUrl, categoryId, true);
     return "redirect:/admin/products";
   }
 
