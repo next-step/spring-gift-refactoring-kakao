@@ -13,6 +13,7 @@ import gift.option.Option;
 import gift.option.OptionCommandPort;
 import gift.option.OptionQueryPort;
 import gift.order.Order;
+import gift.order.OrderCreatedEvent;
 import gift.product.ProductDto;
 import java.lang.reflect.Field;
 import java.util.List;
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -46,6 +48,9 @@ class OrderServiceTest {
 
     @Mock
     MemberCommandPort memberCommandPort;
+
+    @Mock
+    ApplicationEventPublisher eventPublisher;
 
     @Test
     @DisplayName("주문 목록을 조회한다 — orderRepo.findByMemberId 호출 + PagedModel 응답 매핑")
@@ -149,6 +154,9 @@ class OrderServiceTest {
         then(memberCommandPort).should().deductPoint(memberId, unitPrice * quantity);
         then(optionQueryPort).should().getReference(optionId);
         then(orderRepo).should().save(any(Order.class));
+        then(eventPublisher).should().publishEvent(new OrderCreatedEvent(
+                memberId, productDto.id(), savedOrder.getId()
+        ));
 
         // then — 응답 매핑
         assertThat(response.id()).isEqualTo(savedOrder.getId());
