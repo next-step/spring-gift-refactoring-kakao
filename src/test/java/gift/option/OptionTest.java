@@ -45,6 +45,15 @@ class OptionTest {
     }
 
     @Test
+    @DisplayName("0 이하의 수량을 차감하면 예외가 발생한다")
+    void subtractZeroOrNegativeThrows() {
+        Option option = createOption(10);
+
+        assertThrows(IllegalArgumentException.class, () -> option.subtractQuantity(0));
+        assertThrows(IllegalArgumentException.class, () -> option.subtractQuantity(-1));
+    }
+
+    @Test
     @DisplayName("calculateTotalPrice는 상품 가격 × 수량을 반환한다")
     void calculateTotalPrice() {
         Option option = createOption(100);
