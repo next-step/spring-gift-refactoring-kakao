@@ -37,13 +37,13 @@ public class AdminMemberController {
 
   @PostMapping
   public String create(@RequestParam String email, @RequestParam String password, Model model) {
-    if (memberService.existsByEmail(email)) {
-      populateNewFormError(model, email, "이미 등록된 이메일입니다.");
+    try {
+      memberService.register(email, password);
+      return "redirect:/admin/members";
+    } catch (IllegalArgumentException e) {
+      populateNewFormError(model, email, e.getMessage());
       return "member/new";
     }
-
-    memberService.register(email, password);
-    return "redirect:/admin/members";
   }
 
   @GetMapping("/{id}/edit")
