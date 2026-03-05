@@ -19,7 +19,7 @@
 
 ### 결정
 
-**A. 메서드 전체에 `@Transactional` 적용**
+**A. 메서드 전체에 `@Transactional` 적용** → 이후 Phase 5-2에서 **B로 전환** (ADR-8 참조)
 
 ### 이유
 
@@ -186,3 +186,30 @@ AdminProductController가 CategoryRepository를 직접 사용하는 계층 위�
 - "Controller는 Service를 통해 데이터에 접근한다"는 원칙에 예외를 두면 규칙의 의미가 퇴색된다.
 - AdminProductController의 CategoryRepository 의존은 CategoryService.findAllCategories() 추가로 간단히 해소됐다.
 - Admin과 API가 같은 규칙을 따르면 코드 리뷰 시 별도 판단이 필요 없다.
+
+---
+
+## ADR-8: 카카오 알림 트랜잭션 분리 — OrderTransactionService 추출
+
+### 맥락
+
+ADR-1에서 메서드 전체에 `@Transactional`을 적용했으나, 카카오 알림(외부 API 호출)이 트랜잭션 안에 포함되어 있었다. 외부 호출이 느려지면 DB 커넥션을 오래 점유하는 문제가 발생할 수 있다.
+
+### 선택지
+
+| 선택지 | 장점 | 단점 |
+|--------|------|------|
+| A. 현행 유지 (ADR-1 결정 그대로) | 추가 변경 없음 | 외부 호출이 트랜잭션을 잡고 있음 |
+| B. `OrderTransactionService`로 DB 로직 분리 | 트랜잭션 범위 최소화, self-invocation 문제 해결 | 클래스 1개 추가 |
+| C. `@TransactionalEventListener`로 알림 분리 | 느슨한 결합 | 이벤트 클래스 추가, 디버깅 복잡도 증가 |
+
+### 결정
+
+**B. `OrderTransactionService` 추출**
+
+### 이유
+
+- 클래스 1개 추가로 트랜잭션 범위가 명확해진다 (DB 작업만 `@Transactional`).
+- self-invocation 문제를 자연스럽게 해결한다.
+- C(이벤트 기반)는 현재 규모에서 과도한 복잡도를 추가한다.
+- `OrderService.createOrder()`는 트랜잭션 완료 후 카카오 알림을 호출하므로, 알림 실패가 DB 커넥션에 영향을 주지 않는다.
