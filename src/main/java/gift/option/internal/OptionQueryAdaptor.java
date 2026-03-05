@@ -25,7 +25,7 @@ public class OptionQueryAdaptor implements OptionQueryPort {
 
     @Override
     public ProductDto getAssociatedProduct(Long optionId) {
-        Option option = optionRepo.findByIdInnerJoinFetchProduct(optionId)
+        Option option = optionRepo.findWithProductById(optionId)
                 .orElseThrow(NotFoundException::optionNotFound);
 
         return convertToProductDto(option.getProduct());
