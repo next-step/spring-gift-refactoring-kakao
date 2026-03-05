@@ -33,6 +33,12 @@ public class Member {
     this.email = email;
   }
 
+  public void validatePassword(String password) {
+    if (this.password == null || !this.password.equals(password)) {
+      throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
+    }
+  }
+
   public void update(String email, String password) {
     this.email = email;
     this.password = password;

@@ -174,3 +174,10 @@
 - 201 응답 통일: `MemberController`의 `ResponseEntity.status(CREATED)` → `ResponseEntity.created(URI)` 패턴으로 통일
 - 컨트롤러 반환 타입: `ResponseEntity<?>` → 구체 타입으로 변경
 - `./gradlew spotlessApply build` — 빌드 + 테스트 통과 확인
+
+### 프롬프트 6: 비밀번호 검증 로직을 Member 엔티티로 이동
+> 비밀번호 검증로직을 Member 로 옮기면 어떨까?
+
+- `MemberService.login()`의 비밀번호 비교 로직을 `Member.authenticate(password)` 메서드로 추출
+- 자기 상태 기반 검증(`chargePoint`, `deductPoint`와 동일 패턴)이 엔티티에 모이도록 통일
+- `./gradlew spotlessApply build` — 빌드 + 테스트 통과 확인
