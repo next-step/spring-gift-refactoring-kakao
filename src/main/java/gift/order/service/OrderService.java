@@ -15,6 +15,7 @@ import gift.order.entity.Order;
 import gift.order.exception.OrderErrorCode;
 import gift.order.exception.OrderException;
 import gift.order.repository.OrderRepository;
+import gift.wish.repository.WishRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +29,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OptionRepository optionRepository;
     private final MemberRepository memberRepository;
+    private final WishRepository wishRepository;
     private final AuthenticationResolver authenticationResolver;
     private final MessageClientRegistry messageClientRegistry;
 
@@ -52,6 +54,8 @@ public class OrderService {
 
         Order order = new Order(option, member.getId(), request.quantity(), request.message());
         Order saved = orderRepository.save(order);
+
+        wishRepository.deleteByMemberIdAndProductId(member.getId(), option.getProduct().getId());
 
         sendKakaoMessageIfPossible(member, saved, option);
 

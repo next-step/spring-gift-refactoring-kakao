@@ -16,18 +16,21 @@ import gift.order.exception.OrderException;
 import gift.order.repository.OrderRepository;
 import gift.order.service.OrderService;
 import gift.product.entity.Product;
+import gift.wish.repository.WishRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -41,6 +44,9 @@ class OrderServiceTest {
 
     @Mock
     private MemberRepository memberRepository;
+
+    @Mock
+    private WishRepository wishRepository;
 
     @Mock
     private AuthenticationResolver authenticationResolver;
@@ -78,8 +84,10 @@ class OrderServiceTest {
     @DisplayName("주문 성공 시 주문 응답을 반환한다")
     void createOrder_success_returnsResponse() {
         Member member = new Member("test@example.com", "password");
+        ReflectionTestUtils.setField(member, "id", 1L);
         member.chargePoint(10000);
         Product product = new Product("아메리카노", 3000, "http://image.png", new Category("음료", "#000000", "http://image.png", null));
+        ReflectionTestUtils.setField(product, "id", 10L);
         Option option = new Option(product, "기본 옵션", 10);
         OrderRequest request = new OrderRequest(1L, 2, "메시지");
         Order savedOrder = new Order(option, 1L, request.quantity(), request.message());
@@ -95,5 +103,27 @@ class OrderServiceTest {
         verify(optionRepository).save(option);
         verify(memberRepository).save(member);
         verify(orderRepository).save(any(Order.class));
+        verify(wishRepository).deleteByMemberIdAndProductId(1L, 10L);
+    }
+
+    @Test
+    @DisplayName("위시 삭제가 실패하면 예외를 던진다")
+    void createOrder_wishDeleteFails_throwsException() {
+        Member member = new Member("test@example.com", "password");
+        ReflectionTestUtils.setField(member, "id", 1L);
+        member.chargePoint(10000);
+        Product product = new Product("아메리카노", 3000, "http://image.png", new Category("음료", "#000000", "http://image.png", null));
+        ReflectionTestUtils.setField(product, "id", 10L);
+        Option option = new Option(product, "기본 옵션", 10);
+        OrderRequest request = new OrderRequest(1L, 2, "메시지");
+        Order savedOrder = new Order(option, 1L, request.quantity(), request.message());
+
+        when(authenticationResolver.extractMember("Bearer token")).thenReturn(member);
+        when(optionRepository.findById(request.optionId())).thenReturn(Optional.of(option));
+        when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
+        doThrow(new RuntimeException("wish delete failed"))
+            .when(wishRepository).deleteByMemberIdAndProductId(1L, 10L);
+
+        assertThrows(RuntimeException.class, () -> orderService.createOrder("Bearer token", request));
     }
 }
