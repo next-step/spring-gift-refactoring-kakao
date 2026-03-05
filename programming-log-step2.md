@@ -36,6 +36,7 @@ Service 계층 도입 이후 예외 처리가 Controller별 `@ExceptionHandler`�
 
 엔티티 클래스에 getter/기본 생성자 보일러플레이트가 반복되어 코드량이 증가하고 가독성이 떨어졌다.  
 JPA 요구사항(기본 생성자)은 유지하면서 반복 코드를 줄이기 위해 Lombok을 도입했다.
+- step1에서 했으면 좋았겠지만, 빠뜨려서 step2에서라도 추가했습니다. 
 
 ### 2-2. 수정사항
 
@@ -103,3 +104,28 @@ Service 계층에 읽기/쓰기 작업이 혼재되어 있었지만 트랜잭션
 
 1. 서비스 계층 변경 시 의도치 않은 동작 변화를 테스트로 차단할 수 있다.
 2. 2단계 동작 변경(트랜잭션/비즈니스 로직 확장) 시 안전한 리팩토링 기반을 확보할 수 있다.
+
+---
+
+## 5. [구조 변경 + 동작 변경] AdminProductController Repository 의존 분리
+
+### 5-1. 배경
+
+step1에서 대부분 Controller의 Repository 직접 의존을 Service로 분리했지만, `AdminProductController`는 누락되어 있었다.  
+구조 일관성을 맞추기 위해 step2에서 해당 누락분을 보완했다.
+
+### 5-2. 수정사항
+
+| 항목 | 내용 |
+|---|---|
+| Controller 의존성 정리 | `AdminProductController`에서 `ProductRepository`, `CategoryRepository` 직접 주입 제거 |
+| Service 분리 | `AdminProductService` 신설 후 상품/카테고리 조회, 생성, 수정, 삭제 책임 이동 |
+| 트랜잭션 정책 | `AdminProductService`에 `@Transactional(readOnly = true)` 적용, 쓰기 메서드에 `@Transactional` 명시 |
+| Lombok 적용 | `AdminProductController`, `AdminProductService` 모두 `@RequiredArgsConstructor` 기반 생성자 주입 유지 |
+| 단위 테스트 | `AdminProductServiceTest` 추가(조회/수정/삭제/예외 시나리오 검증) |
+
+### 5-3. 기대효과
+
+1. Controller는 요청/응답 흐름에 집중하고, 비즈니스/데이터 접근 로직은 Service로 일관되게 관리할 수 있다.
+2. step1에서 누락된 의존성 분리를 보완해 전체 도메인 구조 기준을 맞출 수 있다.
+3. Admin 상품 관리 로직의 회귀를 단위 테스트로 빠르게 검증할 수 있다.
