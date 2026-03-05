@@ -6,8 +6,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.NoSuchElementException;
-
 @Service
 public class ProductService {
     private final ProductRepository productRepository;
@@ -24,14 +22,14 @@ public class ProductService {
 
     public ProductResponse getProduct(Long id) {
         Product product = productRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("Product not found."));
+            .orElseThrow(() -> new ProductException(ProductErrorCode.PRODUCT_NOT_FOUND));
         return ProductResponse.from(product);
     }
 
     public ProductResponse createProduct(ProductRequest request) {
         ProductNameValidator.validateOrThrow(request.name());
         Category category = categoryRepository.findById(request.categoryId())
-            .orElseThrow(() -> new NoSuchElementException("Category not found."));
+            .orElseThrow(() -> new ProductException(ProductErrorCode.CATEGORY_NOT_FOUND));
         Product saved = productRepository.save(request.toEntity(category));
         return ProductResponse.from(saved);
     }
@@ -39,9 +37,9 @@ public class ProductService {
     public ProductResponse updateProduct(Long id, ProductRequest request) {
         ProductNameValidator.validateOrThrow(request.name());
         Category category = categoryRepository.findById(request.categoryId())
-            .orElseThrow(() -> new NoSuchElementException("Category not found."));
+            .orElseThrow(() -> new ProductException(ProductErrorCode.CATEGORY_NOT_FOUND));
         Product product = productRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("Product not found."));
+            .orElseThrow(() -> new ProductException(ProductErrorCode.PRODUCT_NOT_FOUND));
         product.update(request.name(), request.price(), request.imageUrl(), category);
         return ProductResponse.from(productRepository.save(product));
     }

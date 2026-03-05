@@ -1,5 +1,7 @@
 package gift.common;
 
+import gift.product.ProductErrorCode;
+import gift.product.ProductException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -11,6 +13,19 @@ import java.util.NoSuchElementException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(ProductException.class)
+    public ResponseEntity<?> handleProductException(ProductException e) {
+        ProductErrorCode errorCode = (ProductErrorCode) e.getErrorCode();
+        if (errorCode == ProductErrorCode.INVALID_PRODUCT_NAME) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+        if (errorCode == ProductErrorCode.PRODUCT_NOT_FOUND || errorCode == ProductErrorCode.CATEGORY_NOT_FOUND) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.status(errorCode.getHttpStatus())
+            .body(new ErrorResponse(errorCode.getHttpStatus().value(), errorCode.getMessage()));
+    }
+
     @ExceptionHandler(BaseException.class)
     public ResponseEntity<ErrorResponse> handleBaseException(BaseException e) {
         BaseErrorCode errorCode = e.getErrorCode();

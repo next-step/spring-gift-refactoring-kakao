@@ -15,7 +15,7 @@ public class ProductNameValidator {
     public static void validateOrThrow(String name) {
         List<String> errors = validate(name);
         if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(String.join(", ", errors));
+            throw new ProductException(ProductErrorCode.INVALID_PRODUCT_NAME);
         }
     }
 
