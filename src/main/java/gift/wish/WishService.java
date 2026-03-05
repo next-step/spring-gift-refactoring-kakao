@@ -41,9 +41,7 @@ public class WishService {
         Wish wish = wishRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("위시를 찾을 수 없습니다. id: " + id));
 
-        if (!wish.getMember().getId().equals(memberId)) {
-            throw new IllegalStateException("본인의 위시만 삭제할 수 있습니다.");
-        }
+        wish.validateOwner(memberId);
 
         wishRepository.delete(wish);
     }
