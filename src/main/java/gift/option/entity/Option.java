@@ -15,6 +15,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Objects;
+
 @Entity
 @Table(name = "options")
 @Getter
@@ -45,5 +47,17 @@ public class Option {
             throw new OptionException(OptionErrorCode.INSUFFICIENT_OPTION_QUANTITY);
         }
         this.quantity -= amount;
+    }
+
+    public void assertBelongsTo(Long productId) {
+        if (!Objects.equals(this.product.getId(), productId)) {
+            throw new OptionException(OptionErrorCode.OPTION_NOT_FOUND);
+        }
+    }
+
+    public static void assertDeletableIn(int optionCount) {
+        if (optionCount <= 1) {
+            throw new OptionException(OptionErrorCode.CANNOT_DELETE_LAST_OPTION);
+        }
     }
 }

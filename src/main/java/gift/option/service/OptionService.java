@@ -45,12 +45,10 @@ public class OptionService {
         productRepository.findById(productId)
             .orElseThrow(() -> new OptionException(OptionErrorCode.PRODUCT_NOT_FOUND));
         List<Option> options = optionRepository.findByProductId(productId);
-        if (options.size() <= 1) {
-            throw new OptionException(OptionErrorCode.CANNOT_DELETE_LAST_OPTION);
-        }
+        Option.assertDeletableIn(options.size());
         Option option = optionRepository.findById(optionId)
-            .filter(o -> o.getProduct().getId().equals(productId))
             .orElseThrow(() -> new OptionException(OptionErrorCode.OPTION_NOT_FOUND));
+        option.assertBelongsTo(productId);
         optionRepository.delete(option);
     }
 }
