@@ -18,9 +18,12 @@ public class ProductService {
     private final ProductRepository productRepo;
     private final CategoryQueryPort categoryQueryPort;
 
-    public PagedModel<ProductResponse> getProducts(Pageable pageable) {
-        Page<ProductResponse> pageResponse = productRepo.findAll(pageable)
-                .map(ProductResponse::from);
+    public PagedModel<ProductResponse> getProducts(Long categoryId, Pageable pageable) {
+        Page<Product> page = categoryId == null ?
+                productRepo.findAll(pageable) :
+                productRepo.findByCategoryId(categoryId, pageable);
+
+        Page<ProductResponse> pageResponse = page.map(ProductResponse::from);
 
         return new PagedModel<>(pageResponse);
     }
