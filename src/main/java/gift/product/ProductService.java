@@ -12,7 +12,7 @@ import gift.category.Category;
 import gift.category.CategoryRepository;
 
 @Service
-@Transactional
+@Transactional(readOnly = true)
 public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
@@ -22,20 +22,19 @@ public class ProductService {
         this.categoryRepository = categoryRepository;
     }
 
-    @Transactional(readOnly = true)
     public List<ProductResponse> findAll() {
         return productRepository.findAll().stream()
             .map(ProductResponse::from)
             .toList();
     }
 
-    @Transactional(readOnly = true)
     public ProductResponse getById(Long id) {
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
         return ProductResponse.from(product);
     }
 
+    @Transactional
     public ProductResponse createProduct(String name, int price, String imageUrl, Long categoryId) {
         Category category = categoryRepository.findById(categoryId)
             .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
@@ -43,6 +42,7 @@ public class ProductService {
         return ProductResponse.from(product);
     }
 
+    @Transactional
     public ProductResponse updateProduct(Long id, String name, int price, String imageUrl, Long categoryId) {
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
@@ -53,22 +53,22 @@ public class ProductService {
         return ProductResponse.from(product);
     }
 
+    @Transactional
     public void deleteProduct(Long id) {
         productRepository.deleteById(id);
     }
 
-    @Transactional(readOnly = true)
     public Page<ProductResponse> getProducts(Pageable pageable) {
         return productRepository.findAll(pageable).map(ProductResponse::from);
     }
 
-    @Transactional(readOnly = true)
     public ProductResponse getProduct(Long id) {
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
         return ProductResponse.from(product);
     }
 
+    @Transactional
     public ProductResponse createProduct(ProductRequest request) {
         validateName(request.name());
         Category category = categoryRepository.findById(request.categoryId())
@@ -77,6 +77,7 @@ public class ProductService {
         return ProductResponse.from(saved);
     }
 
+    @Transactional
     public ProductResponse updateProduct(Long id, ProductRequest request) {
         validateName(request.name());
         Product product = productRepository.findById(id)

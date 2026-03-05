@@ -245,10 +245,10 @@
 ### 3. 트랜잭션 경계 세우기
 
 #### 3-1. product 패키지 — 읽기 트랜잭션 기본값 정리 (구조)
-- [ ] `ProductService` 클래스 레벨 `@Transactional` → `@Transactional(readOnly = true)` 변경
-- [ ] 쓰기 메서드 5개에 `@Transactional` 추가
-- [ ] 읽기 메서드에서 중복 `@Transactional(readOnly = true)` 제거
-- [ ] 기존 `ProductControllerTest` + `AdminProductControllerTest` 전체 통과 확인
+- [x] `ProductService` 클래스 레벨 `@Transactional` → `@Transactional(readOnly = true)` 변경
+- [x] 쓰기 메서드 5개에 `@Transactional` 추가
+- [x] 읽기 메서드에서 중복 `@Transactional(readOnly = true)` 제거
+- [x] 기존 `ProductControllerTest` + `AdminProductControllerTest` 전체 통과 확인
 
 #### 3-2. order 패키지 — Member를 트랜잭션 내부에서 조회 (작동)
 - [ ] `OrderService.createOrder(Member member, ...)` → `createOrder(Long memberId, ...)` 시그니처 변경
