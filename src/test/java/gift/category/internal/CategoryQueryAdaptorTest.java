@@ -101,7 +101,7 @@ class CategoryQueryAdaptorTest {
         createCategory("상품권", "#FFFFFF", "http://img2", "설명2");
 
         // when
-        List<Category> result = categoryQueryPort.findAll();
+        List<CategoryDto> result = categoryQueryPort.findAll();
 
         // then
         assertThat(result).hasSize(2);
@@ -111,7 +111,7 @@ class CategoryQueryAdaptorTest {
     @DisplayName("카테고리가 없으면 빈 목록을 반환한다")
     void testFindAllEmpty() {
         // when
-        List<Category> result = categoryQueryPort.findAll();
+        List<CategoryDto> result = categoryQueryPort.findAll();
 
         // then
         assertThat(result).isEmpty();

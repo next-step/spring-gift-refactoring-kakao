@@ -23,5 +23,5 @@ public interface CategoryQueryPort {
      *
      * @return 카테고리 목록 (없으면 빈 목록)
      */
-    List<Category> findAll();
+    List<CategoryDto> findAll();
 }

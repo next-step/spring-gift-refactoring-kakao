@@ -1,6 +1,7 @@
 package gift.category.internal;
 
 import gift.category.Category;
+import gift.category.CategoryDto;
 import gift.category.CategoryQueryPort;
 import gift.global.NotFoundException;
 import java.util.List;
@@ -23,7 +24,19 @@ public class CategoryQueryAdaptor implements CategoryQueryPort {
     }
 
     @Override
-    public List<Category> findAll() {
-        return categoryRepo.findAll();
+    public List<CategoryDto> findAll() {
+        return categoryRepo.findAll().stream()
+                .map(CategoryQueryAdaptor::convertToDto)
+                .toList();
+    }
+
+    private static CategoryDto convertToDto(Category entity) {
+        Long id = entity.getId();
+        String name = entity.getName();
+        String color = entity.getColor();
+        String imageUrl = entity.getImageUrl();
+        String description = entity.getDescription();
+
+        return new CategoryDto(id, name, color, imageUrl, description);
     }
 }
