@@ -203,3 +203,15 @@
 - `KakaoRestMessageClient.buildTemplate()`의 `product.getPrice() * order.getQuantity()` → `option.calculateTotalPrice(order.getQuantity())`로 교체
 - 가격 계산 로직이 `Option.calculateTotalPrice()` 한 곳으로 통일
 - `./gradlew spotlessApply build` — 빌드 + 테스트 통과 확인
+
+### 프롬프트 10: 비밀번호 암호화 (Password 값 객체)
+> 비밀번호 암호화가 안되있음. 암호라는 객체를 만들어서 암호화 라이브러리를 사용하여 암호화 하고 비밀번호 검증도 하면 어떨까? salt 정보만 사용해서 해싱.
+
+- `Password` 값 객체 생성 (`@Embeddable`): `SecureRandom`으로 16바이트 salt 생성 + `SHA-256` 해싱
+  - `Password.of(rawPassword)` — salt 생성 + 해시 계산
+  - `Password.validate(rawPassword)` — 동일 salt로 해시 비교
+- `Member` 엔티티: `String password` → `@Embedded Password password`로 변경
+  - 생성자/update에서 `Password.of()` 호출, `validatePassword()`에서 `password.validate()` 위임
+- Flyway 마이그레이션 `V3__Encrypt_member_password.sql` 추가: `password` 컬럼 → `password_hash` + `password_salt` 컬럼
+- 테스트 수정: SQL 시드 회원 → API 회원 등록 방식으로 전환, 포인트 충전은 JdbcTemplate 직접 UPDATE
+- `./gradlew spotlessApply test` — 10개 테스트 모두 통과 확인

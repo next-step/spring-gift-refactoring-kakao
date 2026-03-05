@@ -1,5 +1,6 @@
 package gift.member;
 
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -18,7 +19,7 @@ public class Member {
 
   private String email;
 
-  private String password;
+  @Embedded private Password password;
 
   private String kakaoAccessToken;
 
@@ -26,22 +27,23 @@ public class Member {
 
   public Member(String email, String password) {
     this.email = email;
-    this.password = password;
+    this.password = Password.of(password);
   }
 
   public Member(String email) {
     this.email = email;
   }
 
-  public void validatePassword(String password) {
-    if (this.password == null || !this.password.equals(password)) {
+  public void validatePassword(String rawPassword) {
+    if (this.password == null) {
       throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
     }
+    this.password.validate(rawPassword);
   }
 
   public void update(String email, String password) {
     this.email = email;
-    this.password = password;
+    this.password = Password.of(password);
   }
 
   public void updateKakaoAccessToken(String kakaoAccessToken) {
