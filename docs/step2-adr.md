@@ -181,3 +181,41 @@ Step 2의 작동 변경을 검증할 테스트를 작성해야 한다. 서비스
 - `OrderService`: DB 작업(재고 차감·포인트 차감·주문 저장·위시 삭제)은 트랜잭션 내에서 실행되고, 카카오 알림은 커밋 후 전송된다.
 - `KakaoAuthService`: 카카오 토큰 교환·사용자 조회는 트랜잭션 밖에서 실행되고, 회원 저장·토큰 갱신만 트랜잭션 내에서 실행된다.
 - ADR-001의 결정(`@Transactional` 적용)을 `TransactionTemplate`으로 대체하지만, 트랜잭션 보장 범위는 동일하다.
+
+---
+
+## ADR-006: 동시 수정 시 Lost Update 방지 전략
+
+### 상태
+
+결정됨
+
+### 맥락
+
+`MemberService.update()`, `ProductService.update()`, `CategoryService.update()`, `Option.subtractQuantity()` 등 조회 → 상태변경 → 저장 패턴에서, 두 요청이 동시에 같은 엔티티를 조회한 뒤 저장하면 마지막 저장이 이전 변경을 덮어쓰는 lost update 문제가 발생할 수 있다.
+
+### 선택지
+
+| 선택지 | 장점 | 단점 |
+|--------|------|------|
+| **(A) 낙관적 락 (`@Version`)** | JPA 기본 지원, 추가 인프라 불필요, 충돌 드문 경우 성능 부담 없음 | 충돌 시 재시도 로직 필요 |
+| (B) 비관적 락 (`@Lock(PESSIMISTIC_WRITE)`) | 충돌 자체를 원천 차단 | 데드락 위험, 조회 시점부터 row lock으로 성능 부담 |
+| (C) 조건부 UPDATE (`WHERE point = ?`) | 특정 필드만 보호할 때 유효 | 범용적이지 않음, 엔티티마다 별도 쿼리 필요 |
+
+### 결정
+
+**(A) 낙관적 락 (`@Version`)** — Member, Product, Category, Option 4개 엔티티에 `@Version` 필드를 추가한다.
+
+### 근거
+
+- 현재 admin 관리 화면 + REST API 규모에서 동시 수정 충돌 빈도가 낮다. 낙관적 락은 충돌이 드문 경우 성능 부담 없이 데이터 정합성을 보장한다.
+- JPA `@Version`만 추가하면 Hibernate가 UPDATE 시 `WHERE version = ?` 조건을 자동으로 붙여준다. 별도 쿼리나 인프라 변경이 필요 없다.
+- 비관적 락(B)은 데드락 위험과 커넥션 점유 문제가 있어 현재 규모에서 과잉이다.
+- 조건부 UPDATE(C)는 엔티티마다 별도 쿼리를 작성해야 하므로 범용적이지 않다.
+
+### 영향
+
+- 4개 엔티티에 `@Version private Long version` 필드가 추가된다.
+- Flyway `V3__Add_version_columns.sql`로 기존 테이블에 `version` 컬럼이 추가된다.
+- 동시 수정 충돌 시 `ObjectOptimisticLockingFailureException`이 발생하며, `GlobalExceptionHandler`가 409 Conflict를 반환한다.
+- Order, Wish는 생성 후 수정이 없으므로 `@Version` 대상에서 제외한다.
