@@ -28,7 +28,7 @@ public class OrderService {
     public Order createOrder(Long memberId, Long optionId, int quantity, String message) {
         Option option = optionService.subtractQuantity(optionId, quantity);
 
-        int price = option.getProduct().getPrice() * quantity;
+        int price = option.calculateTotalPrice(quantity);
         Member member = memberService.deductPoint(memberId, price);
 
         Order saved = orderRepository.save(new Order(option, member, quantity, message));
