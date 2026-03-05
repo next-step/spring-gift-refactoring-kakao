@@ -69,9 +69,9 @@ class WishServiceTest {
         assertThat(response.getContent()).hasSize(1);
 
         PageMetadata metadata = response.getMetadata();
-        assertThat(metadata.size()).isZero();
+        assertThat(metadata.size()).isEqualTo(10);
         assertThat(metadata.number()).isEqualTo(pageNumber);
-        assertThat(metadata.totalElements()).isZero();
+        assertThat(metadata.totalElements()).isOne();
         assertThat(metadata.totalPages()).isOne();
 
         WishResponse content = response.getContent().getFirst();
