@@ -157,7 +157,7 @@ class OrderControllerTest {
         .then()
             .statusCode(400);
 
-        // @Transactional 덕분에 재고가 원래대로 유지되어야 한다
+        // TransactionTemplate 덕분에 재고가 원래대로 유지되어야 한다
         given()
         .when()
             .get("/api/products/1/options")
