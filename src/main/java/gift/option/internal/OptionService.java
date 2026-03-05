@@ -3,6 +3,7 @@ package gift.option.internal;
 import gift.global.NotFoundException;
 import gift.option.Option;
 import gift.product.Product;
+import gift.product.ProductQueryPort;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -12,22 +13,20 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class OptionService {
 
-    private final OptionProductRepository productRepo;
+    private final ProductQueryPort productQueryPort;
     private final OptionRepository optionRepo;
 
     public List<OptionResponse> getOptions(Long productId) {
-        Product product = productRepo.findByIdLeftJoinFetchOptions(productId)
-                .orElseThrow(NotFoundException::productNotFound);
+        productQueryPort.validateExists(productId);
 
-        return product.getOptions().stream()
+        return optionRepo.findAllByProductId(productId).stream()
                 .map(OptionResponse::from)
                 .toList();
     }
 
     @Transactional
     public OptionResponse createOption(Long productId, OptionRequest createRequest) {
-        Product product = productRepo.findById(productId)
-                .orElseThrow(NotFoundException::productNotFound);
+        Product product = productQueryPort.getReference(productId);
 
         String name = createRequest.name();
         int quantity = createRequest.quantity();
@@ -49,10 +48,9 @@ public class OptionService {
 
     @Transactional
     public void deleteOption(Long productId, Long optionId) {
-        Product product = productRepo.findByIdLeftJoinFetchOptions(productId)
-                .orElseThrow(NotFoundException::productNotFound);
+        productQueryPort.validateExists(productId);
 
-        if (product.getOptions().size() <= 1) {
+        if (optionRepo.countByProductId(productId) <= 1) {
             throw FailedToDeleteOptionException.byInsufficientRemainingOptions();
         }
 
