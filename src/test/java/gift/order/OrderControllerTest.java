@@ -1,6 +1,8 @@
 package gift.order;
 
 import gift.auth.JwtProvider;
+import gift.member.Member;
+import gift.member.MemberRepository;
 import io.restassured.RestAssured;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +12,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.jdbc.Sql;
 
 import static io.restassured.http.ContentType.JSON;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
@@ -22,6 +25,9 @@ class OrderControllerTest {
 
     @Autowired
     JwtProvider jwtProvider;
+
+    @Autowired
+    MemberRepository memberRepository;
 
     @BeforeEach
     void setUp() {
@@ -99,6 +105,10 @@ class OrderControllerTest {
             .then()
                 .statusCode(200)
                 .body("[0].quantity", equalTo(8));
+
+        // 포인트 차감 확인 (초기 1,000,000 - 주문 10,000 * 2 = 980,000)
+        Member member = memberRepository.findById(1L).orElseThrow();
+        assertThat(member.getPoint()).isEqualTo(980000);
     }
 
     @Test
