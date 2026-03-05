@@ -82,7 +82,8 @@ docs/
 └── step2/
     ├── plan/
     │   ├── PLAN.md
-    │   └── PHASE1-인증_로직_추출.md
+    │   ├── PHASE1-인증_로직_추출.md
+    │   └── PHASE2-예외_핸들러_중앙화.md
     └── adr/
         └── ADR1-인증_로직_추출_방식.md
 ```
