@@ -12,6 +12,10 @@ public class CategoryService {
     this.categoryRepository = categoryRepository;
   }
 
+  public List<Category> findAllCategories() {
+    return categoryRepository.findAll();
+  }
+
   public List<CategoryResponse> getAllCategories() {
     return categoryRepository.findAll().stream().map(CategoryResponse::from).toList();
   }

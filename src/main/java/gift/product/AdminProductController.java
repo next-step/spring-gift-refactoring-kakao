@@ -1,6 +1,6 @@
 package gift.product;
 
-import gift.category.CategoryRepository;
+import gift.category.CategoryService;
 import java.util.List;
 import java.util.NoSuchElementException;
 import org.springframework.stereotype.Controller;
@@ -15,12 +15,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RequestMapping("/admin/products")
 public class AdminProductController {
   private final ProductService productService;
-  private final CategoryRepository categoryRepository;
+  private final CategoryService categoryService;
 
-  public AdminProductController(
-      ProductService productService, CategoryRepository categoryRepository) {
+  public AdminProductController(ProductService productService, CategoryService categoryService) {
     this.productService = productService;
-    this.categoryRepository = categoryRepository;
+    this.categoryService = categoryService;
   }
 
   @GetMapping
@@ -31,7 +30,7 @@ public class AdminProductController {
 
   @GetMapping("/new")
   public String newForm(Model model) {
-    model.addAttribute("categories", categoryRepository.findAll());
+    model.addAttribute("categories", categoryService.findAllCategories());
     return "product/new";
   }
 
@@ -59,7 +58,7 @@ public class AdminProductController {
             .findProductById(id)
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
     model.addAttribute("product", product);
-    model.addAttribute("categories", categoryRepository.findAll());
+    model.addAttribute("categories", categoryService.findAllCategories());
     return "product/edit";
   }
 
@@ -99,7 +98,7 @@ public class AdminProductController {
     model.addAttribute("price", price);
     model.addAttribute("imageUrl", imageUrl);
     model.addAttribute("categoryId", categoryId);
-    model.addAttribute("categories", categoryRepository.findAll());
+    model.addAttribute("categories", categoryService.findAllCategories());
   }
 
   private void populateEditForm(
@@ -116,6 +115,6 @@ public class AdminProductController {
     model.addAttribute("price", price);
     model.addAttribute("imageUrl", imageUrl);
     model.addAttribute("categoryId", categoryId);
-    model.addAttribute("categories", categoryRepository.findAll());
+    model.addAttribute("categories", categoryService.findAllCategories());
   }
 }
