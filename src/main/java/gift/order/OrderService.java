@@ -4,7 +4,6 @@ import gift.member.Member;
 import gift.member.MemberService;
 import gift.option.Option;
 import gift.option.OptionService;
-import gift.product.Product;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,7 +17,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OptionService optionService;
     private final MemberService memberService;
-    private final KakaoMessageClient kakaoMessageClient;
+    private final OrderNotificationSender notificationSender;
 
     public Page<Order> findByMemberId(Long memberId, Pageable pageable) {
         return orderRepository.findByMemberId(memberId, pageable);
@@ -35,18 +34,7 @@ public class OrderService {
 
         // TODO: 위시 정리 구현 필요
 
-        sendKakaoMessageIfPossible(member, saved, option);
+        notificationSender.send(member, saved, option);
         return saved;
-    }
-
-    private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {
-        if (member.getKakaoAccessToken() == null) {
-            return;
-        }
-        try {
-            Product product = option.getProduct();
-            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
-        } catch (Exception ignored) {
-        }
     }
 }
