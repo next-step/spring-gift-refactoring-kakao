@@ -216,8 +216,8 @@
 > 근거: 9개 엔드포인트에서 @Valid를 사용하나 GlobalExceptionHandler에 핸들러가 없다.
 > Bean Validation 실패 시 Spring 기본 응답과 IllegalArgumentException 응답의 형식이 다르다.
 
-- [ ] GlobalExceptionHandler에 MethodArgumentNotValidException → 400 핸들러 추가
-- [ ] 전체 테스트 실행 → 통과 확인
+- [x] GlobalExceptionHandler에 MethodArgumentNotValidException → 400 핸들러 추가
+- [x] 전체 테스트 실행 → 통과 확인
 
 #### 6-6. wish 테이블 UNIQUE 제약 추가
 

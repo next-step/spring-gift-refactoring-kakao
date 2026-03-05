@@ -104,3 +104,6 @@ auth ↔ member 순환 참조 해소 — member 패키지에 TokenProvider 인�
 
 ## 프롬프트 31
 6-4 보정: 사전 검증 → 예외 포착 방식으로 전환 — 크로스 패키지 Repository 참조(5-3 원칙 위반) 및 불필요한 추가 조회 문제를 해결. existsBy* 메서드 6개 제거, 각 Service의 delete()를 try { deleteById(); flush(); } catch (DataIntegrityViolationException) 패턴으로 변경. 크로스 패키지 Repository 주입 4건 모두 제거. 별도 문서 생성 없이 기존 문서(step6-작동-변경-분석.md ADR-001/작업 4, README.md)를 업데이트.
+
+## 프롬프트 32
+6-5. MethodArgumentNotValidException 핸들러 추가 — GlobalExceptionHandler에 Bean Validation 실패 핸들러 추가. BindingResult.getFieldErrors()에서 필드명 + 기본 메시지를 조합하여 ResponseEntity<String> 400 반환. 기존 IllegalArgumentException 핸들러와 동일한 응답 형식 유지.

@@ -457,6 +457,14 @@ public Order createOrder(Long memberId, Long optionId, int quantity, String mess
 **영향 범위**: `GlobalExceptionHandler.java`
 **우선순위**: 중간
 
+**구현 내역**:
+- `GlobalExceptionHandler`에 `MethodArgumentNotValidException` → 400 핸들러 추가
+- `BindingResult.getFieldErrors()`에서 필드명 + 기본 메시지를 조합하여 `ResponseEntity<String>` 반환
+- 기존 `IllegalArgumentException` 핸들러와 동일한 `400 + 문자열 메시지` 형식 유지
+- 응답 예시: `name: must not be blank, price: must be greater than 0`
+
+**검증 결과**: `./gradlew cucumberTest` — 20개 시나리오 전체 통과 (기존 시나리오는 정상 입력만 사용하므로 영향 없음)
+
 ---
 
 ### 작업 6: wish 테이블 UNIQUE 제약 추가
