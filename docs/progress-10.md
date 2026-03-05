@@ -16,47 +16,31 @@ Phase 2 "도메인 책임 되찾기" — 여섯 번째(마지막) Service 교체
 
 #### 의존성 변경
 
-| Before                  | After               |
-|-------------------------|---------------------|
-| `OrderOptionRepository` | `OptionQueryPort`   |
-|                         | `OptionCommandPort` |
-| `OrderMemberRepository` | `MemberCommandPort` |
+| Before                   | After              |
+|--------------------------|--------------------|
+| `OrderOptionRepository`  | `OptionQueryPort`  |
+|                          | `OptionCommandPort` |
+| `OrderMemberRepository`  | `MemberCommandPort` |
 
 #### createOrder() 재구성
 
 ```java
 // Before
 Option option = optionRepo.findByIdInnerJoinFetchProduct(optionId)
-                .orElseThrow(NotFoundException::optionNotFound);
-option.
-
-subtractQuantity(quantity);
-
+        .orElseThrow(NotFoundException::optionNotFound);
+option.subtractQuantity(quantity);
 Product product = option.getProduct();
 int price = product.getPrice() * quantity;
-memberRepo.
-
-findById(memberId)
-        .
-
-orElseThrow(NotFoundException::memberNotFound)
-        .
-
-deductPoint(price);
-
+memberRepo.findById(memberId)
+        .orElseThrow(NotFoundException::memberNotFound)
+        .deductPoint(price);
 Order build = Order.builder().option(option)...
 
 // After
-        optionCommandPort.
-
-subtractQuantity(optionId, quantity);
-
+optionCommandPort.subtractQuantity(optionId, quantity);
 ProductDto product = optionQueryPort.getAssociatedProduct(optionId);
 int price = product.price() * quantity;
-memberCommandPort.
-
-deductPoint(memberId, price);
-
+memberCommandPort.deductPoint(memberId, price);
 Option optionRef = optionQueryPort.getReference(optionId);
 Order build = Order.builder().option(optionRef)...
 ```
@@ -70,17 +54,17 @@ Order build = Order.builder().option(optionRef)...
 
 `OrderMemberRepository` 삭제로 인한 필수 수정.
 
-| Before                                                              | After                                           |
-|---------------------------------------------------------------------|-------------------------------------------------|
+| Before                                                      | After                                       |
+|-------------------------------------------------------------|---------------------------------------------|
 | `memberRepo.findById(memberId).orElseThrow().getKakaoAccessToken()` | `memberQueryPort.getKakaoAccessToken(memberId)` |
 
 ### 1-3. 삭제 파일
 
-| 파일                           | 이유                                                |
-|------------------------------|---------------------------------------------------|
-| `OrderOptionRepository.java` | OrderService가 Port로 교체 완료                         |
+| 파일                           | 이유                                |
+|------------------------------|-----------------------------------|
+| `OrderOptionRepository.java` | OrderService가 Port로 교체 완료         |
 | `OrderMemberRepository.java` | OrderService + KakaoMessagingService가 Port로 교체 완료 |
-| `OrderWishRepository.java`   | 미사용 (사용처 없음)                                      |
+| `OrderWishRepository.java`   | 미사용 (사용처 없음)                      |
 
 ---
 
@@ -90,23 +74,23 @@ Order build = Order.builder().option(optionRef)...
 
 파일: `src/test/java/gift/order/internal/OrderServiceTest.java`
 
-| 테스트                                 | 검증 내용                                                                                           |
-|-------------------------------------|-------------------------------------------------------------------------------------------------|
-| `testGetOrders`                     | `orderRepo.findByMemberId` 호출 + PagedModel 응답 매핑 + 메타데이터                                        |
-| `testCreateOrder`                   | 호출 여부 + 인자 검증 (subtractQuantity, getAssociatedProduct, deductPoint, getReference, save) + 응답 매핑 |
-| `testCreateOrderOptionNotFound`     | `optionCommandPort.subtractQuantity` → NotFoundException 전파                                     |
-| `testCreateOrderInsufficientStock`  | `optionCommandPort.subtractQuantity` → IllegalArgumentException 전파                              |
-| `testCreateOrderMemberNotFound`     | `memberCommandPort.deductPoint` → NotFoundException 전파                                          |
-| `testCreateOrderInsufficientPoints` | `memberCommandPort.deductPoint` → IllegalArgumentException 전파                                   |
+| 테스트                                | 검증 내용                                                     |
+|------------------------------------|-----------------------------------------------------------|
+| `testGetOrders`                    | `orderRepo.findByMemberId` 호출 + PagedModel 응답 매핑 + 메타데이터 |
+| `testCreateOrder`                  | 호출 여부 + 인자 검증 (subtractQuantity, getAssociatedProduct, deductPoint, getReference, save) + 응답 매핑 |
+| `testCreateOrderOptionNotFound`    | `optionCommandPort.subtractQuantity` → NotFoundException 전파 |
+| `testCreateOrderInsufficientStock` | `optionCommandPort.subtractQuantity` → IllegalArgumentException 전파 |
+| `testCreateOrderMemberNotFound`    | `memberCommandPort.deductPoint` → NotFoundException 전파     |
+| `testCreateOrderInsufficientPoints`| `memberCommandPort.deductPoint` → IllegalArgumentException 전파 |
 
 ### KakaoMessagingServiceTest (2개)
 
 파일: `src/test/java/gift/order/internal/KakaoMessagingServiceTest.java`
 
-| 테스트                                | 검증 내용                                                       |
-|------------------------------------|-------------------------------------------------------------|
+| 테스트                              | 검증 내용                                                        |
+|----------------------------------|--------------------------------------------------------------|
 | `testSendDefaultTemplateMessageTo` | 토큰 조회 → 메시지 전송 순서 (InOrder) + 인자 전달                         |
-| `testSendMessageMemberNotFound`    | 토큰 조회 → NotFoundException 전파 + kakaoMessageClient 호출 안 됨 확인 |
+| `testSendMessageMemberNotFound`  | 토큰 조회 → NotFoundException 전파 + kakaoMessageClient 호출 안 됨 확인 |
 
 ---
 
@@ -137,29 +121,29 @@ Order build = Order.builder().option(optionRef)...
 
 ## 5. 수정/삭제 파일 목록
 
-| 파일                               | 변경                                                          |
-|----------------------------------|-------------------------------------------------------------|
-| `OrderService.java`              | `OrderOptionRepository` + `OrderMemberRepository` → Port 3개 |
-| `KakaoMessagingService.java`     | `OrderMemberRepository` → `MemberQueryPort`                 |
-| `OrderOptionRepository.java`     | **삭제**                                                      |
-| `OrderMemberRepository.java`     | **삭제**                                                      |
-| `OrderWishRepository.java`       | **삭제** (미사용)                                                |
-| `OrderServiceTest.java`          | **신규** — 6개 테스트                                             |
-| `KakaoMessagingServiceTest.java` | **신규** — 2개 테스트                                             |
+| 파일                                 | 변경                                                          |
+|------------------------------------|-------------------------------------------------------------|
+| `OrderService.java`               | `OrderOptionRepository` + `OrderMemberRepository` → Port 3개 |
+| `KakaoMessagingService.java`      | `OrderMemberRepository` → `MemberQueryPort`                 |
+| `OrderOptionRepository.java`      | **삭제**                                                      |
+| `OrderMemberRepository.java`      | **삭제**                                                      |
+| `OrderWishRepository.java`        | **삭제** (미사용)                                                |
+| `OrderServiceTest.java`           | **신규** — 6개 테스트                                             |
+| `KakaoMessagingServiceTest.java`  | **신규** — 2개 테스트                                             |
 
 ---
 
 ## 6. 전체 Port 교체 완료 현황
 
-| Service               | 교체 대상 Repository                 | 교체할 Port                                | 상태              |
-|-----------------------|----------------------------------|-----------------------------------------|-----------------|
-| ProductService        | `ProductCategoryRepository`      | `CategoryQueryPort`                     | 완료 (progress-5) |
-| AdminProductService   | `AdminProductCategoryRepository` | `CategoryQueryPort`                     | 완료 (progress-6) |
-| WishService           | `WishProductRepository`          | `ProductQueryPort`                      | 완료 (progress-7) |
-| OptionService         | `OptionProductRepository`        | `ProductQueryPort`                      | 완료 (progress-8) |
-| Auth (3개 클래스)         | `AuthMemberRepository`           | `MemberQueryPort` + `MemberCommandPort` | 완료 (progress-9) |
-| OrderService          | `OrderOptionRepository`          | `OptionQueryPort` + `OptionCommandPort` | **완료**          |
-| OrderService          | `OrderMemberRepository`          | `MemberCommandPort`                     | **완료**          |
-| KakaoMessagingService | `OrderMemberRepository`          | `MemberQueryPort`                       | **완료**          |
+| Service               | 교체 대상 Repository                 | 교체할 Port                                | 상태               |
+|-----------------------|----------------------------------|-----------------------------------------|------------------|
+| ProductService        | `ProductCategoryRepository`      | `CategoryQueryPort`                     | 완료 (progress-5)  |
+| AdminProductService   | `AdminProductCategoryRepository` | `CategoryQueryPort`                     | 완료 (progress-6)  |
+| WishService           | `WishProductRepository`          | `ProductQueryPort`                      | 완료 (progress-7)  |
+| OptionService         | `OptionProductRepository`        | `ProductQueryPort`                      | 완료 (progress-8)  |
+| Auth (3개 클래스)         | `AuthMemberRepository`           | `MemberQueryPort` + `MemberCommandPort` | 완료 (progress-9)  |
+| OrderService          | `OrderOptionRepository`          | `OptionQueryPort` + `OptionCommandPort` | **완료**           |
+| OrderService          | `OrderMemberRepository`          | `MemberCommandPort`                     | **완료**           |
+| KakaoMessagingService | `OrderMemberRepository`          | `MemberQueryPort`                       | **완료**           |
 
 **모든 크로스 도메인 Repository 교체가 완료되었다.**

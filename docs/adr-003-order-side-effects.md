@@ -65,11 +65,9 @@ OrderService의 책임은 "주문을 체결하는 것"이다. 위시를 정리�
 
 ```java
 // send kakao notification if possible   ← "가능하면" 보낸다
-try{
-        kakaoMessagingService.sendDefaultTemplateMessageTo(memberId, orderMessageDto);
-}catch(
-Exception ignored){            ←
-실패해도 무시
+try {
+    kakaoMessagingService.sendDefaultTemplateMessageTo(memberId, orderMessageDto);
+} catch (Exception ignored) {            ← 실패해도 무시
 }
 ```
 
@@ -86,23 +84,13 @@ Exception ignored){            ←
 ```java
 OrderResponse response = orderService.createOrder(memberId, request);
 
-try{wishCleanupService.
+try { wishCleanupService.cleanup(memberId, productId); }
+catch (Exception ignored) {}
 
-cleanup(memberId, productId); }
-        catch(
-Exception ignored){}
+try { kakaoMessagingService.send(memberId, orderId); }
+catch (Exception ignored) {}
 
-        try{kakaoMessagingService.
-
-send(memberId, orderId); }
-        catch(
-Exception ignored){}
-
-        return ResponseEntity.
-
-created(...).
-
-body(response);
+return ResponseEntity.created(...).body(response);
 ```
 
 - 흐름이 위에서 아래로 한눈에 보임
@@ -156,7 +144,6 @@ public record OrderCreatedEvent(Long memberId, Long productId, Long orderId) {
 ### 발행 (OrderService)
 
 ```java
-
 @Transactional
 public OrderResponse createOrder(Long memberId, OrderRequest request) {
     // 기존 로직: validate → subtract → deduct → save
@@ -222,7 +209,6 @@ public class KakaoNotificationEventListener {
 ### Controller (변경 후)
 
 ```java
-
 @PostMapping
 public ResponseEntity<OrderResponse> createOrder(
         @RequestHeader("Authorization") String authorization,

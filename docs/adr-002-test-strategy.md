@@ -176,7 +176,6 @@ Service 단위 테스트  → Port Mock + 오케스트레이션 검증
 ### Port 통합 테스트 구조
 
 ```java
-
 @DataJpaTest
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 @Import(OptionCommandPortImpl.class)
@@ -239,7 +238,6 @@ class OptionCommandPortTest {
 ### QueryPort MANDATORY 테스트
 
 ```java
-
 @DataJpaTest
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 @Import(CategoryQueryPortImpl.class)
@@ -260,7 +258,6 @@ class CategoryQueryPortTest {
 ### Service 단위 테스트 구조
 
 ```java
-
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
 

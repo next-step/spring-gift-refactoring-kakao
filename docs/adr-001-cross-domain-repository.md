@@ -29,12 +29,8 @@ Repository 복제의 결과로, Service가 다른 도메인의 Entity를 직접 
 ```java
 // OrderService.java — Member의 비즈니스 규칙이 Order 패키지에 누출
 memberRepo.findById(memberId)
-        .
-
-orElseThrow(NotFoundException::memberNotFound)
-        .
-
-deductPoint(price);
+        .orElseThrow(NotFoundException::memberNotFound)
+        .deductPoint(price);
 ```
 
 Member의 포인트 차감 정책이 변경되면 `OrderService`를 수정해야 한다. 이는 Feature Envy — 다른 도메인의 내부 구현에 의존하는 안티패턴이다.
@@ -88,14 +84,10 @@ Port가 Entity를 반환하면, 호출자가 Entity의 비즈니스 메서드를
 ```java
 // 의도하지 않은 사용이 가능해짐
 Product product = productPort.getReference(productId);
-product.
-
-update("이름변경",0,"url",category);  // 도메인 침범
+product.update("이름변경", 0, "url", category);  // 도메인 침범
 
 Option option = optionPort.getReference(optionId);
-option.
-
-subtractQuantity(10);  // Port를 우회한 직접 호출
+option.subtractQuantity(10);  // Port를 우회한 직접 호출
 ```
 
 JPA에서 `@ManyToOne` FK에 Entity 객체가 필요하므로, Entity를 반환하지 않을 수 없다. 이것은 JPA의 구조적 한계이다.

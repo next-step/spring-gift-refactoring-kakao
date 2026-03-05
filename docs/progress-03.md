@@ -112,10 +112,8 @@ private Product createProduct(String name, int price, String imageUrl, Long cate
 ### tearDown (FK 순서 준수)
 
 ```java
-testProductRepo.deleteAllInBatch();  // Product 먼저 (Category FK 참조)
-testCategoryRepo.
-
-deleteAllInBatch();
+testProductRepo.deleteAllInBatch();   // Product 먼저 (Category FK 참조)
+testCategoryRepo.deleteAllInBatch();
 ```
 
 ### 테스트 목록 (5개)

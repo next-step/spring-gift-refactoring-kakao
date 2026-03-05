@@ -23,7 +23,6 @@ Phase 2 네 번째(마지막) 구조 변경으로, 크로스 도메인 `OrderOpt
 ### OrderService.createOrder() 상세 분석
 
 ```java
-
 @Transactional
 public OrderResponse createOrder(Long memberId, OrderRequest request) {
     Option option = optionRepo.findByIdInnerJoinFetchProduct(optionId)
@@ -145,7 +144,6 @@ OrderService.createOrder()는 하나의 `@Transactional` → 하나의 영속성
 ### 현재 (OrderOptionRepository + OrderMemberRepository 직접 사용)
 
 ```java
-
 @Transactional
 public OrderResponse createOrder(Long memberId, OrderRequest request) {
     Option option = optionRepo.findByIdInnerJoinFetchProduct(optionId)
@@ -175,7 +173,6 @@ public OrderResponse createOrder(Long memberId, OrderRequest request) {
 ### 교체 후 (Port 사용)
 
 ```java
-
 @Transactional
 public OrderResponse createOrder(Long memberId, OrderRequest request) {
     // FK 참조용 Option entity
@@ -237,13 +234,9 @@ private Option createOption(String name, int quantity, Long productId) {
 ### tearDown (FK 역순)
 
 ```java
-testOptionRepo.deleteAllInBatch();   // Option 먼저
-testProductRepo.
-
-deleteAllInBatch();  // Product
-testCategoryRepo.
-
-deleteAllInBatch(); // Category 마지막
+testOptionRepo.deleteAllInBatch();    // Option 먼저
+testProductRepo.deleteAllInBatch();   // Product
+testCategoryRepo.deleteAllInBatch();  // Category 마지막
 ```
 
 ### OptionQueryAdaptorTest (5개)

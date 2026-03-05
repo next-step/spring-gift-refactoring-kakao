@@ -63,19 +63,9 @@ Phase 2 "도메인 책임 되찾기"의 Port 구성 단계가 완료되었다.
 **CategoryDto 매핑**: `AdminProductService`가 사용하는 `ProductDto.CategoryDto`는 `(id, name)` 2개 필드이고, `CategoryQueryPort.findAll()`이 반환하는 `gift.category.CategoryDto`는 `(id, name, color, imageUrl, description)` 5개 필드이다. 작동 변경을 방지하기 위해 매핑한다:
 
 ```java
-categoryQueryPort.findAll().
-
-stream()
-        .
-
-map(dto ->new ProductDto.
-
-CategoryDto(dto.id(),dto.
-
-name()))
-        .
-
-toList();
+categoryQueryPort.findAll().stream()
+        .map(dto -> new ProductDto.CategoryDto(dto.id(), dto.name()))
+        .toList();
 ```
 
 `createProduct()`, `updateProduct()`는 `@Transactional`이므로 `getReference(MANDATORY)` 사용 가능.
@@ -145,23 +135,13 @@ Product entity는 `Wish.builder().product(product)` FK 참조에 그대로 사�
 ```java
 // 현재
 Option option = optionRepo.findByIdInnerJoinFetchProduct(optionId).orElseThrow();
-option.
-
-subtractQuantity(quantity);
+option.subtractQuantity(quantity);
 
 Product product = option.getProduct();
 int price = product.getPrice() * quantity;
-memberRepo.
+memberRepo.findById(memberId).orElseThrow().deductPoint(price);
 
-findById(memberId).
-
-orElseThrow().
-
-deductPoint(price);
-
-Order build = Order.builder().option(option)...
-
-build();
+Order build = Order.builder().option(option)...build();
 ```
 
 ```java
@@ -172,13 +152,9 @@ Option option = optionQueryPort.getReference(optionId);              // FK 참�
 ProductDto product = optionQueryPort.getAssociatedProduct(optionId); // 가격 조회
 int price = product.price() * quantity;
 
-memberCommandPort.
+memberCommandPort.deductPoint(memberId, price);                      // 포인트 차감
 
-deductPoint(memberId, price);                      // 포인트 차감
-
-Order build = Order.builder().option(option)...
-
-build();
+Order build = Order.builder().option(option)...build();
 ```
 
 **호출 순서 결정**: `subtractQuantity`를 `getReference`보다 먼저 호출한다. 기능적으로 두 순서 모두 동일하지만 (같은 `@Transactional` 내 1차 캐시 공유), `subtractQuantity`(비즈니스 액션)를 먼저 수행하고 `getReference`(FK 참조) + `getAssociatedProduct`(정보 조회)를 모아서 "수량 차감 → 데이터 수집 → 포인트 차감 → 주문 생성" 흐름이 의도 단위로 묶여 가독성이 좋다.
@@ -206,30 +182,21 @@ build();
 ```java
 // 현재 — upsert 패턴
 Member member = memberRepository.findByEmail(email)
-                .orElseGet(() -> Member.builder().email(email).build());
-member.
-
-updateKakaoAccessToken(kakaoToken.accessToken());
-        memberRepository.
-
-save(member);
+        .orElseGet(() -> Member.builder().email(email).build());
+member.updateKakaoAccessToken(kakaoToken.accessToken());
+memberRepository.save(member);
 
 String token = jwtProvider.createToken(member.getEmail());
 ```
 
 ```java
 // 교체 후
-try{
-Long memberId = memberQueryPort.getIdByEmail(email);
-    memberCommandPort.
-
-updateKakaoAccessToken(memberId, kakaoToken.accessToken());
-        }catch(
-NotFoundException e){
-        memberCommandPort.
-
-create(new MemberInfo(email, null,kakaoToken.accessToken()));
-        }
+try {
+    Long memberId = memberQueryPort.getIdByEmail(email);
+    memberCommandPort.updateKakaoAccessToken(memberId, kakaoToken.accessToken());
+} catch (NotFoundException e) {
+    memberCommandPort.create(new MemberInfo(email, null, kakaoToken.accessToken()));
+}
 String token = jwtProvider.createToken(email);
 ```
 
@@ -246,24 +213,17 @@ String token = jwtProvider.createToken(email);
 
 ```java
 // 현재
-memberId =memberRepo.
-
-findByEmail(memberEmail).
-
-map(Member::getId).
-
-orElse(null);
+memberId = memberRepo.findByEmail(memberEmail)
+        .map(Member::getId)
+        .orElse(null);
 ```
 
 ```java
 // 교체 후
-try{
-memberId =memberQueryPort.
-
-getIdByEmail(memberEmail);
-}catch(
-NotFoundException ignored){
-        }
+try {
+    memberId = memberQueryPort.getIdByEmail(memberEmail);
+} catch (NotFoundException ignored) {
+}
 ```
 
 ---

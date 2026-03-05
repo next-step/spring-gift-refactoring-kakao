@@ -141,17 +141,11 @@ Port를 도입하면 Service 코드에서 `repo.findById().orElseThrow().메서�
 ```java
 // Before: OrderService가 OrderMemberRepository로 Member를 직접 조회·조작
 memberRepo.findById(memberId)
-        .
-
-orElseThrow(NotFoundException::memberNotFound)
-        .
-
-deductPoint(price);
+        .orElseThrow(NotFoundException::memberNotFound)
+        .deductPoint(price);
 
 // After: MemberCommandPort가 조회 + 예외 + 차감을 캡슐화
-memberCommandPort.
-
-deductPoint(memberId, price);
+memberCommandPort.deductPoint(memberId, price);
 ```
 
 **KakaoMessagingService — 카카오 토큰 조회**:
@@ -241,11 +235,9 @@ String memberEmail = memberQueryPort.getEmail(memberId);
 
 ```java
 // send kakao notification if possible   ← "가능하면" 보낸다
-try{
-        kakaoMessagingService.send(...);
-}catch(
-Exception ignored){            ←
-실패해도 무시
+try {
+    kakaoMessagingService.send(...);
+} catch (Exception ignored) {            ← 실패해도 무시
 }
 ```
 

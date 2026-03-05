@@ -98,22 +98,12 @@ Progress 1에서 "이후 Option, Product Port 테스트에서 FK 체인 데이�
 
 ```java
 // TransactionTemplate 안에서 FK 체인 데이터를 한 트랜잭션으로 준비
-transactionTemplate.execute(status ->{
-Category category = testCategoryRepo.save(Category.builder()...
-
-build());
-Product product = testProductRepo.save(Product.builder().category(category)...
-
-build());
-        testOptionRepo.
-
-save(Option.builder().
-
-product(product)...
-
-build());
-        return null;
-        });
+transactionTemplate.execute(status -> {
+    Category category = testCategoryRepo.save(Category.builder()...build());
+    Product product = testProductRepo.save(Product.builder().category(category)...build());
+    testOptionRepo.save(Option.builder().product(product)...build());
+    return null;
+});
 ```
 
 `TransactionTemplate`이 트랜잭션을 제공하므로, 별도 `@Component` + `@Transactional` 헬퍼 없이 테스트 메서드 안에서 직접 해결된다. 인수 테스트의 `CucumberTestDataManipulator`는 75개 시나리오의 데이터 정리 순서 관리라는 추가 책임이 있어 유지하지만, Port 통합 테스트에서는 `TransactionTemplate` + `deleteAllInBatch()`로 충분하다.

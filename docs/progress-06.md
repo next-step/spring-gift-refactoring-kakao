@@ -28,19 +28,9 @@ Phase 2 "도메인 책임 되찾기" — 두 번째 Service 교체 작업. Admin
 `CategoryQueryPort.findAll()`은 `List<gift.category.CategoryDto>` (id, name, color, imageUrl, description)를 반환하지만, AdminProductService는 `List<ProductDto.CategoryDto>` (id, name)만 필요하다. 람다로 매핑:
 
 ```java
-categoryQueryPort.findAll().
-
-stream()
-        .
-
-map(c ->new
-
-CategoryDto(c.id(),c.
-
-name()))
-        .
-
-toList();
+categoryQueryPort.findAll().stream()
+        .map(c -> new CategoryDto(c.id(), c.name()))
+        .toList();
 ```
 
 ### 예외 타입 유지 — getCategoryOrThrow()

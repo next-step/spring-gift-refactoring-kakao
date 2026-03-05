@@ -27,26 +27,17 @@ Phase 2 "도메인 책임 되찾기" — 다섯 번째 Service 교체 작업. `a
 ```java
 // Before
 Member member = memberRepository.findByEmail(email)
-                .orElseGet(() -> Member.builder().email(email).build());
-member.
-
-updateKakaoAccessToken(kakaoToken.accessToken());
-        memberRepository.
-
-save(member);
+        .orElseGet(() -> Member.builder().email(email).build());
+member.updateKakaoAccessToken(kakaoToken.accessToken());
+memberRepository.save(member);
 
 // After
-try{
-Long memberId = memberQueryPort.getIdByEmail(email);
-    memberCommandPort.
-
-updateKakaoAccessToken(memberId, accessToken);
-}catch(
-NotFoundException e){
-        memberCommandPort.
-
-create(new MemberInfo(email, null,accessToken));
-        }
+try {
+    Long memberId = memberQueryPort.getIdByEmail(email);
+    memberCommandPort.updateKakaoAccessToken(memberId, accessToken);
+} catch (NotFoundException e) {
+    memberCommandPort.create(new MemberInfo(email, null, accessToken));
+}
 ```
 
 - `member.updateKakaoAccessToken()` 직접 호출 제거 — Port 컨벤션 준수
@@ -81,7 +72,6 @@ Port 인터페이스를 최소한으로 유지하는 방향을 선택했다.
 `getMemberIdFrom()`이 핵심 로직을 담당하고, `requestMemberIdFrom()`은 이를 try-catch로 감싸는 구조로 재구성했다.
 
 ```java
-
 @Override
 public Long getMemberIdFrom(String authorization) {
     String token = removeBearerPrefix(authorization);
