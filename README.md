@@ -297,6 +297,7 @@ Step 1에서 정리한 구조 위에 작동 변경을 수행한다. 모든 변�
 | 외부 HTTP 호출 트랜잭션 분리 | `@Transactional` → `TransactionTemplate` 전환. 카카오 API 응답 지연 시 DB 커넥션 점유 문제 해소 (ADR-005) |
 | 위시 삭제 책임 통합 | `OrderService`가 `WishRepository` 직접 의존 → `WishService.removeByMemberAndProduct`로 위임. 삭제 책임을 `WishService` 한 곳으로 통합 |
 | 낙관적 락(`@Version`) 적용 | Member, Product, Category, Option에 `@Version` 추가. 동시 수정 시 lost update 방지, 충돌 시 409 Conflict 반환 (ADR-006) |
+| `Option.subtractQuantity` 경계 검증 | `amount <= 0` 검증 추가 + `OptionTest`에 0/음수 경계 케이스 테스트 보강 |
 
 ### 학습한 점
 
