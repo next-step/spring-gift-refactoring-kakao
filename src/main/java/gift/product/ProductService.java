@@ -2,6 +2,7 @@ package gift.product;
 
 import gift.category.Category;
 import gift.category.CategoryService;
+import gift.common.exception.ApplicationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @RequiredArgsConstructor
 @Service
@@ -28,7 +28,7 @@ public class ProductService {
 
     public Product findById(Long id) {
         return productRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("상품을 찾을 수 없습니다. id: " + id));
+                .orElseThrow(() -> new ApplicationException(ProductErrorCode.NOT_FOUND));
     }
 
     @Transactional
@@ -49,7 +49,7 @@ public class ProductService {
 
     private void validateKakaoPolicy(String name, boolean allowKakao) {
         if (!allowKakao && name != null && name.contains("카카오")) {
-            throw new IllegalArgumentException("\"카카오\"가 포함된 상품명은 담당 MD와 협의한 경우에만 사용할 수 있습니다.");
+            throw new ApplicationException(ProductErrorCode.KAKAO_NAME_RESTRICTED);
         }
     }
 

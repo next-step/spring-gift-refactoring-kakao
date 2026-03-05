@@ -1,6 +1,7 @@
 package gift.product;
 
 import gift.category.Category;
+import gift.common.exception.ApplicationException;
 import gift.option.Option;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -45,13 +46,13 @@ public class Product {
 
     private void validatePrice(int price) {
         if (price <= 0) {
-            throw new IllegalArgumentException("상품 가격은 1 이상이어야 합니다.");
+            throw new ApplicationException(ProductErrorCode.INVALID_PRICE);
         }
     }
 
     public void removeOption(Option option) {
         if (this.options.size() <= 1) {
-            throw new IllegalArgumentException("옵션이 1개인 상품은 옵션을 삭제할 수 없습니다.");
+            throw new ApplicationException(ProductErrorCode.LAST_OPTION_DELETE);
         }
         this.options.remove(option);
     }
@@ -67,13 +68,15 @@ public class Product {
 
     private void validateName(String name) {
         if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("상품 이름은 필수입니다.");
+            throw new ApplicationException(ProductErrorCode.INVALID_NAME, "상품 이름은 필수입니다.");
         }
         if (name.length() > MAX_NAME_LENGTH) {
-            throw new IllegalArgumentException("상품 이름은 공백을 포함하여 최대 15자까지 입력할 수 있습니다.");
+            throw new ApplicationException(ProductErrorCode.INVALID_NAME,
+                    "상품 이름은 공백을 포함하여 최대 15자까지 입력할 수 있습니다.");
         }
         if (!ALLOWED_NAME_PATTERN.matcher(name).matches()) {
-            throw new IllegalArgumentException("상품 이름에 허용되지 않는 특수 문자가 포함되어 있습니다. 사용 가능: ( ), [ ], +, -, &, /, _");
+            throw new ApplicationException(ProductErrorCode.INVALID_NAME,
+                    "상품 이름에 허용되지 않는 특수 문자가 포함되어 있습니다. 사용 가능: ( ), [ ], +, -, &, /, _");
         }
     }
 

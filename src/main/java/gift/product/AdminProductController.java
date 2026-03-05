@@ -1,6 +1,7 @@
 package gift.product;
 
 import gift.category.CategoryService;
+import gift.common.exception.ApplicationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -38,7 +39,7 @@ public class AdminProductController {
         try {
             productService.create(name, price, imageUrl, categoryId, true);
             return "redirect:/admin/products";
-        } catch (IllegalArgumentException e) {
+        } catch (ApplicationException e) {
             populateNewForm(model, List.of(e.getMessage()), name, price, imageUrl, categoryId);
             return "product/new";
         }
@@ -64,7 +65,7 @@ public class AdminProductController {
         try {
             productService.update(id, name, price, imageUrl, categoryId, true);
             return "redirect:/admin/products";
-        } catch (IllegalArgumentException e) {
+        } catch (ApplicationException e) {
             Product product = productService.findById(id);
             populateEditForm(model, product, List.of(e.getMessage()), name, price, imageUrl, categoryId);
             return "product/edit";
