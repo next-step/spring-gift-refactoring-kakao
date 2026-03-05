@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Version;
 
 /**
  * Represents a registered member.
@@ -20,6 +21,8 @@ public class Member {
     private String password;
     private String kakaoAccessToken;
     private int point;
+    @Version
+    private Long version;
 
     protected Member() {
     }

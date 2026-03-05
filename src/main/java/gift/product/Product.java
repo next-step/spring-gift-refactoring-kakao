@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Version;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,8 @@ public class Product {
     private String name;
     private int price;
     private String imageUrl;
+    @Version
+    private Long version;
 
     @ManyToOne
     @JoinColumn(name = "category_id")

@@ -1,6 +1,7 @@
 package gift.common;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -23,5 +24,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<String> handleForbidden(IllegalStateException e) {
         return ResponseEntity.status(403).body(e.getMessage());
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<String> handleConflict(ObjectOptimisticLockingFailureException e) {
+        return ResponseEntity.status(409).body("다른 요청과 충돌이 발생했습니다. 다시 시도해주세요.");
     }
 }
