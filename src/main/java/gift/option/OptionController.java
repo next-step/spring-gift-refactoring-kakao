@@ -12,10 +12,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/*
- * Each product must have at least one option at all times.
- * Option names are validated against allowed characters and length constraints.
- */
 @RestController
 @RequestMapping(path = "/api/products/{productId}/options")
 public class OptionController {

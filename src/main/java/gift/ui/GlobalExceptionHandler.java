@@ -1,6 +1,7 @@
 package gift.ui;
 
 import gift.infrastructure.kakao.KakaoMessageException;
+import io.jsonwebtoken.JwtException;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -29,6 +30,12 @@ public class GlobalExceptionHandler {
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public Map<String, String> handleIllegalArgument(IllegalArgumentException e) {
     return Map.of(ERROR_MESSAGE_KEY, Objects.toString(e.getMessage(), "Bad Request"));
+  }
+
+  @ExceptionHandler(JwtException.class)
+  @ResponseStatus(HttpStatus.UNAUTHORIZED)
+  public Map<String, String> handleJwtException(JwtException e) {
+    return Map.of(ERROR_MESSAGE_KEY, Objects.toString(e.getMessage(), "인증에 실패했습니다."));
   }
 
   @ExceptionHandler(KakaoMessageException.class)

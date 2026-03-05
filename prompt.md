@@ -161,3 +161,16 @@
 - `OrderCompletedEvent` record 생성, `OrderCompletedEventListener`에서 `@TransactionalEventListener`(기본 AFTER_COMMIT)로 처리
 - `OrderService`에서 `kakaoMessageClient` 의존성 제거, `ApplicationEventPublisher`로 이벤트 발행만 담당
 - `./gradlew spotlessApply build` — 빌드 + 테스트 통과 확인
+
+### 프롬프트 5: 개발자별 코드 스타일 불일치 검토 및 수정
+> 사건의 전말(A/B/C/D 개발자 스토리)을 기반으로 코드 검토 후 수정
+
+- 예외 타입 통일: `MemberService`의 엔티티 조회 실패를 `IllegalArgumentException` → `NoSuchElementException`으로 변경 (회원만 400이던 것을 404로 통일)
+- 메서드명 통일: `MemberService.getById()` → `findById()` (다른 서비스와 동일 패턴)
+- DI 방식 통일: `AuthenticationResolver`, `JwtProvider`에서 `@Autowired` 제거 (생성자 주입으로 통일)
+- 주석 스타일 통일: Javadoc `@author`/`@since` 5개 파일 제거, 블록 주석 2개 파일 제거, 메서드 Javadoc 1건 제거 → 프로젝트 전체 "주석 없이 코드로 설명" 원칙으로 통일
+- 인증 처리 통일: `AuthenticationResolver`가 null 반환 → 예외(`NoSuchElementException`) 던지도록 변경, 컨트롤러 5곳의 null 체크 중복 제거
+- `GlobalExceptionHandler`에 `JwtException` → 401 핸들러 추가
+- 201 응답 통일: `MemberController`의 `ResponseEntity.status(CREATED)` → `ResponseEntity.created(URI)` 패턴으로 통일
+- 컨트롤러 반환 타입: `ResponseEntity<?>` → 구체 타입으로 변경
+- `./gradlew spotlessApply build` — 빌드 + 테스트 통과 확인

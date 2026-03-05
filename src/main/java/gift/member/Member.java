@@ -8,12 +8,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * Represents a registered member.
- *
- * @author brian.kim
- * @since 1.0
- */
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -55,7 +49,6 @@ public class Member {
     this.point += amount;
   }
 
-  /** 주문 결제 시 포인트를 차감한다. */
   public void deductPoint(int amount) {
     if (amount <= 0) {
       throw new IllegalArgumentException("차감 금액은 1 이상이어야 합니다.");
