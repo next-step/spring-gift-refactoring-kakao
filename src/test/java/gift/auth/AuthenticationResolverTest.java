@@ -1,7 +1,9 @@
 package gift.auth;
 
-import gift.member.Member;
-import gift.member.MemberRepository;
+import gift.auth.jwt.AuthenticationResolver;
+import gift.auth.jwt.JwtProvider;
+import gift.member.entity.Member;
+import gift.member.repository.MemberRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

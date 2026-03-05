@@ -1,12 +1,19 @@
 package gift.wish;
 
-import gift.auth.AuthenticationException;
-import gift.auth.AuthenticationResolver;
-import gift.auth.ForbiddenException;
-import gift.category.Category;
-import gift.member.Member;
-import gift.product.Product;
-import gift.product.ProductRepository;
+import gift.auth.exception.AuthenticationException;
+import gift.auth.jwt.AuthenticationResolver;
+import gift.auth.exception.ForbiddenException;
+import gift.category.entity.Category;
+import gift.member.entity.Member;
+import gift.product.entity.Product;
+import gift.product.repository.ProductRepository;
+import gift.wish.dto.AddWishResult;
+import gift.wish.dto.WishRequest;
+import gift.wish.entity.Wish;
+import gift.wish.exception.WishErrorCode;
+import gift.wish.exception.WishException;
+import gift.wish.repository.WishRepository;
+import gift.wish.service.WishService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

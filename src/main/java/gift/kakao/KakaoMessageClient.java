@@ -2,8 +2,8 @@ package gift.kakao;
 
 import gift.external.ExternalProvider;
 import gift.message.MessageClient;
-import gift.order.Order;
-import gift.product.Product;
+import gift.order.entity.Order;
+import gift.product.entity.Product;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClient;

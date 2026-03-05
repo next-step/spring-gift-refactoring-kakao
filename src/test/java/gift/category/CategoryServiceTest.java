@@ -1,5 +1,10 @@
 package gift.category;
 
+import gift.category.entity.Category;
+import gift.category.exception.CategoryErrorCode;
+import gift.category.exception.CategoryException;
+import gift.category.repository.CategoryRepository;
+import gift.category.service.CategoryService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

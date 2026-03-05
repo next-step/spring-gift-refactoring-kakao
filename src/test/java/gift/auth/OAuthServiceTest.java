@@ -1,11 +1,14 @@
 package gift.auth;
 
+import gift.auth.dto.TokenResponse;
+import gift.auth.jwt.JwtProvider;
 import gift.auth.oauth.OAuthClient;
 import gift.auth.oauth.OAuthClientRegistry;
 import gift.auth.oauth.OAuthUserInfo;
+import gift.auth.service.OAuthService;
 import gift.external.ExternalProvider;
-import gift.member.Member;
-import gift.member.MemberRepository;
+import gift.member.entity.Member;
+import gift.member.repository.MemberRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

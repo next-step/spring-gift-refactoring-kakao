@@ -1,7 +1,14 @@
 package gift.product;
 
-import gift.category.Category;
-import gift.category.CategoryRepository;
+import gift.category.entity.Category;
+import gift.category.repository.CategoryRepository;
+import gift.product.dto.ProductRequest;
+import gift.product.dto.ProductResponse;
+import gift.product.entity.Product;
+import gift.product.exception.ProductErrorCode;
+import gift.product.exception.ProductException;
+import gift.product.repository.ProductRepository;
+import gift.product.service.ProductService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -1,5 +1,10 @@
 package gift.member;
 
+import gift.member.entity.Member;
+import gift.member.exception.MemberErrorCode;
+import gift.member.exception.MemberException;
+import gift.member.repository.MemberRepository;
+import gift.member.service.AdminMemberService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

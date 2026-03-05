@@ -1,7 +1,10 @@
 package gift.option;
 
-import gift.category.Category;
-import gift.product.Product;
+import gift.category.entity.Category;
+import gift.option.entity.Option;
+import gift.option.exception.OptionErrorCode;
+import gift.option.exception.OptionException;
+import gift.product.entity.Product;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

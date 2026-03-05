@@ -1,8 +1,8 @@
 package gift.message;
 
 import gift.external.ExternalProvider;
-import gift.order.Order;
-import gift.product.Product;
+import gift.order.entity.Order;
+import gift.product.entity.Product;
 
 public interface MessageClient {
     ExternalProvider provider();

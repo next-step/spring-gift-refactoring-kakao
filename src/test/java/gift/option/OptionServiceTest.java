@@ -1,8 +1,14 @@
 package gift.option;
 
-import gift.category.Category;
-import gift.product.Product;
-import gift.product.ProductRepository;
+import gift.category.entity.Category;
+import gift.option.dto.OptionRequest;
+import gift.option.entity.Option;
+import gift.option.exception.OptionErrorCode;
+import gift.option.exception.OptionException;
+import gift.option.repository.OptionRepository;
+import gift.option.service.OptionService;
+import gift.product.entity.Product;
+import gift.product.repository.ProductRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

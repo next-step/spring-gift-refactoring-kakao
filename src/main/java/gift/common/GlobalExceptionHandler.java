@@ -1,15 +1,15 @@
 package gift.common;
 
-import gift.category.CategoryErrorCode;
-import gift.category.CategoryException;
-import gift.option.OptionErrorCode;
-import gift.option.OptionException;
-import gift.order.OrderErrorCode;
-import gift.order.OrderException;
-import gift.product.ProductErrorCode;
-import gift.product.ProductException;
-import gift.wish.WishErrorCode;
-import gift.wish.WishException;
+import gift.category.exception.CategoryErrorCode;
+import gift.category.exception.CategoryException;
+import gift.option.exception.OptionErrorCode;
+import gift.option.exception.OptionException;
+import gift.order.exception.OrderErrorCode;
+import gift.order.exception.OrderException;
+import gift.product.exception.ProductErrorCode;
+import gift.product.exception.ProductException;
+import gift.wish.exception.WishErrorCode;
+import gift.wish.exception.WishException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;

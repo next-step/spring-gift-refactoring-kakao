@@ -2,7 +2,6 @@ package gift.kakao;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import gift.auth.KakaoLoginProperties;
 import gift.auth.oauth.OAuthClient;
 import gift.auth.oauth.OAuthUserInfo;
 import gift.external.ExternalProvider;

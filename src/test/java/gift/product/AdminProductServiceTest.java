@@ -1,7 +1,10 @@
 package gift.product;
 
-import gift.category.Category;
-import gift.category.CategoryRepository;
+import gift.category.entity.Category;
+import gift.category.repository.CategoryRepository;
+import gift.product.entity.Product;
+import gift.product.repository.ProductRepository;
+import gift.product.service.AdminProductService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

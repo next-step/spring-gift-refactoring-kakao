@@ -1,5 +1,6 @@
 package gift.category;
 
+import gift.category.entity.Category;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

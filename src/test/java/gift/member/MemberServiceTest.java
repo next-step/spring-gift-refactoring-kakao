@@ -1,7 +1,13 @@
 package gift.member;
 
-import gift.auth.JwtProvider;
-import gift.auth.TokenResponse;
+import gift.auth.jwt.JwtProvider;
+import gift.auth.dto.TokenResponse;
+import gift.member.dto.MemberRequest;
+import gift.member.entity.Member;
+import gift.member.exception.MemberErrorCode;
+import gift.member.exception.MemberException;
+import gift.member.repository.MemberRepository;
+import gift.member.service.MemberService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
