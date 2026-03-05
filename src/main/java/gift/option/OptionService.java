@@ -4,11 +4,13 @@ import gift.product.Product;
 import gift.product.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class OptionService {
     private final OptionRepository optionRepository;
     private final ProductRepository productRepository;
@@ -21,6 +23,7 @@ public class OptionService {
             .toList();
     }
 
+    @Transactional
     public OptionResponse createOption(Long productId, OptionRequest request) {
         Product product = productRepository.findById(productId)
             .orElseThrow(() -> new OptionException(OptionErrorCode.PRODUCT_NOT_FOUND));
@@ -31,6 +34,7 @@ public class OptionService {
         return OptionResponse.from(saved);
     }
 
+    @Transactional
     public void deleteOption(Long productId, Long optionId) {
         productRepository.findById(productId)
             .orElseThrow(() -> new OptionException(OptionErrorCode.PRODUCT_NOT_FOUND));

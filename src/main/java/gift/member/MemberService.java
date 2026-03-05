@@ -4,13 +4,16 @@ import gift.auth.JwtProvider;
 import gift.auth.TokenResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class MemberService {
     private final MemberRepository memberRepository;
     private final JwtProvider jwtProvider;
 
+    @Transactional
     public TokenResponse register(MemberRequest request) {
         if (memberRepository.existsByEmail(request.email())) {
             throw new MemberException(MemberErrorCode.DUPLICATE_EMAIL);

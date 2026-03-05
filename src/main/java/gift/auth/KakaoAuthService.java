@@ -5,12 +5,14 @@ import gift.member.Member;
 import gift.member.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class KakaoAuthService {
     private final KakaoLoginProperties properties;
     private final KakaoLoginClient kakaoLoginClient;
@@ -28,6 +30,7 @@ public class KakaoAuthService {
         return URI.create(url);
     }
 
+    @Transactional
     public TokenResponse handleCallback(String code) {
         KakaoLoginClient.KakaoTokenResponse kakaoToken = kakaoLoginClient.requestAccessToken(code);
         KakaoLoginClient.KakaoUserResponse kakaoUser = kakaoLoginClient.requestUserInfo(kakaoToken.accessToken());

@@ -10,9 +10,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class WishService {
     private final WishRepository wishRepository;
     private final ProductRepository productRepository;
@@ -23,6 +25,7 @@ public class WishService {
         return wishRepository.findByMemberId(member.getId(), pageable).map(WishResponse::from);
     }
 
+    @Transactional
     public AddWishResult addWish(String authorization, WishRequest request) {
         Member member = extractMember(authorization);
         Product product = productRepository.findById(request.productId())
@@ -33,6 +36,7 @@ public class WishService {
                 WishResponse.from(wishRepository.save(request.toEntity(member.getId(), product))), true));
     }
 
+    @Transactional
     public void removeWish(String authorization, Long id) {
         Member member = extractMember(authorization);
         Wish wish = wishRepository.findById(id)

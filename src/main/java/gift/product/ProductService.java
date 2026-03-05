@@ -6,9 +6,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
@@ -23,6 +25,7 @@ public class ProductService {
         return ProductResponse.from(product);
     }
 
+    @Transactional
     public ProductResponse createProduct(ProductRequest request) {
         ProductNameValidator.validateOrThrow(request.name());
         Category category = categoryRepository.findById(request.categoryId())
@@ -31,6 +34,7 @@ public class ProductService {
         return ProductResponse.from(saved);
     }
 
+    @Transactional
     public ProductResponse updateProduct(Long id, ProductRequest request) {
         ProductNameValidator.validateOrThrow(request.name());
         Category category = categoryRepository.findById(request.categoryId())
@@ -41,6 +45,7 @@ public class ProductService {
         return ProductResponse.from(productRepository.save(product));
     }
 
+    @Transactional
     public void deleteProduct(Long id) {
         productRepository.deleteById(id);
     }
