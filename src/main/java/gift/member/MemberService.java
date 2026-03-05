@@ -20,13 +20,8 @@ public class MemberService {
 
     @Transactional
     public TokenResponse register(MemberRequest request) {
-        if (memberRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("이미 등록된 이메일입니다.");
-        }
-
-        Member member = memberRepository.save(request.toEntity());
-        String token = jwtProvider.createToken(member.getEmail());
-        return new TokenResponse(token);
+        create(request.email(), request.password());
+        return new TokenResponse(jwtProvider.createToken(request.email()));
     }
 
     @Transactional(readOnly = true)
