@@ -281,3 +281,158 @@ return ResponseEntity.ok(...);
 - **API 동작 유지**: 신규 201, 중복 200, 미존재 404 — Cucumber 시나리오 전체 통과
 
 ---
+
+## 8단계: 상품 이름 검증을 서비스로 이동 (구조 변경)
+
+### 프롬프트
+
+> 상품 이름 검증을 서비스로 이동. 중복 제거.
+
+### 변경 전/후 정의
+
+- **무엇을 바꾸는가**: 이름 검증 책임을 컨트롤러에서 서비스로 이동
+- **무엇을 바꾸지 않는가**: API 동작 (카카오 이름 400, 15자 초과 400, Admin은 카카오 허용)
+- **무엇이 이를 증명하는가**: `ProductServiceTest` 5개 추가 + 기존 Cucumber product 시나리오 3개
+
+### 변경 전 (컨트롤러에 검증 중복)
+
+```java
+// ProductController - create, update 양쪽에서 validateName 호출
+validateName(request.name()); // allowKakao=false
+productService.create(name, price, imageUrl, categoryId);
+
+// AdminProductController - ProductNameValidator 직접 호출
+List<String> errors = ProductNameValidator.validate(name, true); // allowKakao=true
+productService.create(name, price, imageUrl, categoryId);
+```
+
+### 변경 후 (서비스가 책임)
+
+```java
+// ProductService - 검증을 내부에서 수행, allowKakao 오버로드
+public Product create(name, price, imageUrl, categoryId) { ... }           // allowKakao=false
+public Product create(name, price, imageUrl, categoryId, allowKakao) { ... } // 명시적 지정
+
+// ProductController - validateName 제거, 서비스만 호출
+productService.create(name, price, imageUrl, categoryId);
+
+// AdminProductController - allowKakao=true 전달
+productService.create(name, price, imageUrl, categoryId, true);
+```
+
+### AI 활용 방식
+
+1. **테스트 먼저 작성** (Red): `ProductServiceTest`에 5개 추가
+   - 카카오 이름 등록 거부 + DB 미생성 확인
+   - 15자 초과 이름 등록 거부
+   - Admin은 카카오 이름 허용 (`allowKakao=true`)
+   - 카카오 이름 수정 거부 + 원래 이름 유지 확인
+2. **서비스 변경**: `create`/`update`에 `allowKakao` 오버로드 추가, 내부에서 `validateName()` 호출
+3. **컨트롤러 단순화**:
+   - `ProductController`: `validateName()` 메서드 제거, 미사용 `List` import 제거
+   - `AdminProductController`: `ProductNameValidator` 직접 호출 → `productService.create(..., true)` 위임
+4. **전체 테스트 통과 확인** (`./gradlew clean test` BUILD SUCCESSFUL)
+
+### 산출물
+
+| 파일 | 변경 | 종류 |
+|------|------|------|
+| `ProductServiceTest.java` | 5개 테스트 추가 (카카오/길이/Admin/수정) | 테스트 |
+| `ProductService.java` | `create`/`update` 오버로드 + `validateName()` private 메서드 | 구조 변경 |
+| `ProductController.java` | `validateName()` 제거, 서비스만 호출 | 구조 변경 |
+| `AdminProductController.java` | `ProductNameValidator` 직접 호출 → 서비스 `allowKakao=true` 위임 | 구조 변경 |
+
+### 효과
+
+- **검증 중복 제거**: 컨트롤러 2곳에서 각각 호출하던 검증이 서비스 1곳으로 통합
+- **도메인 규칙 캡슐화**: "상품 이름 제약" 규칙이 서비스 안에 위치
+- **Admin 정책 분리**: `allowKakao` 파라미터로 API/Admin 정책 차이를 명시적으로 표현
+
+---
+
+## 9단계: 카카오 이름 검증 책임 재설계 (8단계 개선)
+
+### 프롬프트
+
+> allowkakao 이거 넣는게 너무 어색한데 다른 방법 없을까
+
+### 문제 인식
+
+8단계에서 `allowKakao` boolean 오버로드 방식을 적용했으나, 다음 문제가 제기됨:
+
+1. **호출부 가독성 부족**: `create(name, price, imageUrl, categoryId, true)` — `true`가 무엇을 의미하는지 코드만 보고 알 수 없음
+2. **구조 중복**: `create(4인자)` / `create(5인자)`, `update(5인자)` / `update(6인자)` — 시그니처만 다른 거의 동일한 메서드 쌍
+3. **관심사 혼재**: 서비스가 "누가 호출하는가"(API vs Admin)를 알아야 하는 구조
+
+### 의사결정 과정
+
+3가지 대안을 검토:
+
+| 대안 | 설명 | 판단 |
+|------|------|------|
+| `create` / `createByAdmin` 분리 | 메서드명으로 구분 | 처음 선택했으나 로직 중복이 여전히 존재 |
+| `allowKakao` boolean 유지 | 현행 유지 | 호출부 가독성 나쁨, 거부 |
+| **DTO Bean Validation으로 분리** | 카카오 체크를 DTO 어노테이션으로 이동 | **최종 채택** |
+
+**최종 설계**: 검증 책임을 계층별로 분리
+
+- **"카카오" 제한** → DTO의 `@ValidProductName` Bean Validation 어노테이션이 담당
+- **도메인 규칙 (길이, 특수문자)** → `ProductNameValidator`가 담당, 서비스에서 호출
+- **Admin은 `@RequestParam`**으로 개별 파라미터를 받으므로 Bean Validation을 거치지 않음 → 카카오 이름 자연스럽게 허용
+
+### 핵심 인사이트
+
+서비스가 `ProductNameValidator.validate(name, true)`를 항상 호출하는 것은 설계 모순이었다.
+"카카오" 검증은 **누가 호출하느냐**에 따라 달라지는 **접근 제어** 성격이므로, 서비스(도메인)가 아닌 **컨트롤러 계층(DTO)**에서 처리하는 것이 자연스럽다.
+
+이를 통해:
+- `ProductNameValidator`에서 `allowKakao` 파라미터 **완전 제거** — 도메인 규칙(길이, 특수문자)만 남김
+- 서비스는 `ProductNameValidator.validate(name)` 한 가지만 호출
+- 카카오 검증은 `@ValidProductName` 어노테이션이 전담
+
+### 검증 흐름 최종 구조
+
+```
+[API 호출]
+  ProductController → @Valid ProductRequest
+    → @NotBlank        : null/빈값 체크
+    → @ValidProductName : "카카오" 포함 여부 체크 (ProductNameConstraintValidator)
+    → @Positive         : 가격 양수 체크
+  → ProductService.create()
+    → ProductNameValidator.validate(name) : 길이 15자, 특수문자만 체크
+
+[Admin 호출]
+  AdminProductController → @RequestParam (Bean Validation 미적용)
+  → ProductService.create()
+    → ProductNameValidator.validate(name) : 길이 15자, 특수문자만 체크
+    → "카카오" 체크 없음 → Admin은 카카오 포함 상품명 등록 가능
+```
+
+### AI 활용 방식
+
+1. `@ValidProductName` 커스텀 어노테이션 + `ProductNameConstraintValidator` 신규 작성
+2. `ProductRequest`에 `@ValidProductName` 추가
+3. `ProductNameValidator`에서 `allowKakao` 파라미터와 카카오 체크 로직 제거 → 도메인 규칙만 남김
+4. `ProductService.validateName()`에서 `validate(name, true)` → `validate(name)` 변경
+5. `AdminProductController`에서 5인자 호출(`true`) → 4인자 호출로 복원
+6. `ProductServiceTest` 정리: 카카오 관련 서비스 테스트 제거, 서비스가 카카오를 안 막는 것 확인 테스트 추가
+7. **전체 테스트 통과 확인** (`./gradlew test` BUILD SUCCESSFUL)
+
+### 산출물
+
+| 파일 | 변경 | 종류 |
+|------|------|------|
+| `ValidProductName.java` | 신규 — 커스텀 Bean Validation 어노테이션 | 구조 변경 |
+| `ProductNameConstraintValidator.java` | 신규 — "카카오" 포함 여부 검증 | 구조 변경 |
+| `ProductRequest.java` | `@ValidProductName` 추가 | 구조 변경 |
+| `ProductNameValidator.java` | `allowKakao` 파라미터 및 카카오 체크 로직 제거 | 구조 변경 |
+| `ProductService.java` | `validate(name, true)` → `validate(name)`, 오버로드 제거 | 구조 변경 |
+| `AdminProductController.java` | 5인자 → 4인자 호출 복원 | 구조 변경 |
+| `ProductServiceTest.java` | 카카오 서비스 테스트 정리, 서비스 카카오 미검증 테스트 추가 | 테스트 |
+
+### 교훈
+
+- **boolean 파라미터 지양**: `create(name, price, imageUrl, categoryId, true)`처럼 호출부만 보고 의미를 파악할 수 없는 구조는 피해야 한다
+- **검증 책임은 성격에 따라 계층을 나눠야 한다**: "카카오" 제한처럼 호출자(API vs Admin)에 따라 달라지는 검증은 컨트롤러 계층(DTO + Bean Validation)에서, 길이/특수문자 같은 도메인 규칙은 서비스에서 처리하는 것이 자연스럽다
+
+---

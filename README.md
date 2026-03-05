@@ -212,7 +212,7 @@ Spring Boot 기반의 선물하기 서비스. 사용자가 카테고리와 상�
   - 현재: `WishController`에서 `findByMemberAndProduct()` + `addWish()` 두 단계로 분리 호출
   - 변경: `WishService.addWish()` 안에서 중복 체크까지 처리, 컨트롤러는 한 번만 호출
   - **효과**: 컨트롤러의 분기 제거, 서비스가 도메인 규칙(멱등 추가) 책임
-- [ ] **개선 2: 상품 이름 검증을 서비스로 이동** (중복 제거)
+- [x] **개선 2: 상품 이름 검증을 서비스로 이동** (중복 제거)
   - 현재: `ProductController.createProduct()`와 `updateProduct()`에서 각각 `validateName()` 호출
   - 변경: `ProductService.create()`와 `update()` 안에서 검증 수행
   - **효과**: 검증 로직 중복 제거, 서비스가 비즈니스 규칙(이름 제약) 책임. Admin은 `allowKakao=true` 정책이 다르므로 서비스 메서드 오버로드 또는 파라미터로 분리

@@ -85,4 +85,21 @@ class ProductServiceTest {
             productService.update(product.getId(), "수정", 2000, "https://test.com/img.jpg", 999L)
         ).isInstanceOf(NoSuchElementException.class);
     }
+
+    @Test
+    @DisplayName("15자 초과 이름으로 상품 등록 시 예외 발생")
+    void create_longName_rejected() {
+        assertThatThrownBy(() ->
+            productService.create("이름이열다섯자를넘는아주긴상품명", 1000, "https://test.com/img.jpg", category.getId())
+        ).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("Admin은 카카오가 포함된 이름으로 상품 등록 가능 (서비스는 카카오 미검증)")
+    void create_kakaoName_allowedByService() {
+        Product product = productService.create(
+            "카카오선물", 1000, "https://test.com/img.jpg", category.getId());
+
+        assertThat(product.getName()).isEqualTo("카카오선물");
+    }
 }

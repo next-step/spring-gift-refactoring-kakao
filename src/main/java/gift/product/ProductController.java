@@ -2,7 +2,6 @@ package gift.product;
 
 import jakarta.validation.Valid;
 import java.net.URI;
-import java.util.List;
 import java.util.NoSuchElementException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,8 +42,6 @@ public class ProductController {
 
     @PostMapping
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductRequest request) {
-        validateName(request.name());
-
         try {
             Product saved = productService.create(
                 request.name(), request.price(), request.imageUrl(), request.categoryId()
@@ -61,8 +58,6 @@ public class ProductController {
         @PathVariable Long id,
         @Valid @RequestBody ProductRequest request
     ) {
-        validateName(request.name());
-
         try {
             Product saved = productService.update(
                 id, request.name(), request.price(), request.imageUrl(), request.categoryId()
@@ -77,13 +72,6 @@ public class ProductController {
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.delete(id);
         return ResponseEntity.noContent().build();
-    }
-
-    private void validateName(String name) {
-        List<String> errors = ProductNameValidator.validate(name);
-        if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(String.join(", ", errors));
-        }
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
