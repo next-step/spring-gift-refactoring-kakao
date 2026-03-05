@@ -33,6 +33,9 @@ public class Option {
   private int quantity;
 
   public Option(Product product, String name, int quantity) {
+    if (quantity < 1) {
+      throw new IllegalArgumentException("옵션 수량은 1 이상이어야 합니다.");
+    }
     this.product = product;
     this.name = name;
     this.quantity = quantity;
