@@ -186,3 +186,36 @@ Step 2에서 수행할 작업 식별:
 `@SpringBootTest`로 여러 테스트 클래스가 같은 H2 인스턴스를 공유할 때, `@BeforeEach`의 `deleteAll()` 순서가 FK 제약을 고려해야 한다. 삭제 순서: orders → wishes → options → products → categories → members (FK 역순).
 
 ---
+
+## 6단계: 주문 완료 후 위시리스트 자동 제거 구현
+
+### 프롬프트
+
+> 주문 완료 후 위시리스트에서 해당 상품 자동 제거. 테스트 먼저 구성하고 구현.
+
+### 변경 전/후 정의
+
+- **무엇을 바꾸는가**: 주문 완료 후 해당 회원의 위시리스트에서 주문한 상품을 자동 제거
+- **무엇을 바꾸지 않는가**: 기존 주문 흐름 (재고 차감 + 포인트 차감 + 주문 저장 + 카카오 알림)
+- **무엇이 이를 증명하는가**: `OrderServiceTest.createOrder_removesWishForProduct()` 테스트
+
+### AI 활용 방식
+
+1. **테스트 먼저 작성** (Red):
+   - `createOrder_removesWishForProduct()` — 위시에 상품 추가 → 주문 → DB 재조회로 위시 제거 확인
+   - 불필요한 테스트(`noWish_stillSucceeds`) 제거 — 기존 `createOrder_success`가 이미 커버
+2. **테스트 실패 확인**: 위시 삭제 로직이 없어서 주문 후에도 위시가 남아있음
+3. **최소 구현** (Green):
+   - `WishRepository` 의존성 추가
+   - 주문 저장 후 `wishRepository.findByMemberIdAndProductId().ifPresent(delete)` 1줄 추가
+   - TODO 주석 제거
+4. **전체 테스트 통과 확인** (`./gradlew clean test` BUILD SUCCESSFUL)
+
+### 산출물
+
+| 파일 | 변경 | 종류 |
+|------|------|------|
+| `OrderServiceTest.java` | 테스트 1개 추가 (위시 자동 제거 검증) | 테스트 |
+| `OrderService.java` | `WishRepository` 의존성 추가 + 위시 삭제 로직 + TODO 주석 제거 | 작동 변경 |
+
+---

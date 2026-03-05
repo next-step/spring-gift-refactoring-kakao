@@ -4,6 +4,7 @@ import gift.member.Member;
 import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
+import gift.wish.WishRepository;
 import java.util.NoSuchElementException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,17 +16,20 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OptionRepository optionRepository;
     private final MemberRepository memberRepository;
+    private final WishRepository wishRepository;
     private final KakaoMessageClient kakaoMessageClient;
 
     public OrderService(
         OrderRepository orderRepository,
         OptionRepository optionRepository,
         MemberRepository memberRepository,
+        WishRepository wishRepository,
         KakaoMessageClient kakaoMessageClient
     ) {
         this.orderRepository = orderRepository;
         this.optionRepository = optionRepository;
         this.memberRepository = memberRepository;
+        this.wishRepository = wishRepository;
         this.kakaoMessageClient = kakaoMessageClient;
     }
 
@@ -33,7 +37,6 @@ public class OrderService {
         return orderRepository.findByMemberId(memberId, pageable);
     }
 
-    // TODO: 주문 완료 후 위시리스트에서 해당 상품 자동 제거 (미구현)
     @Transactional
     public Order createOrder(Member member, Long optionId, int quantity, String message) {
         Option option = optionRepository.findById(optionId)
@@ -47,6 +50,9 @@ public class OrderService {
         memberRepository.save(member);
 
         Order saved = orderRepository.save(new Order(option, member.getId(), quantity, message));
+
+        wishRepository.findByMemberIdAndProductId(member.getId(), option.getProduct().getId())
+            .ifPresent(wishRepository::delete);
 
         sendKakaoMessageIfPossible(member, saved, option);
         return saved;

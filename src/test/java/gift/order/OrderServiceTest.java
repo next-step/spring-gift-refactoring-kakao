@@ -11,6 +11,8 @@ import gift.option.Option;
 import gift.option.OptionRepository;
 import gift.product.Product;
 import gift.product.ProductRepository;
+import gift.wish.Wish;
+import gift.wish.WishRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,9 +40,13 @@ class OrderServiceTest {
     @Autowired
     private OrderRepository orderRepository;
 
+    @Autowired
+    private WishRepository wishRepository;
+
     @BeforeEach
     void setUp() {
         orderRepository.deleteAll();
+        wishRepository.deleteAll();
         optionRepository.deleteAll();
         productRepository.deleteAll();
         categoryRepository.deleteAll();
@@ -109,4 +115,32 @@ class OrderServiceTest {
         Member reloadedMember = memberRepository.findById(member.getId()).orElseThrow();
         assertThat(reloadedMember.getPoint()).isEqualTo(4000);
     }
+
+    @Test
+    @DisplayName("주문 완료 후 위시리스트에서 해당 상품이 자동 제거된다")
+    void createOrder_removesWishForProduct() {
+        // given
+        Category category = categoryRepository.save(
+            new Category("테스트", "#000000", "https://test.com/img.jpg", "설명"));
+        Product product = productRepository.save(
+            new Product("테스트상품", 500, "https://test.com/img.jpg", category));
+        Option option = optionRepository.save(new Option(product, "기본옵션", 10));
+
+        Member member = new Member("test@example.com", "password");
+        member.chargePoint(5000);
+        member = memberRepository.save(member);
+
+        // given: 해당 상품을 위시리스트에 추가
+        Wish wish = wishRepository.save(new Wish(member.getId(), product));
+        assertThat(wishRepository.findByMemberIdAndProductId(member.getId(), product.getId()))
+            .isPresent();
+
+        // when: 주문 생성
+        orderService.createOrder(member, option.getId(), 1, "선물");
+
+        // then: 위시리스트에서 해당 상품이 제거되어야 한다 (DB 재조회)
+        assertThat(wishRepository.findByMemberIdAndProductId(member.getId(), product.getId()))
+            .isEmpty();
+    }
+
 }
