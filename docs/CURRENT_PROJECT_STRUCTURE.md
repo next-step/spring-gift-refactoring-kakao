@@ -28,7 +28,8 @@ spring-gift-refactoring-kakao/
 │   │   │   │   ├── JwtProvider.java
 │   │   │   │   └── TokenResponse.java
 │   │   │   ├── config/
-│   │   │   │   └── WebMvcConfig.java
+│   │   │   │   ├── WebMvcConfig.java
+│   │   │   │   └── GlobalExceptionHandler.java
 │   │   │   ├── category/
 │   │   │   │   ├── Category.java
 │   │   │   │   ├── CategoryController.java
@@ -174,6 +175,7 @@ spring-gift-refactoring-kakao/
 | 클래스 | 역할 |
 |--------|------|
 | WebMvcConfig | WebMvcConfigurer — ArgumentResolver 등록 |
+| GlobalExceptionHandler | @RestControllerAdvice — 예외 핸들러 중앙 관리 |
 
 ### category - 상품 카테고리 관리
 
