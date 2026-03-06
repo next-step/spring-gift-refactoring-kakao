@@ -65,6 +65,9 @@ public class Option {
     }
 
     public void subtractQuantity(int amount) {
+        if (amount < 1) {
+            throw new ApplicationException(OptionErrorCode.INVALID_QUANTITY);
+        }
         if (amount > this.quantity) {
             throw new ApplicationException(OptionErrorCode.INSUFFICIENT_STOCK);
         }
