@@ -3,8 +3,10 @@ package gift.auth;
 import gift.member.Member;
 import gift.member.MemberRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional
 public class KakaoAuthService {
     private final KakaoLoginClient kakaoLoginClient;
     private final MemberRepository memberRepository;

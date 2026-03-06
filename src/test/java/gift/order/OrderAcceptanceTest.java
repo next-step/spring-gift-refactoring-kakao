@@ -145,7 +145,7 @@ class OrderAcceptanceTest {
         }
 
         @Test
-        @DisplayName("실패: 인증 헤더 없이 조회하면 400을 반환한다")
+        @DisplayName("실패: 인증 헤더 없이 조회하면 401을 반환한다")
         void fail_noAuthHeader() {
             RestAssured.given()
                 .param("page", 0)
@@ -153,7 +153,7 @@ class OrderAcceptanceTest {
                 .when()
                 .get("/api/orders")
                 .then()
-                .statusCode(400);
+                .statusCode(401);
         }
     }
 
@@ -292,7 +292,7 @@ class OrderAcceptanceTest {
                 .when()
                 .post("/api/orders")
                 .then()
-                .statusCode(500); // IllegalArgumentException이 처리되지 않아 500 반환
+                .statusCode(400);
         }
 
         @Test
@@ -318,7 +318,40 @@ class OrderAcceptanceTest {
                 .when()
                 .post("/api/orders")
                 .then()
-                .statusCode(500); // IllegalArgumentException이 처리되지 않아 500 반환
+                .statusCode(400);
+        }
+
+        @Test
+        @DisplayName("실패: 포인트 부족 시 재고가 롤백되어야 한다 (트랜잭션 원자성)")
+        void fail_insufficientPoints_shouldRollbackStock() {
+            // Given: 포인트 부족한 회원
+            Member poorMember = memberRepository.save(new Member("poor@example.com", "password"));
+            poorMember.chargePoint(100); // 100 포인트만 (상품가격 1000원보다 적음)
+            memberRepository.save(poorMember);
+            String poorToken = getToken("poor@example.com", "password");
+            int initialStock = option.getQuantity(); // 100
+
+            // When: 포인트 부족으로 주문 실패
+            RestAssured.given()
+                .header("Authorization", "Bearer " + poorToken)
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "optionId": %d,
+                        "quantity": 1,
+                        "message": "메시지"
+                    }
+                    """.formatted(option.getId()))
+                .when()
+                .post("/api/orders")
+                .then()
+                .statusCode(400);
+
+            // Then: 재고가 차감되지 않아야 한다 (트랜잭션 롤백)
+            Option updated = optionRepository.findById(option.getId()).orElseThrow();
+            assertThat(updated.getQuantity())
+                .as("포인트 부족으로 주문 실패 시 재고가 롤백되어야 한다")
+                .isEqualTo(initialStock);
         }
 
         @Test
@@ -341,7 +374,7 @@ class OrderAcceptanceTest {
         }
 
         @Test
-        @DisplayName("실패: 인증 헤더 없이 주문하면 400을 반환한다")
+        @DisplayName("실패: 인증 헤더 없이 주문하면 401을 반환한다")
         void fail_noAuthHeader() {
             RestAssured.given()
                 .contentType(ContentType.JSON)
@@ -355,7 +388,7 @@ class OrderAcceptanceTest {
                 .when()
                 .post("/api/orders")
                 .then()
-                .statusCode(400);
+                .statusCode(401);
         }
 
         @Test
@@ -375,6 +408,65 @@ class OrderAcceptanceTest {
                 .post("/api/orders")
                 .then()
                 .statusCode(401);
+        }
+
+        @Test
+        @DisplayName("성공: 주문 완료 시 위시리스트에서 해당 상품이 제거된다")
+        void success_removesFromWishlist() {
+            // Given: 위시리스트에 상품 추가
+            wishRepository.save(new gift.wish.Wish(member.getId(), product));
+            assertThat(wishRepository.findByMemberIdAndProductId(member.getId(), product.getId()))
+                .isPresent();
+
+            // When: 주문 생성
+            RestAssured.given()
+                .header("Authorization", "Bearer " + token)
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "optionId": %d,
+                        "quantity": 1,
+                        "message": "메시지"
+                    }
+                    """.formatted(option.getId()))
+                .when()
+                .post("/api/orders")
+                .then()
+                .statusCode(201);
+
+            // Then: 위시리스트에서 해당 상품 제거됨
+            assertThat(wishRepository.findByMemberIdAndProductId(member.getId(), product.getId()))
+                .as("주문 완료 후 위시리스트에서 해당 상품이 제거되어야 한다")
+                .isEmpty();
+        }
+
+        @Test
+        @DisplayName("성공: 위시리스트에 없는 상품도 주문할 수 있다")
+        void success_orderWithoutWishlist() {
+            // Given: 위시리스트가 비어있음
+            assertThat(wishRepository.findByMemberIdAndProductId(member.getId(), product.getId()))
+                .isEmpty();
+
+            // When: 주문 생성
+            RestAssured.given()
+                .header("Authorization", "Bearer " + token)
+                .contentType(ContentType.JSON)
+                .body("""
+                    {
+                        "optionId": %d,
+                        "quantity": 1,
+                        "message": "메시지"
+                    }
+                    """.formatted(option.getId()))
+                .when()
+                .post("/api/orders")
+                .then()
+                .statusCode(201);
+
+            // Then: 주문 성공 확인
+            assertThat(orderRepository.findByMemberId(member.getId(), org.springframework.data.domain.Pageable.unpaged()).getContent())
+                .as("위시리스트에 없어도 주문이 생성되어야 한다")
+                .hasSize(1);
         }
     }
 }

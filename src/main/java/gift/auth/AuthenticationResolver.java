@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 /**
  * Resolves the authenticated member from an Authorization header.
  *
@@ -24,14 +26,14 @@ public class AuthenticationResolver {
         this.memberRepository = memberRepository;
     }
 
-    public Member extractMember(String authorization) {
+    public Optional<Member> extractMember(String authorization) {
         try {
-            final String token = authorization.replace("Bearer ", "");
-            final String email = jwtProvider.getEmail(token);
-            return memberRepository.findByEmail(email).orElse(null);
+            String token = authorization.replace("Bearer ", "");
+            String email = jwtProvider.getEmail(token);
+            return memberRepository.findByEmail(email);
         } catch (Exception e) {
             log.debug("인증 토큰 파싱 실패: {}", e.getMessage());
-            return null;
+            return Optional.empty();
         }
     }
 }

@@ -3,10 +3,12 @@ package gift.member;
 import gift.auth.JwtProvider;
 import gift.auth.TokenResponse;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
+@Transactional
 public class MemberService {
     private final MemberRepository memberRepository;
     private final JwtProvider jwtProvider;
@@ -26,6 +28,7 @@ public class MemberService {
         return new TokenResponse(token);
     }
 
+    @Transactional(readOnly = true)
     public TokenResponse login(MemberRequest request) {
         Member member = memberRepository.findByEmail(request.email())
             .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다."));
@@ -40,15 +43,18 @@ public class MemberService {
 
     // Admin operations
 
+    @Transactional(readOnly = true)
     public List<Member> findAll() {
         return memberRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Member findById(Long id) {
         return memberRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다. id=" + id));
     }
 
+    @Transactional(readOnly = true)
     public boolean existsByEmail(String email) {
         return memberRepository.existsByEmail(email);
     }

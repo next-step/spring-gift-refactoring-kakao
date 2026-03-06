@@ -1,6 +1,6 @@
 package gift.wish;
 
-import gift.auth.AuthenticationResolver;
+import gift.auth.AuthenticatedMember;
 import gift.member.Member;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,40 +21,30 @@ import java.net.URI;
 @RequestMapping("/api/wishes")
 public class WishController {
     private final WishService wishService;
-    private final AuthenticationResolver authenticationResolver;
 
-    public WishController(WishService wishService, AuthenticationResolver authenticationResolver) {
+    public WishController(WishService wishService) {
         this.wishService = wishService;
-        this.authenticationResolver = authenticationResolver;
     }
 
     @GetMapping
     public ResponseEntity<Page<WishResponse>> getWishes(
-        @RequestHeader("Authorization") String authorization,
+        @AuthenticatedMember Member member,
         Pageable pageable
     ) {
-        Member member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
         Page<WishResponse> wishes = wishService.getWishes(member.getId(), pageable);
         return ResponseEntity.ok(wishes);
     }
 
     @PostMapping
     public ResponseEntity<WishResponse> addWish(
-        @RequestHeader("Authorization") String authorization,
+        @AuthenticatedMember Member member,
         @Valid @RequestBody WishRequest request
     ) {
-        Member member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
         return wishService.addWish(member.getId(), request)
             .map(result -> {
                 if (result.created()) {
-                    return ResponseEntity.created(URI.create("/api/wishes/" + result.response().id()))
+                    return ResponseEntity
+                        .created(URI.create("/api/wishes/" + result.response().id()))
                         .body(result.response());
                 }
                 return ResponseEntity.ok(result.response());
@@ -65,20 +54,13 @@ public class WishController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> removeWish(
-        @RequestHeader("Authorization") String authorization,
+        @AuthenticatedMember Member member,
         @PathVariable Long id
     ) {
-        Member member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        return wishService.removeWish(member.getId(), id)
-            .map(result -> switch (result) {
-                case SUCCESS -> ResponseEntity.noContent().<Void>build();
-                case NOT_FOUND -> ResponseEntity.notFound().<Void>build();
-                case FORBIDDEN -> ResponseEntity.status(HttpStatus.FORBIDDEN).<Void>build();
-            })
-            .orElse(ResponseEntity.notFound().build());
+        return switch (wishService.removeWish(member.getId(), id)) {
+            case SUCCESS -> ResponseEntity.noContent().build();
+            case NOT_FOUND -> ResponseEntity.notFound().build();
+            case FORBIDDEN -> ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        };
     }
 }

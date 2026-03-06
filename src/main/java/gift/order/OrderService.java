@@ -11,16 +11,20 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.Optional;
 
 @Service
+@Transactional
 public class OrderService {
     private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 
     private final OrderRepository orderRepository;
     private final OptionRepository optionRepository;
-    private final WishRepository wishRepository;  // TODO: 주문 완료 후 위시리스트 정리 기능 구현 예정
+    private final WishRepository wishRepository;
     private final MemberRepository memberRepository;
     private final KakaoMessageClient kakaoMessageClient;
 
@@ -38,40 +42,37 @@ public class OrderService {
         this.kakaoMessageClient = kakaoMessageClient;
     }
 
+    @Transactional(readOnly = true)
     public Page<OrderResponse> getOrders(Long memberId, Pageable pageable) {
         return orderRepository.findByMemberId(memberId, pageable).map(OrderResponse::from);
     }
 
-    // TODO: @Transactional 추가 필요
-    //  - 현재 여러 save()가 개별 트랜잭션으로 실행됨
-    //  - 부분 실패 시나리오: 포인트 부족 시 재고만 차감되고 주문은 생성되지 않는 데이터 불일치 발생 가능
-    //  - 해결: @Transactional로 원자성 보장, 실패 시 전체 롤백
-    //  - 관련 테스트 추가 필요: 포인트 부족 시나리오
-    //
-    // order flow:
-    // 1. validate option
-    // 2. subtract stock
-    // 3. deduct points
-    // 4. save order
-    // 5. cleanup wish
-    // 6. send kakao notification
     public Optional<OrderResponse> createOrder(Member member, OrderRequest request) {
-        return optionRepository.findById(request.optionId())
+        return optionRepository.findByIdForUpdate(request.optionId())
             .map(option -> {
                 // subtract stock
                 option.subtractQuantity(request.quantity());
                 optionRepository.save(option);
 
                 // deduct points
-                int price = option.getProduct().getPrice() * request.quantity();
-                member.deductPoint(price);
+                long price = option.calculateTotalPrice(request.quantity());
+                member.deductPoint(Math.toIntExact(price));
                 memberRepository.save(member);
 
                 // save order
                 Order saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
 
-                // best-effort kakao notification
-                sendKakaoMessageIfPossible(member, saved, option);
+                // cleanup wishlist
+                wishRepository.findByMemberIdAndProductId(member.getId(), option.getProduct().getId())
+                    .ifPresent(wishRepository::delete);
+
+                // best-effort kakao notification (트랜잭션 커밋 후 실행)
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        sendKakaoMessageIfPossible(member, saved, option);
+                    }
+                });
 
                 return OrderResponse.from(saved);
             });

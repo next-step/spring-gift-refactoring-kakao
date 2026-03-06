@@ -5,11 +5,13 @@ import gift.category.CategoryRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@Transactional
 public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
@@ -19,10 +21,12 @@ public class ProductService {
         this.categoryRepository = categoryRepository;
     }
 
+    @Transactional(readOnly = true)
     public Page<ProductResponse> getAllProducts(Pageable pageable) {
         return productRepository.findAll(pageable).map(ProductResponse::from);
     }
 
+    @Transactional(readOnly = true)
     public Optional<ProductResponse> getProduct(Long id) {
         return productRepository.findById(id)
             .map(ProductResponse::from);
@@ -63,10 +67,12 @@ public class ProductService {
 
     // Admin operations
 
+    @Transactional(readOnly = true)
     public List<Product> findAll() {
         return productRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Product findById(Long id) {
         return productRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("상품이 존재하지 않습니다. id=" + id));

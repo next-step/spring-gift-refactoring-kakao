@@ -3,11 +3,13 @@ package gift.option;
 import gift.product.Product;
 import gift.product.ProductRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@Transactional
 public class OptionService {
     private final OptionRepository optionRepository;
     private final ProductRepository productRepository;
@@ -17,6 +19,7 @@ public class OptionService {
         this.productRepository = productRepository;
     }
 
+    @Transactional(readOnly = true)
     public Optional<List<OptionResponse>> getOptions(Long productId) {
         return productRepository.findById(productId)
             .map(product -> optionRepository.findByProductId(productId).stream()

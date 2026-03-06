@@ -128,7 +128,7 @@ class WishAcceptanceTest {
         }
 
         @Test
-        @DisplayName("실패: 인증 헤더 없이 조회하면 400을 반환한다")
+        @DisplayName("실패: 인증 헤더 없이 조회하면 401을 반환한다")
         void fail_noAuthHeader() {
             RestAssured.given()
                 .param("page", 0)
@@ -136,7 +136,7 @@ class WishAcceptanceTest {
                 .when()
                 .get("/api/wishes")
                 .then()
-                .statusCode(400);
+                .statusCode(401);
         }
 
         @Test
@@ -216,7 +216,7 @@ class WishAcceptanceTest {
         }
 
         @Test
-        @DisplayName("실패: 인증 헤더 없이 추가하면 400을 반환한다")
+        @DisplayName("실패: 인증 헤더 없이 추가하면 401을 반환한다")
         void fail_noAuthHeader() {
             RestAssured.given()
                 .contentType(ContentType.JSON)
@@ -228,7 +228,7 @@ class WishAcceptanceTest {
                 .when()
                 .post("/api/wishes")
                 .then()
-                .statusCode(400);
+                .statusCode(401);
         }
     }
 
@@ -279,7 +279,7 @@ class WishAcceptanceTest {
         }
 
         @Test
-        @DisplayName("실패: 인증 헤더 없이 삭제하면 400을 반환한다")
+        @DisplayName("실패: 인증 헤더 없이 삭제하면 401을 반환한다")
         void fail_noAuthHeader() {
             // Given
             Wish wish = wishRepository.save(new Wish(member.getId(), product));
@@ -289,7 +289,7 @@ class WishAcceptanceTest {
                 .when()
                 .delete("/api/wishes/" + wish.getId())
                 .then()
-                .statusCode(400);
+                .statusCode(401);
         }
     }
 }
