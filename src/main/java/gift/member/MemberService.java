@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class MemberService {
     private final MemberRepository memberRepository;
 
@@ -18,21 +19,22 @@ public class MemberService {
 
     public Member findById(Long id) {
         return memberRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Member not found. id=" + id));
+            .orElseThrow(() -> new IllegalArgumentException("회원이 존재하지 않습니다. id=" + id));
     }
 
+    @Transactional
     public Member register(String email, String password) {
         if (memberRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("Email is already registered.");
+            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
         return memberRepository.save(new Member(email, password));
     }
 
     public Member login(String email, String password) {
         Member member = memberRepository.findByEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid email or password."));
-        if (member.getPassword() == null || !member.getPassword().equals(password)) {
-            throw new IllegalArgumentException("Invalid email or password.");
+            .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다."));
+        if (!member.matchesPassword(password)) {
+            throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
         }
         return member;
     }
@@ -41,16 +43,29 @@ public class MemberService {
     public Member update(Long id, String email, String password) {
         Member member = findById(id);
         member.update(email, password);
-        return memberRepository.save(member);
+        return member;
     }
 
     @Transactional
     public Member chargePoint(Long id, int amount) {
         Member member = findById(id);
         member.chargePoint(amount);
-        return memberRepository.save(member);
+        return member;
     }
 
+    @Transactional
+    public void deductPoint(Member member, int amount) {
+        member.deductPoint(amount);
+        memberRepository.save(member);
+    }
+
+    @Transactional
+    public Member findByEmailOrCreate(String email) {
+        return memberRepository.findByEmail(email)
+            .orElseGet(() -> memberRepository.save(new Member(email)));
+    }
+
+    @Transactional
     public void delete(Long id) {
         memberRepository.deleteById(id);
     }

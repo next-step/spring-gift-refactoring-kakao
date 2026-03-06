@@ -466,3 +466,73 @@ AI는 크게 두 가지 역할로 활용되었다.
 ### 문제 발견 → 문서에 기록
 
 코드 분석 과정에서 발견한 이슈(트랜잭션 부재, 위시 클린업 미구현, 인증 패턴 반복)를 TECH_SPEC.md와 FEATURES.md에 명시적으로 기록하여, 이후 리팩터링 단계에서 참조할 수 있도록 했다.
+
+---
+
+## PR #37 리뷰 대응 (리팩터링 반영)
+
+- **Prompt**: PR #37에 달린 8개 리뷰 코멘트를 분석하고, 각각에 대해 코드를 수정하여 커밋
+- **Action**:
+  - `OrderService.java`: `@Transactional` 제거 (1단계 원칙 준수), SLF4J 로깅 추가 (Exception swallowing 해소)
+  - `Option.java`: `calculateTotalPrice(int quantity)` 메서드 추가 (Tell Don't Ask 원칙)
+  - `OrderService.java`: `option.calculateTotalPrice(quantity)` 사용으로 도메인 위임
+  - `WishController.java`, `OrderController.java`: 매직 넘버 → `HttpStatus` 상수 교체
+  - `WishService.java`: `addWishIdempotent()` + `AddWishResult` record 추가 (비즈니스 로직 서비스 이동)
+  - `WishController.java`: 중복 체크 로직 제거, `ResponseEntity<?>` → 구체적 타입 복원
+  - `AuthService.java` 신규 생성: JWT 생성 로직을 서비스 계층으로 분리
+  - `MemberController.java`: `JwtProvider` → `AuthService` 의존으로 변경
+  - `build.gradle.kts`: ArchUnit 의존성 추가
+  - `ArchitectureTest.java` 신규 생성: Controller → Repository 직접 의존 금지 규칙
+- **Outcome**: 6개 커밋으로 분리하여 반영. 전체 테스트(ArchUnit 포함) 통과 확인.
+
+---
+
+## [Step 2] 작동 변경 — Phase 1~4 구현
+
+- **Prompt**: Step 2 계획서(9개 커밋)를 그대로 구현해줘.
+- **Action**:
+  - **Commit 1 (테스트)**: `common-cleanup.sql`, `order/setup.sql`, `OrderIntegrationTest.java` 생성. 정상주문/재고부족/포인트부족/위시자동제거 5개 시나리오 포함.
+  - **Commit 2 (ADR)**: `docs/adr/001-transaction-boundaries.md` — 트랜잭션 경계 결정 및 trade-off 문서화.
+  - **Commit 3 (작동)**: `OrderService.createOrder()`에 `@Transactional` 추가. 포인트 부족 시 재고 롤백 버그 수정.
+  - **Commit 4 (작동)**: `OptionService.create/delete`, `WishService.addWishIdempotent/removeWish`에 `@Transactional` 추가.
+  - **Commit 5 (작동)**: `WishRepository.deleteByMemberIdAndProductId()` 추가, `OrderService`에 주문 후 위시 자동 삭제 로직 추가. FEATURES.md "(미구현)" 기능 완성.
+  - **Commit 6 (작동)**: `OrderController`에 `@ExceptionHandler(IllegalArgumentException.class)` 추가(500→400). Cucumber 시나리오 기대 코드 변경.
+  - **Commit 7 (구조)**: 상품 이름 검증을 `ProductService.create/update(allowKakao)`로 통합. 컨트롤러 중복 제거.
+  - **Commit 8 (구조)**: `Member.matchesPassword()`, `Wish.belongsTo()` 도메인 메서드 추가. Tell Don't Ask 적용.
+  - **Commit 9 (구조)**: `KakaoMessageClient` 가격 계산을 `Option.calculateTotalPrice()`로 통일. `CategoryService/MemberService/ProductService`의 `@Transactional` 내 불필요한 `save()` 제거. `OrderService`의 `optionRepository.save()` 제거.
+- **Outcome**: 전체 테스트(`./gradlew test`) 통과. 포인트 부족 시 재고 롤백, 위시 자동 제거, 400 에러 코드 모두 `OrderIntegrationTest`로 검증됨.
+
+## [예외 처리 통합] RestControllerAdvice로 전역 예외 처리
+- **Prompt**: 4개 컨트롤러에 복붙된 @ExceptionHandler와 9곳에 반복된 NoSuchElementException try-catch를 @RestControllerAdvice로 통합
+- **Action**:
+  - `gift/common/GlobalExceptionHandler.java` 생성: `@RestControllerAdvice(annotations=RestController.class)`, IllegalArgumentException→400, NoSuchElementException→404, ForbiddenAccessException→403
+  - `gift/common/ForbiddenAccessException.java` 생성: 위시 소유권 위반 전용 예외
+  - `ProductController`, `OrderController`, `OptionController`, `MemberController`에서 `@ExceptionHandler` 메서드 삭제
+  - `ProductController`(3곳), `OrderController`(1곳), `OptionController`(3곳), `WishController`(2곳), `CategoryController`(1곳) try-catch 제거
+  - `WishService`: `IllegalStateException` → `ForbiddenAccessException`으로 교체
+- **Outcome**: 전체 테스트(`./gradlew test`) 통과. Admin SSR 컨트롤러(@Controller)는 어노테이션 필터로 영향 없음.
+
+---
+
+## [리팩토링 종합] Phase 1~4 구현 (Step 1~12)
+
+- **Prompt**: 12단계 리팩토링 종합 계획서 그대로 구현
+- **Action**:
+  - **Step 1 (DTO 파라미터)**: CategoryService, ProductService, OptionService 메서드 파라미터를 Request DTO로 교체. 컨트롤러에서 `request.toEntity()` 위임으로 단순화.
+  - **Step 2 (메시지 한국어)**: `Member.chargePoint()`, `MemberService.findById/register/login()`, `OrderService` 영어 에러 메시지 한국어 통일.
+  - **Step 3 (populate 중복)**: `AdminProductController`의 `populateNewForm/populateEditForm` 2개 → `populateForm` 1개로 통합.
+  - **Step 4 (findById 헬퍼)**: `CategoryService.findById()`, `OptionService.findById()` 추출. 내부 중복 제거.
+  - **Step 5 (NameValidator 추상화)**: `gift.common.NameValidator` 생성. `ProductNameValidator`, `OptionNameValidator` 위임으로 교체. 패턴 중복 1곳으로 통합.
+  - **Step 6 (@Transactional 일관성)**: 7개 Service 모두 클래스 레벨 `@Transactional(readOnly=true)` 추가. 쓰기 메서드에 `@Transactional` 오버라이드.
+  - **Step 7 (@LoginMember)**: `UnauthorizedException` + `LoginMember` 어노테이션 + `LoginMemberArgumentResolver` + `WebConfig` 생성. `WishController/OrderController`에서 인증 보일러플레이트 5개 제거.
+  - **Step 8 (cross-package Repository 정리, 5 서브커밋)**:
+    - (a) ProductService: `CategoryRepository` → `CategoryService.findById()`
+    - (b) OptionService: `ProductRepository` → `ProductService.findById()`
+    - (c) WishService: `ProductRepository` → `ProductService.findById()`
+    - (d) OrderService: `OptionRepository/MemberRepository/WishRepository` → 각 Service 위임. `MemberService.deductPoint()`, `WishService.deleteByMemberIdAndProductId()` 추가.
+    - (e) KakaoAuthService: `MemberRepository` → `MemberService.findByEmailOrCreate()` 추가 후 위임.
+  - **Step 9 (boolean allowKakao 제거)**: `ProductService.createForAdmin/updateForAdmin()` 추가. 기존 `create/update()`에서 boolean 파라미터 제거. API는 카카오 금지, Admin만 허용.
+  - **Step 10 (외부 API 분리)**: `OrderCompletedEvent` record + `OrderEventListener` (`@TransactionalEventListener(AFTER_COMMIT)`) 생성. `OrderService`에서 `KakaoMessageClient` 의존 제거, 이벤트 발행으로 교체.
+  - **Step 11 (JSON 안전성)**: `KakaoMessageClient.buildTemplate()` 텍스트 블록 → `ObjectMapper.writeValueAsString(Map)` 사용으로 JSON injection 해소.
+  - **Step 12 (단위 테스트)**: 도메인 (`MemberTest`, `OptionTest`), Validator (`NameValidatorTest`, `ProductNameValidatorTest`, `OptionNameValidatorTest`), Service Mockito 테스트 6개 추가. ArchTest에 "Service → 타도메인 Repository 금지" 규칙 추가.
+- **Outcome**: 전체 `./gradlew test` 통과. 12단계 각 Step마다 커밋 분리. 작동 변경 없이 구조만 개선.

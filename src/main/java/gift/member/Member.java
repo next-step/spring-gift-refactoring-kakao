@@ -45,7 +45,7 @@ public class Member {
 
     public void chargePoint(int amount) {
         if (amount <= 0) {
-            throw new IllegalArgumentException("Amount must be greater than zero.");
+            throw new IllegalArgumentException("충전 금액은 1 이상이어야 합니다.");
         }
         this.point += amount;
     }
@@ -59,6 +59,10 @@ public class Member {
             throw new IllegalArgumentException("포인트가 부족합니다.");
         }
         this.point -= amount;
+    }
+
+    public boolean matchesPassword(String password) {
+        return this.password != null && this.password.equals(password);
     }
 
     public Long getId() {

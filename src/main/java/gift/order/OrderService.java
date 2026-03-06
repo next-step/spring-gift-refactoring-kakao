@@ -1,67 +1,57 @@
 package gift.order;
 
 import gift.member.Member;
-import gift.member.MemberRepository;
+import gift.member.MemberService;
 import gift.option.Option;
-import gift.option.OptionRepository;
-import java.util.NoSuchElementException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import gift.option.OptionService;
+import gift.wish.WishService;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class OrderService {
-    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
-
     private final OrderRepository orderRepository;
-    private final OptionRepository optionRepository;
-    private final MemberRepository memberRepository;
-    private final KakaoMessageClient kakaoMessageClient;
+    private final OptionService optionService;
+    private final MemberService memberService;
+    private final WishService wishService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public OrderService(
         OrderRepository orderRepository,
-        OptionRepository optionRepository,
-        MemberRepository memberRepository,
-        KakaoMessageClient kakaoMessageClient
+        OptionService optionService,
+        MemberService memberService,
+        WishService wishService,
+        ApplicationEventPublisher eventPublisher
     ) {
         this.orderRepository = orderRepository;
-        this.optionRepository = optionRepository;
-        this.memberRepository = memberRepository;
-        this.kakaoMessageClient = kakaoMessageClient;
+        this.optionService = optionService;
+        this.memberService = memberService;
+        this.wishService = wishService;
+        this.eventPublisher = eventPublisher;
     }
 
     public Page<Order> getOrders(Long memberId, Pageable pageable) {
         return orderRepository.findByMemberId(memberId, pageable);
     }
 
+    @Transactional
     public Order createOrder(Member member, Long optionId, int quantity, String message) {
-        Option option = optionRepository.findById(optionId)
-            .orElseThrow(() -> new NoSuchElementException("Option not found"));
+        Option option = optionService.findById(optionId);
 
         option.subtractQuantity(quantity);
-        optionRepository.save(option);
 
         int price = option.calculateTotalPrice(quantity);
-        member.deductPoint(price);
-        memberRepository.save(member);
+        memberService.deductPoint(member, price);
 
         Order saved = orderRepository.save(new Order(option, member.getId(), quantity, message));
 
-        sendKakaoMessageIfPossible(member, saved, option);
-        return saved;
-    }
+        wishService.deleteByMemberIdAndProductId(member.getId(), option.getProduct().getId());
 
-    private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {
-        if (member.getKakaoAccessToken() == null) {
-            return;
-        }
-        try {
-            var product = option.getProduct();
-            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
-        } catch (Exception e) {
-            log.warn("카카오 메시지 전송 실패: {}", e.getMessage(), e);
-        }
+        eventPublisher.publishEvent(new OrderCompletedEvent(saved, member, option));
+        return saved;
     }
 }

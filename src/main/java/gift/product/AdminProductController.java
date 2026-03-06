@@ -41,13 +41,12 @@ public class AdminProductController {
         @RequestParam Long categoryId,
         Model model
     ) {
-        List<String> errors = ProductNameValidator.validate(name, true);
-        if (!errors.isEmpty()) {
-            populateNewForm(model, errors, name, price, imageUrl, categoryId);
+        try {
+            productService.createForAdmin(new ProductRequest(name, price, imageUrl, categoryId));
+        } catch (IllegalArgumentException e) {
+            populateForm(model, null, List.of(e.getMessage()), name, price, imageUrl, categoryId);
             return "product/new";
         }
-
-        productService.create(name, price, imageUrl, categoryId);
         return "redirect:/admin/products";
     }
 
@@ -67,15 +66,13 @@ public class AdminProductController {
         @RequestParam Long categoryId,
         Model model
     ) {
-        Product product = productService.findById(id);
-
-        List<String> errors = ProductNameValidator.validate(name, true);
-        if (!errors.isEmpty()) {
-            populateEditForm(model, product, errors, name, price, imageUrl, categoryId);
+        try {
+            productService.updateForAdmin(id, new ProductRequest(name, price, imageUrl, categoryId));
+        } catch (IllegalArgumentException e) {
+            Product product = productService.findById(id);
+            populateForm(model, product, List.of(e.getMessage()), name, price, imageUrl, categoryId);
             return "product/edit";
         }
-
-        productService.update(id, name, price, imageUrl, categoryId);
         return "redirect:/admin/products";
     }
 
@@ -85,23 +82,7 @@ public class AdminProductController {
         return "redirect:/admin/products";
     }
 
-    private void populateNewForm(
-        Model model,
-        List<String> errors,
-        String name,
-        int price,
-        String imageUrl,
-        Long categoryId
-    ) {
-        model.addAttribute("errors", errors);
-        model.addAttribute("name", name);
-        model.addAttribute("price", price);
-        model.addAttribute("imageUrl", imageUrl);
-        model.addAttribute("categoryId", categoryId);
-        model.addAttribute("categories", categoryService.findAll());
-    }
-
-    private void populateEditForm(
+    private void populateForm(
         Model model,
         Product product,
         List<String> errors,
