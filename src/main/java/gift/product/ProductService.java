@@ -50,7 +50,7 @@ public class ProductService {
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new ProductException(ProductErrorCode.PRODUCT_NOT_FOUND));
         product.update(name, price, imageUrl, category);
-        return productRepository.save(product);
+        return product;
     }
 
     @Transactional

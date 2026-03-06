@@ -1,5 +1,7 @@
 package gift.wish;
 
+import gift.error.CommonErrorCode;
+import gift.error.CommonException;
 import gift.product.Product;
 import gift.product.ProductRepository;
 import org.springframework.data.domain.Page;
@@ -22,26 +24,25 @@ public class WishService {
         return wishRepository.findByMemberId(memberId, pageable);
     }
 
-    @Transactional(readOnly = true)
-    public Wish findByMemberIdAndProductId(Long memberId, Long productId) {
-        return wishRepository.findByMemberIdAndProductId(memberId, productId).orElse(null);
-    }
-
     @Transactional
-    public Wish addWish(Long memberId, Long productId) {
+    public WishAddResult addWish(Long memberId, Long productId) {
+        var existing = wishRepository.findByMemberIdAndProductId(memberId, productId);
+        if (existing.isPresent()) {
+            return new WishAddResult(existing.get(), false);
+        }
         Product product = productRepository.findById(productId)
             .orElseThrow(() -> new WishException(WishErrorCode.PRODUCT_NOT_FOUND));
-        return wishRepository.save(new Wish(memberId, product));
-    }
-
-    @Transactional(readOnly = true)
-    public Wish findById(Long id) {
-        return wishRepository.findById(id)
-            .orElseThrow(() -> new WishException(WishErrorCode.WISH_NOT_FOUND));
+        Wish saved = wishRepository.save(new Wish(memberId, product));
+        return new WishAddResult(saved, true);
     }
 
     @Transactional
-    public void delete(Wish wish) {
+    public void deleteByIdAndMemberId(Long wishId, Long memberId) {
+        Wish wish = wishRepository.findById(wishId)
+            .orElseThrow(() -> new WishException(WishErrorCode.WISH_NOT_FOUND));
+        if (!wish.getMemberId().equals(memberId)) {
+            throw new CommonException(CommonErrorCode.FORBIDDEN);
+        }
         wishRepository.delete(wish);
     }
 }

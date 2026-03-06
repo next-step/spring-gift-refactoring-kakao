@@ -5,6 +5,7 @@ import gift.member.MemberRepository;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -39,11 +40,11 @@ public class KakaoAuthController {
 
     @GetMapping(path = "/login")
     public ResponseEntity<Void> login() {
-        String kakaoAuthUrl = UriComponentsBuilder.fromUriString("https://kauth.kakao.com/oauth/authorize")
+        String kakaoAuthUrl = UriComponentsBuilder.fromUriString(properties.authorizeUrl())
             .queryParam("response_type", "code")
             .queryParam("client_id", properties.clientId())
             .queryParam("redirect_uri", properties.redirectUri())
-            .queryParam("scope", "account_email,talk_message")
+            .queryParam("scope", properties.scope())
             .build()
             .toUriString();
 
@@ -52,6 +53,7 @@ public class KakaoAuthController {
             .build();
     }
 
+    @Transactional
     @GetMapping(path = "/callback")
     public ResponseEntity<TokenResponse> callback(@RequestParam("code") String code) {
         KakaoLoginClient.KakaoTokenResponse kakaoToken = kakaoLoginClient.requestAccessToken(code);

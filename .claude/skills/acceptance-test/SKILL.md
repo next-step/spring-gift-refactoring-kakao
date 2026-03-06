@@ -95,7 +95,6 @@ void createProduct()
 void getProduct_NotFound()
 ```
 
-- 메서드명은 영문 camelCase로 행위를 간결히 표현
 - `@DisplayName`에 한글로 기대 동작을 명시
 - 실패 케이스는 `_실패사유` 접미사 사용
 

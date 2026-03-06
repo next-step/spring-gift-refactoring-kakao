@@ -11,6 +11,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import gift.wish.WishRequest;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -73,6 +75,7 @@ class OrderAcceptanceTest {
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.optionId").value(3))
             .andExpect(jsonPath("$.quantity").value(1))
+            .andExpect(jsonPath("$.totalPrice").value(1350000))
             .andExpect(jsonPath("$.message").value("선물입니다"));
     }
 
@@ -88,6 +91,52 @@ class OrderAcceptanceTest {
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.code").value("ORDER_OPTION_NOT_FOUND"));
+    }
+
+    @Test
+    @DisplayName("주문 시 해당 상품의 위시가 자동 삭제된다")
+    void createOrder_RemovesWish() throws Exception {
+        String token = obtainAccessToken();
+        // user1은 productId=1(맥북)에 대한 위시를 보유 (시드 데이터)
+        // optionId=1은 productId=1의 옵션 (가격 3360000)
+        var orderRequest = new OrderRequest(1L, 1, null);
+
+        // 주문 전: 위시 2개 확인
+        mockMvc.perform(get("/api/wishes")
+                .header("Authorization", "Bearer " + token)
+                .param("page", "0")
+                .param("size", "10"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content.length()").value(2));
+
+        // 주문 생성
+        mockMvc.perform(post("/api/orders")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(orderRequest)))
+            .andExpect(status().isCreated());
+
+        // 주문 후: 위시 1개로 감소 (productId=1 위시 삭제됨)
+        mockMvc.perform(get("/api/wishes")
+                .header("Authorization", "Bearer " + token)
+                .param("page", "0")
+                .param("size", "10"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content.length()").value(1));
+    }
+
+    @Test
+    @DisplayName("위시에 없는 상품을 주문해도 정상 처리된다")
+    void createOrder_NoWish() throws Exception {
+        String token = obtainAccessToken();
+        // optionId=3 (아이폰 블루/256GB, productId=2) - user1의 위시에 없음
+        var request = new OrderRequest(3L, 1, null);
+
+        mockMvc.perform(post("/api/orders")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isCreated());
     }
 
     @Test

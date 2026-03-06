@@ -27,7 +27,7 @@ public class CategoryService {
         Category category = categoryRepository.findById(id)
             .orElseThrow(() -> new CategoryException(CategoryErrorCode.CATEGORY_NOT_FOUND));
         category.update(name, color, imageUrl, description);
-        return categoryRepository.save(category);
+        return category;
     }
 
     @Transactional

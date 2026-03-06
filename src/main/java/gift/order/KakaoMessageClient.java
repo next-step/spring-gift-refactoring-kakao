@@ -1,16 +1,22 @@
 package gift.order;
 
 import gift.product.Product;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClient;
 
 @Component
-public class KakaoMessageClient {
+public class KakaoMessageClient implements MessageClient {
     private final RestClient restClient;
+    private final String messageSendUrl;
 
-    public KakaoMessageClient(RestClient.Builder builder) {
+    public KakaoMessageClient(
+        RestClient.Builder builder,
+        @Value("${kakao.api.message-send-url}") String messageSendUrl
+    ) {
         this.restClient = builder.build();
+        this.messageSendUrl = messageSendUrl;
     }
 
     public void sendToMe(String accessToken, Order order, Product product) {
@@ -20,7 +26,7 @@ public class KakaoMessageClient {
         params.add("template_object", templateObject);
 
         restClient.post()
-            .uri("https://kapi.kakao.com/v2/api/talk/memo/default/send")
+            .uri(messageSendUrl)
             .header("Authorization", "Bearer " + accessToken)
             .header("Content-Type", "application/x-www-form-urlencoded")
             .body(params)

@@ -56,6 +56,31 @@
 - [x] test(wish): 에러 응답 code 필드 검증 추가
 - [x] test(order): 에러 응답 code 필드 검증 추가
 
+### Phase 6: 안전한 작동 변경
+- [x] refactor(order): createOrder 시그니처를 memberId 기반으로 변경
+- [x] refactor(wish): 위시 중복 체크를 Service 트랜잭션으로 통합
+- [x] feat(order): 주문 시 해당 상품의 위시리스트 자동 삭제
+- [x] refactor(wish): 위시 소유권 확인을 Service로 이동
+- [x] refactor(order): Order에 totalPrice 필드 추가 및 가격 계산 이동
+- [x] feat(order): 주문 응답에 totalPrice 포함
+- [x] feat(auth): @LoginMember ArgumentResolver 도입
+- [x] refactor(order): @LoginMember 적용으로 인증 보일러플레이트 제거
+- [x] refactor(wish): @LoginMember 적용으로 인증 보일러플레이트 제거
+- [x] refactor(order): KakaoMessageClient를 인터페이스로 추출
+- [x] refactor(error): ErrorResponse를 record로 변환
+- [x] refactor(auth): 카카오 API URL과 scope를 설정으로 추출
+- [x] refactor(order): 카카오 메시지 API URL을 설정으로 추출
+- [x] fix(option): 재고 차감 시 비관적 락 적용
+- [x] fix(auth): KakaoAuthController.callback에 @Transactional 추가
+- [x] refactor: 불필요한 save() 호출 제거
+- [x] refactor: Controller 반환 타입 와일드카드 제거
+- [x] test(order): 동시 주문 시 재고 정합성 검증 테스트
+
+### 스킬 정비
+- [x] chore: 스킬에서 정적 도구가 잡는 불필요한 내용 제거
+- [x] chore: 인라인 템플릿을 별도 파일로 분리
+- [x] chore: refactoring 스킬을 Phase별로 분리
+
 ## 구현 전략
 
 ### Phase 0: 테스트 코드 작성
@@ -82,6 +107,13 @@
 - **원칙**: Controller는 요청 수신 + 응답 반환만 담당
 - **주의**: 로직 이동 시 기능 추가/변경 금지
 - **검증**: 각 도메인 추출 후 테스트 통과
+
+### Phase 6: 안전한 작동 변경
+- **목적**: 트랜잭션 경계 정비, 누락된 기능 구현, 도메인 책임 이동, 인증 중복 코드 정리
+- **원칙**: 구조 변경(refactor)과 작동 변경(feat) 커밋 분리, 작동 변경은 상태 재조회 테스트로 증거 확보
+- **순서**: (1) 트랜잭션 경계 세우기 → (2) 누락된 작동 구현 → (3) 도메인 책임 되찾기 → (4) 인증 중복 코드 정리
+- **ADR**: ADR-001 — 주문 시 가격을 Order에 저장한다 (이력 추적을 위해 totalPrice 컬럼 추가)
+- **검증**: 각 커밋마다 `./gradlew test` + `./gradlew checkstyleMain` 통과
 
 ### Phase 4: 에러 처리 구조화
 - **목적**: 산재된 `@ExceptionHandler`와 `IllegalArgumentException`/`NoSuchElementException`을 도메인별 에러 코드 체계로 통합
@@ -139,3 +171,15 @@
 - **활용 방식**: 사용자 제공 스킬 템플릿을 프로젝트에 맞게 커스터마이징하여 setup-error-handling 스킬 생성. 기존 예외 현황을 분석하고 도메인별 에러 코드를 도출하여 구조화된 예외 체계 구축
 - **AI 산출물 수정 내용**: gift.error 패키지에 공통 인프라(ErrorCode, ErrorResponse, BusinessException, GlobalExceptionHandler, CommonErrorCode, CommonException) 6개 클래스 생성. 6개 도메인 패키지에 각각 ErrorCode enum + Exception 클래스 생성(12개 파일). 기존 NoSuchElementException/IllegalArgumentException을 도메인 예외로 교체하고 Controller-level @ExceptionHandler 3개 제거. 인증(401)/인가(403) 처리도 CommonException으로 통합
 - **학습한 내용**: @RestControllerAdvice는 @RestController에만 적용되므로 Admin Controller(@Controller)의 예외 처리는 별도 고려 필요. 이름 검증처럼 여러 에러 메시지를 반환하는 경우 CommonException(INVALID_REQUEST)으로 단순화하면 기존 테스트(상태 코드만 검증)는 통과하지만 에러 메시지 상세도가 낮아지는 트레이드오프 존재
+
+### 2026-03-04 — Phase 6: 안전한 작동 변경
+- **활용 방식**: 플랜 모드에서 설계한 10단계 커밋 계획을 순차 실행. 구조 변경(refactor)과 작동 변경(feat)을 엄격히 분리하여 커밋
+- **AI 산출물 수정 내용**:
+  - OrderService.createOrder 시그니처를 Member → memberId로 변경하여 트랜잭션 내 member 조회 보장
+  - WishService.addWish에 중복 체크 통합 (check-then-act race condition 해소), WishAddResult record 도입
+  - 주문 시 위시리스트 자동 삭제 구현 (상태 재조회 인수테스트로 검증)
+  - WishService.deleteByIdAndMemberId로 소유권 확인+삭제를 단일 트랜잭션 통합
+  - Order 엔티티에 totalPrice 필드 추가 (Flyway V3 마이그레이션), 가격 계산을 Order 생성자로 이동
+  - OrderResponse에 totalPrice 필드 추가 (인수테스트로 검증)
+  - @LoginMember ArgumentResolver 도입으로 OrderController, WishController의 인증 보일러플레이트 제거 (5곳)
+- **학습한 내용**: detached 엔티티를 Service에 전달하면 merge가 발생하므로 ID를 전달하고 트랜잭션 내에서 조회하는 것이 안전함. HandlerMethodArgumentResolver로 cross-cutting concern을 분리하면 Controller가 얇아지고 인증 로직 중복이 제거됨. 주문 시점의 가격은 이력 추적을 위해 저장하는 것이 적절 (ADR-001)
