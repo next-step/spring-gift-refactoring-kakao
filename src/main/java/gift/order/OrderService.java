@@ -6,6 +6,7 @@ import gift.option.Option;
 import gift.option.OptionService;
 import gift.wish.WishService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,7 @@ public class OrderService {
     private final OptionService optionService;
     private final MemberService memberService;
     private final WishService wishService;
-    private final OrderNotificationSender notificationSender;
+    private final ApplicationEventPublisher eventPublisher;
 
     public Page<Order> findByMemberId(Long memberId, Pageable pageable) {
         return orderRepository.findByMemberId(memberId, pageable);
@@ -38,7 +39,7 @@ public class OrderService {
         wishService.findByMemberIdAndProductId(memberId, productId)
                 .ifPresent(wish -> wishService.removeWish(wish.getId(), memberId));
 
-        notificationSender.send(member, saved, option);
+        eventPublisher.publishEvent(new OrderCompletedEvent(member, saved, option));
         return saved;
     }
 }
