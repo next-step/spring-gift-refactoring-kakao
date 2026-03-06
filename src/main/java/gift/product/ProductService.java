@@ -1,5 +1,6 @@
 package gift.product;
 
+import gift.DomainException;
 import gift.category.Category;
 import gift.category.CategoryRepository;
 import java.util.List;
@@ -53,7 +54,6 @@ public class ProductService {
         return productRepository.save(product);
     }
 
-    @Transactional
     public void deleteProduct(Long id) {
         productRepository.deleteById(id);
     }
@@ -61,7 +61,7 @@ public class ProductService {
     private void validateName(String name, boolean allowKakao) {
         final List<String> errors = ProductNameValidator.validate(name, allowKakao);
         if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(String.join(", ", errors));
+            throw new DomainException(String.join(", ", errors));
         }
     }
 }

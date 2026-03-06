@@ -4,12 +4,10 @@ import gift.auth.AuthenticationResolver;
 import gift.member.Member;
 import jakarta.validation.Valid;
 import java.net.URI;
-import java.util.NoSuchElementException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -50,10 +48,5 @@ public class OrderController {
         final Order saved = orderService.createOrder(member, request);
         return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
                 .body(OrderResponse.from(saved));
-    }
-
-    @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<Void> handleNotFound() {
-        return ResponseEntity.notFound().build();
     }
 }

@@ -1,33 +1,37 @@
 package gift.member;
 
+import gift.DomainException;
 import java.util.List;
 import java.util.NoSuchElementException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class MemberService {
     private final MemberRepository memberRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public MemberService(MemberRepository memberRepository) {
+    public MemberService(MemberRepository memberRepository, PasswordEncoder passwordEncoder) {
         this.memberRepository = memberRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional
     public Member register(String email, String password) {
         if (memberRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("이미 등록된 이메일입니다.");
+            throw new DomainException("이미 등록된 이메일입니다.");
         }
-        return memberRepository.save(new Member(email, password));
+        final String encodedPassword = passwordEncoder.encode(password);
+        return memberRepository.save(new Member(email, encodedPassword));
     }
 
     public Member login(String email, String password) {
-        final Member member = memberRepository
-                .findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다."));
+        final Member member =
+                memberRepository.findByEmail(email).orElseThrow(() -> new DomainException("이메일 또는 비밀번호가 올바르지 않습니다."));
 
-        if (member.getPassword() == null || !member.getPassword().equals(password)) {
-            throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
+        if (member.getPassword() == null || !passwordEncoder.matches(password, member.getPassword())) {
+            throw new DomainException("이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
         return member;
@@ -41,19 +45,11 @@ public class MemberService {
         return memberRepository.findById(id).orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다. id=" + id));
     }
 
-    public boolean existsByEmail(String email) {
-        return memberRepository.existsByEmail(email);
-    }
-
-    @Transactional
-    public Member createMember(String email, String password) {
-        return memberRepository.save(new Member(email, password));
-    }
-
     @Transactional
     public Member updateMember(Long id, String email, String password) {
         final Member member = findById(id);
-        member.update(email, password);
+        final String encodedPassword = passwordEncoder.encode(password);
+        member.update(email, encodedPassword);
         return memberRepository.save(member);
     }
 
@@ -64,7 +60,6 @@ public class MemberService {
         return memberRepository.save(member);
     }
 
-    @Transactional
     public void deleteMember(Long id) {
         memberRepository.deleteById(id);
     }

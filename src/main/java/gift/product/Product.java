@@ -46,6 +46,10 @@ public class Product {
         this.category = category;
     }
 
+    public int calculateTotalPrice(int quantity) {
+        return this.price * quantity;
+    }
+
     public Long getId() {
         return id;
     }

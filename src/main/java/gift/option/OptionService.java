@@ -1,5 +1,6 @@
 package gift.option;
 
+import gift.DomainException;
 import gift.product.Product;
 import gift.product.ProductRepository;
 import java.util.List;
@@ -29,7 +30,7 @@ public class OptionService {
                 productRepository.findById(productId).orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다."));
 
         if (optionRepository.existsByProductIdAndName(productId, name)) {
-            throw new IllegalArgumentException("이미 존재하는 옵션명입니다.");
+            throw new DomainException("이미 존재하는 옵션명입니다.");
         }
 
         return optionRepository.save(new Option(product, name, quantity));
@@ -41,7 +42,7 @@ public class OptionService {
 
         final List<Option> options = optionRepository.findByProductId(productId);
         if (options.size() <= 1) {
-            throw new IllegalArgumentException("옵션이 1개인 상품은 옵션을 삭제할 수 없습니다.");
+            throw new DomainException("옵션이 1개인 상품은 옵션을 삭제할 수 없습니다.");
         }
 
         final Option option =
@@ -57,7 +58,7 @@ public class OptionService {
     private void validateName(String name) {
         final List<String> errors = OptionNameValidator.validate(name);
         if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(String.join(", ", errors));
+            throw new DomainException(String.join(", ", errors));
         }
     }
 }

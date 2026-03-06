@@ -8,6 +8,7 @@ import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
 import gift.product.ProductRepository;
+import gift.wish.WishRepository;
 import io.cucumber.java.ko.그러면;
 import io.cucumber.java.ko.만일;
 import io.cucumber.java.ko.먼저;
@@ -29,6 +30,9 @@ public class E2eOrderStepDefinitions {
 
     @Autowired
     private OptionRepository optionRepository;
+
+    @Autowired
+    private WishRepository wishRepository;
 
     @Autowired
     private JwtProvider jwtProvider;
@@ -169,6 +173,30 @@ public class E2eOrderStepDefinitions {
                 .then()
                 .extract();
         context.setResponse(response);
+    }
+
+    @먼저("해당 상품이 위시리스트에 존재한다")
+    public void 해당_상품이_위시리스트에_존재한다() {
+        var option = optionRepository.findById(context.getOptionId()).get();
+        var productId = option.getProduct().getId();
+        var response = RestAssured.given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + context.getToken())
+                .body(Map.of("productId", productId))
+                .when()
+                .post("/api/wishes")
+                .then()
+                .extract();
+        assertThat(response.statusCode()).isIn(200, 201);
+    }
+
+    @그러면("위시리스트에서 해당 상품이 제거되었다")
+    public void 위시리스트에서_해당_상품이_제거되었다() {
+        var option = optionRepository.findById(context.getOptionId()).get();
+        var productId = option.getProduct().getId();
+        var wish = wishRepository.findByMemberIdAndProductId(
+                memberRepository.findByEmail("sender@test.com").get().getId(), productId);
+        assertThat(wish).isEmpty();
     }
 
     @그러면("주문에 성공한다")
