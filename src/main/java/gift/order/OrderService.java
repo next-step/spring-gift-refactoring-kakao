@@ -1,5 +1,6 @@
 package gift.order;
 
+import gift.common.exception.ApplicationException;
 import gift.member.Member;
 import gift.member.MemberService;
 import gift.option.Option;
@@ -30,7 +31,12 @@ public class OrderService {
     public Order createOrder(Long memberId, Long optionId, int quantity, String message) {
         Option option = optionService.subtractQuantity(optionId, quantity);
 
-        int price = option.calculateTotalPrice(quantity);
+        int price;
+        try {
+            price = option.calculateTotalPrice(quantity);
+        } catch (ArithmeticException e) {
+            throw new ApplicationException(OrderErrorCode.PRICE_OVERFLOW);
+        }
         Member member = memberService.deductPoint(memberId, price);
 
         Order saved = orderRepository.save(new Order(option, member, quantity, message));

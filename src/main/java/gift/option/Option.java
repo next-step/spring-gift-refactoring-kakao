@@ -61,7 +61,7 @@ public class Option {
     }
 
     public int calculateTotalPrice(int quantity) {
-        return this.product.getPrice() * quantity;
+        return Math.multiplyExact(this.product.getPrice(), quantity);
     }
 
     public void subtractQuantity(int amount) {
