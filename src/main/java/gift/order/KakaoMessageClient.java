@@ -3,10 +3,12 @@ package gift.order;
 import gift.member.Member;
 import gift.option.Option;
 import gift.product.Product;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClient;
 
+@Slf4j
 @Component
 public class KakaoMessageClient implements OrderNotificationSender {
     private final RestClient restClient;
@@ -22,7 +24,8 @@ public class KakaoMessageClient implements OrderNotificationSender {
         }
         try {
             sendToMe(member.getKakaoAccessToken(), order, option.getProduct());
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            log.warn("카카오 알림 발송 실패: orderId={}, memberId={}", order.getId(), member.getId(), e);
         }
     }
 
