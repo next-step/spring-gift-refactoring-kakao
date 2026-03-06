@@ -6,6 +6,7 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -150,13 +151,13 @@ class GiftAcceptanceTest {
             .all()
             .extract();
 
-    // then (NoSuchElementException → GlobalExceptionHandler → 400)
-    assertThat(response.statusCode()).isEqualTo(400);
+    // then (NoSuchElementException → GlobalExceptionHandler → 404)
+    assertThat(response.statusCode()).isEqualTo(404);
   }
 
-  /** G5: Authorization 헤더 없이 주문하면 실패한다. - Authorization 헤더 누락 → 400 응답 */
+  /** G5: Authorization 헤더 없이 주문하면 실패한다. - Authorization 헤더 누락 → 401 응답 */
   @Test
-  void Member_Id_헤더_없이_선물하면_실패한다() {
+  void 인증_헤더_없이_선물하면_실패한다() {
     // when — Authorization 헤더 없이 요청
     ExtractableResponse<Response> response =
         RestAssured.given()
@@ -175,7 +176,112 @@ class GiftAcceptanceTest {
             .all()
             .extract();
 
-    // then (MissingRequestHeaderException → 400)
-    assertThat(response.statusCode()).isEqualTo(400);
+    // then (UnauthorizedException → 401)
+    assertThat(response.statusCode()).isEqualTo(401);
+  }
+
+  /**
+   * G6: 위시리스트 상품을 주문하면 위시가 자동 제거된다. - test-data.sql에 wish(member=1, product=1)가 존재 - 옵션1(상품1)로 주문 →
+   * 201 - 위시 목록 조회 → productId=1 미포함
+   */
+  @Test
+  void 위시리스트_상품을_주문하면_위시가_자동_제거된다() {
+    // when — 위시에 있는 상품 주문
+    ExtractableResponse<Response> orderResponse =
+        RestAssured.given()
+            .log()
+            .all()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + token)
+            .body(
+                Map.of(
+                    "optionId", 1,
+                    "quantity", 1,
+                    "message", "위시 자동 정리 테스트"))
+            .when()
+            .post("/api/orders")
+            .then()
+            .log()
+            .all()
+            .extract();
+
+    assertThat(orderResponse.statusCode()).isEqualTo(201);
+
+    // then — 위시 목록에서 productId=1이 제거됨
+    ExtractableResponse<Response> wishResponse =
+        RestAssured.given()
+            .log()
+            .all()
+            .header("Authorization", "Bearer " + token)
+            .when()
+            .get("/api/wishes")
+            .then()
+            .log()
+            .all()
+            .extract();
+
+    List<Long> productIds = wishResponse.jsonPath().getList("content.productId", Long.class);
+    assertThat(productIds).doesNotContain(1L);
+  }
+
+  /**
+   * G7: 포인트 부족으로 주문 실패 시 재고가 원복된다. - 옵션1(재고 10) 확인 - poor@test.com(포인트 0)으로 주문 → 400 - 재고 재조회 → 여전히
+   * 10 (트랜잭션 rollback 증명)
+   */
+  @Test
+  void 포인트_부족_주문_실패_시_재고가_원복된다() {
+    // given — 현재 재고 확인
+    ExtractableResponse<Response> beforeOptions =
+        RestAssured.given()
+            .log()
+            .all()
+            .when()
+            .get("/api/products/1/options")
+            .then()
+            .log()
+            .all()
+            .extract();
+
+    int stockBefore = beforeOptions.jsonPath().getInt("[0].quantity");
+    assertThat(stockBefore).isEqualTo(10);
+
+    // when — 포인트 0인 회원으로 주문 시도
+    String poorToken = AcceptanceTestSupport.로그인하고_토큰을_받는다("poor@test.com", "password");
+
+    ExtractableResponse<Response> orderResponse =
+        RestAssured.given()
+            .log()
+            .all()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + poorToken)
+            .body(
+                Map.of(
+                    "optionId", 1,
+                    "quantity", 1,
+                    "message", "포인트 부족 테스트"))
+            .when()
+            .post("/api/orders")
+            .then()
+            .log()
+            .all()
+            .extract();
+
+    // then — 주문 실패 (포인트 부족 → IllegalArgumentException → 400)
+    assertThat(orderResponse.statusCode()).isEqualTo(400);
+
+    // then — 재고가 원복됨 (트랜잭션 rollback)
+    ExtractableResponse<Response> afterOptions =
+        RestAssured.given()
+            .log()
+            .all()
+            .when()
+            .get("/api/products/1/options")
+            .then()
+            .log()
+            .all()
+            .extract();
+
+    int stockAfter = afterOptions.jsonPath().getInt("[0].quantity");
+    assertThat(stockAfter).isEqualTo(10);
   }
 }

@@ -1,5 +1,6 @@
 package gift.category;
 
+import gift.product.ProductRepository;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
@@ -9,9 +10,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class CategoryService {
   private final CategoryRepository categoryRepository;
+  private final ProductRepository productRepository;
 
-  public CategoryService(CategoryRepository categoryRepository) {
+  public CategoryService(
+      CategoryRepository categoryRepository, ProductRepository productRepository) {
     this.categoryRepository = categoryRepository;
+    this.productRepository = productRepository;
   }
 
   public List<Category> findAll() {
@@ -41,6 +45,9 @@ public class CategoryService {
 
   @Transactional
   public void delete(Long id) {
+    if (productRepository.existsByCategoryId(id)) {
+      throw new IllegalStateException("해당 카테고리에 상품이 존재하여 삭제할 수 없습니다.");
+    }
     categoryRepository.deleteById(id);
   }
 }

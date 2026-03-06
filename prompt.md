@@ -16,14 +16,12 @@
 - Claude가 `build.gradle.kts`에 Spotless 플러그인 추가, `spotlessApply` 실행하여 전체 소스 포매팅 적용
 - ktlint 위반도 함께 수정하여 빌드 성공 확인
 
-### 프롬프트 3: 커밋 + Co-author 등록
-> 이 작업 자를 코워커로 등록하고, 커밋을 한 번 합니다. Co-authored-by: koomin1227 <koomin1227@naver.com>
+### (deprecated no co-worker)프롬프트 3: 커밋 + Co-author 등록
 
 - Spotless 적용 작업 전체를 한 번에 커밋
-- Co-author를 지정하여 커밋 메시지에 포함
 
 ### 프롬프트 4: 전역 규칙 고정
-> 별도의 요청이 있기 전까지, 다음의 두가지를 전역 규칙으로 고정합니다. 1. 매 대화 세션 마다, 프롬프트위주로 나의 코딩 에이전트 사용에 대한 prompt.md파일 추가 작성 2. 커밋에 Co-authored-by: koomin1227 <koomin1227@naver.com> 코워커를 항상 등록하고, 한국어로 커밋메시지작성
+> 별도의 요청이 있기 전까지, 다음의 두가지를 전역 규칙으로 고정합니다. 1. 매 대화 세션 마다, 프롬프트위주로 나의 코딩 에이전트 사용에 대한 prompt.md파일 추가 작성
 
 - 두 가지 전역 규칙을 메모리에 저장: prompt.md 매 세션 추가 작성, 커밋 시 Co-author + 한국어 메시지
 
@@ -133,3 +131,181 @@
 - `gift.auth.KakaoLoginClient`, `gift.auth.KakaoLoginProperties`, `gift.order.KakaoMessageClient` → `gift.infrastructure.kakao` 패키지로 이동
 - `KakaoAuthService`, `OrderService`의 import 경로 업데이트
 - `./gradlew spotlessApply build` — 테스트 9개 모두 통과 확인
+
+## 세션: 2026-03-04 — Step1 검토 및 리뷰어 피드백 반영
+
+### 프롬프트 1: Step1 전체 검토
+> step1 과제 요구사항 대비 커밋 이력 검토
+
+- 10개 커밋 중 8개는 순수 구조 변경으로 원칙을 잘 지킴
+- **문제 커밋 2개 식별**:
+  - `b926ddc` (서비스 레이어 추출): 구조 변경에 작동 변경 혼재 (404→400 응답 변경, 트랜잭션 경계 추가)
+  - `20f2ad4` (예외 처리 통합): `refactor:` 라벨이나 실제로는 버그 수정 (500→400), 응답 body 형식 변경
+- 기타 코드 우려: `OptionService.createRaw()` 검증 우회, `BEARER_PREFIX` 3곳 중복, `OrderService`의 `MemberRepository` 직접 의존
+
+### 프롬프트 2: 리뷰어(wooobo) 피드백 확인 (PR #41)
+
+**피드백 3건:**
+
+1. **커밋 분할 제안** — 7개 서비스를 한 커밋에 추출한 것이 너무 큼. 도메인 단위로 커밋 분리 권장
+2. **응답 상태 코드 변경 주의** — 구조 변경 시 404→400 같은 클라이언트 의존 부분이 달라지지 않는지 확인 필요
+3. **Claude Skills 문서 포맷** — SKILL.md에 name, description 등 메타데이터 프로퍼티 활용 제안
+
+**자체 검토와 리뷰어 피드백 일치점:**
+- 피드백 1, 2번은 자체 검토에서도 동일하게 식별한 문제 (커밋 6의 구조+작동 혼재)
+- 리뷰어는 승인했으나, 다음 단계에서 개선할 포인트로 인식
+
+### 프롬프트 3: 리뷰어(catsbi) 피드백 확인 (PR #40)
+
+**코드 품질 12건 상세 리뷰:**
+
+1. `validateNameOrThrow` public → private 변경 제안
+2. `orElse(null)` + null 체크 → Optional 체이닝 권장
+3. 예외 메시지 한글/영어 혼용 지적
+4. public API 주석 → javadoc 스타일 변경 제안
+5. 외부 URL 상수 → properties 외부화 제안
+6. `option.getProduct().getPrice()` 디미터 법칙 위반
+7. `catch (Exception ignored)` 로깅 없이 무시 지적
+8. `sendKakaoMessageIfPossible` 전략 패턴 추상화 제안
+9. 비밀번호 평문 저장/비교 지적
+10. `NoSuchElementException` → 400은 부적절, 404 권장
+11. `AdminMemberController` 인증 로직 분리 제안
+12. `Order`에서 Option/Member 참조 방식 불일치 지적
+
+### 프롬프트 4: 피드백 통합 및 반영 계획 수립 (Plan 모드)
+
+- 자체 검토 + 리뷰어1(wooobo) + 리뷰어2(catsbi) 피드백을 통합하여 분류
+- **구조 변경 7건 (S1~S7)**: step2 전에 즉시 반영 (작동 변경 없음)
+- **작동 변경 8건 (B1~B8)**: step2에서 테스트와 함께 반영
+- **설계 판단 1건 (D1)**: step2에서 검토
+- **프로세스 4건 (P1~P4)**: 습관 개선으로 인지
+- 구조 변경을 독립 커밋으로 분리하여 "한 커밋 = 하나의 의도" 원칙 준수
+
+### 프롬프트 5: 구조 변경 반영 실행
+
+- **커밋 1**: `validateNameOrThrow` public → private (OptionService, ProductService)
+- **커밋 2**: WishService `orElse(null)` → Optional 체이닝
+- **커밋 3**: Member.java, MemberService.java 예외 메시지 6건 한국어 통일
+- **커밋 4**: Member.deductPoint() 주석 javadoc 스타일로 변경
+- **커밋 5**: 카카오 API URL 4개를 application.properties로 외부화, KakaoMessageProperties 신규 생성
+- **커밋 6**: BEARER_PREFIX 3곳 중복 → AuthConstants 공통 상수 클래스로 통합
+- **커밋 7**: OptionService.createRaw() 제거, SeedOptionController에서 create() 사용
+- 매 커밋마다 `./gradlew spotlessApply build` 성공 확인
+
+## 세션: 2026-03-04 — Step2 리팩터링 완성하기
+
+### 프롬프트 1: Step2 구현 계획 수립 (Plan 모드)
+> Step2 과제 요구사항(트랜잭션 경계, 누락 기능, 도메인 책임)에 대한 구현 계획 수립
+
+- 구조 변경 4건(S8~S11) + 작동 변경 3건(B1~B3) + ADR 2건 계획
+- 각 커밋의 파일, 코드 변경, 검증 방법을 상세 설계
+- "구조 변경은 refactor:, 작동 변경은 fix:/feat:/test:" 라벨 분리 원칙 적용
+
+### 프롬프트 2: Step2 구현 실행
+> Implement the following plan: (Step2 전체 실행)
+
+**구조 변경 (작동 불변):**
+- **S8**: `Option.calculateTotalPrice(quantity)` 추가, `OrderService`에서 `option.getProduct().getPrice() * quantity` → `option.calculateTotalPrice(quantity)` (디미터 법칙 해소)
+- **S9**: `WishService.removeByMemberAndProduct(memberId, productId)` 추가 (B2 준비)
+- **S10**: `OrderService`의 `MemberRepository` → `MemberService` 전환 (계층 의존 정리)
+- **S11**: `catch (Exception ignored)` → `log.warn()` 경고 로깅 추가 (운영 가시성)
+
+**작동 변경 (증거 포함):**
+- **B1**: `NoSuchElementException` → 404 변경, G4 테스트 기대값 수정, ADR-001 작성
+- **B2**: 주문 시 위시 자동 정리 (`OrderService`에 `WishService` 연동), G6 테스트 + Cucumber 시나리오 + GiftSteps 3개 추가, ADR-002 작성
+- **B3**: 트랜잭션 경계 검증 (포인트 부족 시 재고 rollback), G7 테스트 + Cucumber 시나리오 + GiftSteps 2개 추가, test-data.sql에 poor 회원 추가
+
+**문서:**
+- `PLAN.md` 생성 및 완료 상태 업데이트
+- 매 커밋마다 `./gradlew spotlessApply build` 성공 확인
+
+## 세션: 2026-03-04 — Checkstyle 도입 + 코딩 스타일 불일치 수정
+
+### 프롬프트 1: 코딩 스타일 점검 및 Checkstyle 도입 계획 수립 (Plan 모드)
+> Step2 구현 완료 후 코딩 컨벤션 점검을 수행. Spotless(포매팅)에 더해 네이밍 규칙 자동 검증 수단으로 Checkstyle 도입 계획 수립.
+
+- 네이밍 컨벤션(PascalCase, camelCase 등) 준수 확인
+- 스타일 불일치 5건 식별, 수용 가능 4건 분류
+- 5개 커밋으로 분리하여 "한 커밋 = 하나의 의도" 원칙 유지
+
+### 프롬프트 2: Checkstyle 도입 + 코딩 스타일 불일치 수정 실행
+> Implement the following plan: (5개 커밋 순차 실행)
+
+- **커밋 1**: `config/checkstyle/checkstyle.xml` + `suppressions.xml` 생성, `build.gradle.kts`에 checkstyle 플러그인 추가. 네이밍 모듈 7개 설정, 테스트 소스 한글 메서드명 억제
+- **커밋 2**: `GiftAcceptanceTest` 메서드명 `Member_Id_헤더_없이_선물하면_실패한다` → `인증_헤더_없이_선물하면_실패한다` (실제 검증 내용과 일치)
+- **커밋 3**: `AdminMemberController` 영어 에러 메시지 한국어화 + `IllegalArgumentException` → `NoSuchElementException` (엔티티 미존재 예외 통일)
+- **커밋 4**: `JwtProvider`, `AuthenticationResolver`에서 단일 생성자의 불필요한 `@Autowired` + import 제거
+- **커밋 5**: `MemberService.update()`, `chargePoint()`에서 `IllegalArgumentException` → `NoSuchElementException` (엔티티 미존재 예외 통일)
+- 매 커밋마다 `./gradlew spotlessApply build` 성공 확인
+
+## 세션: 2026-03-05 — 과제 종합 검토 + 코드 품질 개선
+
+### 프롬프트 1: 과제 완료 종합 검토
+> 현재 프로젝트에서 여러가지 사항에 대해 물어보겟습니다. 나는 과제를 완료했다고 생각합니다. 우선 종합적으로 검토하고 의견을 줍니다.
+
+- Explore 에이전트로 Docker 구성, Cucumber 테스트, 컨트롤러, 서비스, 엔티티 전체 검토
+- 과제 요구사항(Application 컨테이너화 + E2E Cucumber 테스트) 충분히 완료 판단
+- 경미한 개선 사항 4건 보고: PostgreSQL 포트 매핑 문서 불일치, Kakao 프로퍼티 키 불일치, flyway-mysql 의존성, GiftSteps 수신자 파라미터 미사용
+
+### 프롬프트 2: GlobalExceptionHandler 중복 코드 확인
+> ui/globalexceptionhandler의 중복코드는 의도된 건가요?
+
+- `IllegalStateException`과 `IllegalArgumentException` 핸들러가 동일한 상태코드(400)와 로직임을 확인
+- 합치기(방법1) vs 공통 메서드 추출(방법2) 제안
+
+### 프롬프트 3: 알림 기능 존재 확인
+> 현재 앱에 알림 기능이 있나요?
+
+- `KakaoMessageClient.sendToMe()` — 카카오톡 나에게 보내기 알림 기능 존재 확인
+- `OrderService.placeOrder()` 완료 후 호출됨
+
+### 프롬프트 4: OrderController의 `<?>` 와일드카드 + `== null` 수동 인증 검토
+> 두 가지 질문이 있습니다. <?>의 사용 그리고 == null을 사용하는 것에 대해 어떻게 생각해?
+
+- `ResponseEntity<?>`: 인증 실패/성공 반환 타입이 달라 와일드카드 사용 → 타입 정보 손실 문제
+- `== null` 수동 인증: 횡단 관심사가 컨트롤러에 반복 → `HandlerMethodArgumentResolver`로 분리 제안
+
+### 프롬프트 5: @LoginMember ArgumentResolver 도입 + GlobalExceptionHandler 중복 통합 실행
+> 두 작업에 대한 목록을 plan.md에 추가하고, 작업을 진행합니다.
+
+- **Task 1**: `@LoginMember` 어노테이션 + `LoginMemberArgumentResolver` + `UnauthorizedException` + `WebMvcConfig` 생성
+  - `OrderController`, `WishController`에서 수동 인증 코드 제거, `@LoginMember Member member` 파라미터로 교체
+  - `ResponseEntity<?>` → 구체 타입(`ResponseEntity<Page<OrderResponse>>` 등)으로 변경
+  - `AuthenticationResolver` 의존성 제거로 컨트롤러 단순화
+- **Task 2**: `GlobalExceptionHandler`에서 `IllegalStateException` + `IllegalArgumentException` 핸들러를 하나로 합침 + `UnauthorizedException` → 401 핸들러 추가
+- 기존 테스트 `인증_헤더_없이_선물하면_실패한다` 기대값 400 → 401로 변경 (의미적으로 더 정확)
+- `./gradlew build -x cucumberTest` — 테스트 11개 모두 통과 확인
+
+### 프롬프트 6: Step2 리팩터링 관점 코드 검토
+> 다음 관점에서 현재 코드를 검토합니다. 2단계 리팩터링 완성하기 — 트랜잭션 경계, 누락된 작동 구현, 도메인 책임 되찾기
+
+- Explore 에이전트로 전체 코드 심층 분석
+- 14개 검토 항목 식별: 작동 변경 6건, 구조 변경 7건, 설계 판단 2건 (취소선 1)
+- `review-issues.md`에 전체 항목 기록
+
+### 프롬프트 7~13: 14개 항목 하나씩 검토
+> 각 항목의 진위 여부와 수정 필요성을 사용자와 하나씩 확인
+
+- **수정 확정 11개**: D-1, B-1, B-4, B-5, T-2, D-2, D-3, D-5, T-3, B-6, B-7
+- **보류 2개**: B-2(옵션별 가격), D-4(memberId FK 비일관)
+- **제외 1개**: D-6(OSIV 잠재 위험 — `open-in-view` 설정 자체가 없어 Spring Boot 기본값 true)
+
+### 프롬프트 14: 구조 변경 → 작동 변경 순서로 수정 실행
+> 순서는, 구조변경 우선, 그다음 동작 변경 순서대로 작업하고 매 작업 마다 커밋합니다.
+
+**구조 변경 6건:**
+- D-2: `AuthenticationResolver`의 `MemberRepository` → `MemberService` 전환
+- D-3: `KakaoMessageClient` 가격 계산을 `Option.calculateTotalPrice()`로 위임, `Product` 파라미터 제거
+- D-5: `ProductService`의 `CategoryRepository` → `CategoryService`, `OptionService`의 `ProductRepository` → `ProductService`
+- B-7: `WishService`의 `ProductRepository` → `ProductService`
+- T-3: `OptionService.delete()`에서 `findByProductId().size()` → `countByProductId()` COUNT 쿼리
+- B-6: `Option` 생성자에 `quantity < 1` 검증 추가
+
+**작동 변경 5건:**
+- D-1: `ProductService.create()/update()`에 `allowKakao` 파라미터 추가, Admin은 `true` 전달
+- B-1: `Option.subtractQuantity()`에 `amount <= 0` 검증 추가
+- B-4: `CategoryService.delete()`에 연관 상품 사전 검증 (`existsByCategoryId`) 추가. 순환 의존(CategoryService↔ProductService) 발생으로 `ProductRepository` 직접 사용
+- B-5: `ProductService.delete()`에서 위시 자동 삭제 + 주문 이력 존재 시 삭제 금지
+- T-2: `AdminMemberController`의 중복 `existsByEmail` 제거, `register()` 예외 활용
+
+- 매 커밋마다 `./gradlew spotlessApply build -x cucumberTest` 성공 확인

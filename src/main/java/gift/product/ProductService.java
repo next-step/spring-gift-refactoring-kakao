@@ -1,7 +1,9 @@
 package gift.product;
 
 import gift.category.Category;
-import gift.category.CategoryRepository;
+import gift.category.CategoryService;
+import gift.order.OrderRepository;
+import gift.wish.WishRepository;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -14,12 +16,19 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ProductService {
   private final ProductRepository productRepository;
-  private final CategoryRepository categoryRepository;
+  private final CategoryService categoryService;
+  private final OrderRepository orderRepository;
+  private final WishRepository wishRepository;
 
   public ProductService(
-      ProductRepository productRepository, CategoryRepository categoryRepository) {
+      ProductRepository productRepository,
+      CategoryService categoryService,
+      OrderRepository orderRepository,
+      WishRepository wishRepository) {
     this.productRepository = productRepository;
-    this.categoryRepository = categoryRepository;
+    this.categoryService = categoryService;
+    this.orderRepository = orderRepository;
+    this.wishRepository = wishRepository;
   }
 
   public Page<Product> findAll(Pageable pageable) {
@@ -36,9 +45,19 @@ public class ProductService {
 
   @Transactional
   public Product create(String name, int price, String imageUrl, Long categoryId) {
-    validateNameOrThrow(name);
+    return createInternal(name, price, imageUrl, categoryId, false);
+  }
+
+  @Transactional
+  public Product createAllowingKakao(String name, int price, String imageUrl, Long categoryId) {
+    return createInternal(name, price, imageUrl, categoryId, true);
+  }
+
+  private Product createInternal(
+      String name, int price, String imageUrl, Long categoryId, boolean allowKakao) {
+    validateNameOrThrow(name, allowKakao);
     Category category =
-        categoryRepository
+        categoryService
             .findById(categoryId)
             .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
     return productRepository.save(new Product(name, price, imageUrl, category));
@@ -47,9 +66,20 @@ public class ProductService {
   @Transactional
   public Optional<Product> update(
       Long id, String name, int price, String imageUrl, Long categoryId) {
-    validateNameOrThrow(name);
+    return updateInternal(id, name, price, imageUrl, categoryId, false);
+  }
+
+  @Transactional
+  public Optional<Product> updateAllowingKakao(
+      Long id, String name, int price, String imageUrl, Long categoryId) {
+    return updateInternal(id, name, price, imageUrl, categoryId, true);
+  }
+
+  private Optional<Product> updateInternal(
+      Long id, String name, int price, String imageUrl, Long categoryId, boolean allowKakao) {
+    validateNameOrThrow(name, allowKakao);
     Category category =
-        categoryRepository
+        categoryService
             .findById(categoryId)
             .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
     return productRepository
@@ -63,11 +93,15 @@ public class ProductService {
 
   @Transactional
   public void delete(Long id) {
+    if (orderRepository.existsByOptionProductId(id)) {
+      throw new IllegalStateException("주문 이력이 있는 상품은 삭제할 수 없습니다.");
+    }
+    wishRepository.deleteByProductId(id);
     productRepository.deleteById(id);
   }
 
-  public void validateNameOrThrow(String name) {
-    List<String> errors = ProductNameValidator.validate(name);
+  private void validateNameOrThrow(String name, boolean allowKakao) {
+    List<String> errors = ProductNameValidator.validate(name, allowKakao);
     if (!errors.isEmpty()) {
       throw new IllegalArgumentException(String.join(", ", errors));
     }

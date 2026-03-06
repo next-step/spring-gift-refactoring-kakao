@@ -47,7 +47,7 @@ public class AdminProductController {
       return "product/new";
     }
 
-    productService.create(name, price, imageUrl, categoryId);
+    productService.createAllowingKakao(name, price, imageUrl, categoryId);
     return "redirect:/admin/products";
   }
 
@@ -81,7 +81,7 @@ public class AdminProductController {
       return "product/edit";
     }
 
-    productService.update(id, name, price, imageUrl, categoryId);
+    productService.updateAllowingKakao(id, name, price, imageUrl, categoryId);
     return "redirect:/admin/products";
   }
 

@@ -10,6 +10,7 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.ExtractableResponse;
 import io.restassured.response.Response;
+import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -172,6 +173,99 @@ public class GiftSteps {
             .all()
             .extract();
     state.setLastResponse(response);
+  }
+
+  @Given("{string}이 {string} 상품을 위시리스트에 추가한다")
+  public void 위시리스트에_추가한다(String memberName, String productName) {
+    String token = state.getToken(memberName);
+    Long productId = state.getProductId(productName);
+
+    RestAssured.given()
+        .log()
+        .all()
+        .contentType(ContentType.JSON)
+        .header("Authorization", "Bearer " + token)
+        .body(Map.of("productId", productId))
+        .when()
+        .post("/api/wishes")
+        .then()
+        .log()
+        .all()
+        .extract();
+  }
+
+  @Then("{string}의 위시리스트에 {string} 상품이 있다")
+  public void 위시리스트에_상품이_있다(String memberName, String productName) {
+    String token = state.getToken(memberName);
+    Long productId = state.getProductId(productName);
+
+    List<Long> productIds =
+        RestAssured.given()
+            .log()
+            .all()
+            .header("Authorization", "Bearer " + token)
+            .when()
+            .get("/api/wishes")
+            .then()
+            .log()
+            .all()
+            .extract()
+            .jsonPath()
+            .getList("content.productId", Long.class);
+
+    assertThat(productIds).contains(productId);
+  }
+
+  @Then("{string}의 위시리스트에 {string} 상품이 없다")
+  public void 위시리스트에_상품이_없다(String memberName, String productName) {
+    String token = state.getToken(memberName);
+    Long productId = state.getProductId(productName);
+
+    List<Long> productIds =
+        RestAssured.given()
+            .log()
+            .all()
+            .header("Authorization", "Bearer " + token)
+            .when()
+            .get("/api/wishes")
+            .then()
+            .log()
+            .all()
+            .extract()
+            .jsonPath()
+            .getList("content.productId", Long.class);
+
+    assertThat(productIds).doesNotContain(productId);
+  }
+
+  @Given("{string}의 포인트가 {int}이다")
+  public void 포인트를_설정한다(String memberName, int point) {
+    Long memberId = state.getMemberId(memberName);
+    jdbcTemplate.update("UPDATE member SET point = ? WHERE id = ?", point, memberId);
+  }
+
+  @Then("{string}의 {string} 옵션 재고가 {int}개이다")
+  public void 옵션_재고를_확인한다(String productName, String optionName, int expectedQuantity) {
+    Long productId = state.getProductId(productName);
+
+    io.restassured.path.json.JsonPath json =
+        RestAssured.given()
+            .log()
+            .all()
+            .when()
+            .get("/api/products/" + productId + "/options")
+            .then()
+            .log()
+            .all()
+            .extract()
+            .jsonPath();
+
+    List<String> names = json.getList("name", String.class);
+    List<Integer> quantities = json.getList("quantity", Integer.class);
+
+    int index = names.indexOf(optionName);
+    assertThat(index).as("옵션을 찾을 수 없습니다: " + optionName).isGreaterThanOrEqualTo(0);
+    assertThat(quantities.get(index)).isEqualTo(expectedQuantity);
   }
 
   @Then("선물하기가 성공한다")

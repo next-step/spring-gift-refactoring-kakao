@@ -1,7 +1,7 @@
 package gift.option;
 
 import gift.product.Product;
-import gift.product.ProductRepository;
+import gift.product.ProductService;
 import java.util.List;
 import java.util.NoSuchElementException;
 import org.springframework.stereotype.Service;
@@ -13,15 +13,15 @@ public class OptionService {
   private static final int MIN_OPTION_COUNT = 1;
 
   private final OptionRepository optionRepository;
-  private final ProductRepository productRepository;
+  private final ProductService productService;
 
-  public OptionService(OptionRepository optionRepository, ProductRepository productRepository) {
+  public OptionService(OptionRepository optionRepository, ProductService productService) {
     this.optionRepository = optionRepository;
-    this.productRepository = productRepository;
+    this.productService = productService;
   }
 
   public List<Option> findByProductId(Long productId) {
-    productRepository
+    productService
         .findById(productId)
         .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
     return optionRepository.findByProductId(productId);
@@ -31,7 +31,7 @@ public class OptionService {
   public Option create(Long productId, String name, int quantity) {
     validateNameOrThrow(name);
     Product product =
-        productRepository
+        productService
             .findById(productId)
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
 
@@ -43,22 +43,13 @@ public class OptionService {
   }
 
   @Transactional
-  public Option createRaw(Long productId, String name, int quantity) {
-    Product product =
-        productRepository
-            .findById(productId)
-            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
-    return optionRepository.save(new Option(product, name, quantity));
-  }
-
-  @Transactional
   public boolean delete(Long productId, Long optionId) {
-    productRepository
+    productService
         .findById(productId)
         .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
 
-    List<Option> options = optionRepository.findByProductId(productId);
-    if (options.size() <= MIN_OPTION_COUNT) {
+    long optionCount = optionRepository.countByProductId(productId);
+    if (optionCount <= MIN_OPTION_COUNT) {
       throw new IllegalArgumentException("옵션이 1개인 상품은 옵션을 삭제할 수 없습니다.");
     }
 
@@ -71,7 +62,7 @@ public class OptionService {
     return true;
   }
 
-  public void validateNameOrThrow(String name) {
+  private void validateNameOrThrow(String name) {
     List<String> errors = OptionNameValidator.validate(name);
     if (!errors.isEmpty()) {
       throw new IllegalArgumentException(String.join(", ", errors));
