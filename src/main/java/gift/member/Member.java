@@ -45,6 +45,7 @@ public class Member {
     }
 
     public void update(String email, String password) {
+        validateEmail(email);
         this.email = email;
         this.password = password;
     }
