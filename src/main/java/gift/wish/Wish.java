@@ -10,33 +10,33 @@ import jakarta.persistence.ManyToOne;
 
 @Entity
 public class Wish {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    // primitive FK - no entity reference
-    private Long memberId;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "product_id")
-    private Product product;
+  // primitive FK - no entity reference
+  private Long memberId;
 
-    protected Wish() {
-    }
+  @ManyToOne
+  @JoinColumn(name = "product_id")
+  private Product product;
 
-    public Wish(Long memberId, Product product) {
-        this.memberId = memberId;
-        this.product = product;
-    }
+  protected Wish() {}
 
-    public Long getId() {
-        return id;
-    }
+  public Wish(Long memberId, Product product) {
+    this.memberId = memberId;
+    this.product = product;
+  }
 
-    public Long getMemberId() {
-        return memberId;
-    }
+  public Long getId() {
+    return id;
+  }
 
-    public Product getProduct() {
-        return product;
-    }
+  public Long getMemberId() {
+    return memberId;
+  }
+
+  public Product getProduct() {
+    return product;
+  }
 }

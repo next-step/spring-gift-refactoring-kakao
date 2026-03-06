@@ -7,45 +7,47 @@ import org.springframework.web.client.RestClient;
 
 @Component
 class KakaoMessageClient {
-    private final RestClient restClient;
+  private final RestClient restClient;
 
-    public KakaoMessageClient(RestClient.Builder builder) {
-        this.restClient = builder.build();
-    }
+  public KakaoMessageClient(RestClient.Builder builder) {
+    this.restClient = builder.build();
+  }
 
-    public void sendToMe(String accessToken, Order order, Product product) {
-        String templateObject = buildTemplate(order, product);
+  public void sendToMe(String accessToken, Order order, Product product) {
+    String templateObject = buildTemplate(order, product);
 
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("template_object", templateObject);
+    LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+    params.add("template_object", templateObject);
 
-        restClient.post()
-            .uri("https://kapi.kakao.com/v2/api/talk/memo/default/send")
-            .header("Authorization", "Bearer " + accessToken)
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .body(params)
-            .retrieve()
-            .toBodilessEntity();
-    }
+    restClient
+        .post()
+        .uri("https://kapi.kakao.com/v2/api/talk/memo/default/send")
+        .header("Authorization", "Bearer " + accessToken)
+        .header("Content-Type", "application/x-www-form-urlencoded")
+        .body(params)
+        .retrieve()
+        .toBodilessEntity();
+  }
 
-    private String buildTemplate(Order order, Product product) {
-        String totalPrice = String.format("%,d", product.getPrice() * order.getQuantity());
-        String message = order.getMessage() != null && !order.getMessage().isBlank()
+  private String buildTemplate(Order order, Product product) {
+    String totalPrice = String.format("%,d", order.getTotalPrice());
+    String message =
+        order.getMessage() != null && !order.getMessage().isBlank()
             ? "\\n\\n💌 " + order.getMessage()
             : "";
-        return """
+    return """
             {
                 "object_type": "text",
                 "text": "🎁 선물이 도착했어요!\\n\\n%s (%s)\\n수량: %d개\\n금액: %s원%s",
                 "link": {},
                 "button_title": "선물 확인하기"
             }
-            """.formatted(
+            """
+        .formatted(
             product.getName(),
             order.getOption().getName(),
             order.getQuantity(),
             totalPrice,
-            message
-        );
-    }
+            message);
+  }
 }

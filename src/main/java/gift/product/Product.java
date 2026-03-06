@@ -10,60 +10,59 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 public class Product {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    private String name;
-    private int price;
-    private String imageUrl;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "category_id")
-    private Category category;
+  private String name;
+  private int price;
+  private String imageUrl;
 
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Option> options = new ArrayList<>();
+  @ManyToOne
+  @JoinColumn(name = "category_id")
+  private Category category;
 
-    protected Product() {
-    }
+  @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<Option> options = new ArrayList<>();
 
-    public Product(String name, int price, String imageUrl, Category category) {
-        this.name = name;
-        this.price = price;
-        this.imageUrl = imageUrl;
-        this.category = category;
-    }
+  protected Product() {}
 
-    public void update(String name, int price, String imageUrl, Category category) {
-        this.name = name;
-        this.price = price;
-        this.imageUrl = imageUrl;
-        this.category = category;
-    }
+  public Product(String name, int price, String imageUrl, Category category) {
+    this.name = name;
+    this.price = price;
+    this.imageUrl = imageUrl;
+    this.category = category;
+  }
 
-    public Long getId() {
-        return id;
-    }
+  public void update(String name, int price, String imageUrl, Category category) {
+    this.name = name;
+    this.price = price;
+    this.imageUrl = imageUrl;
+    this.category = category;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public Long getId() {
+    return id;
+  }
 
-    public int getPrice() {
-        return price;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public String getImageUrl() {
-        return imageUrl;
-    }
+  public int getPrice() {
+    return price;
+  }
 
-    public Category getCategory() {
-        return category;
-    }
+  public String getImageUrl() {
+    return imageUrl;
+  }
+
+  public Category getCategory() {
+    return category;
+  }
 }

@@ -12,21 +12,21 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/members")
 public class MemberController {
-    private final MemberService memberService;
+  private final MemberService memberService;
 
-    public MemberController(MemberService memberService) {
-        this.memberService = memberService;
-    }
+  public MemberController(MemberService memberService) {
+    this.memberService = memberService;
+  }
 
-    @PostMapping("/register")
-    public ResponseEntity<TokenResponse> register(@Valid @RequestBody MemberRequest request) {
-        TokenResponse response = memberService.register(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
+  @PostMapping("/register")
+  public ResponseEntity<TokenResponse> register(@Valid @RequestBody MemberRequest request) {
+    TokenResponse response = memberService.register(request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+  }
 
-    @PostMapping("/login")
-    public ResponseEntity<TokenResponse> login(@Valid @RequestBody MemberRequest request) {
-        TokenResponse response = memberService.login(request);
-        return ResponseEntity.ok(response);
-    }
+  @PostMapping("/login")
+  public ResponseEntity<TokenResponse> login(@Valid @RequestBody MemberRequest request) {
+    TokenResponse response = memberService.login(request);
+    return ResponseEntity.ok(response);
+  }
 }

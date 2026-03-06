@@ -13,49 +13,53 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "options")
 public class Option {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
+  @ManyToOne
+  @JoinColumn(name = "product_id", nullable = false)
+  private Product product;
 
-    @Column(nullable = false, length = 50)
-    private String name;
+  @Column(nullable = false, length = 50)
+  private String name;
 
-    @Column(nullable = false)
-    private int quantity;
+  @Column(nullable = false)
+  private int quantity;
 
-    protected Option() {
+  protected Option() {}
+
+  public Option(Product product, String name, int quantity) {
+    this.product = product;
+    this.name = name;
+    this.quantity = quantity;
+  }
+
+  public void update(String name, int quantity) {
+    this.name = name;
+    this.quantity = quantity;
+  }
+
+  public void subtractQuantity(int amount) {
+    if (amount > this.quantity) {
+      throw new IllegalArgumentException("차감할 수량이 현재 재고보다 많습니다.");
     }
+    this.quantity -= amount;
+  }
 
-    public Option(Product product, String name, int quantity) {
-        this.product = product;
-        this.name = name;
-        this.quantity = quantity;
-    }
+  public Long getId() {
+    return id;
+  }
 
-    public void subtractQuantity(int amount) {
-        if (amount > this.quantity) {
-            throw new IllegalArgumentException("차감할 수량이 현재 재고보다 많습니다.");
-        }
-        this.quantity -= amount;
-    }
+  public Product getProduct() {
+    return product;
+  }
 
-    public Long getId() {
-        return id;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public Product getProduct() {
-        return product;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
+  public int getQuantity() {
+    return quantity;
+  }
 }

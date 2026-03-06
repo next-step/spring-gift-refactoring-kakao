@@ -1,17 +1,21 @@
 package gift;
 
-import gift.member.MemberController;
-import gift.option.OptionController;
-import gift.product.ProductController;
+import gift.auth.UnauthorizedException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-@RestControllerAdvice(assignableTypes = {MemberController.class, ProductController.class, OptionController.class})
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
-        return ResponseEntity.badRequest().body(e.getMessage());
-    }
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
+    return ResponseEntity.badRequest().body(e.getMessage());
+  }
+
+  @ExceptionHandler(UnauthorizedException.class)
+  public ResponseEntity<String> handleUnauthorized(UnauthorizedException e) {
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(e.getMessage());
+  }
 }
