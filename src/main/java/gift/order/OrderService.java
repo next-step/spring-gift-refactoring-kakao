@@ -1,63 +1,54 @@
 package gift.order;
 
-import gift.auth.AuthenticationException;
 import gift.auth.AuthenticationResolver;
 import gift.kakao.KakaoMessageClient;
 import gift.member.Member;
-import gift.member.MemberRepository;
+import gift.member.MemberService;
 import gift.option.Option;
-import gift.option.OptionRepository;
-import gift.wish.WishRepository;
+import gift.option.OptionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.NoSuchElementException;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class OrderService {
     private final OrderRepository orderRepository;
-    private final OptionRepository optionRepository;
-    private final WishRepository wishRepository;
-    private final MemberRepository memberRepository;
+    private final OptionService optionService;
+    private final MemberService memberService;
     private final AuthenticationResolver authenticationResolver;
     private final KakaoMessageClient kakaoMessageClient;
 
     public OrderService(
         OrderRepository orderRepository,
-        OptionRepository optionRepository,
-        WishRepository wishRepository,
-        MemberRepository memberRepository,
+        OptionService optionService,
+        MemberService memberService,
         AuthenticationResolver authenticationResolver,
         KakaoMessageClient kakaoMessageClient
     ) {
         this.orderRepository = orderRepository;
-        this.optionRepository = optionRepository;
-        this.wishRepository = wishRepository;
-        this.memberRepository = memberRepository;
+        this.optionService = optionService;
+        this.memberService = memberService;
         this.authenticationResolver = authenticationResolver;
         this.kakaoMessageClient = kakaoMessageClient;
     }
 
     public Page<OrderResponse> getOrders(String authorization, Pageable pageable) {
-        Member member = extractMember(authorization);
+        Member member = authenticationResolver.extractMemberOrThrow(authorization);
         return orderRepository.findByMemberId(member.getId(), pageable).map(OrderResponse::from);
     }
 
+    @Transactional
     public OrderResponse createOrder(String authorization, OrderRequest request) {
-        Member member = extractMember(authorization);
+        Member member = authenticationResolver.extractMemberOrThrow(authorization);
 
-        Option option = optionRepository.findById(request.optionId())
-            .orElseThrow(() -> new NoSuchElementException("Option not found."));
+        Option option = optionService.subtractQuantity(request.optionId(), request.quantity());
 
-        option.subtractQuantity(request.quantity());
-        optionRepository.save(option);
+        Order order = request.toEntity(option, member.getId());
+        member.deductPoint(order.getTotalPrice());
+        memberService.save(member);
 
-        int price = option.getProduct().getPrice() * request.quantity();
-        member.deductPoint(price);
-        memberRepository.save(member);
-
-        Order saved = orderRepository.save(request.toEntity(option, member.getId()));
+        Order saved = orderRepository.save(order);
 
         sendKakaoMessageIfPossible(member, saved, option);
 
@@ -65,7 +56,7 @@ public class OrderService {
     }
 
     private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {
-        if (member.getKakaoAccessToken() == null) {
+        if (!member.hasKakaoAccessToken()) {
             return;
         }
         try {
@@ -74,11 +65,4 @@ public class OrderService {
         }
     }
 
-    private Member extractMember(String authorization) {
-        Member member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            throw new AuthenticationException();
-        }
-        return member;
-    }
 }
