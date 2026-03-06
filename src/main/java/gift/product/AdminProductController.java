@@ -1,6 +1,6 @@
 package gift.product;
 
-import gift.category.CategoryService;
+import gift.category.CategoryQueryService;
 import java.util.List;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,23 +13,29 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Controller
 @RequestMapping("/admin/products")
 public class AdminProductController {
-    private final ProductService productService;
-    private final CategoryService categoryService;
+    private final ProductQueryService productQueryService;
+    private final ProductCommandService productCommandService;
+    private final CategoryQueryService categoryQueryService;
 
-    public AdminProductController(ProductService productService, CategoryService categoryService) {
-        this.productService = productService;
-        this.categoryService = categoryService;
+    public AdminProductController(
+        ProductQueryService productQueryService,
+        ProductCommandService productCommandService,
+        CategoryQueryService categoryQueryService
+    ) {
+        this.productQueryService = productQueryService;
+        this.productCommandService = productCommandService;
+        this.categoryQueryService = categoryQueryService;
     }
 
     @GetMapping
     public String list(Model model) {
-        model.addAttribute("products", productService.findAll());
+        model.addAttribute("products", productQueryService.findAll());
         return "product/list";
     }
 
     @GetMapping("/new")
     public String newForm(Model model) {
-        model.addAttribute("categories", categoryService.findAll());
+        model.addAttribute("categories", categoryQueryService.findAll());
         return "product/new";
     }
 
@@ -47,15 +53,15 @@ public class AdminProductController {
             return "product/new";
         }
 
-        productService.save(name, price, imageUrl, categoryId);
+        productCommandService.save(name, price, imageUrl, categoryId);
         return "redirect:/admin/products";
     }
 
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
-        Product product = productService.findById(id);
+        Product product = productQueryService.findById(id);
         model.addAttribute("product", product);
-        model.addAttribute("categories", categoryService.findAll());
+        model.addAttribute("categories", categoryQueryService.findAll());
         return "product/edit";
     }
 
@@ -68,7 +74,7 @@ public class AdminProductController {
         @RequestParam Long categoryId,
         Model model
     ) {
-        Product product = productService.findById(id);
+        Product product = productQueryService.findById(id);
 
         List<String> errors = ProductNameValidator.validate(name, true);
         if (!errors.isEmpty()) {
@@ -76,13 +82,13 @@ public class AdminProductController {
             return "product/edit";
         }
 
-        productService.update(id, name, price, imageUrl, categoryId);
+        productCommandService.update(id, name, price, imageUrl, categoryId);
         return "redirect:/admin/products";
     }
 
     @PostMapping("/{id}/delete")
     public String delete(@PathVariable Long id) {
-        productService.deleteById(id);
+        productCommandService.deleteById(id);
         return "redirect:/admin/products";
     }
 
@@ -99,7 +105,7 @@ public class AdminProductController {
         model.addAttribute("price", price);
         model.addAttribute("imageUrl", imageUrl);
         model.addAttribute("categoryId", categoryId);
-        model.addAttribute("categories", categoryService.findAll());
+        model.addAttribute("categories", categoryQueryService.findAll());
     }
 
     private void populateEditForm(
@@ -117,6 +123,6 @@ public class AdminProductController {
         model.addAttribute("price", price);
         model.addAttribute("imageUrl", imageUrl);
         model.addAttribute("categoryId", categoryId);
-        model.addAttribute("categories", categoryService.findAll());
+        model.addAttribute("categories", categoryQueryService.findAll());
     }
 }

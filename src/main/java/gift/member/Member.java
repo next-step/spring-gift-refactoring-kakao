@@ -46,6 +46,12 @@ public class Member {
         this.kakaoAccessToken = kakaoAccessToken;
     }
 
+    public void verifyPassword(String password) {
+        if (this.password == null || !this.password.equals(password)) {
+            throw new MemberException(MemberErrorCode.INVALID_CREDENTIALS);
+        }
+    }
+
     public void chargePoint(int amount) {
         if (amount <= 0) {
             throw new MemberException(MemberErrorCode.INVALID_POINT_AMOUNT);

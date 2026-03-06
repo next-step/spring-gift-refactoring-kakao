@@ -5,36 +5,33 @@ import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
 import gift.product.Product;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import gift.wish.WishRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class OrderService {
+@Transactional
+public class OrderCommandService {
     private final OrderRepository orderRepository;
     private final OptionRepository optionRepository;
     private final MemberRepository memberRepository;
+    private final WishRepository wishRepository;
     private final KakaoMessageClient kakaoMessageClient;
 
-    public OrderService(
+    public OrderCommandService(
         OrderRepository orderRepository,
         OptionRepository optionRepository,
         MemberRepository memberRepository,
+        WishRepository wishRepository,
         KakaoMessageClient kakaoMessageClient
     ) {
         this.orderRepository = orderRepository;
         this.optionRepository = optionRepository;
         this.memberRepository = memberRepository;
+        this.wishRepository = wishRepository;
         this.kakaoMessageClient = kakaoMessageClient;
     }
 
-    @Transactional(readOnly = true)
-    public Page<Order> findByMemberId(Long memberId, Pageable pageable) {
-        return orderRepository.findByMemberId(memberId, pageable);
-    }
-
-    @Transactional
     public Order createOrder(Member member, Long optionId, int quantity, String message) {
         Option option = optionRepository.findById(optionId)
             .orElseThrow(() -> new OrderException(OrderErrorCode.OPTION_NOT_FOUND));
@@ -42,7 +39,7 @@ public class OrderService {
         option.subtractQuantity(quantity);
         optionRepository.save(option);
 
-        int price = option.getProduct().getPrice() * quantity;
+        int price = option.calculatePrice(quantity);
         member.deductPoint(price);
         memberRepository.save(member);
 
@@ -50,8 +47,14 @@ public class OrderService {
             new Order(option, member.getId(), quantity, message)
         );
 
+        removeWishIfExists(member.getId(), option.getProduct().getId());
         sendKakaoMessageIfPossible(member, saved, option);
         return saved;
+    }
+
+    private void removeWishIfExists(Long memberId, Long productId) {
+        wishRepository.findByMemberIdAndProductId(memberId, productId)
+            .ifPresent(wishRepository::delete);
     }
 
     private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {

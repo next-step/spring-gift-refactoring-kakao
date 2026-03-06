@@ -11,7 +11,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -19,30 +18,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @Transactional
-class OptionAcceptanceTest {
+class OptionCommandAcceptanceTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @Test
-    @DisplayName("상품의 옵션 목록을 조회한다")
-    void getOptions() throws Exception {
-        mockMvc.perform(get("/api/products/{productId}/options", 1L))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$").isArray())
-            .andExpect(jsonPath("$.length()").value(2));
-    }
-
-    @Test
-    @DisplayName("존재하지 않는 상품의 옵션을 조회하면 404를 반환한다")
-    void getOptions_ProductNotFound() throws Exception {
-        mockMvc.perform(get("/api/products/{productId}/options", 999L))
-            .andExpect(status().isNotFound())
-            .andExpect(jsonPath("$.code").value("PRODUCT_NOT_FOUND"));
-    }
 
     @Test
     @DisplayName("상품에 새로운 옵션을 추가한다")

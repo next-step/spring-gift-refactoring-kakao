@@ -20,14 +20,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/wishes")
 public class WishController {
-    private final WishService wishService;
+    private final WishQueryService wishQueryService;
+    private final WishCommandService wishCommandService;
     private final AuthenticationResolver authenticationResolver;
 
     public WishController(
-        WishService wishService,
+        WishQueryService wishQueryService,
+        WishCommandService wishCommandService,
         AuthenticationResolver authenticationResolver
     ) {
-        this.wishService = wishService;
+        this.wishQueryService = wishQueryService;
+        this.wishCommandService = wishCommandService;
         this.authenticationResolver = authenticationResolver;
     }
 
@@ -40,7 +43,7 @@ public class WishController {
         if (member == null) {
             throw new CommonException(CommonErrorCode.UNAUTHORIZED);
         }
-        var wishes = wishService.findByMemberId(member.getId(), pageable).map(WishResponse::from);
+        var wishes = wishQueryService.findByMemberId(member.getId(), pageable).map(WishResponse::from);
         return ResponseEntity.ok(wishes);
     }
 
@@ -54,12 +57,12 @@ public class WishController {
             throw new CommonException(CommonErrorCode.UNAUTHORIZED);
         }
 
-        var existing = wishService.findByMemberIdAndProductId(member.getId(), request.productId());
+        var existing = wishQueryService.findByMemberIdAndProductId(member.getId(), request.productId());
         if (existing != null) {
             return ResponseEntity.ok(WishResponse.from(existing));
         }
 
-        var saved = wishService.addWish(member.getId(), request.productId());
+        var saved = wishCommandService.addWish(member.getId(), request.productId());
         return ResponseEntity.created(URI.create("/api/wishes/" + saved.getId()))
             .body(WishResponse.from(saved));
     }
@@ -74,12 +77,12 @@ public class WishController {
             throw new CommonException(CommonErrorCode.UNAUTHORIZED);
         }
 
-        var wish = wishService.findById(id);
+        var wish = wishQueryService.findById(id);
         if (!wish.getMemberId().equals(member.getId())) {
             throw new CommonException(CommonErrorCode.FORBIDDEN);
         }
 
-        wishService.delete(wish);
+        wishCommandService.delete(wish);
         return ResponseEntity.noContent().build();
     }
 }

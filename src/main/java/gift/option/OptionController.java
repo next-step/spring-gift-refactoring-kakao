@@ -21,15 +21,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping(path = "/api/products/{productId}/options")
 public class OptionController {
-    private final OptionService optionService;
+    private final OptionQueryService optionQueryService;
+    private final OptionCommandService optionCommandService;
 
-    public OptionController(OptionService optionService) {
-        this.optionService = optionService;
+    public OptionController(
+        OptionQueryService optionQueryService,
+        OptionCommandService optionCommandService
+    ) {
+        this.optionQueryService = optionQueryService;
+        this.optionCommandService = optionCommandService;
     }
 
     @GetMapping
     public ResponseEntity<List<OptionResponse>> getOptions(@PathVariable Long productId) {
-        List<OptionResponse> responses = optionService.findByProductId(productId).stream()
+        List<OptionResponse> responses = optionQueryService.findByProductId(productId).stream()
             .map(OptionResponse::from)
             .toList();
         return ResponseEntity.ok(responses);
@@ -42,7 +47,7 @@ public class OptionController {
     ) {
         validateName(request.name());
 
-        Option saved = optionService.createOption(productId, request.name(), request.quantity());
+        Option saved = optionCommandService.createOption(productId, request.name(), request.quantity());
         URI location = URI.create("/api/products/" + productId + "/options/" + saved.getId());
         return ResponseEntity.created(location)
             .body(OptionResponse.from(saved));
@@ -53,7 +58,7 @@ public class OptionController {
         @PathVariable Long productId,
         @PathVariable Long optionId
     ) {
-        optionService.deleteOption(productId, optionId);
+        optionCommandService.deleteOption(productId, optionId);
         return ResponseEntity.noContent().build();
     }
 

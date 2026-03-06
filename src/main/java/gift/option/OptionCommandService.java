@@ -9,23 +9,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class OptionService {
+@Transactional
+public class OptionCommandService {
     private final OptionRepository optionRepository;
     private final ProductRepository productRepository;
 
-    public OptionService(OptionRepository optionRepository, ProductRepository productRepository) {
+    public OptionCommandService(OptionRepository optionRepository, ProductRepository productRepository) {
         this.optionRepository = optionRepository;
         this.productRepository = productRepository;
     }
 
-    @Transactional(readOnly = true)
-    public List<Option> findByProductId(Long productId) {
-        productRepository.findById(productId)
-            .orElseThrow(() -> new ProductException(ProductErrorCode.PRODUCT_NOT_FOUND));
-        return optionRepository.findByProductId(productId);
-    }
-
-    @Transactional
     public Option createOption(Long productId, String name, int quantity) {
         Product product = productRepository.findById(productId)
             .orElseThrow(() -> new ProductException(ProductErrorCode.PRODUCT_NOT_FOUND));
@@ -37,7 +30,6 @@ public class OptionService {
         return optionRepository.save(new Option(product, name, quantity));
     }
 
-    @Transactional
     public void deleteOption(Long productId, Long optionId) {
         productRepository.findById(productId)
             .orElseThrow(() -> new ProductException(ProductErrorCode.PRODUCT_NOT_FOUND));

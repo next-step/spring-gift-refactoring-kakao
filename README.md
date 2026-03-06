@@ -56,6 +56,42 @@
 - [x] test(wish): 에러 응답 code 필드 검증 추가
 - [x] test(order): 에러 응답 code 필드 검증 추가
 
+### Phase 6: 트랜잭션 경계 세우기
+#### 구조 변경 (refactor 커밋)
+- [x] refactor: 전체 Service @Transactional 현황 검증 및 누락 확인
+- [x] refactor: 클래스 레벨 vs 메서드 레벨 @Transactional 전략 결정 및 적용
+#### 작동 변경 (feat 커밋 — 상태 재조회 테스트 필수)
+- [x] test: 복합 쓰기 연산(OrderService.createOrder)의 원자적 트랜잭션 검증
+
+### Phase 7: 누락된 작동 구현
+- [x] test(order): 주문 완료 시 위시리스트 항목 제거 검증 테스트 작성
+- [x] feat(order): 주문 완료 시 해당 상품의 위시리스트 항목 자동 제거
+
+### Phase 8: 도메인 책임 되찾기
+- [x] refactor(option): 주문 금액 계산 로직을 Option 엔티티로 이동
+- [x] refactor(member): 비밀번호 검증 로직을 Member 엔티티로 이동
+
+### Phase 9: CQRS 패턴 적용 — 조회/명령 서비스 분리
+- [x] refactor(category): CategoryService → CategoryQueryService + CategoryCommandService 분리
+- [x] refactor(member): MemberService → MemberQueryService + MemberCommandService 분리
+- [x] refactor(product): ProductService → ProductQueryService + ProductCommandService 분리
+- [x] refactor(option): OptionService → OptionQueryService + OptionCommandService 분리
+- [x] refactor(wish): WishService → WishQueryService + WishCommandService 분리
+- [x] refactor(order): OrderService → OrderQueryService + OrderCommandService 분리
+- [x] test: 인수테스트를 조회/명령 단위로 분리
+
+### Phase 10: 단위 테스트 작성
+#### 도메인 엔티티
+- [x] test(member): Member 도메인 로직 단위 테스트 (verifyPassword, chargePoint, deductPoint)
+- [x] test(option): Option 도메인 로직 단위 테스트 (calculatePrice, subtractQuantity)
+#### 서비스
+- [x] test(category): CategoryQueryService, CategoryCommandService 단위 테스트
+- [x] test(member): MemberQueryService, MemberCommandService 단위 테스트
+- [x] test(product): ProductQueryService, ProductCommandService 단위 테스트
+- [x] test(option): OptionQueryService, OptionCommandService 단위 테스트
+- [x] test(wish): WishQueryService, WishCommandService 단위 테스트
+- [x] test(order): OrderQueryService, OrderCommandService 단위 테스트
+
 ## 구현 전략
 
 ### Phase 0: 테스트 코드 작성
@@ -91,6 +127,65 @@
 - **주의**: Admin Controller(`@Controller`)는 `@RestControllerAdvice` 적용 대상이 아니므로 기존 방식 유지. 교체 커밋은 도메인별로 분리하여 테스트 통과 확인
 - **검증**: 각 커밋마다 `./gradlew test` + `./gradlew checkstyleMain` 통과
 
+### Phase 6: 트랜잭션 경계 세우기
+- **목적**: Service 메서드의 트랜잭션 경계가 올바르게 설정되었는지 검증하고 개선
+- **현황**: 모든 Service 메서드에 `@Transactional` 또는 `@Transactional(readOnly = true)`가 이미 적용되어 있음 (Phase 3에서 적용)
+- **핵심 원칙**: 트랜잭션 변경은 구조 변경과 작동 변경을 **반드시 분리**하여 커밋
+  - 구조 변경(`refactor`): 선언 위치 이동, 단일 Repository 호출에 명시적 추가 — 기존 테스트 통과로 충분
+  - 작동 변경(`feat`): 복합 쓰기에 원자성 부여, propagation/isolation 변경 — 실패 시 롤백 동작이 달라지므로 **상태 재조회 테스트 필수**
+- **검증 포인트**: (1) 복합 쓰기 연산(OrderService.createOrder: 재고 차감 + 포인트 차감 + 주문 생성)의 원자성 (2) 클래스 레벨 @Transactional 적용 여부 결정
+- **검증**: 구조 변경은 `./gradlew test` 통과, 작동 변경은 상태 재조회 테스트 동반
+
+### Phase 7: 누락된 작동 구현
+- **목적**: TODO로 남겨진 미구현 기능을 구현
+- **현황**: TODO 1건 — `OrderController:51` 주문 완료 시 위시리스트 정리 (cleanup wish)
+- **접근**: 작동 변경이므로 변경 전 3줄 명세 작성 → 실패 테스트 → 구현 → 테스트 통과 → TODO 제거
+- **검증**: 주문 후 위시리스트 조회 API로 해당 상품이 제거되었는지 상태 재조회
+
+### Phase 8: 도메인 책임 되찾기
+- **목적**: Service에 위치한 도메인 로직을 Entity로 이동하여 응집도 향상
+- **대상 식별 결과**:
+  - `OrderService:49` `option.getProduct().getPrice() * quantity` → getter 조합 산술 연산 → `Option.calculatePrice(quantity)`로 이동
+  - `MemberService:37-39` `member.getPassword() == null || !...equals(password)` → getter 비교 검증 → `Member.verifyPassword(password)`로 이동
+- **원칙**: 구조 변경(`refactor`)이므로 외부 동작 불변. 기존 테스트 통과로 검증
+- **검증**: 각 커밋마다 `./gradlew test` 통과
+
+### Phase 9: CQRS 패턴 적용 — 조회/명령 서비스 분리
+- **목적**: 코드의 의도를 명확히 하여 유지 보수를 쉽게 하고, 유효성 검증(명령)과 조회 성능(조회) 등 각 영역의 관심사를 분리
+- **현황 분석**:
+  | Service | Query 메서드 | Command 메서드 |
+  |---------|-------------|---------------|
+  | CategoryService | findAll | save, update, deleteById |
+  | MemberService | findAll, findById, existsByEmail, login | register, update, chargePoint, deleteById |
+  | ProductService | findAll(Pageable), findAll, findById | save, update, deleteById |
+  | OptionService | findByProductId | createOption, deleteOption |
+  | WishService | findByMemberId, findByMemberIdAndProductId, findById | addWish, delete |
+  | OrderService | findByMemberId | createOrder |
+- **분리 규칙**:
+  - QueryService: `@Transactional(readOnly = true)` 유지, 조회 메서드만 포함
+  - CommandService: `@Transactional` 쓰기 메서드만 포함, 필요 시 QueryService 의존 가능
+  - Controller는 용도에 따라 QueryService 또는 CommandService를 주입받음
+- **순서**: 의존성 적은 도메인부터 (category → member → product → option → wish → order)
+- **원칙**: 구조 변경(`refactor`)이므로 외부 동작 불변. 기존 테스트 통과로 검증
+- **검증**: 각 커밋마다 `./gradlew test` 통과
+
+### Phase 10: 단위 테스트 작성
+- **목적**: 도메인 엔티티와 Service 계층의 비즈니스 로직을 격리 테스트하여, 인수테스트(통합)가 놓칠 수 있는 세밀한 분기와 엣지 케이스를 검증
+- **현황**: 인수테스트(MockMvc)만 존재. 로직이 복잡해질수록 통합테스트만으로는 실패 원인 추적이 어려움
+- **대상**:
+  - 도메인 엔티티: 검증/연산 로직이 있는 Member, Option
+  - 서비스: CQRS 분리된 12개 Service (6 QueryService + 6 CommandService)
+- **도구**: JUnit 5 + Mockito (`@ExtendWith(MockitoExtension.class)`, `@Mock`, `@InjectMocks`)
+- **테스트 범위**:
+  - 도메인 엔티티: 성공 케이스, 경계값, 예외 발생 조건 (Mockito 불필요, 순수 단위 테스트)
+    - `Member`: verifyPassword (성공/실패/null), chargePoint (성공/0이하), deductPoint (성공/잔액부족/0이하)
+    - `Option`: calculatePrice (정상 계산), subtractQuantity (성공/재고 부족)
+  - QueryService: 조회 성공, 존재하지 않는 리소스 예외
+  - CommandService: 생성/수정/삭제 성공, 유효성 검증 실패, 도메인 예외 발생
+- **네이밍**: `{Class}Test.java` (예: `MemberTest.java`, `CategoryQueryServiceTest.java`)
+- **순서**: 도메인 엔티티 먼저, 이후 의존성 적은 도메인부터 서비스 테스트 (category → member → product → option → wish → order)
+- **검증**: 각 커밋마다 `./gradlew test` 통과
+
 ## 진행 기록
 
 ### 2026-02-26
@@ -107,6 +202,23 @@
 #### 이슈
 - 테스트 코드가 전혀 없는 상태 (`src/test/` 하위에 `.gitkeep`만 존재). Phase 0에서 인수테스트를 먼저 확보해야 이후 리팩터링의 안전망이 보장됨
 - Order, Auth 도메인은 Kakao 외부 API 의존성이 있어 Mock 처리가 필요
+
+### 2026-03-04
+#### 작업 내용
+- 2단계 리팩터링 규칙 및 스킬 업데이트 (CLAUDE.md, 스킬 2종 신규, 스킬 2종 갱신)
+- Phase 6: 트랜잭션 경계 세우기 완료
+- Phase 7: 누락된 작동 구현 완료 (주문 시 위시리스트 자동 제거)
+- Phase 8: 도메인 책임 되찾기 완료 (Option.calculatePrice, Member.verifyPassword)
+
+#### 의사결정
+- **트랜잭션 변경 분류 (ADR-0001)**: 트랜잭션 경계 변경을 일괄 구조 변경으로 취급하지 않고, 변경 유형별로 구조/작동을 분리하기로 결정. 선언 위치 이동은 구조 변경(refactor), 복합 쓰기에 원자성 부여는 작동 변경(feat)으로 분류
+- **@Transactional 선언 레벨 (ADR-0002)**: 클래스 레벨 `@Transactional(readOnly = true)` + 쓰기 메서드에 `@Transactional` 오버라이드 전략 채택. 메서드 레벨 개별 선언 대비 누락 방지 효과
+- **Phase 7 TDD 접근**: @Disabled 처리 대신 실패하는 테스트를 먼저 커밋하고, 기능 구현 후 통과를 관찰하는 Red-Green 패턴 적용
+- **Phase 8 대상 선정**: Service의 getter 조합 연산/비교를 Entity 메서드로 이동. `option.getProduct().getPrice() * quantity` → `Option.calculatePrice()`, 비밀번호 null 체크+비교 → `Member.verifyPassword()`
+
+#### 이슈
+- JDK 25 환경에서 Kotlin 컴파일러(1.9.25)가 버전 문자열 파싱 실패 (`java.lang.IllegalArgumentException: 25.0.2`). JDK 21로 고정하여 해결
+- OrderTransactionTest에서 클래스 레벨 @Transactional을 붙이지 않아야 트랜잭션 롤백 테스트가 정상 작동. 개별 테스트 중 데이터 격리가 필요한 것만 메서드 레벨 @Transactional 적용
 
 ## AI 활용 기록
 
@@ -139,3 +251,23 @@
 - **활용 방식**: 사용자 제공 스킬 템플릿을 프로젝트에 맞게 커스터마이징하여 setup-error-handling 스킬 생성. 기존 예외 현황을 분석하고 도메인별 에러 코드를 도출하여 구조화된 예외 체계 구축
 - **AI 산출물 수정 내용**: gift.error 패키지에 공통 인프라(ErrorCode, ErrorResponse, BusinessException, GlobalExceptionHandler, CommonErrorCode, CommonException) 6개 클래스 생성. 6개 도메인 패키지에 각각 ErrorCode enum + Exception 클래스 생성(12개 파일). 기존 NoSuchElementException/IllegalArgumentException을 도메인 예외로 교체하고 Controller-level @ExceptionHandler 3개 제거. 인증(401)/인가(403) 처리도 CommonException으로 통합
 - **학습한 내용**: @RestControllerAdvice는 @RestController에만 적용되므로 Admin Controller(@Controller)의 예외 처리는 별도 고려 필요. 이름 검증처럼 여러 에러 메시지를 반환하는 경우 CommonException(INVALID_REQUEST)으로 단순화하면 기존 테스트(상태 코드만 검증)는 통과하지만 에러 메시지 상세도가 낮아지는 트레이드오프 존재
+
+### 2026-03-04 — 2단계 리팩터링 규칙 및 스킬 업데이트
+- **활용 방식**: CLAUDE.md에 구조/작동 변경 분리 규칙, Phase 6~8 정의, 작동 변경 증거 규칙, ADR 규칙 추가. 신규 스킬 2종(adr, behavior-verification) 생성, 기존 스킬 2종(refactoring, acceptance-test) 갱신
+- **AI 산출물 수정 내용**: 사용자의 "트랜잭션 변경이 구조 변경이 아닐 수 있다"는 피드백을 반영하여, 변경 유형별 구조/작동 분류표를 CLAUDE.md와 refactoring 스킬에 추가
+- **학습한 내용**: 트랜잭션 경계 변경은 단순 선언 위치 이동(구조)과 원자성 부여(작동)를 구분해야 함. 일괄 분류는 작동 변경의 증거 테스트를 누락시킬 위험이 있음
+
+### 2026-03-04 — Phase 6: 트랜잭션 경계 세우기
+- **활용 방식**: 전체 6개 Service의 27개 메서드에 대해 @Transactional 현황 검증. ADR 2건 작성(변경 분류, 선언 레벨). 클래스 레벨 @Transactional(readOnly=true) 일괄 적용. 복합 쓰기 원자성 증거 테스트(OrderTransactionTest) 작성
+- **AI 산출물 수정 내용**: 6개 Service에 클래스 레벨 @Transactional(readOnly=true) 적용, 각 읽기 메서드의 개별 @Transactional(readOnly=true) 제거. OrderTransactionTest에서 포인트 부족 시 옵션 재고 롤백을 상태 재조회로 검증
+- **학습한 내용**: Phase 3에서 이미 모든 메서드에 @Transactional을 적용해 두었으므로 누락은 없었음. 트랜잭션 롤백 테스트 시 테스트 클래스에 @Transactional을 붙이면 테스트 자체가 트랜잭션을 감싸서 롤백 동작을 관찰할 수 없음
+
+### 2026-03-04 — Phase 7: 누락된 작동 구현
+- **활용 방식**: TODO 탐색으로 미구현 기능 1건(주문 시 위시리스트 정리) 확인. TDD Red-Green 패턴으로 실패 테스트 선행 커밋 후 기능 구현
+- **AI 산출물 수정 내용**: OrderTransactionTest에 위시리스트 제거 검증 테스트 추가. OrderService에 WishRepository 의존성 추가 및 removeWishIfExists() 메서드 구현. 사용자 피드백으로 @Disabled 대신 실패 상태 커밋, 미사용 import(WishRequest) 제거
+- **학습한 내용**: TDD에서 @Disabled는 Red 상태를 건너뛰는 것이므로, 실패하는 테스트를 그대로 커밋하여 Red → Green 전환을 명시적으로 기록하는 것이 더 적절함
+
+### 2026-03-04 — Phase 8: 도메인 책임 되찾기
+- **활용 방식**: 전체 Service의 getter 조합 연산/비교 패턴을 탐색하여 Entity로 이동할 대상 2건 식별. 각각 별도 refactor 커밋으로 분리
+- **AI 산출물 수정 내용**: Option에 calculatePrice(quantity) 메서드 추가, OrderService에서 `option.getProduct().getPrice() * quantity` 호출을 `option.calculatePrice(quantity)`로 교체. Member에 verifyPassword(password) 메서드 추가, MemberService.login()의 비밀번호 검증 조건문을 `member.verifyPassword(password)` 호출로 교체
+- **학습한 내용**: getter 조합 연산(A.getB().getC() * x)은 디미터 법칙 위반의 전형적 패턴으로, 데이터를 가진 객체에 메서드를 두는 것이 응집도 향상에 효과적. 구조 변경이므로 기존 테스트 통과만으로 동작 불변 검증 충분

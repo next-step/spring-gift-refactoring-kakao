@@ -1,6 +1,6 @@
 ---
 name: acceptance-test
-description: 인수테스트 작성법 스킬. 사용자가 "인수테스트 작성", "API 테스트", "MockMvc 테스트", "테스트 추가", "테스트 작성" 등을 언급하면 이 스킬을 사용한다. 리팩터링 전 안전망 확보를 위한 테스트 구조, 네이밍 규칙, MockMvc/RestAssured 패턴을 정의한다.
+description: 인수테스트 작성법 스킬. 사용자가 "인수테스트 작성", "API 테스트", "MockMvc 테스트", "테스트 추가", "테스트 작성", "상태 검증", "증거 테스트" 등을 언급하면 이 스킬을 사용한다. 리팩터링 전 안전망 확보를 위한 테스트 구조, 네이밍 규칙, MockMvc/RestAssured 패턴, 상태 재조회 검증 패턴을 정의한다.
 ---
 
 # 인수테스트(Acceptance Test) 작성 가이드
@@ -239,3 +239,57 @@ void setUp() {
 - [ ] 외부 API 의존성이 Mock 처리됨
 - [ ] 정상 흐름(Happy Path)이 모두 커버됨
 - [ ] `@DisplayName`으로 테스트 의도가 명확히 표현됨
+
+---
+
+## 10. 상태 검증 테스트 패턴
+
+작동 변경 후에는 **조회 API로 결과를 재확인**하는 테스트를 작성한다.
+예외 발생만 확인하는 것은 불충분하다.
+
+### 패턴: 변경 후 조회로 재확인
+
+```java
+@Test
+@DisplayName("주문하면 옵션 재고가 차감된다")
+void orderReducesStock() throws Exception {
+    // Given: 현재 옵션 재고 확인
+    var before = mockMvc.perform(get("/api/products/{id}/options", productId)
+            .header("Authorization", "Bearer " + token))
+        .andReturn().getResponse().getContentAsString();
+
+    // When: 주문 실행
+    mockMvc.perform(post("/api/orders")
+            .header("Authorization", "Bearer " + token)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(orderRequest)))
+        .andExpect(status().isCreated());
+
+    // Then: 옵션 재조회로 재고 차감 확인
+    mockMvc.perform(get("/api/products/{id}/options", productId)
+            .header("Authorization", "Bearer " + token))
+        .andExpect(jsonPath("$[0].quantity").value(expectedQuantity));
+}
+```
+
+### 적용 사례
+
+| 작동 변경 | Then에서 확인할 것 |
+|---|---|
+| 주문 시 옵션 재고 차감 | 옵션 조회 API로 재고 감소 확인 |
+| 주문 시 위시리스트 제거 | 위시리스트 조회 API로 해당 상품 부재 확인 |
+| 포인트 차감 후 회원 정보 | 회원 조회 API로 포인트 잔액 확인 |
+| 상품 삭제 시 관련 위시 제거 | 위시리스트 조회 API로 해당 상품 위시 부재 확인 |
+
+### 안티패턴
+
+```java
+// Bad: 예외 발생만 확인 — 실제 상태가 바뀌었는지 모름
+mockMvc.perform(post("/api/orders")
+        .header("Authorization", "Bearer " + token)
+        .content(...))
+    .andExpect(status().isCreated());
+// 여기서 끝나면 재고가 실제로 줄었는지 알 수 없다!
+```
+
+상태 검증 테스트의 상세한 패턴과 안티패턴은 `behavior-verification` 스킬을 참조한다.

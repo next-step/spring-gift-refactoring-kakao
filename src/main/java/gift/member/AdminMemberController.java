@@ -17,15 +17,20 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Controller
 @RequestMapping("/admin/members")
 public class AdminMemberController {
-    private final MemberService memberService;
+    private final MemberQueryService memberQueryService;
+    private final MemberCommandService memberCommandService;
 
-    public AdminMemberController(MemberService memberService) {
-        this.memberService = memberService;
+    public AdminMemberController(
+        MemberQueryService memberQueryService,
+        MemberCommandService memberCommandService
+    ) {
+        this.memberQueryService = memberQueryService;
+        this.memberCommandService = memberCommandService;
     }
 
     @GetMapping
     public String list(Model model) {
-        model.addAttribute("members", memberService.findAll());
+        model.addAttribute("members", memberQueryService.findAll());
         return "member/list";
     }
 
@@ -40,18 +45,18 @@ public class AdminMemberController {
         @RequestParam String password,
         Model model
     ) {
-        if (memberService.existsByEmail(email)) {
+        if (memberQueryService.existsByEmail(email)) {
             populateNewFormError(model, email, "Email is already registered.");
             return "member/new";
         }
 
-        memberService.register(email, password);
+        memberCommandService.register(email, password);
         return "redirect:/admin/members";
     }
 
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
-        model.addAttribute("member", memberService.findById(id));
+        model.addAttribute("member", memberQueryService.findById(id));
         return "member/edit";
     }
 
@@ -61,7 +66,7 @@ public class AdminMemberController {
         @RequestParam String email,
         @RequestParam String password
     ) {
-        memberService.update(id, email, password);
+        memberCommandService.update(id, email, password);
         return "redirect:/admin/members";
     }
 
@@ -70,13 +75,13 @@ public class AdminMemberController {
         @PathVariable Long id,
         @RequestParam int amount
     ) {
-        memberService.chargePoint(id, amount);
+        memberCommandService.chargePoint(id, amount);
         return "redirect:/admin/members";
     }
 
     @PostMapping("/{id}/delete")
     public String delete(@PathVariable Long id) {
-        memberService.deleteById(id);
+        memberCommandService.deleteById(id);
         return "redirect:/admin/members";
     }
 
