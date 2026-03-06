@@ -1,0 +1,44 @@
+package gift.category;
+
+import gift.error.EntityNotFoundException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Service
+@Transactional(readOnly = true)
+public class CategoryService {
+    private final CategoryRepository categoryRepository;
+
+    public CategoryService(CategoryRepository categoryRepository) {
+        this.categoryRepository = categoryRepository;
+    }
+
+    public List<Category> getCategories() {
+        return categoryRepository.findAll();
+    }
+
+    public Category getCategory(Long id) {
+        return categoryRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("카테고리가 존재하지 않습니다."));
+    }
+
+    @Transactional
+    public Category createCategory(CategoryRequest request) {
+        return categoryRepository.save(request.toEntity());
+    }
+
+    @Transactional
+    public Category updateCategory(Long id, CategoryRequest request) {
+        Category category = getCategory(id);
+        category.update(request.name(), request.color(), request.imageUrl(), request.description());
+        return categoryRepository.save(category);
+    }
+
+    @Transactional
+    public void deleteCategory(Long id) {
+        getCategory(id);
+        categoryRepository.deleteById(id);
+    }
+}

@@ -1,34 +1,24 @@
 package gift.auth;
 
+import gift.error.UnauthorizedException;
 import gift.member.Member;
 import gift.member.MemberRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-/**
- * Resolves the authenticated member from an Authorization header.
- *
- * @author brian.kim
- * @since 1.0
- */
 @Component
 public class AuthenticationResolver {
     private final JwtProvider jwtProvider;
     private final MemberRepository memberRepository;
 
-    @Autowired
     public AuthenticationResolver(JwtProvider jwtProvider, MemberRepository memberRepository) {
         this.jwtProvider = jwtProvider;
         this.memberRepository = memberRepository;
     }
 
     public Member extractMember(String authorization) {
-        try {
-            final String token = authorization.replace("Bearer ", "");
-            final String email = jwtProvider.getEmail(token);
-            return memberRepository.findByEmail(email).orElse(null);
-        } catch (Exception e) {
-            return null;
-        }
+        final String token = authorization.replace("Bearer ", "");
+        final String email = jwtProvider.getEmail(token);
+        return memberRepository.findByEmail(email)
+            .orElseThrow(() -> new UnauthorizedException("회원을 찾을 수 없습니다."));
     }
 }

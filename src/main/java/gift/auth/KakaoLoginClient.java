@@ -46,7 +46,6 @@ public class KakaoLoginClient {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record KakaoUserResponse(@JsonProperty("kakao_account") KakaoAccount kakaoAccount) {
-
         public String email() {
             return kakaoAccount.email();
         }

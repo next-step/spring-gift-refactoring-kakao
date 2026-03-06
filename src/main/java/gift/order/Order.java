@@ -1,18 +1,15 @@
 package gift.order;
 
 import gift.option.Option;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "orders")
+@Getter
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -21,16 +18,22 @@ public class Order {
     @ManyToOne
     @JoinColumn(name = "option_id")
     private Option option;
-    // primitive FK
-    private Long memberId;
+
+    @NotNull
+    private Long memberId; // Primitive FK
+
+    @NotNull
     private int quantity;
+
     private String message;
+
+    @NotNull
     private LocalDateTime orderDateTime;
 
-    protected Order() {
-    }
+    protected Order() { }
 
     public Order(Option option, Long memberId, int quantity, String message) {
+        validateQuantity(quantity);
         this.option = option;
         this.memberId = memberId;
         this.quantity = quantity;
@@ -38,27 +41,9 @@ public class Order {
         this.orderDateTime = LocalDateTime.now();
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public Option getOption() {
-        return option;
-    }
-
-    public Long getMemberId() {
-        return memberId;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public LocalDateTime getOrderDateTime() {
-        return orderDateTime;
+    private void validateQuantity(int quantity) {
+        if (quantity < 1) {
+            throw new IllegalArgumentException("주문 수량은 1 이상이어야 합니다.");
+        }
     }
 }

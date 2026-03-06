@@ -1,10 +1,10 @@
 package gift.wish;
 
 public record WishResponse(
-    Long id,
-    Long productId,
+    Long   id,
+    Long   productId,
     String name,
-    int price,
+    int    price,
     String imageUrl
 ) {
     public static WishResponse from(Wish wish) {

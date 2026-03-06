@@ -1,37 +1,50 @@
 package gift.option;
 
 import gift.product.Product;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.regex.Pattern;
 
 @Entity
 @Table(name = "options")
+@Getter
 public class Option {
+    private static final int NAME_MAX_LENGTH = 50;
+    private static final Pattern NAME_ALLOWED_PATTERN =
+        Pattern.compile("^[a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ ()\\[\\]+\\-&/_]*$");
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotNull
     @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false)
+    @JoinColumn(name = "product_id")
     private Product product;
 
-    @Column(nullable = false, length = 50)
+    @NotNull
+    @Column(length = 50)
     private String name;
 
-    @Column(nullable = false)
+    @NotNull
     private int quantity;
 
-    protected Option() {
-    }
+    protected Option() { }
 
     public Option(Product product, String name, int quantity) {
+        validateName(name);
         this.product = product;
+        this.name = name;
+        this.quantity = quantity;
+    }
+
+    public void update(String name, int quantity) {
+        validateName(name);
         this.name = name;
         this.quantity = quantity;
     }
@@ -43,19 +56,26 @@ public class Option {
         this.quantity -= amount;
     }
 
-    public Long getId() {
-        return id;
+    public void validateBelongsTo(Long productId) {
+        if (!this.product.getId().equals(productId)) {
+            throw new NoSuchElementException("해당 상품에 속한 옵션이 아닙니다.");
+        }
     }
 
-    public Product getProduct() {
-        return product;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public int getQuantity() {
-        return quantity;
+    private void validateName(String name) {
+        List<String> errors = new ArrayList<>();
+        if (name == null || name.isBlank()) {
+            errors.add("옵션 이름은 필수입니다.");
+            throw new IllegalArgumentException(String.join(", ", errors));
+        }
+        if (name.length() > NAME_MAX_LENGTH) {
+            errors.add("옵션 이름은 공백을 포함하여 최대 50자까지 입력할 수 있습니다.");
+        }
+        if (!NAME_ALLOWED_PATTERN.matcher(name).matches()) {
+            errors.add("옵션 이름에 허용되지 않는 특수 문자가 포함되어 있습니다.");
+        }
+        if (!errors.isEmpty()) {
+            throw new IllegalArgumentException(String.join(", ", errors));
+        }
     }
 }

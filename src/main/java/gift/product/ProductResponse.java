@@ -1,11 +1,11 @@
 package gift.product;
 
 public record ProductResponse(
-    Long id,
+    Long   id,
     String name,
-    int price,
+    int    price,
     String imageUrl,
-    Long categoryId
+    Long   categoryId
 ) {
     public static ProductResponse from(Product product) {
         return new ProductResponse(

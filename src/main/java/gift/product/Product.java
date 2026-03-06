@@ -2,25 +2,33 @@ package gift.product;
 
 import gift.category.Category;
 import gift.option.Option;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Entity
+@Getter
 public class Product {
+    private static final int NAME_MAX_LENGTH = 15;
+    private static final Pattern NAME_ALLOWED_PATTERN =
+        Pattern.compile("^[a-zA-Z0-9가-힣ㄱ-ㅎㅏ-ㅣ ()\\[\\]+\\-&/_]*$");
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @NotNull
+    @Column(length = 15)
     private String name;
+
+    @NotNull
     private int price;
+
+    @NotNull
     private String imageUrl;
 
     @ManyToOne
@@ -30,44 +38,58 @@ public class Product {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Option> options = new ArrayList<>();
 
-    protected Product() {
-    }
+    protected Product() { }
 
     public Product(String name, int price, String imageUrl, Category category) {
+        this(name, price, imageUrl, category, false);
+    }
+
+    public Product(String name, int price, String imageUrl, Category category, boolean allowKakao) {
+        validateName(name, allowKakao);
+        validatePrice(price);
         this.name = name;
         this.price = price;
         this.imageUrl = imageUrl;
         this.category = category;
     }
 
-    public void update(String name, int price, String imageUrl, Category category) {
+    public void update(String name, int price, String imageUrl, Category category, boolean allowKakao) {
+        validateName(name, allowKakao);
+        validatePrice(price);
         this.name = name;
         this.price = price;
         this.imageUrl = imageUrl;
         this.category = category;
     }
 
-    public Long getId() {
-        return id;
+    public static List<String> validateNameErrors(String name, boolean allowKakao) {
+        List<String> errors = new ArrayList<>();
+        if (name == null || name.isBlank()) {
+            errors.add("상품 이름은 필수입니다.");
+            return errors;
+        }
+        if (name.length() > NAME_MAX_LENGTH) {
+            errors.add("상품 이름은 공백을 포함하여 최대 15자까지 입력할 수 있습니다.");
+        }
+        if (!NAME_ALLOWED_PATTERN.matcher(name).matches()) {
+            errors.add("상품 이름에 허용되지 않는 특수 문자가 포함되어 있습니다.");
+        }
+        if (!allowKakao && name.contains("카카오")) {
+            errors.add("\"카카오\"가 포함된 상품명은 담당 MD와 협의한 경우에만 사용할 수 있습니다.");
+        }
+        return errors;
     }
 
-    public String getName() {
-        return name;
+    private void validateName(String name, boolean allowKakao) {
+        List<String> errors = validateNameErrors(name, allowKakao);
+        if (!errors.isEmpty()) {
+            throw new IllegalArgumentException(String.join(", ", errors));
+        }
     }
 
-    public int getPrice() {
-        return price;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public Category getCategory() {
-        return category;
-    }
-
-    public List<Option> getOptions() {
-        return options;
+    private void validatePrice(int price) {
+        if (price <= 0) {
+            throw new IllegalArgumentException("상품 가격은 0보다 커야 합니다.");
+        }
     }
 }
