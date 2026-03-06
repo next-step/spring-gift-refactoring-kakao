@@ -1,5 +1,7 @@
 package gift.order;
 
+import gift.common.exception.ApplicationException;
+import gift.member.Member;
 import gift.option.Option;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -17,21 +19,31 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "option_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "option_id", nullable = false)
     private Option option;
-    // Member 엔티티를 직접 참조하지 않고 ID만 저장하여 느슨한 결합 유지
-    private Long memberId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id", nullable = false)
+    private Member member;
+
     private int quantity;
     private String message;
     private LocalDateTime orderDateTime;
 
-    public Order(Option option, Long memberId, int quantity, String message) {
+    public Order(Option option, Member member, int quantity, String message) {
+        validateQuantity(quantity);
         this.option = option;
-        this.memberId = memberId;
+        this.member = member;
         this.quantity = quantity;
         this.message = message;
         this.orderDateTime = LocalDateTime.now();
+    }
+
+    private void validateQuantity(int quantity) {
+        if (quantity < 1) {
+            throw new ApplicationException(OrderErrorCode.INVALID_QUANTITY);
+        }
     }
 
 }

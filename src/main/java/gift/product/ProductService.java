@@ -2,16 +2,18 @@ package gift.product;
 
 import gift.category.Category;
 import gift.category.CategoryService;
+import gift.common.exception.ApplicationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @RequiredArgsConstructor
 @Service
+@Transactional(readOnly = true)
 public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryService categoryService;
@@ -26,30 +28,32 @@ public class ProductService {
 
     public Product findById(Long id) {
         return productRepository.findById(id)
-                .orElseThrow(() -> new NoSuchElementException("상품을 찾을 수 없습니다. id: " + id));
+                .orElseThrow(() -> new ApplicationException(ProductErrorCode.NOT_FOUND));
     }
 
+    @Transactional
     public Product create(String name, int price, String imageUrl, Long categoryId, boolean allowKakao) {
-        validateName(name, allowKakao);
+        validateKakaoPolicy(name, allowKakao);
         Category category = categoryService.findById(categoryId);
         return productRepository.save(new Product(name, price, imageUrl, category));
     }
 
+    @Transactional
     public Product update(Long id, String name, int price, String imageUrl, Long categoryId, boolean allowKakao) {
-        validateName(name, allowKakao);
+        validateKakaoPolicy(name, allowKakao);
         Product product = findById(id);
         Category category = categoryService.findById(categoryId);
         product.update(name, price, imageUrl, category);
         return productRepository.save(product);
     }
 
-    private void validateName(String name, boolean allowKakao) {
-        List<String> errors = ProductNameValidator.validate(name, allowKakao);
-        if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(String.join(", ", errors));
+    private void validateKakaoPolicy(String name, boolean allowKakao) {
+        if (!allowKakao && name != null && name.contains("카카오")) {
+            throw new ApplicationException(ProductErrorCode.KAKAO_NAME_RESTRICTED);
         }
     }
 
+    @Transactional
     public void delete(Long id) {
         productRepository.deleteById(id);
     }

@@ -8,7 +8,7 @@ import java.util.List;
 
 public class DatabaseCleanup {
     private static final List<String> TABLES = List.of(
-        "orders", "wish", "options", "product", "category", "member"
+        "orders", "wish", "option", "product", "category", "member"
     );
 
     @Autowired

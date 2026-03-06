@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.NoSuchElementException;
 
 @RequiredArgsConstructor
 @RestController
@@ -36,17 +35,9 @@ public class OrderController {
     ) {
         Member member = authenticationResolver.extractMember(authorization);
 
-        try {
-            Order saved = orderService.createOrder(member.getId(), request.optionId(), request.quantity(), request.message());
-            return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
-                    .body(OrderResponse.from(saved));
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        }
+        Order saved = orderService.createOrder(member.getId(), request.optionId(), request.quantity(), request.message());
+        return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
+                .body(OrderResponse.from(saved));
     }
 
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<Void> handleUnauthorized(IllegalStateException e) {
-        return ResponseEntity.status(401).build();
-    }
 }

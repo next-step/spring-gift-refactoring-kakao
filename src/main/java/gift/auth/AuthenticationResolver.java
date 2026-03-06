@@ -1,5 +1,6 @@
 package gift.auth;
 
+import gift.common.exception.ApplicationException;
 import gift.member.Member;
 import gift.member.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,11 +17,11 @@ public class AuthenticationResolver {
             String token = authorization.replace("Bearer ", "");
             String email = jwtProvider.getEmail(token);
             return memberRepository.findByEmail(email)
-                    .orElseThrow(() -> new IllegalStateException("인증에 실패했습니다."));
-        } catch (IllegalStateException e) {
+                    .orElseThrow(() -> new ApplicationException(AuthErrorCode.AUTHENTICATION_FAILED));
+        } catch (ApplicationException e) {
             throw e;
         } catch (Exception e) {
-            throw new IllegalStateException("인증에 실패했습니다.");
+            throw new ApplicationException(AuthErrorCode.AUTHENTICATION_FAILED);
         }
     }
 }

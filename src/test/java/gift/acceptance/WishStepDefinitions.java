@@ -82,6 +82,22 @@ public class WishStepDefinitions {
         context.setResponse(response);
     }
 
+    @When("{string} 회원의 위시 {string}의 삭제를 요청하면")
+    public void 다른_회원의_위시_삭제를_요청하면(String email, String productName) {
+        Long memberId = jdbcTemplate.queryForObject("SELECT id FROM member WHERE email = ?", Long.class, email);
+        Long productId = jdbcTemplate.queryForObject("SELECT id FROM product WHERE name = ?", Long.class, productName);
+        Long wishId = jdbcTemplate.queryForObject(
+            "SELECT id FROM wish WHERE member_id = ? AND product_id = ?", Long.class, memberId, productId
+        );
+        var response = restTemplate.exchange(
+            "/api/wishes/" + wishId,
+            HttpMethod.DELETE,
+            new HttpEntity<>(authHeaders()),
+            String.class
+        );
+        context.setResponse(response);
+    }
+
     @Then("응답의 위시 상품 이름은 {string}이다")
     public void 응답의_위시_상품_이름_확인(String expectedName) throws Exception {
         Map<String, Object> body = objectMapper.readValue(

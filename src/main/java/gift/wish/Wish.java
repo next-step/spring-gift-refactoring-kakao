@@ -1,5 +1,7 @@
 package gift.wish;
 
+import gift.common.exception.ApplicationException;
+import gift.member.Member;
 import gift.product.Product;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -14,16 +16,24 @@ public class Wish {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    // Member 엔티티를 직접 참조하지 않고 ID만 저장하여 느슨한 결합 유지
-    private Long memberId;
 
-    @ManyToOne
-    @JoinColumn(name = "product_id")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id", nullable = false)
+    private Member member;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    public Wish(Long memberId, Product product) {
-        this.memberId = memberId;
+    public Wish(Member member, Product product) {
+        this.member = member;
         this.product = product;
+    }
+
+    public void validateOwner(Long memberId) {
+        if (!this.member.getId().equals(memberId)) {
+            throw new ApplicationException(WishErrorCode.NOT_OWNER);
+        }
     }
 
 }

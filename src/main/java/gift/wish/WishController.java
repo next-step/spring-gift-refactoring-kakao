@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -37,18 +36,14 @@ public class WishController {
     ) {
         Member member = authenticationResolver.extractMember(authorization);
 
-        try {
-            Optional<Wish> existing = wishService.findByMemberIdAndProductId(member.getId(), request.productId());
-            if (existing.isPresent()) {
-                return ResponseEntity.ok(WishResponse.from(existing.get()));
-            }
-
-            Wish saved = wishService.create(member.getId(), request.productId());
-            return ResponseEntity.created(URI.create("/api/wishes/" + saved.getId()))
-                    .body(WishResponse.from(saved));
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
+        Optional<Wish> existing = wishService.findByMemberIdAndProductId(member.getId(), request.productId());
+        if (existing.isPresent()) {
+            return ResponseEntity.ok(WishResponse.from(existing.get()));
         }
+
+        Wish saved = wishService.create(member.getId(), request.productId());
+        return ResponseEntity.created(URI.create("/api/wishes/" + saved.getId()))
+                .body(WishResponse.from(saved));
     }
 
     @DeleteMapping("/{id}")
@@ -58,18 +53,8 @@ public class WishController {
     ) {
         Member member = authenticationResolver.extractMember(authorization);
 
-        try {
-            wishService.removeWish(id, member.getId());
-            return ResponseEntity.noContent().build();
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(403).build();
-        }
+        wishService.removeWish(id, member.getId());
+        return ResponseEntity.noContent().build();
     }
 
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<Void> handleUnauthorized(IllegalStateException e) {
-        return ResponseEntity.status(401).build();
-    }
 }

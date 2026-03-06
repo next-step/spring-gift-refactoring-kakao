@@ -1,19 +1,35 @@
 package gift.order;
 
+import gift.member.Member;
+import gift.option.Option;
 import gift.product.Product;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClient;
 
+@Slf4j
 @Component
-public class KakaoMessageClient {
+public class KakaoMessageClient implements OrderNotificationSender {
     private final RestClient restClient;
 
     public KakaoMessageClient(RestClient.Builder builder) {
         this.restClient = builder.build();
     }
 
-    public void sendToMe(String accessToken, Order order, Product product) {
+    @Override
+    public void send(Member member, Order order, Option option) {
+        if (member.getKakaoAccessToken() == null) {
+            return;
+        }
+        try {
+            sendToMe(member.getKakaoAccessToken(), order, option.getProduct());
+        } catch (Exception e) {
+            log.warn("카카오 알림 발송 실패: orderId={}, memberId={}", order.getId(), member.getId(), e);
+        }
+    }
+
+    private void sendToMe(String accessToken, Order order, Product product) {
         String templateObject = buildTemplate(order, product);
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
