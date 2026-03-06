@@ -2,12 +2,11 @@ package gift.product;
 
 import jakarta.validation.Valid;
 import java.net.URI;
-import java.util.NoSuchElementException;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,8 +39,9 @@ public class ProductController {
 
     @PostMapping
     public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductRequest request) {
-        final Product saved = productService.createProduct(
-                request.name(), request.price(), request.imageUrl(), request.categoryId(), false);
+        validateName(request.name());
+        final Product saved =
+                productService.createProduct(request.name(), request.price(), request.imageUrl(), request.categoryId());
         return ResponseEntity.created(URI.create("/api/products/" + saved.getId()))
                 .body(ProductResponse.from(saved));
     }
@@ -49,24 +49,22 @@ public class ProductController {
     @PutMapping("/{id}")
     public ResponseEntity<ProductResponse> updateProduct(
             @PathVariable Long id, @Valid @RequestBody ProductRequest request) {
+        validateName(request.name());
         final Product saved = productService.updateProduct(
-                id, request.name(), request.price(), request.imageUrl(), request.categoryId(), false);
+                id, request.name(), request.price(), request.imageUrl(), request.categoryId());
         return ResponseEntity.ok(ProductResponse.from(saved));
+    }
+
+    private void validateName(String name) {
+        final List<String> errors = ProductNameValidator.validate(name);
+        if (!errors.isEmpty()) {
+            throw new IllegalArgumentException(String.join(", ", errors));
+        }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
-    }
-
-    @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<Void> handleNotFound() {
-        return ResponseEntity.notFound().build();
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
-        return ResponseEntity.badRequest().body(e.getMessage());
     }
 }

@@ -6,16 +6,26 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class KakaoAuthService {
     private final KakaoLoginClient kakaoLoginClient;
+    private final KakaoLoginProperties properties;
     private final MemberRepository memberRepository;
     private final JwtProvider jwtProvider;
 
     public KakaoAuthService(
-            KakaoLoginClient kakaoLoginClient, MemberRepository memberRepository, JwtProvider jwtProvider) {
+            KakaoLoginClient kakaoLoginClient,
+            KakaoLoginProperties properties,
+            MemberRepository memberRepository,
+            JwtProvider jwtProvider) {
         this.kakaoLoginClient = kakaoLoginClient;
+        this.properties = properties;
         this.memberRepository = memberRepository;
         this.jwtProvider = jwtProvider;
+    }
+
+    public String buildAuthorizationUrl() {
+        return new KakaoAuthorizationUrl(properties).toString();
     }
 
     @Transactional

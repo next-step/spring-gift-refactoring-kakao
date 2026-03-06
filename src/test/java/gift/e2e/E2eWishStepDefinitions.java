@@ -127,7 +127,8 @@ public class E2eWishStepDefinitions {
 
     @그러면("위시리스트 중복 추가시 기존 위시를 반환한다")
     public void 위시리스트_중복_추가시_기존_위시를_반환한다() {
-        assertThat(context.getResponse().statusCode()).isEqualTo(200);
+        assertThat(context.getResponse().statusCode()).isEqualTo(201);
+        assertThat(context.getResponse().jsonPath().getLong("id")).isEqualTo(context.getWishId());
     }
 
     @그러면("위시리스트에 {string} 상품이 포함되어 있다")
@@ -155,5 +156,17 @@ public class E2eWishStepDefinitions {
     @그러면("위시리스트 추가에 실패한다")
     public void 위시리스트_추가에_실패한다() {
         assertThat(context.getResponse().statusCode()).isGreaterThanOrEqualTo(400);
+    }
+
+    @그러면("위시리스트에 {string} 상품이 포함되어 있지 않다")
+    public void 위시리스트에_상품이_포함되어_있지_않다(String productName) {
+        var response = RestAssured.given()
+                .header("Authorization", "Bearer " + context.getToken())
+                .when()
+                .get("/api/wishes")
+                .then()
+                .extract();
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.jsonPath().getList("content.name")).doesNotContain(productName);
     }
 }

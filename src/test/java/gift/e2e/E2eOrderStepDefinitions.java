@@ -196,4 +196,10 @@ public class E2eOrderStepDefinitions {
     public void 주문이_n건_조회된다(int count) {
         assertThat(context.getResponse().jsonPath().getList("content")).hasSize(count);
     }
+
+    @그러면("회원의 포인트가 {int}원 차감되어 있다")
+    public void 회원의_포인트가_차감되어_있다(int deducted) {
+        var member = memberRepository.findByEmail("sender@test.com").get();
+        assertThat(member.getPoint()).isEqualTo(10_000_000 - deducted);
+    }
 }

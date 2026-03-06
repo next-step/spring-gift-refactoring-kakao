@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional(readOnly = true)
 public class MemberService {
     private final MemberRepository memberRepository;
 
@@ -26,7 +27,7 @@ public class MemberService {
                 .findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다."));
 
-        if (member.getPassword() == null || !member.getPassword().equals(password)) {
+        if (!member.matchesPassword(password)) {
             throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
@@ -39,15 +40,6 @@ public class MemberService {
 
     public Member findById(Long id) {
         return memberRepository.findById(id).orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다. id=" + id));
-    }
-
-    public boolean existsByEmail(String email) {
-        return memberRepository.existsByEmail(email);
-    }
-
-    @Transactional
-    public Member createMember(String email, String password) {
-        return memberRepository.save(new Member(email, password));
     }
 
     @Transactional
