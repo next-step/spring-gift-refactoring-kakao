@@ -1,5 +1,6 @@
 package gift.wish;
 
+import gift.ForbiddenException;
 import gift.category.Category;
 import gift.product.Product;
 import gift.product.ProductRepository;

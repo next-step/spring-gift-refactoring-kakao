@@ -13,7 +13,7 @@ public record ProductResponse(
             product.getName(),
             product.getPrice(),
             product.getImageUrl(),
-            product.getCategory().getId()
+            product.getCategoryId()
         );
     }
 }

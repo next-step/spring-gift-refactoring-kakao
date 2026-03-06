@@ -34,6 +34,31 @@ class OptionTest {
             .isInstanceOf(IllegalArgumentException.class);
     }
 
+    @Test
+    @DisplayName("0개를 차감하면 예외가 발생한다")
+    void subtractZeroThrows() {
+        Option option = createOption(10);
+        assertThatThrownBy(() -> option.subtractQuantity(0))
+            .isInstanceOf(IllegalArgumentException.class);
+        assertThat(option.getQuantity()).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("음수를 차감하면 예외가 발생한다")
+    void subtractNegativeThrows() {
+        Option option = createOption(10);
+        assertThatThrownBy(() -> option.subtractQuantity(-1))
+            .isInstanceOf(IllegalArgumentException.class);
+        assertThat(option.getQuantity()).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("총 가격은 상품 단가 × 수량이다")
+    void calculateTotalPrice() {
+        Option option = createOption(10);
+        assertThat(option.calculateTotalPrice(3)).isEqualTo(3000);
+    }
+
     private Option createOption(int quantity) {
         Category category = new Category("카테고리", "#000", "img.png", "설명");
         Product product = new Product("상품", 1000, "img.png", category);

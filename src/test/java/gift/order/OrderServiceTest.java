@@ -6,6 +6,7 @@ import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
 import gift.product.Product;
+import gift.wish.WishRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,9 @@ class OrderServiceTest {
 
     @Mock
     private MemberRepository memberRepository;
+
+    @Mock
+    private WishRepository wishRepository;
 
     @Mock
     private KakaoMessageClient kakaoMessageClient;
@@ -103,6 +107,17 @@ class OrderServiceTest {
         assertThatThrownBy(() -> orderService.createOrder(poorMember, new OrderRequest(1L, 1, null)))
             .isInstanceOf(IllegalArgumentException.class);
         verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("주문 완료 시 해당 상품의 위시를 삭제한다")
+    void deletesWishOnOrder() {
+        given(optionRepository.findById(1L)).willReturn(Optional.of(option));
+        given(orderRepository.save(any(Order.class))).willAnswer(inv -> inv.getArgument(0));
+
+        orderService.createOrder(member, new OrderRequest(1L, 1, null));
+
+        verify(wishRepository).deleteByMemberIdAndProductId(member.getId(), product.getId());
     }
 
     @Test

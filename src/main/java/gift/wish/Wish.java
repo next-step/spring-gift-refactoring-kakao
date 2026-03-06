@@ -32,11 +32,35 @@ public class Wish {
         return id;
     }
 
+    public boolean isOwnedBy(Long memberId) {
+        return this.memberId.equals(memberId);
+    }
+
+    public boolean isNotOwnedBy(Long memberId) {
+        return !this.memberId.equals(memberId);
+    }
+
     public Long getMemberId() {
         return memberId;
     }
 
     public Product getProduct() {
         return product;
+    }
+
+    public Long getProductId() {
+        return product.getId();
+    }
+
+    public String getProductName() {
+        return product.getName();
+    }
+
+    public int getProductPrice() {
+        return product.getPrice();
+    }
+
+    public String getProductImageUrl() {
+        return product.getImageUrl();
     }
 }

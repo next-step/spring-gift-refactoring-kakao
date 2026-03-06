@@ -1,10 +1,12 @@
 package gift.wish;
 
+import gift.ForbiddenException;
 import gift.product.Product;
 import gift.product.ProductRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -27,17 +29,25 @@ public class WishService {
         return wishRepository.findByMemberIdAndProductId(memberId, productId);
     }
 
+    @Transactional
+    public Wish createOrGet(Long memberId, Long productId) {
+        return wishRepository.findByMemberIdAndProductId(memberId, productId)
+            .orElseGet(() -> create(memberId, productId));
+    }
+
+    @Transactional
     public Wish create(Long memberId, Long productId) {
         Product product = productRepository.findById(productId)
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
         return wishRepository.save(new Wish(memberId, product));
     }
 
+    @Transactional
     public void remove(Long memberId, Long wishId) {
         Wish wish = wishRepository.findById(wishId)
             .orElseThrow(() -> new NoSuchElementException("위시가 존재하지 않습니다. id=" + wishId));
 
-        if (!wish.getMemberId().equals(memberId)) {
+        if (wish.isNotOwnedBy(memberId)) {
             throw new ForbiddenException("다른 회원의 위시를 삭제할 수 없습니다.");
         }
 

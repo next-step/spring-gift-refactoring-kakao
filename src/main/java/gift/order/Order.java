@@ -46,6 +46,10 @@ public class Order {
         return option;
     }
 
+    public Long getOptionId() {
+        return option.getId();
+    }
+
     public Long getMemberId() {
         return memberId;
     }

@@ -3,7 +3,7 @@ package gift.auth;
 import gift.member.Member;
 import gift.member.MemberRepository;
 import org.springframework.stereotype.Service;
-import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class KakaoAuthService {
@@ -25,15 +25,10 @@ public class KakaoAuthService {
     }
 
     public String buildLoginUrl() {
-        return UriComponentsBuilder.fromUriString("https://kauth.kakao.com/oauth/authorize")
-            .queryParam("response_type", "code")
-            .queryParam("client_id", properties.clientId())
-            .queryParam("redirect_uri", properties.redirectUri())
-            .queryParam("scope", "account_email,talk_message")
-            .build()
-            .toUriString();
+        return properties.buildLoginUrl();
     }
 
+    @Transactional
     public TokenResponse processCallback(String code) {
         KakaoLoginClient.KakaoTokenResponse kakaoToken = kakaoLoginClient.requestAccessToken(code);
         KakaoLoginClient.KakaoUserResponse kakaoUser = kakaoLoginClient.requestUserInfo(kakaoToken.accessToken());

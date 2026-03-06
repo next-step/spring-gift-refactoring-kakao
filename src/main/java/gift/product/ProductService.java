@@ -5,6 +5,7 @@ import gift.category.CategoryRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -32,12 +33,14 @@ public class ProductService {
         return productRepository.findById(id);
     }
 
+    @Transactional
     public Product create(ProductRequest request) {
         validateName(request.name());
         Category category = findCategoryById(request.categoryId());
         return productRepository.save(request.toEntity(category));
     }
 
+    @Transactional
     public Product update(Long id, ProductRequest request) {
         validateName(request.name());
         Category category = findCategoryById(request.categoryId());
@@ -47,11 +50,13 @@ public class ProductService {
         return productRepository.save(product);
     }
 
+    @Transactional
     public Product saveProduct(String name, int price, String imageUrl, Long categoryId) {
         Category category = findCategoryById(categoryId);
         return productRepository.save(new Product(name, price, imageUrl, category));
     }
 
+    @Transactional
     public Product updateProduct(Long id, String name, int price, String imageUrl, Long categoryId) {
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
@@ -62,10 +67,6 @@ public class ProductService {
 
     public void delete(Long id) {
         productRepository.deleteById(id);
-    }
-
-    public List<Category> findAllCategories() {
-        return categoryRepository.findAll();
     }
 
     private Category findCategoryById(Long categoryId) {

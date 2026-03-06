@@ -1,5 +1,6 @@
 package gift.product;
 
+import gift.category.CategoryService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,9 +16,11 @@ import java.util.NoSuchElementException;
 @RequestMapping("/admin/products")
 public class AdminProductController {
     private final ProductService productService;
+    private final CategoryService categoryService;
 
-    public AdminProductController(ProductService productService) {
+    public AdminProductController(ProductService productService, CategoryService categoryService) {
         this.productService = productService;
+        this.categoryService = categoryService;
     }
 
     @GetMapping
@@ -28,7 +31,7 @@ public class AdminProductController {
 
     @GetMapping("/new")
     public String newForm(Model model) {
-        model.addAttribute("categories", productService.findAllCategories());
+        model.addAttribute("categories", categoryService.findAll());
         return "product/new";
     }
 
@@ -42,7 +45,7 @@ public class AdminProductController {
     ) {
         List<String> errors = ProductNameValidator.validate(name, true);
         if (!errors.isEmpty()) {
-            populateNewForm(model, errors, name, price, imageUrl, categoryId);
+            populateForm(model, null, errors, name, price, imageUrl, categoryId);
             return "product/new";
         }
 
@@ -55,7 +58,7 @@ public class AdminProductController {
         Product product = productService.findById(id)
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
         model.addAttribute("product", product);
-        model.addAttribute("categories", productService.findAllCategories());
+        model.addAttribute("categories", categoryService.findAll());
         return "product/edit";
     }
 
@@ -73,7 +76,7 @@ public class AdminProductController {
 
         List<String> errors = ProductNameValidator.validate(name, true);
         if (!errors.isEmpty()) {
-            populateEditForm(model, product, errors, name, price, imageUrl, categoryId);
+            populateForm(model, product, errors, name, price, imageUrl, categoryId);
             return "product/edit";
         }
 
@@ -87,23 +90,7 @@ public class AdminProductController {
         return "redirect:/admin/products";
     }
 
-    private void populateNewForm(
-        Model model,
-        List<String> errors,
-        String name,
-        int price,
-        String imageUrl,
-        Long categoryId
-    ) {
-        model.addAttribute("errors", errors);
-        model.addAttribute("name", name);
-        model.addAttribute("price", price);
-        model.addAttribute("imageUrl", imageUrl);
-        model.addAttribute("categoryId", categoryId);
-        model.addAttribute("categories", productService.findAllCategories());
-    }
-
-    private void populateEditForm(
+    private void populateForm(
         Model model,
         Product product,
         List<String> errors,
@@ -113,11 +100,13 @@ public class AdminProductController {
         Long categoryId
     ) {
         model.addAttribute("errors", errors);
-        model.addAttribute("product", product);
+        if (product != null) {
+            model.addAttribute("product", product);
+        }
         model.addAttribute("name", name);
         model.addAttribute("price", price);
         model.addAttribute("imageUrl", imageUrl);
         model.addAttribute("categoryId", categoryId);
-        model.addAttribute("categories", productService.findAllCategories());
+        model.addAttribute("categories", categoryService.findAll());
     }
 }

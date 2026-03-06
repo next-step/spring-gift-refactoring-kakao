@@ -36,7 +36,14 @@ public class Option {
         this.quantity = quantity;
     }
 
+    public int calculateTotalPrice(int quantity) {
+        return product.getPrice() * quantity;
+    }
+
     public void subtractQuantity(int amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("차감 수량은 1 이상이어야 합니다.");
+        }
         if (amount > this.quantity) {
             throw new IllegalArgumentException("차감할 수량이 현재 재고보다 많습니다.");
         }
@@ -49,6 +56,10 @@ public class Option {
 
     public Product getProduct() {
         return product;
+    }
+
+    public String getProductName() {
+        return product.getName();
     }
 
     public String getName() {

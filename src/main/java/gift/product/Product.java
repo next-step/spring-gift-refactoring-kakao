@@ -12,6 +12,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Entity
@@ -67,7 +68,11 @@ public class Product {
         return category;
     }
 
+    public Long getCategoryId() {
+        return category.getId();
+    }
+
     public List<Option> getOptions() {
-        return options;
+        return Collections.unmodifiableList(options);
     }
 }
