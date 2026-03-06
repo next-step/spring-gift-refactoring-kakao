@@ -64,6 +64,10 @@ public class Member {
         this.point -= amount;
     }
 
+    public boolean passwordMatches(String rawPassword, org.springframework.security.crypto.password.PasswordEncoder encoder) {
+        return password != null && encoder.matches(rawPassword, password);
+    }
+
     public Long getId() {
         return id;
     }

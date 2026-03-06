@@ -130,3 +130,99 @@
 | **커밋 = 목적 1개** | git diff를 보고 30초 안에 설명할 수 없으면 더 쪼갠다 |
 | **AI 산출물 검증** | AI는 초안을 만들 뿐, 의도하지 않은 변경이 없는지 반드시 확인한다 |
 | **AI 활용 기록** | AI 도구를 활용했다면 README.md에 활용 방식, 수정 내용, 학습 내용을 기록한다 |
+
+---
+
+## 🚀 2단계: 리팩터링 완성하기 (작동 변경 포함)
+
+> 작동 변경을 안전하게 수행하고, 그 결과를 증거로 보여준다.
+> 구조 변경 커밋과 작동 변경 커밋을 분리한다.
+
+### 4단계: 트랜잭션 경계 세우기
+
+**대상 식별 결과:**
+
+| Service 메서드 | 복수 쓰기 작업 | 우선순위 |
+|---|---|---|
+| `OrderService.createOrder()` | 재고 차감 → 포인트 차감 → 주문 저장 (3개 쓰기) | HIGH |
+| `KakaoAuthService.processCallback()` | 회원 조회/생성 → 토큰 갱신 (외부 API + DB) | MEDIUM |
+
+#### 4-1. OrderService.createOrder() 트랜잭션 적용
+
+- **현재 문제**: 재고 차감 후 포인트 차감 실패 시 재고만 줄어든 채로 남음
+- **변경**: `@Transactional` 추가, 카카오 알림은 트랜잭션 밖에서 처리
+- [ ] `OrderService.createOrder()`에 `@Transactional` 적용
+- [ ] 중간 실패 시 롤백 검증 테스트 작성 (포인트 부족 시 재고 원복 확인)
+- [ ] 전체 테스트 통과 확인
+
+#### 4-2. KakaoAuthService.processCallback() 트랜잭션 적용
+
+- **현재 문제**: 회원 저장 실패 시 외부 API 호출은 이미 완료된 상태
+- **변경**: DB 쓰기 부분에 `@Transactional` 적용
+- [ ] `KakaoAuthService.processCallback()`에 `@Transactional` 적용
+- [ ] 전체 테스트 통과 확인
+
+---
+
+### 5단계: 누락된 작동 구현
+
+**대상 식별 결과:**
+
+#### 5-1. 상품 옵션 수정 API 미구현
+
+- **API 명세**: `PUT /api/products/{productId}/options/{optionId}` — "상품 옵션 수정"
+- **현재 상태**: OptionController에 PUT 엔드포인트 없음, OptionService에 update() 없음
+- [ ] `Option.update(String name, int quantity)` 모델 메서드 추가
+- [ ] `OptionService.update()` 메서드 추가
+- [ ] `OptionController` PUT 엔드포인트 추가
+- [ ] 옵션 수정 테스트 작성 (상태 재조회로 검증)
+- [ ] 전체 테스트 통과 확인
+
+#### 5-2. 테스트 검증 강화 — 예외만 확인하는 테스트를 상태 검증으로 개선
+
+- **현재 문제**: 예외 발생 여부만 확인하고, 상태가 변하지 않았는지 검증하지 않음
+- **대상 테스트**:
+  - `OptionTest` — 차감 실패 시 재고가 그대로인지 검증 누락 (2건)
+  - `MemberTest` — 포인트 차감/충전 실패 시 포인트가 그대로인지 검증 누락 (5건)
+- [ ] `OptionTest`: 예외 후 `option.getQuantity()` 불변 검증 추가
+- [ ] `MemberTest`: 예외 후 `member.getPoint()` 불변 검증 추가
+- [ ] 전체 테스트 통과 확인
+
+---
+
+### 6단계: 도메인 책임 되찾기
+
+**대상 식별 결과:**
+
+#### 6-1. 디미터 법칙 위반 해소 — DTO 변환에서 엔티티 체인 접근 제거
+
+- **현재 문제**: DTO의 `from()` 메서드가 `wish.getProduct().getName()` 등으로 엔티티 내부를 탐색
+- **대상 파일**:
+  - `WishResponse.from()` — `wish.getProduct().getId/getName/getPrice/getImageUrl` (4회)
+  - `ProductResponse.from()` — `product.getCategory().getId()` (1회)
+  - `OrderResponse.from()` — `order.getOption().getId()` (1회)
+  - `OptionService.delete()` — `option.getProduct().getId()` (1회)
+- **개선 방향**: 엔티티에 필요한 값을 반환하는 메서드 추가 (예: `Wish.getProductId()`, `Product.getCategoryId()`)
+- [ ] 엔티티에 위임 메서드 추가
+- [ ] DTO 변환 코드에서 체인 접근 제거
+- [ ] 전체 테스트 통과 확인
+
+#### 6-2. 주문 금액 계산 책임 정리
+
+- **현재 문제**: `Option.calculatePrice()`가 `product.getPrice()`를 호출하여 가격 계산 — Option이 Product 가격 정책을 알아야 함
+- **개선 방향**: 주문 금액 계산은 `Order` 생성 시점에 총액을 받거나, 별도 계산 로직으로 분리
+- [ ] 가격 계산 책임 위치 결정 (ADR 후보)
+- [ ] 변경 적용
+- [ ] 전체 테스트 통과 확인
+
+---
+
+### ADR 작성 판단 기준
+
+- [ ] 선택지가 2개 이상이고 트레이드오프가 있었던 경우 → ADR 작성
+- [ ] 팀이 반복해서 따라야 할 규칙이나 경계를 정한 경우 → ADR 작성
+- [ ] 테스트 전략과 검증 방식이 결정의 핵심이었던 경우 → ADR 작성
+
+**ADR 후보:**
+- 트랜잭션 경계에서 카카오 알림을 트랜잭션 안/밖 어디에 둘지
+- `Option.calculatePrice()` vs 서비스 레벨 가격 계산 vs Order 엔티티 내부 계산

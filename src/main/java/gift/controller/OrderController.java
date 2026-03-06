@@ -4,6 +4,8 @@ import gift.auth.LoginMember;
 import gift.dto.OrderRequest;
 import gift.dto.OrderResponse;
 import gift.model.Member;
+import gift.model.Order;
+import gift.service.KakaoNotificationService;
 import gift.service.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
@@ -20,9 +22,11 @@ import java.net.URI;
 @RequestMapping("/api/orders")
 public class OrderController {
     private final OrderService orderService;
+    private final KakaoNotificationService kakaoNotificationService;
 
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, KakaoNotificationService kakaoNotificationService) {
         this.orderService = orderService;
+        this.kakaoNotificationService = kakaoNotificationService;
     }
 
     @GetMapping
@@ -39,7 +43,8 @@ public class OrderController {
         @LoginMember Member member,
         @Valid @RequestBody OrderRequest request
     ) {
-        var saved = orderService.createOrder(member, request.optionId(), request.quantity(), request.message());
+        Order saved = orderService.createOrder(member, request.optionId(), request.quantity(), request.message());
+        kakaoNotificationService.sendOrderNotification(member, saved, saved.getOption());
         return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
             .body(OrderResponse.from(saved));
     }

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +31,9 @@ class MemberControllerTest {
 
     @Autowired
     private MemberRepository memberRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Test
     @DisplayName("POST /api/members/register - 회원가입에 성공하면 201과 토큰을 반환한다")
@@ -80,7 +84,7 @@ class MemberControllerTest {
     @Test
     @DisplayName("POST /api/members/login - 올바른 자격 증명으로 로그인하면 토큰을 반환한다")
     void login() throws Exception {
-        memberRepository.save(new Member("user@example.com", "password123"));
+        memberRepository.save(new Member("user@example.com", passwordEncoder.encode("password123")));
         var request = new MemberRequest("user@example.com", "password123");
 
         mockMvc.perform(post("/api/members/login")
@@ -93,7 +97,7 @@ class MemberControllerTest {
     @Test
     @DisplayName("POST /api/members/login - 잘못된 비밀번호로 로그인하면 400을 반환한다")
     void loginWrongPassword() throws Exception {
-        memberRepository.save(new Member("user@example.com", "correctPassword"));
+        memberRepository.save(new Member("user@example.com", passwordEncoder.encode("correctPassword")));
         var request = new MemberRequest("user@example.com", "wrongPassword");
 
         mockMvc.perform(post("/api/members/login")

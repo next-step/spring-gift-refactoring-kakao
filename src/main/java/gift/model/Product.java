@@ -65,6 +65,10 @@ public class Product {
         return category;
     }
 
+    public Long categoryId() {
+        return category.getId();
+    }
+
     public List<Option> getOptions() {
         return options;
     }

@@ -7,6 +7,7 @@ import gift.dto.TokenResponse;
 import gift.model.Member;
 import gift.repository.MemberRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
 
 /*
@@ -47,14 +48,17 @@ public class KakaoAuthService {
     public TokenResponse processCallback(String code) {
         KakaoLoginClient.KakaoTokenResponse kakaoToken = kakaoLoginClient.requestAccessToken(code);
         KakaoLoginClient.KakaoUserResponse kakaoUser = kakaoLoginClient.requestUserInfo(kakaoToken.accessToken());
-        String email = kakaoUser.email();
 
+        return saveAndIssueToken(kakaoUser.email(), kakaoToken.accessToken());
+    }
+
+    @Transactional
+    public TokenResponse saveAndIssueToken(String email, String accessToken) {
         Member member = memberRepository.findByEmail(email)
             .orElseGet(() -> new Member(email));
-        member.updateKakaoAccessToken(kakaoToken.accessToken());
+        member.updateKakaoAccessToken(accessToken);
         memberRepository.save(member);
 
-        String token = jwtProvider.createToken(member.getEmail());
-        return new TokenResponse(token);
+        return new TokenResponse(jwtProvider.createToken(email));
     }
 }

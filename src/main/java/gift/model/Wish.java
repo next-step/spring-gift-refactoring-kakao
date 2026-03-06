@@ -38,4 +38,20 @@ public class Wish {
     public Product getProduct() {
         return product;
     }
+
+    public Long productId() {
+        return product.getId();
+    }
+
+    public String productName() {
+        return product.getName();
+    }
+
+    public int productPrice() {
+        return product.getPrice();
+    }
+
+    public String productImageUrl() {
+        return product.getImageUrl();
+    }
 }

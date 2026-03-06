@@ -41,6 +41,7 @@ class MemberTest {
 
             assertThatThrownBy(() -> member.chargePoint(0))
                 .isInstanceOf(IllegalArgumentException.class);
+            assertThat(member.getPoint()).isEqualTo(0);
         }
 
         @Test
@@ -50,6 +51,7 @@ class MemberTest {
 
             assertThatThrownBy(() -> member.chargePoint(-100))
                 .isInstanceOf(IllegalArgumentException.class);
+            assertThat(member.getPoint()).isEqualTo(0);
         }
     }
 
@@ -87,6 +89,7 @@ class MemberTest {
 
             assertThatThrownBy(() -> member.deductPoint(1001))
                 .isInstanceOf(IllegalArgumentException.class);
+            assertThat(member.getPoint()).isEqualTo(1000);
         }
 
         @Test
@@ -97,6 +100,7 @@ class MemberTest {
 
             assertThatThrownBy(() -> member.deductPoint(0))
                 .isInstanceOf(IllegalArgumentException.class);
+            assertThat(member.getPoint()).isEqualTo(1000);
         }
 
         @Test
@@ -107,6 +111,7 @@ class MemberTest {
 
             assertThatThrownBy(() -> member.deductPoint(-100))
                 .isInstanceOf(IllegalArgumentException.class);
+            assertThat(member.getPoint()).isEqualTo(1000);
         }
 
         @Test
@@ -116,6 +121,7 @@ class MemberTest {
 
             assertThatThrownBy(() -> member.deductPoint(1))
                 .isInstanceOf(IllegalArgumentException.class);
+            assertThat(member.getPoint()).isEqualTo(0);
         }
     }
 

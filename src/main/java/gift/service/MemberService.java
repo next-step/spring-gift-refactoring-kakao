@@ -2,6 +2,7 @@ package gift.service;
 
 import gift.model.Member;
 import gift.repository.MemberRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -9,9 +10,11 @@ import java.util.List;
 @Service
 public class MemberService {
     private final MemberRepository memberRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public MemberService(MemberRepository memberRepository) {
+    public MemberService(MemberRepository memberRepository, PasswordEncoder passwordEncoder) {
         this.memberRepository = memberRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<Member> findAll() {
@@ -27,12 +30,14 @@ public class MemberService {
         if (memberRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("Email is already registered.");
         }
-        return memberRepository.save(new Member(email, password));
+        String encodedPassword = passwordEncoder.encode(password);
+        return memberRepository.save(new Member(email, encodedPassword));
     }
 
     public void update(Long id, String email, String password) {
         final Member member = findById(id);
-        member.update(email, password);
+        String encodedPassword = passwordEncoder.encode(password);
+        member.update(email, encodedPassword);
         memberRepository.save(member);
     }
 

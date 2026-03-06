@@ -35,11 +35,20 @@ public class Option {
         this.quantity = quantity;
     }
 
+    public void update(String name, int quantity) {
+        this.name = name;
+        this.quantity = quantity;
+    }
+
     public void subtractQuantity(int amount) {
         if (amount > this.quantity) {
             throw new IllegalArgumentException("Subtract amount exceeds current stock.");
         }
         this.quantity -= amount;
+    }
+
+    public int calculatePrice(int quantity) {
+        return product.getPrice() * quantity;
     }
 
     public Long getId() {
@@ -48,6 +57,14 @@ public class Option {
 
     public Product getProduct() {
         return product;
+    }
+
+    public String productName() {
+        return product.getName();
+    }
+
+    public Long productId() {
+        return product.getId();
     }
 
     public String getName() {

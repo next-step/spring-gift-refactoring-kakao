@@ -19,8 +19,7 @@ public class KakaoNotificationService {
             return;
         }
         try {
-            var product = option.getProduct();
-            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
+            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, option);
         } catch (Exception ignored) {
         }
     }
