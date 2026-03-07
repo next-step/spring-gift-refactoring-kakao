@@ -44,10 +44,17 @@ public class Option {
     }
 
     public void subtractQuantity(int amount) {
+        if (amount <= 0) {
+            throw new IllegalArgumentException("차감 수량은 1 이상이어야 합니다.");
+        }
         if (amount > this.quantity) {
             throw new IllegalArgumentException("차감할 수량이 현재 재고보다 많습니다.");
         }
         this.quantity -= amount;
+    }
+
+    public int getPrice() {
+        return product.getPrice();
     }
 
     public Long getId() {

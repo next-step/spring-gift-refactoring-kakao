@@ -6,11 +6,13 @@ import java.util.NoSuchElementException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import gift.category.Category;
 import gift.category.CategoryRepository;
 
 @Service
+@Transactional(readOnly = true)
 public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
@@ -28,6 +30,7 @@ public class ProductService {
         return ProductResponse.from(findProduct(id));
     }
 
+    @Transactional
     public ProductResponse create(ProductRequest request) {
         validateProductName(request.name());
         Category category = findCategory(request.categoryId());
@@ -35,6 +38,7 @@ public class ProductService {
         return ProductResponse.from(saved);
     }
 
+    @Transactional
     public ProductResponse update(Long id, ProductRequest request) {
         validateProductName(request.name());
         Category category = findCategory(request.categoryId());
@@ -44,18 +48,19 @@ public class ProductService {
         return ProductResponse.from(saved);
     }
 
+    @Transactional
     public void delete(Long id) {
         productRepository.deleteById(id);
     }
 
     private Product findProduct(Long id) {
         return productRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("Product not found. id=" + id));
+            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
     }
 
     private Category findCategory(Long categoryId) {
         return categoryRepository.findById(categoryId)
-            .orElseThrow(() -> new NoSuchElementException("Category not found. id=" + categoryId));
+            .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
     }
 
     private void validateProductName(String name) {

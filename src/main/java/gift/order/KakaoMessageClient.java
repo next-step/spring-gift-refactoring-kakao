@@ -1,37 +1,45 @@
 package gift.order;
 
-import gift.product.Product;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClient;
 
+import java.time.Duration;
+
 @Component
 public class KakaoMessageClient {
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(3);
+    private static final Duration READ_TIMEOUT = Duration.ofSeconds(5);
+
     private final RestClient restClient;
 
     public KakaoMessageClient(RestClient.Builder builder) {
-        this.restClient = builder.build();
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(CONNECT_TIMEOUT);
+        factory.setReadTimeout(READ_TIMEOUT);
+        this.restClient = builder.requestFactory(factory).build();
     }
 
-    public void sendToMe(String accessToken, Order order, Product product) {
-        var templateObject = buildTemplate(order, product);
+    public void sendToMe(OrderCreatedEvent event) {
+        var templateObject = buildTemplate(event);
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("template_object", templateObject);
 
         restClient.post()
             .uri("https://kapi.kakao.com/v2/api/talk/memo/default/send")
-            .header("Authorization", "Bearer " + accessToken)
+            .header("Authorization", "Bearer " + event.accessToken())
             .header("Content-Type", "application/x-www-form-urlencoded")
             .body(params)
             .retrieve()
             .toBodilessEntity();
     }
 
-    private String buildTemplate(Order order, Product product) {
-        var totalPrice = String.format("%,d", product.getPrice() * order.getQuantity());
-        var message = order.getMessage() != null && !order.getMessage().isBlank()
-            ? "\\n\\n💌 " + order.getMessage()
+    private String buildTemplate(OrderCreatedEvent event) {
+        var totalPrice = String.format("%,d", event.productPrice() * event.quantity());
+        var message = event.message() != null && !event.message().isBlank()
+            ? "\\n\\n💌 " + event.message()
             : "";
         return """
             {
@@ -41,9 +49,9 @@ public class KakaoMessageClient {
                 "button_title": "선물 확인하기"
             }
             """.formatted(
-            product.getName(),
-            order.getOption().getName(),
-            order.getQuantity(),
+            event.productName(),
+            event.optionName(),
+            event.quantity(),
             totalPrice,
             message
         );

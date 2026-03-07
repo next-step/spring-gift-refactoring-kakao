@@ -1507,3 +1507,656 @@ Step 3: create()는 그대로 findCategory() 사용 — 변경 없음
 - "미래에 달라질 수 있으니까"라는 이유로 중복을 방치하는 습관을 방지할 수 있다.
 - DRY와 YAGNI의 균형점을 명확히 하여, 팀 내에서 "합칠까 말까" 논의에 일관된 판단 기준을 제공한다.
 - `ProductService`의 `findCategory()`, `findProduct()` 통합으로 에러 메시지 변경 시 1곳만 수정하면 된다.
+
+## 12. 트랜잭션 관리 (`@Transactional`)
+
+### 키워드
+
+| 키워드 | 무엇인가 | 왜 사용하는가 |
+|--------|----------|--------------|
+| `@Transactional` | Spring이 제공하는 선언적 트랜잭션 관리 어노테이션. 메서드 실행을 하나의 트랜잭션으로 묶어, 성공 시 커밋·실패 시 롤백한다. | 여러 DB 조작이 하나의 논리적 작업 단위일 때, 중간에 실패하면 전부 되돌려야 데이터 일관성이 유지된다. 수동으로 `commit()`/`rollback()`을 호출하지 않아도 된다. |
+| 트랜잭션 전파 (Propagation) | 이미 트랜잭션이 진행 중일 때, 새 트랜잭션을 어떻게 처리할지 결정하는 전략. | 서비스 A가 서비스 B를 호출할 때, 같은 트랜잭션으로 묶을지 별도 트랜잭션으로 분리할지 제어해야 하는 경우가 있다. |
+| 트랜잭션 격리 수준 (Isolation) | 동시에 실행되는 트랜잭션 간에 데이터를 어느 수준까지 공유할지 결정하는 설정. | 동시성 문제(Dirty Read, Non-Repeatable Read, Phantom Read)를 방지하기 위해 사용한다. |
+
+### 구현 원리
+
+#### @Transactional의 동작 방식
+
+Spring은 `@Transactional`이 붙은 빈의 **프록시 객체**를 생성한다.
+메서드 호출 시 프록시가 트랜잭션을 시작하고, 정상 완료 시 커밋, 런타임 예외 발생 시 롤백한다.
+
+```
+호출자 → [프록시: 트랜잭션 시작] → 실제 메서드 실행 → [프록시: 커밋 or 롤백]
+```
+
+**주의사항**: 같은 클래스 내의 `private` 또는 `this.method()` 호출은 프록시를 거치지 않으므로, `@Transactional`이 적용되지 않는다. 반드시 **외부에서 호출**되는 `public` 메서드에 선언해야 한다.
+
+### @Transactional 주요 옵션
+
+#### readOnly
+
+```java
+@Transactional(readOnly = true)
+public List<Member> findAll() { ... }
+```
+
+- 읽기 전용 트랜잭션임을 선언한다.
+- JPA의 **더티 체킹(변경 감지)을 생략**하여 성능이 향상된다.
+- DB에 따라 읽기 전용 최적화(레플리카 라우팅 등)를 적용할 수 있다.
+- 조회 메서드에는 항상 `readOnly = true`를 붙이는 것이 좋다.
+
+#### propagation (전파)
+
+```java
+@Transactional(propagation = Propagation.REQUIRED) // 기본값
+@Transactional(propagation = Propagation.REQUIRES_NEW)
+@Transactional(propagation = Propagation.MANDATORY)
+```
+
+| 옵션 | 동작 |
+|------|------|
+| `REQUIRED` (기본값) | 기존 트랜잭션이 있으면 참여, 없으면 새로 생성 |
+| `REQUIRES_NEW` | 항상 새 트랜잭션 생성. 기존 트랜잭션은 일시 중단 |
+| `MANDATORY` | 기존 트랜잭션이 반드시 있어야 함. 없으면 예외 |
+| `SUPPORTS` | 기존 트랜잭션이 있으면 참여, 없으면 트랜잭션 없이 실행 |
+| `NOT_SUPPORTED` | 트랜잭션 없이 실행. 기존 트랜잭션은 일시 중단 |
+| `NEVER` | 트랜잭션 없이 실행. 기존 트랜잭션이 있으면 예외 |
+| `NESTED` | 기존 트랜잭션 내에 세이브포인트를 만들어 중첩 트랜잭션 실행 |
+
+#### isolation (격리 수준)
+
+```java
+@Transactional(isolation = Isolation.DEFAULT) // 기본값
+@Transactional(isolation = Isolation.READ_COMMITTED)
+```
+
+| 옵션 | 동작 | 방지하는 문제 |
+|------|------|-------------|
+| `DEFAULT` | DB 기본 설정 사용 | DB에 따라 다름 |
+| `READ_UNCOMMITTED` | 커밋되지 않은 데이터도 읽기 가능 | — |
+| `READ_COMMITTED` | 커밋된 데이터만 읽기 | Dirty Read |
+| `REPEATABLE_READ` | 트랜잭션 내 같은 쿼리는 같은 결과 보장 | Dirty Read, Non-Repeatable Read |
+| `SERIALIZABLE` | 트랜잭션을 순차 실행 (가장 엄격) | 모든 동시성 문제 |
+
+#### rollbackFor / noRollbackFor
+
+```java
+@Transactional(rollbackFor = Exception.class)
+@Transactional(noRollbackFor = MailSendException.class)
+```
+
+- 기본적으로 `RuntimeException`과 `Error`에서만 롤백한다.
+- **체크 예외(checked exception)** 에서도 롤백하려면 `rollbackFor`를 명시해야 한다.
+- 특정 예외에서 롤백하지 않으려면 `noRollbackFor`를 사용한다.
+
+#### timeout
+
+```java
+@Transactional(timeout = 10) // 10초
+```
+
+- 지정한 시간(초) 내에 트랜잭션이 완료되지 않으면 롤백한다.
+- 장시간 실행되는 쿼리로 인한 DB 커넥션 점유를 방지한다.
+
+### 구현 코드
+
+#### OrderService — 트랜잭션으로 원자성 보장
+
+```java
+@Transactional
+public OrderResponse create(Member member, OrderRequest request) {
+    Option option = findOption(request.optionId());
+    subtractStock(option, request.quantity());   // 1. 재고 차감
+    deductPoint(member, option, request.quantity()); // 2. 포인트 차감
+    Order saved = orderRepository.save(...);     // 3. 주문 저장
+    sendKakaoMessageIfPossible(member, saved, option);
+    return OrderResponse.from(saved);
+}
+```
+
+`@Transactional` 없이 실행하면: 1번에서 재고가 차감된 후 2번에서 포인트 부족 예외가 발생하면, 재고만 줄어든 채로 남는다. `@Transactional`을 선언하면 2번 실패 시 1번의 재고 차감도 함께 롤백된다.
+
+#### 조회 메서드 — readOnly 최적화
+
+```java
+@Transactional(readOnly = true)
+public Page<OrderResponse> findByMember(Member member, Pageable pageable) {
+    return orderRepository.findByMemberId(member.getId(), pageable)
+        .map(OrderResponse::from);
+}
+```
+
+데이터를 변경하지 않는 조회 메서드에 `readOnly = true`를 선언하여 JPA 더티 체킹을 건너뛴다.
+
+### CUD/R 분류 기준
+
+| 분류 | 어노테이션 | 대상 메서드 예시 |
+|------|-----------|-----------------|
+| CUD (Create/Update/Delete) | `@Transactional` | `create()`, `update()`, `delete()`, `register()`, `chargePoint()` |
+| R (Read) | `@Transactional(readOnly = true)` | `findAll()`, `findById()`, `findByMember()`, `isNewWish()` |
+
+### 장단점
+
+**장점:**
+- **데이터 일관성 보장**: 여러 DB 조작이 원자적으로 처리되어 중간 실패 시 전체 롤백된다.
+- **선언적 관리**: 비즈니스 로직에 트랜잭션 코드가 섞이지 않아 가독성이 좋다.
+- **readOnly 최적화**: 조회 성능 향상과 의도 표현을 동시에 달성한다.
+
+**단점 또는 트레이드오프:**
+- **프록시 기반 제약**: 같은 클래스 내 호출(`this.method()`)에는 적용되지 않는다.
+- **외부 API 호출 주의**: 트랜잭션 안에서 외부 HTTP 호출 시 DB 커넥션을 오래 점유할 수 있다 (ADR-001 참고).
+- **과도한 트랜잭션 범위**: 불필요하게 큰 범위의 트랜잭션은 DB 잠금 시간을 늘려 성능 저하를 유발할 수 있다.
+
+### 트랜잭션 롤백 테스트 시 주의사항
+
+트랜잭션 롤백 동작을 검증하는 통합 테스트에서는 **테스트 클래스에 `@Transactional`을 붙이면 안 된다.**
+
+#### 이유
+
+테스트에 `@Transactional`을 붙이면 테스트 트랜잭션이 서비스 트랜잭션을 감싸버린다.
+서비스의 `@Transactional`은 기본 전파(REQUIRED)이므로 테스트 트랜잭션에 **참여**하게 되고,
+서비스에서 예외가 발생해도 실제 롤백은 테스트 트랜잭션 종료 시점에 일어난다.
+결과적으로 "서비스의 @Transactional이 롤백하는가"를 검증할 수 없다.
+
+```
+❌ 테스트 @Transactional → 서비스 @Transactional(REQUIRED) → 같은 트랜잭션에 참여 → 롤백 검증 불가
+✅ 테스트 @Transactional 없음 → 서비스 @Transactional이 독립 트랜잭션 생성 → 롤백 검증 가능
+```
+
+#### 데이터 정리 문제
+
+테스트에 `@Transactional`이 없으면 테스트 중 생성한 데이터가 DB에 남는다.
+같은 Application Context를 공유하는 다른 `@SpringBootTest`에 영향을 줄 수 있다.
+
+| 해결 방법 | 장점 | 단점 |
+|-----------|------|------|
+| `@AfterEach`로 수동 정리 | 명시적, 빠름 | 정리 코드 필요 |
+| `@DirtiesContext` | 확실한 격리 (Context 재생성) | 느림 |
+| `@Sql(executionPhase = AFTER_TEST_METHOD)` | SQL로 깔끔 | 별도 SQL 파일 필요 |
+
+#### 구현 예시
+
+```java
+@SpringBootTest  // @Transactional 없음!
+class OrderTransactionTest {
+
+    @Autowired
+    private OrderService orderService;
+    @Autowired
+    private OptionRepository optionRepository;
+    @Autowired
+    private MemberRepository memberRepository;
+
+    @Test
+    @DisplayName("포인트 부족으로 주문 실패 시 차감된 재고가 롤백된다")
+    void rollbackStockOnPointFailure() {
+        // given: 포인트 0인 회원
+        Member member = memberRepository.save(new Member("broke@test.com"));
+        Option option = optionRepository.findById(1L).orElseThrow();
+        int originalQuantity = option.getQuantity();
+
+        // when: 재고 차감 후 포인트 차감에서 실패
+        assertThatThrownBy(() -> orderService.create(member, new OrderRequest(option.getId(), 1, "테스트")))
+            .isInstanceOf(IllegalArgumentException.class);
+
+        // then: DB 재조회 → 재고 롤백 확인
+        Option reloaded = optionRepository.findById(option.getId()).orElseThrow();
+        assertThat(reloaded.getQuantity()).isEqualTo(originalQuantity);
+    }
+}
+```
+
+### 기대효과
+- `OrderService.create()`에서 포인트 부족 시 재고 차감이 자동 롤백되어 데이터 정합성이 보장된다.
+- 모든 Service 메서드에 트랜잭션 경계가 명시되어, 코드만 봐도 해당 메서드의 트랜잭션 특성을 파악할 수 있다.
+- 조회 메서드에 `readOnly = true`를 적용하여 불필요한 더티 체킹을 방지한다.
+
+## 13. RestClient와 외부 API 타임아웃
+
+### 키워드
+
+| 키워드 | 무엇인가 | 왜 사용하는가 |
+|--------|----------|--------------|
+| `RestClient` | Spring 6.1에서 도입된 동기식 HTTP 클라이언트. `RestTemplate`의 후속으로, 플루언트 API를 제공한다. | HTTP 요청을 간결하게 작성할 수 있고, `RestTemplate` 대비 가독성과 확장성이 좋다. |
+| `ClientHttpRequestFactory` | `RestClient`의 실제 HTTP 통신을 담당하는 팩토리. 커넥션 타임아웃, 읽기 타임아웃 등 저수준 설정을 관리한다. | 외부 API 호출 시 무한 대기를 방지하고, 응답 지연으로 인한 리소스 고갈을 예방한다. |
+
+### RestClient 개요
+
+#### RestTemplate → RestClient 전환
+
+Spring 6.1 이전에는 `RestTemplate`이 사실상 표준이었지만, 빌더 패턴이 아닌 메서드 호출 방식이라 가독성이 떨어졌다.
+
+```java
+// RestTemplate (기존)
+ResponseEntity<String> response = restTemplate.exchange(
+    url, HttpMethod.GET, new HttpEntity<>(headers), String.class);
+
+// RestClient (Spring 6.1+)
+String response = restClient.get()
+    .uri(url)
+    .header("Authorization", "Bearer " + token)
+    .retrieve()
+    .body(String.class);
+```
+
+#### RestClient 주요 메서드 체이닝
+
+```java
+restClient.post()                          // HTTP 메서드
+    .uri("https://api.example.com/data")   // 요청 URL
+    .header("Content-Type", "application/json")  // 헤더
+    .body(requestBody)                     // 요청 본문
+    .retrieve()                            // 응답 수신
+    .body(ResponseDto.class);              // 응답 본문 변환
+```
+
+| 메서드 | 역할 |
+|--------|------|
+| `get()`, `post()`, `put()`, `delete()` | HTTP 메서드 선택 |
+| `.uri(String)` | 요청 URL 지정 |
+| `.header(String, String)` | 요청 헤더 추가 |
+| `.body(Object)` | 요청 본문 설정 |
+| `.retrieve()` | 응답 수신 시작 |
+| `.body(Class<T>)` | 응답 본문을 지정한 타입으로 역직렬화 |
+| `.toBodilessEntity()` | 응답 본문 없이 상태코드만 확인 |
+
+#### RestClient.Builder
+
+Spring Boot는 `RestClient.Builder`를 자동 구성(auto-configure)하여 빈으로 제공한다.
+이를 생성자 주입으로 받아 커스텀 설정을 추가한 후 `build()`로 인스턴스를 생성한다.
+
+```java
+public KakaoLoginClient(RestClient.Builder builder) {
+    this.restClient = builder
+        .requestFactory(factory)   // 타임아웃 등 저수준 설정
+        .baseUrl("https://...")    // 공통 베이스 URL (선택)
+        .build();
+}
+```
+
+### 외부 API 타임아웃
+
+#### 왜 타임아웃이 필요한가
+
+외부 API(카카오 등)는 우리가 제어할 수 없다. 응답 지연이나 장애 시:
+- **타임아웃 없이**: 스레드가 무한 대기 → 스레드 풀 고갈 → 서비스 전체 장애
+- **타임아웃 있으면**: 지정 시간 초과 시 `ResourceAccessException` 발생 → 빠른 실패(fail-fast)
+
+#### 타임아웃 종류
+
+| 타임아웃 | 의미 | 권장값 |
+|----------|------|--------|
+| **Connect Timeout** | TCP 연결 수립까지 대기 시간. 서버가 응답하지 않거나 네트워크 문제 시 걸림. | 1~3초 |
+| **Read Timeout** | 연결 후 응답 데이터를 받기까지 대기 시간. 서버가 요청을 처리하는 데 오래 걸릴 때 걸림. | 3~10초 |
+
+#### SimpleClientHttpRequestFactory
+
+`java.net.HttpURLConnection` 기반의 가장 기본적인 팩토리.
+
+```java
+SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+factory.setConnectTimeout(Duration.ofSeconds(3));  // 연결 타임아웃
+factory.setReadTimeout(Duration.ofSeconds(5));      // 읽기 타임아웃
+```
+
+#### 글로벌 vs 클라이언트별 설정
+
+| 방식 | 장점 | 단점 |
+|------|------|------|
+| **글로벌** (`RestClient.Builder` 빈) | 중복 없음, 일관성 | 클라이언트별 차등 설정 불가 |
+| **클라이언트별** (각 Client 생성자) | 용도에 맞는 세밀한 타임아웃 | 설정 코드 반복 |
+
+### 구현 코드
+
+#### KakaoLoginClient — 인증용 (connect 3초, read 5초)
+
+```java
+@Component
+public class KakaoLoginClient {
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(3);
+    private static final Duration READ_TIMEOUT = Duration.ofSeconds(5);
+
+    private final RestClient restClient;
+
+    public KakaoLoginClient(KakaoLoginProperties properties, RestClient.Builder builder) {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(CONNECT_TIMEOUT);
+        factory.setReadTimeout(READ_TIMEOUT);
+        this.restClient = builder.requestFactory(factory).build();
+        // ...
+    }
+}
+```
+
+#### KakaoMessageClient — 메시지 발송용 (connect 3초, read 5초)
+
+```java
+@Component
+public class KakaoMessageClient {
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(3);
+    private static final Duration READ_TIMEOUT = Duration.ofSeconds(5);
+
+    private final RestClient restClient;
+
+    public KakaoMessageClient(RestClient.Builder builder) {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(CONNECT_TIMEOUT);
+        factory.setReadTimeout(READ_TIMEOUT);
+        this.restClient = builder.requestFactory(factory).build();
+    }
+}
+```
+
+### 트랜잭션과 외부 API 호출의 관계
+
+외부 API 호출이 `@Transactional` 범위 안에 있으면:
+- API 응답을 기다리는 동안 **DB 커넥션을 점유**한다.
+- 타임아웃이 걸려 예외가 발생하면 **트랜잭션이 롤백**될 수 있다.
+- 최악의 경우 **DB 커넥션 풀 고갈** → 서비스 전체 장애.
+
+따라서 외부 API 호출은 가능하면 **트랜잭션 밖**에서 수행하거나, 트랜잭션 안에서 호출할 경우 **try-catch로 감싸서** 트랜잭션에 영향을 주지 않도록 해야 한다.
+
+```
+❌ @Transactional 안에서 외부 API 호출 → DB 커넥션 장시간 점유
+✅ 외부 API 호출 → 결과를 가지고 → @Transactional로 DB 작업만 (KakaoAuthService 방식)
+✅ @Transactional 커밋 후 이벤트로 외부 API 호출 (OrderService 방식)
+```
+
+### 기대효과
+- 외부 API 지연/장애 시 빠르게 실패하여 스레드와 DB 커넥션 고갈을 방지한다.
+- 클라이언트별 타임아웃으로 용도에 맞는 세밀한 제어가 가능하다.
+
+## 14. Spring 이벤트 기반 아키텍처 (`@TransactionalEventListener`)
+
+### 키워드
+
+| 키워드 | 무엇인가 | 왜 사용하는가 |
+|--------|----------|--------------|
+| `ApplicationEventPublisher` | Spring이 제공하는 이벤트 발행 인터페이스. `publishEvent()`로 이벤트를 발행한다. | 컴포넌트 간 직접 의존 없이 느슨한 결합으로 통신할 수 있다. |
+| `@TransactionalEventListener` | 트랜잭션 상태에 따라 이벤트를 처리하는 리스너. `AFTER_COMMIT`, `AFTER_ROLLBACK` 등의 phase를 지정할 수 있다. | 트랜잭션 커밋이 확정된 후에만 부수 효과(알림, 외부 API 호출 등)를 실행하여 데이터 정합성을 보장한다. |
+| `@EventListener` | 트랜잭션과 무관하게 이벤트를 즉시 처리하는 리스너. | 트랜잭션 상태와 무관한 이벤트 처리에 사용한다. |
+
+### @EventListener vs @TransactionalEventListener
+
+| 항목 | `@EventListener` | `@TransactionalEventListener` |
+|------|-------------------|-------------------------------|
+| 실행 시점 | 이벤트 발행 즉시 | 트랜잭션 phase에 따라 |
+| 트랜잭션 인식 | 없음 | 있음 (`AFTER_COMMIT`, `AFTER_ROLLBACK` 등) |
+| 용도 | 트랜잭션과 무관한 처리 | DB 커밋 확정 후 부수 효과 실행 |
+| 주의사항 | 트랜잭션 롤백 시에도 실행됨 | 트랜잭션이 없으면 기본적으로 실행 안 됨 |
+
+### TransactionPhase 옵션
+
+```java
+@TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) // 기본값
+```
+
+| Phase | 실행 시점 | 용도 |
+|-------|----------|------|
+| `AFTER_COMMIT` | 트랜잭션 커밋 성공 후 | 알림 발송, 외부 API 호출, 캐시 갱신 |
+| `AFTER_ROLLBACK` | 트랜잭션 롤백 후 | 실패 알림, 보상 로직 |
+| `AFTER_COMPLETION` | 커밋/롤백 상관없이 완료 후 | 리소스 정리 |
+| `BEFORE_COMMIT` | 커밋 직전 | 추가 검증, 감사 로그 |
+
+### 왜 이벤트 기반으로 분리하는가
+
+#### 문제: 트랜잭션 안에서 외부 API 호출
+
+```java
+// Before: 트랜잭션 안에서 메시지 발송
+@Transactional
+public OrderResponse create(Member member, OrderRequest request) {
+    subtractStock(option, request.quantity());
+    deductPoint(member, option, request.quantity());
+    Order saved = orderRepository.save(...);
+    sendKakaoMessageIfPossible(member, saved, option); // 외부 API
+    return OrderResponse.from(saved);
+}
+```
+
+try-catch로 롤백은 방지하지만:
+1. **DB 커넥션 점유**: 외부 API 응답을 기다리는 동안 커넥션을 잡고 있음
+2. **재시도 확장 불가**: 트랜잭션 안에서 재시도하면 커넥션 점유가 극대화됨
+3. **책임 혼재**: OrderService가 주문과 알림을 모두 담당
+
+#### 해결: 이벤트로 분리
+
+```java
+// After: 이벤트 발행만
+@Transactional
+public OrderResponse create(Member member, OrderRequest request) {
+    subtractStock(option, request.quantity());
+    deductPoint(member, option, request.quantity());
+    Order saved = orderRepository.save(...);
+    eventPublisher.publishEvent(new OrderCreatedEvent(accessToken, saved, product));
+    return OrderResponse.from(saved);
+}
+```
+
+`publishEvent()`는 이벤트 객체를 등록만 하고, 실제 리스너 실행은 트랜잭션 커밋 후에 일어난다.
+따라서 DB 작업이 끝나면 즉시 커넥션이 반환되고, 외부 API 호출은 커넥션 없이 실행된다.
+
+### 구현 코드
+
+#### 이벤트 클래스
+
+```java
+public record OrderCreatedEvent(
+    String accessToken,
+    Order order,
+    Product product
+) {
+}
+```
+
+이벤트는 리스너가 필요로 하는 데이터를 담는다.
+`AFTER_COMMIT` 시점에는 영속성 컨텍스트가 닫혀 있으므로, 지연 로딩에 의존하지 않고 필요한 데이터를 직접 전달한다.
+
+#### 이벤트 리스너
+
+```java
+@Component
+public class OrderEventListener {
+    private static final Logger log = LoggerFactory.getLogger(OrderEventListener.class);
+    private final KakaoMessageClient kakaoMessageClient;
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleOrderCreated(OrderCreatedEvent event) {
+        try {
+            kakaoMessageClient.sendToMe(event.accessToken(), event.order(), event.product());
+        } catch (Exception e) {
+            log.warn("카카오 메시지 발송 실패: orderId={}", event.order().getId(), e);
+        }
+    }
+}
+```
+
+- `AFTER_COMMIT`: 주문이 확실히 저장된 후에만 메시지 발송
+- try-catch: 발송 실패가 애플리케이션 에러로 전파되지 않도록 방어
+
+#### OrderService — 이벤트 발행
+
+```java
+@Service
+@Transactional(readOnly = true)
+public class OrderService {
+    private final ApplicationEventPublisher eventPublisher;
+    // KakaoMessageClient 의존성 제거
+
+    @Transactional
+    public OrderResponse create(Member member, OrderRequest request) {
+        Option option = findOption(request.optionId());
+        subtractStock(option, request.quantity());
+        deductPoint(member, option, request.quantity());
+        Order saved = orderRepository.save(new Order(...));
+        publishOrderCreatedEvent(member, saved, option);
+        return OrderResponse.from(saved);
+    }
+
+    private void publishOrderCreatedEvent(Member member, Order order, Option option) {
+        if (member.getKakaoAccessToken() == null) {
+            return;
+        }
+        eventPublisher.publishEvent(
+            new OrderCreatedEvent(member.getKakaoAccessToken(), order, option.getProduct()));
+    }
+}
+```
+
+- `KakaoMessageClient` 의존성이 `ApplicationEventPublisher`로 교체됨
+- OrderService는 주문 로직에만 집중, 메시지 발송은 리스너가 담당
+
+### 장단점
+
+**장점:**
+- **DB 커넥션 보호**: 외부 API 호출이 트랜잭션 밖에서 실행되어 커넥션 점유 최소화
+- **책임 분리**: 주문(OrderService) ↔ 알림(OrderEventListener)이 명확히 분리
+- **확장성**: 리스너 추가만으로 새로운 부수 효과(SMS, 이메일 등) 추가 가능
+- **안전성**: 트랜잭션 롤백 시 이벤트가 실행되지 않아 잘못된 알림 방지
+
+**단점 또는 트레이드오프:**
+- 이벤트 클래스, 리스너 등 구조가 추가됨
+- 리스너 실패 시 주문은 이미 커밋 → 메시지 미발송 가능 (향후 재시도 로직으로 보완)
+- 트랜잭션이 없는 컨텍스트에서 `publishEvent()` 호출 시 `@TransactionalEventListener`가 기본적으로 실행되지 않음 (`fallbackExecution = true`로 변경 가능)
+
+### 기대효과
+- OrderService에서 `KakaoMessageClient` 의존성이 제거되어 주문 로직이 단순해진다.
+- 향후 재시도, 다른 알림 채널 추가 등을 리스너 레벨에서 독립적으로 처리할 수 있다.
+- DB 커넥션 점유 시간이 최소화되어 동시 주문 처리 능력이 향상된다.
+
+## 15. 이벤트 객체에는 엔티티가 아닌 값 스냅샷을 전달한다
+
+### 문제: AFTER_COMMIT 시점의 엔티티 참조
+
+`@TransactionalEventListener(phase = AFTER_COMMIT)` 리스너는 트랜잭션 커밋 후에 실행된다.
+이 시점에는 **영속성 컨텍스트가 닫혀 있으므로**, 이벤트에 담긴 엔티티에서 lazy loading이 필요한 연관관계에 접근하면 `LazyInitializationException`이 발생한다.
+
+```java
+// 위험: 엔티티 참조를 이벤트에 담음
+public record OrderCreatedEvent(String accessToken, Order order, Product product) {}
+
+// AFTER_COMMIT 리스너에서
+event.order().getOption().getName(); // LazyInitializationException!
+```
+
+현재 직접 필드만 접근하면 문제없지만, 확장 시 누군가 연관관계를 타는 순간 런타임 에러가 발생한다.
+
+### 해결: 값 스냅샷으로 엔티티 참조 제거
+
+```java
+// 안전: 필요한 값만 복사
+public record OrderCreatedEvent(
+    String accessToken,
+    Long orderId,
+    String productName,
+    int productPrice,
+    String optionName,
+    int quantity,
+    String message
+) {}
+```
+
+이벤트 발행 시점(트랜잭션 안)에서 필요한 값을 꺼내서 넘기면, 리스너는 영속성 컨텍스트와 완전히 무관하게 동작한다.
+
+### 엔티티 참조 vs 값 스냅샷
+
+| | 엔티티 참조 | 값 스냅샷 |
+|---|---|---|
+| 확장 시 | record 변경 없음 | record 변경 필요 |
+| 의존 관계 | 숨겨져 있음 (어떤 필드를 쓰는지 모름) | 명시적 (record 필드가 곧 계약) |
+| 실패 시점 | 런타임 (`LazyInitializationException`) | 컴파일 타임 |
+| 영속성 컨텍스트 | 의존 (AFTER_COMMIT에서 위험) | 무관 |
+
+record를 변경해야 하는 것이 단점처럼 보이지만, **이벤트의 데이터 계약이 코드에 명시적으로 드러나는 것**이 오히려 장점이다.
+숨겨진 결합(엔티티 연관관계 체인)보다 명시적 결합(record 필드)이 유지보수에 유리하다.
+
+## 16. 테스트에서 Spring 프록시 경유 검증
+
+### 왜 프록시 경유가 중요한가
+
+Spring의 `@Transactional`은 **프록시 기반**으로 동작한다.
+빈이 다른 빈의 메서드를 호출할 때만 프록시를 거치고, 같은 클래스 내부 호출(self-invocation)은 프록시를 우회한다.
+
+```
+KakaoAuthService → MemberService.registerOrUpdateKakaoMember()
+                   ↑ 프록시 경유 ✅ (다른 빈 호출)
+
+MemberService 내부에서 this.registerOrUpdateKakaoMember()
+                   ↑ 프록시 우회 ❌ (self-invocation)
+```
+
+따라서 서비스 간 위임 구조로 리팩토링한 후에는, 실제 프록시를 경유해서 `@Transactional`이 동작하는지 **통합 테스트로 검증**해야 한다.
+
+### Mock 테스트로는 검증 불가
+
+`@ExtendWith(MockitoExtension.class)` 단위 테스트에서는 Spring 컨테이너가 뜨지 않으므로 프록시가 생성되지 않는다.
+`@Transactional`이 실제로 적용되는지 확인하려면 `@SpringBootTest`로 실제 빈 주입 환경이 필요하다.
+
+### 검증 방법
+
+`@SpringBootTest` + H2 환경에서:
+
+1. 외부 API 의존성은 `@MockBean`으로 stub
+2. 실제 서비스 빈을 통해 메서드 호출
+3. **DB 상태를 직접 조회**하여 트랜잭션 커밋 여부 확인
+
+```java
+@SpringBootTest
+class KakaoAuthTransactionTest {
+
+    @Autowired
+    private KakaoAuthService kakaoAuthService; // 실제 빈
+
+    @MockBean
+    private KakaoLoginClient kakaoLoginClient; // 외부 API stub
+
+    @Autowired
+    private MemberRepository memberRepository;
+}
+```
+
+- `KakaoAuthService`가 `MemberService`를 호출할 때 Spring 프록시를 경유
+- `MemberService.registerOrUpdateKakaoMember()`의 `@Transactional`이 실제로 동작
+- DB에 회원이 저장되었다면 트랜잭션 커밋이 정상 동작한 증거
+
+### @Mock vs @MockitoBean (구 @MockBean)
+
+| | `@Mock` | `@MockitoBean` (`@MockBean`) |
+|---|---|---|
+| 소속 | Mockito | Spring Boot Test |
+| Spring 컨텍스트 | 없음 | 있음 |
+| 동작 | 순수 Mock 객체 생성 | **Spring 컨텍스트의 실제 빈을 Mock으로 교체** |
+| 사용 환경 | `@ExtendWith(MockitoExtension.class)` | `@SpringBootTest` |
+| 프록시 | 없음 | Spring 프록시 체인 유지 |
+
+```java
+// 단위 테스트 — Spring 컨텍스트 없이 순수 Mock
+@ExtendWith(MockitoExtension.class)
+class OrderServiceTest {
+    @Mock
+    private OrderRepository orderRepository; // 순수 Mock 객체
+    @InjectMocks
+    private OrderService orderService; // Mock을 주입한 인스턴스 (프록시 아님)
+}
+
+// 통합 테스트 — Spring 컨텍스트의 빈을 Mock으로 교체
+@SpringBootTest
+class KakaoAuthTransactionTest {
+    @Autowired
+    private KakaoAuthService kakaoAuthService; // 실제 빈 (프록시 경유)
+    @MockitoBean
+    private KakaoLoginClient kakaoLoginClient; // 컨텍스트 내 빈이 Mock으로 교체됨
+}
+```
+
+**핵심 차이**: `@Mock`은 Spring과 무관한 가짜 객체이고, `@MockitoBean`은 Spring 컨텍스트에 등록된 실제 빈을 Mock으로 **교체**한다.
+따라서 `@MockitoBean`을 사용하면 다른 빈들이 이 Mock을 주입받아도 프록시 체인은 정상 동작한다.
+
+> **참고**: Spring Boot 3.4부터 `@MockBean`은 deprecated되고 `@MockitoBean`으로 대체되었다.
+> 패키지도 `org.springframework.boot.test.mock.mockito` → `org.springframework.test.context.bean.override.mockito`로 변경.
+
+### 핵심 포인트
+
+- **단위 테스트(`@Mock`)**: 로직 검증에 적합, 프록시/트랜잭션 검증 불가
+- **통합 테스트(`@MockitoBean`)**: 외부 의존성만 Mock으로 교체하고, 프록시 경유 + 트랜잭션 커밋/롤백 + DB 상태 검증 가능
+- 서비스 간 위임 구조를 변경했다면, 프록시 체인이 정상인지 통합 테스트로 반드시 확인

@@ -4,11 +4,13 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import gift.product.Product;
 import gift.product.ProductRepository;
 
 @Service
+@Transactional(readOnly = true)
 public class OptionService {
     private final OptionRepository optionRepository;
     private final ProductRepository productRepository;
@@ -25,6 +27,7 @@ public class OptionService {
             .toList();
     }
 
+    @Transactional
     public OptionResponse create(Long productId, OptionRequest request) {
         validateOptionName(request.name());
         Product product = findProduct(productId);
@@ -33,6 +36,7 @@ public class OptionService {
         return OptionResponse.from(saved);
     }
 
+    @Transactional
     public void delete(Long productId, Long optionId) {
         findProduct(productId);
         validateNotLastOption(productId);
@@ -42,13 +46,13 @@ public class OptionService {
 
     private Product findProduct(Long productId) {
         return productRepository.findById(productId)
-            .orElseThrow(() -> new NoSuchElementException("Product not found. id=" + productId));
+            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
     }
 
     private Option findOption(Long optionId, Long productId) {
         return optionRepository.findById(optionId)
             .filter(o -> o.getProduct().getId().equals(productId))
-            .orElseThrow(() -> new NoSuchElementException("Option not found. id=" + optionId));
+            .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다. id=" + optionId));
     }
 
     private void validateDuplicateName(Long productId, String name) {
