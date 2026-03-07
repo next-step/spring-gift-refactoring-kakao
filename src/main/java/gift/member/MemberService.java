@@ -51,10 +51,6 @@ public class MemberService {
             .orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다. id=" + id));
     }
 
-    public boolean existsByEmail(String email) {
-        return memberRepository.existsByEmail(email);
-    }
-
     @Transactional
     public Member create(String email, String password) {
         if (memberRepository.existsByEmail(email)) {

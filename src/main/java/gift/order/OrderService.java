@@ -47,9 +47,7 @@ public class OrderService {
             .orElseThrow(() -> new NoSuchElementException("옵션을 찾을 수 없습니다. id=" + request.optionId()));
 
         option.subtractQuantity(request.quantity());
-
-        int price = option.getProduct().getPrice() * request.quantity();
-        member.deductPoint(price);
+        member.deductPoint(option.calculateTotalPrice(request.quantity()));
 
         Order saved = orderRepository.save(request.toEntity(option, member.getId()));
         eventPublisher.publishEvent(new OrderCompletedEvent(member, saved, option));

@@ -23,7 +23,9 @@ services:
     container_name: gift-refactoring-app
     ports:
       - "28080:8080"
-    env_file: .env
+    env_file:
+      - path: .env
+        required: false
     environment:
       DB_URL: jdbc:mysql://mysql:3306/gift
       DB_USERNAME: gift

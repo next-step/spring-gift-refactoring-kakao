@@ -1,157 +1,139 @@
 # spring-gift-refactoring
 
-본 작업은 전 도메인 인수 테스트를 구축하고, 해당 테스트를 기반으로 서비스 레이어를 도입하여 트랜잭션 문제를 해결한 리팩토링 과정입니다.
+## Step2: 작동 변경 리팩터링
 
 ---
 
-## 1. 인수 테스트 기반 실행 구조
+### 1. 트랜잭션 경계 세우기
 
-### 테스트 실행 방식
+#### KakaoAuthService 외부 API 호출을 트랜잭션 밖으로 분리
 
-현재 인수 테스트는 Docker 기반 통합 환경에서 실행됩니다.
+**문제**: `processCallback()`에 `@Transactional`이 걸려 있어, 카카오 외부 HTTP 호출(`requestAccessToken`, `requestUserInfo`) 동안 DB 커넥션을 점유하고 있었다.
 
-```
-./gradlew cucumberTest
-```
+**변경**: `@Transactional` 제거. 외부 API 호출이 트랜잭션 범위 밖에서 실행되도록 분리했다.
 
-해당 태스크는 다음 순서로 동작하도록 구성하였습니다.
-
-1. `dockerUp` 실행
-   - MySQL과 애플리케이션 컨테이너를 기동합니다.
-2. Cucumber 인수 테스트 실행
-   - 별도의 테스트 JVM에서 HTTP 요청을 통해 API를 검증합니다.
-3. `dockerDown` 실행
-   - 컨테이너 종료 및 볼륨을 정리합니다.
-
-테스트는 항상 독립된 환경에서 시작되도록 설계하였습니다.
-
----
-
-### 테스트 아키텍처
-
-테스트 구조는 다음과 같습니다.
-
-- 테스트 JVM과 애플리케이션 JVM은 별도 프로세스로 실행됩니다.
-- 동일한 MySQL 인스턴스를 공유합니다.
-- 기능 검증은 HTTP 요청 기반으로 수행합니다.
-- 데이터 셋업 및 검증은 테스트 JVM에서 DB 직접 접근 방식으로 수행합니다.
-
-이 구조를 통해 실제 운영 환경과 유사한 통합 테스트가 가능하도록 구성하였습니다.
-
----
-
-### 데이터 초기화 전략
-
-각 시나리오 실행 전 전체 테이블을 TRUNCATE 합니다.
-
-- `@Before`에서 공통 초기화를 수행합니다.
-- `FOREIGN_KEY_CHECKS`를 비활성화한 뒤 TRUNCATE를 수행합니다.
-- 모든 Step Definition 클래스에 중복 정의하지 않고 `CommonStepDefinitions`로 통합하였습니다.
-
-이를 통해 테스트 간 데이터 간섭을 제거하였습니다.
-
----
-
-### 인수 테스트 범위
-
-총 34개의 시나리오를 작성하였습니다.
-
-| 도메인 | 시나리오 수 |
-| --- | --- |
-| 회원 | 5 |
-| 카테고리 | 7 |
-| 상품 | 7 |
-| 옵션 | 4 |
-| 위시리스트 | 4 |
-| 주문 | 7 |
-
-모든 리팩토링 작업은 해당 시나리오가 통과하는 것을 기준으로 진행하였습니다.
-
----
-
-## 2. 테스트를 통해 발견한 문제
-
-주문 도메인 테스트 중 다음과 같은 문제가 확인되었습니다.
-
-- 포인트가 부족한 경우 주문은 실패합니다.
-- 그러나 재고는 이미 차감된 상태로 남아 있었습니다.
-
-원인은 다음과 같습니다.
-
-- 컨트롤러에서 Repository를 직접 호출하고 있었습니다.
-- 재고 차감과 포인트 차감이 각각 별도의 트랜잭션으로 커밋되고 있었습니다.
-
-인수 테스트를 통해 데이터 불일치가 재현되었습니다.
-
----
-
-## 3. 서비스 레이어 도입 및 트랜잭션 적용
-
-문제 해결을 위해 서비스 레이어를 도입하였습니다.
-
-- 모든 비즈니스 로직을 서비스 계층으로 이동하였습니다.
-- 컨트롤러는 요청/응답 처리만 담당하도록 축소하였습니다.
-- `OrderService`에 `@Transactional`을 적용하였습니다.
-
-### 변경 후 주문 처리 구조
-
-```
+```java
+// Before: 외부 HTTP 호출이 트랜잭션 안에서 실행됨
 @Transactional
-publicOrderResponsecreateOrder(LongmemberId,OrderRequestrequest) {
-Membermember=memberRepository.findById(memberId).orElseThrow(...);
-Optionoption=optionRepository.findById(request.optionId()).orElseThrow(...);
+public TokenResponse processCallback(String code) {
+    KakaoTokenResponse kakaoToken = kakaoLoginClient.requestAccessToken(code);  // HTTP
+    KakaoUserResponse kakaoUser = kakaoLoginClient.requestUserInfo(...);        // HTTP
+    memberRepository.save(member);  // DB
+}
 
-option.subtractQuantity(request.quantity());
-intprice=option.getProduct().getPrice()*request.quantity();
-member.deductPoint(price);
-
-Ordersaved=orderRepository.save(request.toEntity(option,member.getId()));
-returnOrderResponse.from(saved);
+// After: 트랜잭션 제거 → DB 커넥션 점유 해소
+public TokenResponse processCallback(String code) {
+    KakaoTokenResponse kakaoToken = kakaoLoginClient.requestAccessToken(code);  // HTTP (트랜잭션 밖)
+    KakaoUserResponse kakaoUser = kakaoLoginClient.requestUserInfo(...);        // HTTP (트랜잭션 밖)
+    memberRepository.save(member);  // DB (자체 트랜잭션)
 }
 ```
 
-- 재고 차감과 포인트 차감이 하나의 트랜잭션으로 묶입니다.
-- 포인트 부족 예외 발생 시 전체 롤백됩니다.
-- JPA Dirty Checking을 활용하여 명시적 `save()` 호출을 제거하였습니다.
+**증거**: `memberRepository.save()`는 SimpleJpaRepository의 `@Transactional`로 개별 보장된다. 외부 API 실패 시에도 불필요한 DB 롤백이 발생하지 않으며, 카카오 API 지연이 커넥션 풀에 영향을 주지 않는다.
+
+> 커밋: `321e28f` (구조 변경, 작동 유지)
 
 ---
 
-### 테스트 결과 변화
+### 2. 누락된 작동 구현
 
-기존 기대값:
+#### wish, options 테이블에 UNIQUE 제약 조건 추가
 
-- 포인트 부족 시 재고 9개
+**문제**: 애플리케이션 레벨에서 중복 검사를 하고 있었지만, DB 레벨 제약 조건이 없어 동시 요청 시 중복 데이터가 삽입될 수 있었다.
+- 같은 회원이 같은 상품을 위시리스트에 중복 추가 가능
+- 같은 상품에 같은 이름의 옵션을 중복 추가 가능
 
-변경 후 기대값:
+**변경**: Flyway 마이그레이션(`V3__Add_unique_constraints.sql`)으로 DB 레벨 UNIQUE 제약 조건을 추가했다.
 
-- 포인트 부족 시 재고 10개
+```sql
+alter table wish
+    add constraint uk_wish_member_product unique (member_id, product_id);
 
-트랜잭션 적용 이후 재고가 정상적으로 롤백되는 것을 인수 테스트로 검증하였습니다.
+alter table options
+    add constraint uk_options_product_name unique (product_id, name);
+```
 
----
+**증거**: 기존 인수 테스트 `option.feature`의 "같은 이름의 옵션을 추가하면 실패한다" 시나리오가 DB 레벨에서도 보장된다. 동시 요청 환경에서 애플리케이션 검사를 통과하더라도 DB 제약 조건에 의해 중복이 차단된다.
 
-## 4. AI 활용 방식
-
-본 작업에서는 AI를 다음과 같은 방식으로 활용하였습니다.
-
-### 1. 테스트 설계 검증
-
-- 도메인 코드 분석 후 feature 시나리오 초안을 생성하였습니다.
-- 시나리오가 비즈니스 의도를 정확히 반영하는지 반복 검토하였습니다.
-- Step 충돌 및 NPE 원인을 분석하는 과정에서 구조적 원인을 함께 도출하였습니다.
+> 커밋: `e4b34d1` (작동 변경)
 
 ---
 
-### 2. 리팩토링 전략 수립
+### 3. 도메인 책임 되찾기
 
-- 컨트롤러 9개의 의존성을 분석하여 서비스 분리 순서를 설계하였습니다.
-- 단순 CRUD → 복합 로직 순으로 단계별 리팩토링 계획을 수립하였습니다.
-- 트랜잭션 경계 설정 위치에 대한 대안을 비교 검토하였습니다.
+#### 개선 1: 주문 가격 계산을 Option 도메인으로 이동
+
+**문제**: `OrderService`가 `option.getProduct().getPrice() * quantity`로 직접 가격을 계산하고 있었다. 가격 계산 로직이 서비스에 누수되어 있고, 다른 곳에서 동일한 계산이 필요할 때 중복이 발생한다.
+
+**변경**: `Option.calculateTotalPrice(quantity)` 도메인 메서드를 추가하고, `OrderService`는 이를 호출하도록 변경했다.
+
+```java
+// Before (OrderService): 서비스가 가격 계산 책임을 가짐
+int price = option.getProduct().getPrice() * request.quantity();
+member.deductPoint(price);
+
+// After (Option): 도메인이 가격 계산 책임을 가짐
+public int calculateTotalPrice(int quantity) {
+    return product.getPrice() * quantity;
+}
+
+// After (OrderService): 호출부 단순화
+member.deductPoint(option.calculateTotalPrice(request.quantity()));
+```
+
+**증거**: `order.feature` 7개 시나리오 전체 통과. 특히 "포인트가 부족하면 주문이 실패한다" 시나리오에서 가격 계산 → 포인트 차감 → 롤백 흐름이 변경 전과 동일하게 동작함을 확인했다.
+
+> 커밋: `49a0faa` (구조 변경, 작동 유지)
 
 ---
 
-### 3. 문제 원인 분석
+#### 개선 2: AdminMemberController 중복 이메일 검사 TOCTOU 제거
 
-- 트랜잭션 미적용으로 인한 부분 커밋 문제를 재현하고 원인을 정리하였습니다.
-- JPA Dirty Checking과 detached 엔티티 개념을 코드 흐름 기준으로 설명받고 검증하였습니다.
-- 테스트 기대값 수정이 설계 변경의 결과인지 확인하였습니다.
+**문제**: `AdminMemberController`에서 `existsByEmail()` → `create()` 순서로 호출하는 check-then-act 패턴이 있었다. `MemberService.create()` 내부에 이미 동일한 중복 검사가 존재하므로:
+1. 검사 로직이 컨트롤러와 서비스에 **중복**
+2. 두 호출 사이에 다른 요청이 같은 이메일로 가입하면 **TOCTOU(Time-of-Check to Time-of-Use)** 문제 발생 가능
+
+**변경**: 컨트롤러의 선행 검사를 제거하고, `MemberService.create()`의 `@Transactional` 내부 검사에 일원화했다.
+
+```java
+// Before: check-then-act (TOCTOU 취약)
+if (memberService.existsByEmail(email)) {           // 1. 검사
+    populateNewFormError(model, email, "이미 등록된 이메일입니다.");
+    return "member/new";
+}
+memberService.create(email, password);               // 2. 실행 (사이에 다른 요청 가능)
+
+// After: 원자적 실행
+try {
+    memberService.create(email, password);            // 검사 + 실행이 @Transactional 안에서 원자적
+} catch (IllegalArgumentException e) {
+    populateNewFormError(model, email, e.getMessage());
+    return "member/new";
+}
+```
+
+**증거**: `MemberService.create()`는 `@Transactional` 내에서 `existsByEmail()` 검사 후 즉시 `save()`를 수행하므로 TOCTOU 창이 제거된다. `member.feature`의 "이미 가입된 이메일로 회원가입하면 실패한다" 시나리오로 중복 이메일 차단이 정상 동작함을 확인했다. 불필요한 `existsByEmail()` public 메서드도 제거하여 API surface를 축소했다.
+
+> 커밋: `940d0ca` (구조 변경 + 작동 유지)
+
+---
+
+### 4. 환경 설정 개선
+
+#### docker-compose env_file을 optional로 변경
+
+`.env` 파일이 없는 환경에서도 `docker-compose up`이 실패하지 않도록 `required: false` 설정을 추가했다. `environment` 블록에 기본값이 이미 정의되어 있으므로 `.env`는 오버라이드 용도로만 사용된다.
+
+> 커밋: `95d3bb7` (chore)
+
+---
+
+## 변경 요약
+
+| 구분 | 커밋 | 유형 |
+|------|------|------|
+| 트랜잭션 경계 | KakaoAuthService 외부 API 호출 트랜잭션 분리 | 구조 변경 |
+| 누락된 작동 | wish, options UNIQUE 제약 조건 추가 | 작동 변경 |
+| 도메인 책임 | 가격 계산을 Option 도메인으로 이동 | 구조 변경 |
+| 도메인 책임 | 중복 이메일 검사 TOCTOU 제거 및 중복 제거 | 구조 변경 |
+| 환경 설정 | docker-compose env_file optional 변경 | chore |
