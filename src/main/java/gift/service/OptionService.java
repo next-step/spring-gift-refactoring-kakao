@@ -35,7 +35,7 @@ public class OptionService {
     }
 
     public Option create(Long productId, String name, int quantity) {
-        validateName(name);
+        NAME_VALIDATOR.validateOrThrow(name);
         Product product = productService.findById(productId);
         if (optionRepository.existsByProductIdAndName(productId, name)) {
             throw new IllegalArgumentException("Option name already exists.");
@@ -66,10 +66,4 @@ public class OptionService {
         return optionRepository.save(option);
     }
 
-    private void validateName(String name) {
-        List<String> errors = NAME_VALIDATOR.validate(name);
-        if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(String.join(", ", errors));
-        }
-    }
 }

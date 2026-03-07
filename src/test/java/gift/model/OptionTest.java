@@ -54,4 +54,20 @@ class OptionTest {
         assertThatThrownBy(() -> option.subtractQuantity(1))
             .isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    @DisplayName("수량 1일 때 상품 가격과 동일한 총액을 반환한다")
+    void calculateTotalPriceWithSingleQuantity() {
+        var option = new Option(product, "옵션A", 10);
+
+        assertThat(option.calculateTotalPrice(1)).isEqualTo(10000);
+    }
+
+    @Test
+    @DisplayName("수량 N일 때 상품 가격 * N의 총액을 반환한다")
+    void calculateTotalPriceWithMultipleQuantity() {
+        var option = new Option(product, "옵션A", 10);
+
+        assertThat(option.calculateTotalPrice(3)).isEqualTo(30000);
+    }
 }

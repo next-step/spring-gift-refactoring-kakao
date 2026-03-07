@@ -166,4 +166,34 @@ class ProductControllerTest {
         mockMvc.perform(delete("/api/products/" + saved.getId()))
             .andExpect(status().isNoContent());
     }
+
+    @Test
+    @DisplayName("GET /api/products?categoryId - 카테고리별 상품만 반환한다")
+    void getProductsByCategoryId() throws Exception {
+        var categoryB = categoryRepository.save(new Category("의류", "#FF6347", "https://example.com/b.jpg", "설명B"));
+        productRepository.save(new Product("전자상품1", 10000, "https://example.com/1.jpg", category));
+        productRepository.save(new Product("전자상품2", 20000, "https://example.com/2.jpg", category));
+        productRepository.save(new Product("의류상품1", 30000, "https://example.com/3.jpg", categoryB));
+
+        mockMvc.perform(get("/api/products")
+                .param("categoryId", String.valueOf(category.getId()))
+                .param("page", "0").param("size", "10"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content.length()").value(2))
+            .andExpect(jsonPath("$.content[0].categoryId").value(category.getId()))
+            .andExpect(jsonPath("$.content[1].categoryId").value(category.getId()));
+    }
+
+    @Test
+    @DisplayName("GET /api/products - categoryId 없이 조회하면 전체 상품을 반환한다")
+    void getProductsWithoutCategoryId() throws Exception {
+        var categoryB = categoryRepository.save(new Category("의류", "#FF6347", "https://example.com/b.jpg", "설명B"));
+        productRepository.save(new Product("전자상품1", 10000, "https://example.com/1.jpg", category));
+        productRepository.save(new Product("의류상품1", 30000, "https://example.com/3.jpg", categoryB));
+
+        mockMvc.perform(get("/api/products")
+                .param("page", "0").param("size", "10"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content.length()").value(2));
+    }
 }

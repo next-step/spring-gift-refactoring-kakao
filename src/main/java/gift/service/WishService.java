@@ -24,12 +24,20 @@ public class WishService {
         return wishRepository.findByMemberId(memberId, pageable);
     }
 
+    public boolean existsByMemberIdAndProductId(Long memberId, Long productId) {
+        return wishRepository.findByMemberIdAndProductId(memberId, productId).isPresent();
+    }
+
     public Wish addWish(Long memberId, Long productId) {
         return wishRepository.findByMemberIdAndProductId(memberId, productId)
             .orElseGet(() -> {
                 Product product = productService.findById(productId);
                 return wishRepository.save(new Wish(memberId, product));
             });
+    }
+
+    public void removeByMemberIdAndProductId(Long memberId, Long productId) {
+        wishRepository.deleteByMemberIdAndProductId(memberId, productId);
     }
 
     public void removeWish(Long memberId, Long wishId) {

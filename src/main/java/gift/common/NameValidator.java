@@ -21,6 +21,13 @@ public class NameValidator {
         return new NameValidator(label, rules);
     }
 
+    public void validateOrThrow(String name) {
+        List<String> errors = validate(name);
+        if (!errors.isEmpty()) {
+            throw new IllegalArgumentException(String.join(", ", errors));
+        }
+    }
+
     public List<String> validate(String name) {
         List<String> errors = new ArrayList<>();
 

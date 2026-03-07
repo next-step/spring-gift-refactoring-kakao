@@ -43,9 +43,14 @@ public class WishController {
         @LoginMember Member member,
         @Valid @RequestBody WishRequest request
     ) {
+        boolean alreadyExists = wishService.existsByMemberIdAndProductId(member.getId(), request.productId());
         Wish wish = wishService.addWish(member.getId(), request.productId());
+        WishResponse response = WishResponse.from(wish);
+        if (alreadyExists) {
+            return ResponseEntity.ok(response);
+        }
         return ResponseEntity.created(URI.create("/api/wishes/" + wish.getId()))
-            .body(WishResponse.from(wish));
+            .body(response);
     }
 
     @DeleteMapping("/{id}")

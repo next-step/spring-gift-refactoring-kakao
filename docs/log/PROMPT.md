@@ -139,3 +139,45 @@ ok 고생했어. 추가적으로 @docs/reports/code-review-service-extraction.md
 ```
 Password 일급 객체 도입 트레이드오프 문서 작성 — BCrypt 해싱 적용 이후 피드백에 대해 3가지 방식(String 현재, Password+PasswordEncoder, Password 값 래퍼) 비교 분석 문서를 작성해줘
 ```
+```
+@docs/plan/REQUIREMENT_STEP2.md 해당 설명을 보고 이번 미션에서 해야할 작업 및 실행계획 문서를 만들어줘. 이번미션은 작동 변경이 목표야.
+```
+```
+TODO_STEP2에 있는 작업들을 각각의 에이전트가 담당하여 실행시키는 에이전트 팀을 생성하려고 해. 프롬프트 생성해줘. 각 팀원들은 실행 계획 및 계획 보고서 생성 -> 나의 검토 -> 동작시작 -> 작업 보고서 생성 이런식으로 진행될거야.
+```
+```
+너가 방금 작성한거 md 파일로 만들어줘
+```
+```
+@docs/plan/AGENT_TEAM_PROMPTS.md 에이전트 팀 만들어서 해당 문서대로 작업 진행해줘
+```
+```
+[Agent Task] 트랜잭션 경계 세우기 - OrderService.createOrder()에 @Transactional 추가하여 주문 원자성 보장
+```
+```
+[Agent Task 3] 카테고리별 상품 필터링 - Phase 1 계획 보고서 작성
+```
+```
+[작업 4: 주문 금액 계산 도메인 이동] 가격 계산(price * quantity)을 서비스에서 Option 도메인 객체로 이동한다.
+```
+```
+[Agent Task 5] validateName 중복 제거 - ProductService와 OptionService에 중복된 validateName 메서드를 NameValidator로 통합
+```
+```
+[Agent Task] 트랜잭션 경계 세우기 - OrderService.createOrder()에 @Transactional 추가하여 주문 원자성 보장
+```
+```
+[Agent Task 5 - Phase 1] validateName 중복 제거 실행 계획 보고서 작성
+```
+```
+@docs/plan/TODO_STEP2.md 해당 문서를 보고 안한거나 부족한 부분 보완해줘
+```
+```
+/organize-docs 이름도 명확하지 않으면 파일명 수정해줘도돼
+```
+```
+step2에서 마무리한 작업들을 정리해서 README에 작성해줘
+```
+```
+이번에는 작업하면서 claude agents team 이라는 기능도 써봤잖아. 이에 대한 내용도 간단히 추가하는거 어때?
+```

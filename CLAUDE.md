@@ -4,8 +4,11 @@
 
 ```
 docs/
+├── adr/         # Architecture Decision Records (트레이드오프가 있는 설계 결정)
 ├── analysis/    # 분석 보고서 (리팩토링/삭제 전 분석)
-├── reports/     # 작업 보고서 (완료된 작업 결과)
+├── reports/     # 작업 보고서 (완료된 작업 결과, step별 하위 폴더)
+│   ├── step1/   # Step 1 작업 보고서
+│   └── step2/   # Step 2 작업 보고서
 ├── plan/        # 계획 및 요구사항 (REQUIREMENT.md, TODO.md)
 └── log/         # 프롬프트 기록 (PROMPT.md)
 ```

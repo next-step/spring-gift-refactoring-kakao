@@ -14,6 +14,8 @@ import gift.repository.MemberRepository;
 import gift.repository.OptionRepository;
 import gift.repository.OrderRepository;
 import gift.repository.ProductRepository;
+import gift.repository.WishRepository;
+import gift.model.Wish;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,6 +26,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+
+import jakarta.persistence.EntityManager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -59,6 +63,12 @@ class OrderControllerTest {
 
     @Autowired
     private OrderRepository orderRepository;
+
+    @Autowired
+    private WishRepository wishRepository;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @MockitoBean
     private KakaoMessageClient kakaoMessageClient;
@@ -165,6 +175,50 @@ class OrderControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("POST /api/orders - 포인트 부족 시 주문 실패하면 재고가 원래대로 유지된다")
+    void createOrderInsufficientPoints_stockRemainsUnchanged() throws Exception {
+        var poorMember = new Member("poor-stock@example.com", "password");
+        poorMember.chargePoint(100);
+        poorMember = memberRepository.save(poorMember);
+        var poorToken = jwtProvider.createToken(poorMember.getEmail());
+
+        int originalStock = option.getQuantity();
+
+        var request = new OrderRequest(option.getId(), 1, null);
+
+        mockMvc.perform(post("/api/orders")
+                .header("Authorization", "Bearer " + poorToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isBadRequest());
+
+        entityManager.clear();
+
+        var updatedOption = optionRepository.findById(option.getId()).orElseThrow();
+        assertThat(updatedOption.getQuantity()).isEqualTo(originalStock);
+    }
+
+    @Test
+    @DisplayName("POST /api/orders - 위시리스트에 있는 상품을 주문하면 위시리스트에서 자동 제거된다")
+    void createOrder_removesWish() throws Exception {
+        wishRepository.save(new Wish(member.getId(), option.getProduct()));
+        assertThat(wishRepository.findByMemberIdAndProductId(member.getId(), option.getProduct().getId())).isPresent();
+
+        var request = new OrderRequest(option.getId(), 1, "위시 정리 테스트");
+
+        mockMvc.perform(post("/api/orders")
+                .header("Authorization", "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+            .andExpect(status().isCreated());
+
+        entityManager.flush();
+        entityManager.clear();
+
+        assertThat(wishRepository.findByMemberIdAndProductId(member.getId(), option.getProduct().getId())).isEmpty();
     }
 
     @Test
