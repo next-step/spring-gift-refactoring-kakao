@@ -6,7 +6,11 @@ public class NotContainsKakaoRule implements ProductNameRule {
 
     @Override
     public boolean notValid(String productName) {
-        return productName == null || productName.contains(KAKAO);
+        if (productName == null)    {
+            return false;
+        }
+
+        return productName.contains(KAKAO);
     }
 
     @Override

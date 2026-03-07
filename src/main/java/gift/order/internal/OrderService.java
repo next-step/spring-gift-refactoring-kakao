@@ -1,10 +1,14 @@
 package gift.order.internal;
 
-import gift.global.NotFoundException;
+import gift.member.MemberCommandPort;
 import gift.option.Option;
+import gift.option.OptionCommandPort;
+import gift.option.OptionQueryPort;
 import gift.order.Order;
-import gift.product.Product;
+import gift.order.OrderCreatedEvent;
+import gift.product.ProductDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedModel;
@@ -16,8 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class OrderService {
 
     private final OrderRepository orderRepo;
-    private final OrderOptionRepository optionRepo;
-    private final OrderMemberRepository memberRepo;
+    private final OptionQueryPort optionQueryPort;
+    private final OptionCommandPort optionCommandPort;
+    private final MemberCommandPort memberCommandPort;
+    private final ApplicationEventPublisher eventPublisher;
 
     public PagedModel<OrderResponse> getOrders(Long memberId, Pageable pageable) {
         Page<OrderResponse> pageResponse = orderRepo.findByMemberId(memberId, pageable)
@@ -32,30 +38,28 @@ public class OrderService {
         int quantity = request.quantity();
         String message = request.message();
 
-        // validate option
-        Option option = optionRepo.findByIdInnerJoinFetchProduct(optionId)
-                .orElseThrow(NotFoundException::optionNotFound);
-
         // subtract stock
-        option.subtractQuantity(quantity);
-
-        Product product = option.getProduct();
+        optionCommandPort.subtractQuantity(optionId, quantity);
 
         // deduct points
-        int price = product.getPrice() * quantity;
-        memberRepo.findById(memberId)
-                .orElseThrow(NotFoundException::memberNotFound)
-                .deductPoint(price);
+        ProductDto product = optionQueryPort.getAssociatedProduct(optionId);
+        int price = product.price() * quantity;
+        memberCommandPort.deductPoint(memberId, price);
 
         // save order
+        Option optionRef = optionQueryPort.getReference(optionId);
         Order build = Order.builder()
-                .option(option)
+                .option(optionRef)
                 .memberId(memberId)
                 .quantity(quantity)
                 .message(message)
                 .build();
 
         Order newEntity = orderRepo.save(build);
+
+        eventPublisher.publishEvent(new OrderCreatedEvent(
+                memberId, product.id(), newEntity.getId()
+        ));
 
         return OrderResponse.from(newEntity);
     }

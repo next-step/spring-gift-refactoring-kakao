@@ -19,6 +19,13 @@ public class CategoryService {
                 .toList();
     }
 
+    public CategoryResponse getCategory(Long categoryId) {
+        Category find = categoryRepo.findById(categoryId)
+                .orElseThrow(NotFoundException::categoryNotFound);
+
+        return CategoryResponse.from(find);
+    }
+
     @Transactional
     public CategoryResponse createCategory(CategoryRequest createRequest) {
         String name = createRequest.name();

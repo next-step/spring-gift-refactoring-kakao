@@ -1,7 +1,6 @@
 package gift.order.internal;
 
 import gift.auth.AuthenticationPort;
-import gift.global.UnauthorizedException;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
@@ -24,17 +23,13 @@ public class OrderController {
     private final OrderService orderService;
     private final AuthenticationPort authenticationPort;
 
-    private final OrderMessageBuilder orderMessageBuilder;
-    private final KakaoMessagingService kakaoMessagingService;
-
     @GetMapping
     public ResponseEntity<PagedModel<OrderResponse>> getOrders(
             @RequestHeader("Authorization") String authorization,
             Pageable pageable
     ) {
         // auth check
-        Long memberId = authenticationPort.getMemberIdFrom(authorization)
-                .orElseThrow(UnauthorizedException::new);
+        Long memberId = authenticationPort.getMemberIdFrom(authorization);
 
         PagedModel<OrderResponse> response = orderService.getOrders(memberId, pageable);
 
@@ -42,37 +37,17 @@ public class OrderController {
                 .ok(response);
     }
 
-    // order flow:
-    // 1. auth check
-    // 2. validate option
-    // 3. subtract stock
-    // 4. deduct points
-    // 5. save order
-    // 6. cleanup wish
-    // 7. send kakao notification
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(
             @RequestHeader("Authorization") String authorization,
             @Valid @RequestBody OrderRequest request
     ) {
         // auth check
-        Long memberId = authenticationPort.getMemberIdFrom(authorization)
-                .orElseThrow(UnauthorizedException::new);
+        Long memberId = authenticationPort.getMemberIdFrom(authorization);
 
         OrderResponse response = orderService.createOrder(memberId, request);
 
         Long orderId = response.id();
-
-        // TODO: cleanup wish
-
-        // send kakao notification if possible
-        try {
-            OrderMessageDto orderMessageDto = orderMessageBuilder.buildFrom(orderId);
-
-            kakaoMessagingService.sendDefaultTemplateMessageTo(memberId, orderMessageDto);
-        } catch (Exception ignored) {
-
-        }
 
         return ResponseEntity
                 .created(URI.create("/api/orders/" + orderId))

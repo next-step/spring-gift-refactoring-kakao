@@ -57,6 +57,20 @@ public class CategoryApiSteps {
         apiClient.delete(uri);
     }
 
+    @When("해당 카테고리 조회 요청을 보낸다")
+    public void getCategory() {
+        String uri = BASE_URI + "/" + context.currentCategoryId();
+
+        apiClient.get(uri);
+    }
+
+    @When("존재하지 않는 카테고리 조회 요청을 보낸다")
+    public void getCategoryNotFound() {
+        String uri = BASE_URI + "/" + NON_EXISTENT_ID;
+
+        apiClient.get(uri);
+    }
+
     @When("존재하지 않는 카테고리 수정 요청을 보낸다")
     public void updateCategoryNotFound(DataTable dataTable) {
         String uri = BASE_URI + "/" + NON_EXISTENT_ID;

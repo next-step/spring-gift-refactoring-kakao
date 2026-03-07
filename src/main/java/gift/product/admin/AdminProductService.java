@@ -1,6 +1,8 @@
 package gift.product.admin;
 
 import gift.category.Category;
+import gift.category.CategoryQueryPort;
+import gift.global.NotFoundException;
 import gift.product.Product;
 import gift.product.admin.ProductDto.CategoryDto;
 import java.util.List;
@@ -14,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminProductService {
 
     private final AdminProductRepository productRepo;
-    private final AdminProductCategoryRepository categoryRepo;
+    private final CategoryQueryPort categoryQueryPort;
 
     public List<ProductDto> getAllProducts() {
         return productRepo.findAllInnerJoinFetchCategory().stream()
@@ -23,8 +25,8 @@ public class AdminProductService {
     }
 
     public List<CategoryDto> getAllCategories() {
-        return categoryRepo.findAll().stream()
-                .map(CategoryDto::from)
+        return categoryQueryPort.findAll().stream()
+                .map(c -> new CategoryDto(c.id(), c.name()))
                 .toList();
     }
 
@@ -32,10 +34,7 @@ public class AdminProductService {
     public void createProduct(
             String name, int price, String imageUrl, Long categoryId
     ) {
-        Category category = categoryRepo.findById(categoryId)
-                .orElseThrow(() -> new NoSuchElementException(
-                        "카테고리가 존재하지 않습니다. id=" + categoryId
-                ));
+        Category category = getCategoryOrThrow(categoryId);
 
         Product build = Product.builder()
                 .name(name)
@@ -54,19 +53,12 @@ public class AdminProductService {
         return ProductDto.from(find);
     }
 
-    @Transactional
-    public void updateProduct(
-            Long productId, String name, int price, String imageUrl, Long categoryId
-    ) {
-        Product find = productRepo.findById(productId)
-                .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
-
-        Category category = categoryRepo.findById(categoryId)
-                .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
-
-        find.update(
-                name, price, imageUrl, category
-        );
+    private Category getCategoryOrThrow(Long categoryId) {
+        try {
+            return categoryQueryPort.getReference(categoryId);
+        } catch (NotFoundException e) {
+            throw new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId);
+        }
     }
 
     @Transactional
@@ -75,5 +67,19 @@ public class AdminProductService {
                 .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
 
         productRepo.delete(find);
+    }
+
+    @Transactional
+    public void updateProduct(
+            Long productId, String name, int price, String imageUrl, Long categoryId
+    ) {
+        Product find = productRepo.findById(productId)
+                .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
+
+        Category category = getCategoryOrThrow(categoryId);
+
+        find.update(
+                name, price, imageUrl, category
+        );
     }
 }

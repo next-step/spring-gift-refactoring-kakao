@@ -92,4 +92,23 @@ public class ProductApiSteps {
 
         apiClient.delete(uri);
     }
+
+    @When("해당 카테고리의 상품 목록 조회 요청을 보낸다")
+    public void getProductsByCategoryId() {
+        Long categoryId = context.currentCategoryId();
+
+        apiClient.get(BASE_URI + "?categoryId=" + categoryId);
+    }
+
+    @When("{string} 카테고리의 상품 목록 조회 요청을 보낸다")
+    public void getProductsByCategoryName(String categoryName) {
+        Long categoryId = context.getId(categoryName);
+
+        apiClient.get(BASE_URI + "?categoryId=" + categoryId);
+    }
+
+    @When("존재하지 않는 카테고리의 상품 목록 조회 요청을 보낸다")
+    public void getProductsByNonExistentCategoryId() {
+        apiClient.get(BASE_URI + "?categoryId=" + NON_EXISTENT_ID);
+    }
 }

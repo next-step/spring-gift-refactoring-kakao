@@ -1,6 +1,6 @@
 package gift.order.internal;
 
-import gift.global.NotFoundException;
+import gift.member.MemberQueryPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -9,12 +9,10 @@ import org.springframework.stereotype.Service;
 public class KakaoMessagingService {
 
     private final KakaoMessageClient kakaoMessageClient;
-    private final OrderMemberRepository memberRepo;
+    private final MemberQueryPort memberQueryPort;
 
     public void sendDefaultTemplateMessageTo(Long memberId, OrderMessageDto orderMessageDto) {
-        String kakaoAccessToken = memberRepo.findById(memberId)
-                .orElseThrow(NotFoundException::memberNotFound)
-                .getKakaoAccessToken();
+        String kakaoAccessToken = memberQueryPort.getKakaoAccessToken(memberId);
 
         String templateObject = orderMessageDto.message();
 

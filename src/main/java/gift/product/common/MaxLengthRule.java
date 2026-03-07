@@ -10,7 +10,11 @@ public class MaxLengthRule implements ProductNameRule {
 
     @Override
     public boolean notValid(String productName) {
-        return productName == null || maxLength < productName.length();
+        if (productName == null) {
+            return false;
+        }
+
+        return maxLength < productName.length();
     }
 
     @Override

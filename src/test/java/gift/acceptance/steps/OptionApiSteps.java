@@ -111,4 +111,45 @@ public class OptionApiSteps {
 
         apiClient.delete(uri);
     }
+
+    @When("해당 옵션 수정 요청을 보낸다")
+    public void updateOption(DataTable dataTable) {
+        Long productId = context.currentProductId();
+        Long optionId = context.currentOptionId();
+        OptionRequest request = toOptionRequest(dataTable);
+
+        String uri = buildUri(productId, optionId);
+
+        apiClient.put(uri, request);
+    }
+
+    @When("{string} 옵션을 다음과 같이 수정 요청을 보낸다")
+    public void updateOptionByName(String optionName, DataTable dataTable) {
+        Long productId = context.currentProductId();
+        Long optionId = context.getId(optionName);
+        OptionRequest request = toOptionRequest(dataTable);
+
+        String uri = buildUri(productId, optionId);
+
+        apiClient.put(uri, request);
+    }
+
+    @When("존재하지 않는 상품의 옵션 수정 요청을 보낸다")
+    public void updateOptionNonExistentProduct(DataTable dataTable) {
+        OptionRequest request = toOptionRequest(dataTable);
+
+        String uri = buildUri(NON_EXISTENT_ID, NON_EXISTENT_ID);
+
+        apiClient.put(uri, request);
+    }
+
+    @When("해당 상품의 존재하지 않는 옵션 수정 요청을 보낸다")
+    public void updateOptionNonExistent(DataTable dataTable) {
+        Long productId = context.currentProductId();
+        OptionRequest request = toOptionRequest(dataTable);
+
+        String uri = buildUri(productId, NON_EXISTENT_ID);
+
+        apiClient.put(uri, request);
+    }
 }

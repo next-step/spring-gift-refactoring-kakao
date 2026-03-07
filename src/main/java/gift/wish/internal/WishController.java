@@ -1,7 +1,6 @@
 package gift.wish.internal;
 
 import gift.auth.AuthenticationPort;
-import gift.global.UnauthorizedException;
 import jakarta.validation.Valid;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
@@ -31,8 +30,7 @@ public class WishController {
             Pageable pageable
     ) {
         // check auth
-        Long memberId = authenticationPort.getMemberIdFrom(authorization)
-                .orElseThrow(UnauthorizedException::new);
+        Long memberId = authenticationPort.getMemberIdFrom(authorization);
 
         PagedModel<WishResponse> response = wishService.getWishes(memberId, pageable);
 
@@ -46,8 +44,7 @@ public class WishController {
             @Valid @RequestBody WishRequest request
     ) {
         // check auth
-        Long memberId = authenticationPort.getMemberIdFrom(authorization)
-                .orElseThrow(UnauthorizedException::new);
+        Long memberId = authenticationPort.getMemberIdFrom(authorization);
 
         AddWishResponseDto addWishResponseDto = wishService.addWish(memberId, request);
 
@@ -73,8 +70,7 @@ public class WishController {
             @PathVariable Long id
     ) {
         // check auth
-        Long memberId = authenticationPort.getMemberIdFrom(authorization)
-                .orElseThrow(UnauthorizedException::new);
+        Long memberId = authenticationPort.getMemberIdFrom(authorization);
 
         wishService.removeWish(memberId, id);
 

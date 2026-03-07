@@ -1,6 +1,7 @@
 package gift.product.internal;
 
 import gift.category.Category;
+import gift.category.CategoryQueryPort;
 import gift.global.NotFoundException;
 import gift.product.Product;
 import lombok.RequiredArgsConstructor;
@@ -15,11 +16,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProductService {
 
     private final ProductRepository productRepo;
-    private final ProductCategoryRepository categoryRepo;
+    private final CategoryQueryPort categoryQueryPort;
 
-    public PagedModel<ProductResponse> getProducts(Pageable pageable) {
-        Page<ProductResponse> pageResponse = productRepo.findAll(pageable)
-                .map(ProductResponse::from);
+    public PagedModel<ProductResponse> getProducts(Long categoryId, Pageable pageable) {
+        Page<Product> page = categoryId == null ?
+                productRepo.findAll(pageable) :
+                productRepo.findByCategoryId(categoryId, pageable);
+
+        Page<ProductResponse> pageResponse = page.map(ProductResponse::from);
 
         return new PagedModel<>(pageResponse);
     }
@@ -35,8 +39,7 @@ public class ProductService {
     public ProductResponse createProduct(ProductRequest createRequest) {
         Long categoryId = createRequest.categoryId();
 
-        Category category = categoryRepo.findById(categoryId)
-                .orElseThrow(NotFoundException::categoryNotFound);
+        Category category = categoryQueryPort.getReference(categoryId);
 
         String name = createRequest.name();
         int price = createRequest.price();
@@ -58,8 +61,7 @@ public class ProductService {
     public ProductResponse updateProduct(Long productId, ProductRequest updateRequest) {
         Long categoryId = updateRequest.categoryId();
 
-        Category category = categoryRepo.findById(categoryId)
-                .orElseThrow(NotFoundException::categoryNotFound);
+        Category category = categoryQueryPort.getReference(categoryId);
 
         Product find = productRepo.findById(productId)
                 .orElseThrow(NotFoundException::productNotFound);
