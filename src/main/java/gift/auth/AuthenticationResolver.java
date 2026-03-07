@@ -2,15 +2,9 @@ package gift.auth;
 
 import gift.member.Member;
 import gift.member.MemberRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.NoSuchElementException;
 import org.springframework.stereotype.Component;
 
-/**
- * Resolves the authenticated member from an Authorization header.
- *
- * @author brian.kim
- * @since 1.0
- */
 @Component
 public class AuthenticationResolver {
   private static final String BEARER_PREFIX = "Bearer ";
@@ -18,19 +12,16 @@ public class AuthenticationResolver {
   private final JwtProvider jwtProvider;
   private final MemberRepository memberRepository;
 
-  @Autowired
   public AuthenticationResolver(JwtProvider jwtProvider, MemberRepository memberRepository) {
     this.jwtProvider = jwtProvider;
     this.memberRepository = memberRepository;
   }
 
   public Member extractMember(String authorization) {
-    try {
-      final String token = authorization.replace(BEARER_PREFIX, "");
-      final String email = jwtProvider.getEmail(token);
-      return memberRepository.findByEmail(email).orElse(null);
-    } catch (Exception e) {
-      return null;
-    }
+    String token = authorization.replace(BEARER_PREFIX, "");
+    String email = jwtProvider.getEmail(token);
+    return memberRepository
+        .findByEmail(email)
+        .orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다."));
   }
 }

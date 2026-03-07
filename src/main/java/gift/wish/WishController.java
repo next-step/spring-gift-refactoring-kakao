@@ -2,6 +2,7 @@ package gift.wish;
 
 import gift.auth.AuthenticationResolver;
 import gift.member.Member;
+import gift.wish.WishService.AddWishResult;
 import jakarta.validation.Valid;
 import java.net.URI;
 import org.springframework.data.domain.Page;
@@ -32,9 +33,6 @@ public class WishController {
   public ResponseEntity<Page<WishResponse>> getWishes(
       @RequestHeader("Authorization") String authorization, Pageable pageable) {
     Member member = authenticationResolver.extractMember(authorization);
-    if (member == null) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-    }
     Page<WishResponse> wishes =
         wishService.findByMemberId(member.getId(), pageable).map(WishResponse::from);
     return ResponseEntity.ok(wishes);
@@ -45,34 +43,20 @@ public class WishController {
       @RequestHeader("Authorization") String authorization,
       @Valid @RequestBody WishRequest request) {
     Member member = authenticationResolver.extractMember(authorization);
-    if (member == null) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    AddWishResult result = wishService.addWish(member.getId(), request.productId());
+    if (result.created()) {
+      return ResponseEntity.created(URI.create("/api/wishes/" + result.wish().getId()))
+          .body(WishResponse.from(result.wish()));
     }
-
-    return wishService
-        .addWish(member.getId(), request.productId())
-        .map(
-            result -> {
-              if (result.created()) {
-                return ResponseEntity.created(URI.create("/api/wishes/" + result.wish().getId()))
-                    .body(WishResponse.from(result.wish()));
-              }
-              return ResponseEntity.ok(WishResponse.from(result.wish()));
-            })
-        .orElseGet(() -> ResponseEntity.notFound().build());
+    return ResponseEntity.ok(WishResponse.from(result.wish()));
   }
 
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> removeWish(
       @RequestHeader("Authorization") String authorization, @PathVariable Long id) {
     Member member = authenticationResolver.extractMember(authorization);
-    if (member == null) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-    }
-
     return switch (wishService.removeWish(member.getId(), id)) {
       case DELETED -> ResponseEntity.noContent().build();
-      case NOT_FOUND -> ResponseEntity.notFound().build();
       case FORBIDDEN -> ResponseEntity.status(HttpStatus.FORBIDDEN).build();
     };
   }

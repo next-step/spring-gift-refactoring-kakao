@@ -6,7 +6,6 @@ import jakarta.validation.Valid;
 import java.net.URI;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,26 +26,19 @@ public class OrderController {
   }
 
   @GetMapping
-  public ResponseEntity<?> getOrders(
+  public ResponseEntity<Page<OrderResponse>> getOrders(
       @RequestHeader("Authorization") String authorization, Pageable pageable) {
     Member member = authenticationResolver.extractMember(authorization);
-    if (member == null) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-    }
     Page<OrderResponse> orders =
         orderService.findByMemberId(member.getId(), pageable).map(OrderResponse::from);
     return ResponseEntity.ok(orders);
   }
 
   @PostMapping
-  public ResponseEntity<?> createOrder(
+  public ResponseEntity<OrderResponse> createOrder(
       @RequestHeader("Authorization") String authorization,
       @Valid @RequestBody OrderRequest request) {
     Member member = authenticationResolver.extractMember(authorization);
-    if (member == null) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-    }
-
     Order saved =
         orderService.placeOrder(
             member.getId(), request.optionId(), request.quantity(), request.message());

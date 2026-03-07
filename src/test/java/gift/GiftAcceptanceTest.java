@@ -9,8 +9,10 @@ import io.restassured.response.Response;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.jdbc.Sql;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -20,12 +22,20 @@ class GiftAcceptanceTest {
 
   @LocalServerPort int port;
 
+  @Autowired JdbcTemplate jdbcTemplate;
+
   String token;
 
   @BeforeEach
   void setUp() {
     RestAssured.port = port;
-    token = AcceptanceTestSupport.로그인하고_토큰을_받는다("sender@test.com", "password");
+    ExtractableResponse<Response> response =
+        AcceptanceTestSupport.회원을_등록한다("sender@test.com", "password");
+    token = response.jsonPath().getString("token");
+    Long memberId =
+        jdbcTemplate.queryForObject(
+            "SELECT id FROM member WHERE email = ?", Long.class, "sender@test.com");
+    jdbcTemplate.update("UPDATE member SET point = 100000 WHERE id = ?", memberId);
   }
 
   /** G1: 재고가 충분할 때 주문에 성공한다. - 옵션1(재고 10) 에 수량 1을 주문 → 201 응답 */
@@ -150,11 +160,51 @@ class GiftAcceptanceTest {
             .all()
             .extract();
 
-    // then (NoSuchElementException → GlobalExceptionHandler → 400)
-    assertThat(response.statusCode()).isEqualTo(400);
+    // then (NoSuchElementException → GlobalExceptionHandler → 404)
+    assertThat(response.statusCode()).isEqualTo(404);
   }
 
-  /** G5: Authorization 헤더 없이 주문하면 실패한다. - Authorization 헤더 누락 → 400 응답 */
+  /** G5: 위시에 담은 상품을 주문하면 위시에서 자동 삭제된다. */
+  @Test
+  void 위시에_담은_상품을_주문하면_위시에서_삭제된다() {
+    // given — 위시에 상품 등록
+    RestAssured.given()
+        .contentType(ContentType.JSON)
+        .header("Authorization", "Bearer " + token)
+        .body(Map.of("productId", 1))
+        .when()
+        .post("/api/wishes")
+        .then()
+        .statusCode(201);
+
+    // when — 해당 상품의 옵션으로 주문
+    RestAssured.given()
+        .contentType(ContentType.JSON)
+        .header("Authorization", "Bearer " + token)
+        .body(
+            Map.of(
+                "optionId", 1,
+                "quantity", 1,
+                "message", "위시 삭제 테스트"))
+        .when()
+        .post("/api/orders")
+        .then()
+        .statusCode(201);
+
+    // then — 위시 목록에서 해당 상품이 사라졌는지 확인
+    ExtractableResponse<Response> wishList =
+        RestAssured.given()
+            .header("Authorization", "Bearer " + token)
+            .when()
+            .get("/api/wishes")
+            .then()
+            .extract();
+
+    assertThat(wishList.statusCode()).isEqualTo(200);
+    assertThat(wishList.jsonPath().getList("content")).isEmpty();
+  }
+
+  /** G6: Authorization 헤더 없이 주문하면 실패한다. - Authorization 헤더 누락 → 400 응답 */
   @Test
   void Member_Id_헤더_없이_선물하면_실패한다() {
     // when — Authorization 헤더 없이 요청

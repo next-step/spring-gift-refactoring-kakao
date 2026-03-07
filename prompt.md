@@ -133,3 +133,96 @@
 - `gift.auth.KakaoLoginClient`, `gift.auth.KakaoLoginProperties`, `gift.order.KakaoMessageClient` → `gift.infrastructure.kakao` 패키지로 이동
 - `KakaoAuthService`, `OrderService`의 import 경로 업데이트
 - `./gradlew spotlessApply build` — 테스트 9개 모두 통과 확인
+
+## 세션: 2026-03-05 — 코드 리뷰 (미구현 의도 + 트랜잭션 경계)
+
+### 프롬프트 1: 미구현 의도 탐색
+> 기존 코드에 의도가 남아있지만 구현되지 않은 작동이 있는지 찾아봐
+
+- 전체 소스 탐색 수행
+- `Option.calculateTotalPrice()` + `Member.deductPoint()`로 가격 계산/차감은 하지만 `OrderResponse`에 가격 정보가 누락되어 있음을 발견
+
+### 프롬프트 2: 트랜잭션 경계 점검
+> 트랜잭션 경계는 잘 잡혀있는가?
+
+- `OrderService.placeOrder()`에서 외부 HTTP 호출(`kakaoMessageClient.send()`)이 `@Transactional` 내부에 포함된 문제 발견
+- 카카오 API 실패 시 전체 롤백 + `@Retryable` 3회 재시도로 최대 1.5초 DB 커넥션/락 점유 위험
+- 해결 방향: 트랜잭션 커밋 후 메시지 전송 분리 필요
+
+### 프롬프트 3: 카카오 메시지 전송을 트랜잭션 밖으로 분리
+> kakaoMessageClient.send 이거를 트랜잭션 밖으로 빼줘. 트랜잭션이 성공한 경우에만 메시지가 나갈 수 있도록 수정해줘.
+
+- `TransactionSynchronization.afterCommit()` 콜백으로 1차 구현 후 빌드 통과 확인
+
+### 프롬프트 4: 가독성 개선
+> 좀 더 가독성 좋게 작성할 수는 없나?
+
+- `TransactionSynchronization` 익명 클래스 → Spring 이벤트 기반으로 리팩토링
+- `OrderCompletedEvent` record 생성, `OrderCompletedEventListener`에서 `@TransactionalEventListener`(기본 AFTER_COMMIT)로 처리
+- `OrderService`에서 `kakaoMessageClient` 의존성 제거, `ApplicationEventPublisher`로 이벤트 발행만 담당
+- `./gradlew spotlessApply build` — 빌드 + 테스트 통과 확인
+
+### 프롬프트 5: 개발자별 코드 스타일 불일치 검토 및 수정
+> 사건의 전말(A/B/C/D 개발자 스토리)을 기반으로 코드 검토 후 수정
+
+- 예외 타입 통일: `MemberService`의 엔티티 조회 실패를 `IllegalArgumentException` → `NoSuchElementException`으로 변경 (회원만 400이던 것을 404로 통일)
+- 메서드명 통일: `MemberService.getById()` → `findById()` (다른 서비스와 동일 패턴)
+- DI 방식 통일: `AuthenticationResolver`, `JwtProvider`에서 `@Autowired` 제거 (생성자 주입으로 통일)
+- 주석 스타일 통일: Javadoc `@author`/`@since` 5개 파일 제거, 블록 주석 2개 파일 제거, 메서드 Javadoc 1건 제거 → 프로젝트 전체 "주석 없이 코드로 설명" 원칙으로 통일
+- 인증 처리 통일: `AuthenticationResolver`가 null 반환 → 예외(`NoSuchElementException`) 던지도록 변경, 컨트롤러 5곳의 null 체크 중복 제거
+- `GlobalExceptionHandler`에 `JwtException` → 401 핸들러 추가
+- 201 응답 통일: `MemberController`의 `ResponseEntity.status(CREATED)` → `ResponseEntity.created(URI)` 패턴으로 통일
+- 컨트롤러 반환 타입: `ResponseEntity<?>` → 구체 타입으로 변경
+- `./gradlew spotlessApply build` — 빌드 + 테스트 통과 확인
+
+### 프롬프트 6: 비밀번호 검증 로직을 Member 엔티티로 이동
+> 비밀번호 검증로직을 Member 로 옮기면 어떨까?
+
+- `MemberService.login()`의 비밀번호 비교 로직을 `Member.validatePassword(password)` 메서드로 추출
+- 자기 상태 기반 검증(`chargePoint`, `deductPoint`와 동일 패턴)이 엔티티에 모이도록 통일
+- `./gradlew spotlessApply build` — 빌드 + 테스트 통과 확인
+
+### 프롬프트 7: 주문 시 위시리스트 자동 삭제
+> wish 에 있던 상품을 구매하면 wish 에서 삭제하는 로직이 필요 할 것 같은데
+
+- `OrderService.placeOrder()`에 `WishRepository` 의존성 추가
+- 주문 저장 후 `wishRepository.findByMemberIdAndProductId()` → `ifPresent(delete)` 로직 추가
+- 위시가 없는 경우 무시, 같은 트랜잭션 안에서 원자적 처리
+- `./gradlew spotlessApply build` — 빌드 + 테스트 통과 확인
+
+### 프롬프트 8: 위시 자동 삭제 테스트 코드 작성
+> 방금 추가한거 테스트 코드 작성해줘
+
+- `GiftAcceptanceTest`에 `위시에_담은_상품을_주문하면_위시에서_삭제된다()` 테스트 추가
+- 위시 등록(201) → 주문(201) → 위시 목록 조회 → content가 비어있는지 검증
+- `./gradlew test --tests "gift.GiftAcceptanceTest"` — 6개 테스트 모두 통과 확인
+
+### 프롬프트 9: 가격 계산 중복 제거
+> String.format 가격 계산이 Option.calculateTotalPrice 랑 중복되는데 합칠 수 있을까?
+
+- `KakaoRestMessageClient.buildTemplate()`의 `product.getPrice() * order.getQuantity()` → `option.calculateTotalPrice(order.getQuantity())`로 교체
+- 가격 계산 로직이 `Option.calculateTotalPrice()` 한 곳으로 통일
+- `./gradlew spotlessApply build` — 빌드 + 테스트 통과 확인
+
+### 프롬프트 10: 비밀번호 암호화 (Password 값 객체)
+> 비밀번호 암호화가 안되있음. 암호라는 객체를 만들어서 암호화 라이브러리를 사용하여 암호화 하고 비밀번호 검증도 하면 어떨까? salt 정보만 사용해서 해싱.
+
+- `Password` 값 객체 생성 (`@Embeddable`): `SecureRandom`으로 16바이트 salt 생성 + `SHA-256` 해싱
+  - `Password.of(rawPassword)` — salt 생성 + 해시 계산
+  - `Password.validate(rawPassword)` — 동일 salt로 해시 비교
+- `Member` 엔티티: `String password` → `@Embedded Password password`로 변경
+  - 생성자/update에서 `Password.of()` 호출, `validatePassword()`에서 `password.validate()` 위임
+- Flyway 마이그레이션 `V3__Encrypt_member_password.sql` 추가: `password` 컬럼 → `password_hash` + `password_salt` 컬럼
+- 테스트 수정: SQL 시드 회원 → API 회원 등록 방식으로 전환, 포인트 충전은 JdbcTemplate 직접 UPDATE
+- `./gradlew spotlessApply test` — 10개 테스트 모두 통과 확인
+
+### 프롬프트 11: PR 본문 작성
+> 커밋보고 작업한 내용 pr 작성해줘
+
+- 커밋 이력 18개를 분석하여 PR 본문 작성 (트랜잭션 경계, 코드 스타일 통일, 도메인 로직 개선, 비밀번호 암호화, 테스트)
+
+### 프롬프트 12: ADR 작성
+> 지금 까지 작업 한 것 중에 ADR 작성할 만한게 있으려나? → 작성해줘
+
+- `docs/adr/001-외부-API-호출-트랜잭션-분리.md` — 컨트롤러 직접 호출 / afterCommit 콜백 / 이벤트 리스너 3가지 대안 비교, 이벤트 방식 채택
+- `docs/adr/002-비밀번호-암호화-전략.md` — BCrypt / SCrypt / SHA-256+salt 3가지 대안 비교, SHA-256+salt 값 객체 채택

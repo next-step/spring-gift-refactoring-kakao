@@ -1,12 +1,12 @@
 package gift.order;
 
-import gift.infrastructure.kakao.KakaoMessageClient;
 import gift.member.Member;
 import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
-import gift.product.Product;
+import gift.wish.WishRepository;
 import java.util.NoSuchElementException;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -18,17 +18,20 @@ public class OrderService {
   private final OrderRepository orderRepository;
   private final OptionRepository optionRepository;
   private final MemberRepository memberRepository;
-  private final KakaoMessageClient kakaoMessageClient;
+  private final WishRepository wishRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   public OrderService(
       OrderRepository orderRepository,
       OptionRepository optionRepository,
       MemberRepository memberRepository,
-      KakaoMessageClient kakaoMessageClient) {
+      WishRepository wishRepository,
+      ApplicationEventPublisher eventPublisher) {
     this.orderRepository = orderRepository;
     this.optionRepository = optionRepository;
     this.memberRepository = memberRepository;
-    this.kakaoMessageClient = kakaoMessageClient;
+    this.wishRepository = wishRepository;
+    this.eventPublisher = eventPublisher;
   }
 
   public Page<Order> findByMemberId(Long memberId, Pageable pageable) {
@@ -49,24 +52,17 @@ public class OrderService {
             .findById(memberId)
             .orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다. id=" + memberId));
 
-    int price = option.getProduct().getPrice() * quantity;
+    int price = option.calculateTotalPrice(quantity);
     member.deductPoint(price);
 
     Order saved = orderRepository.save(new Order(option, memberId, quantity, message));
 
-    sendKakaoMessageIfPossible(member, saved, option);
+    wishRepository
+        .findByMemberIdAndProductId(memberId, option.getProduct().getId())
+        .ifPresent(wishRepository::delete);
+
+    eventPublisher.publishEvent(new OrderCompletedEvent(member, saved, option));
 
     return saved;
-  }
-
-  private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {
-    if (member.getKakaoAccessToken() == null) {
-      return;
-    }
-    try {
-      Product product = option.getProduct();
-      kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
-    } catch (Exception ignored) {
-    }
   }
 }
