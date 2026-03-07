@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
-import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/wishes")
@@ -57,19 +56,15 @@ public class WishController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
-        try {
-            // check duplicate
-            var existing = wishService.findByMemberIdAndProductId(member.getId(), request.productId());
-            if (existing != null) {
-                return ResponseEntity.ok(WishResponse.from(existing));
-            }
-
-            var saved = wishService.addWish(member.getId(), request.productId());
-            return ResponseEntity.created(URI.create("/api/wishes/" + saved.getId()))
-                .body(WishResponse.from(saved));
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
+        // check duplicate
+        var existing = wishService.findByMemberIdAndProductId(member.getId(), request.productId());
+        if (existing != null) {
+            return ResponseEntity.ok(WishResponse.from(existing));
         }
+
+        var saved = wishService.addWish(member.getId(), request.productId());
+        return ResponseEntity.created(URI.create("/api/wishes/" + saved.getId()))
+            .body(WishResponse.from(saved));
     }
 
     @DeleteMapping("/{id}")
@@ -86,8 +81,6 @@ public class WishController {
         try {
             wishService.removeWish(member.getId(), id);
             return ResponseEntity.noContent().build();
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }

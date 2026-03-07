@@ -1,5 +1,6 @@
 package gift.option;
 
+import gift.DuplicateResourceException;
 import gift.product.Product;
 import gift.product.ProductRepository;
 import org.springframework.stereotype.Service;
@@ -30,7 +31,7 @@ public class OptionService {
         Product product = findProduct(productId);
 
         if (optionRepository.existsByProductIdAndName(productId, request.name())) {
-            throw new IllegalArgumentException("이미 존재하는 옵션명입니다.");
+            throw new DuplicateResourceException("이미 존재하는 옵션명입니다.");
         }
 
         return optionRepository.save(new Option(product, request.name(), request.quantity()));

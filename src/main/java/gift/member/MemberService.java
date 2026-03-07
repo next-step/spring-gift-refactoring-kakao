@@ -1,5 +1,8 @@
 package gift.member;
 
+import gift.AuthenticationFailedException;
+import gift.DuplicateResourceException;
+
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -27,17 +30,17 @@ public class MemberService {
     @Transactional
     public Member register(String email, String password) {
         if (memberRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("이미 등록된 이메일입니다.");
+            throw new DuplicateResourceException("이미 등록된 이메일입니다.");
         }
         return memberRepository.save(new Member(email, password));
     }
 
     public Member login(String email, String password) {
         Member member = memberRepository.findByEmail(email)
-            .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다."));
+            .orElseThrow(() -> new AuthenticationFailedException("이메일 또는 비밀번호가 올바르지 않습니다."));
 
         if (member.getPassword() == null || !member.getPassword().equals(password)) {
-            throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
+            throw new AuthenticationFailedException("이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
         return member;

@@ -149,7 +149,7 @@ class OptionAcceptanceTest extends AcceptanceTestFixture {
 
         // then
         response.then()
-            .statusCode(400)
+            .statusCode(409)
             .body(containsString("이미 존재하는 옵션명"));
     }
 

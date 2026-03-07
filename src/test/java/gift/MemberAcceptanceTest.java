@@ -102,7 +102,7 @@ class MemberAcceptanceTest extends AcceptanceTestFixture {
 
         // then
         response.then()
-            .statusCode(400);
+            .statusCode(409);
 
         assertThat(memberRepository.count()).isEqualTo(1);
     }
@@ -155,7 +155,7 @@ class MemberAcceptanceTest extends AcceptanceTestFixture {
 
         // then
         response.then()
-            .statusCode(400);
+            .statusCode(401);
     }
 
     @Test
@@ -183,6 +183,6 @@ class MemberAcceptanceTest extends AcceptanceTestFixture {
 
         // then
         response.then()
-            .statusCode(400);
+            .statusCode(401);
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Controller
 @RequestMapping("/admin/products")
@@ -54,10 +55,14 @@ public class AdminProductController {
 
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
-        Product product = productService.findById(id);
-        model.addAttribute("product", product);
-        model.addAttribute("categories", categoryService.findAll());
-        return "product/edit";
+        try {
+            Product product = productService.findById(id);
+            model.addAttribute("product", product);
+            model.addAttribute("categories", categoryService.findAll());
+            return "product/edit";
+        } catch (NoSuchElementException e) {
+            return "redirect:/admin/products";
+        }
     }
 
     @PostMapping("/{id}/edit")
@@ -69,16 +74,20 @@ public class AdminProductController {
         @RequestParam Long categoryId,
         Model model
     ) {
-        Product product = productService.findById(id);
+        try {
+            Product product = productService.findById(id);
 
-        List<String> errors = ProductNameValidator.validate(name, true);
-        if (!errors.isEmpty()) {
-            populateEditForm(model, product, errors, name, price, imageUrl, categoryId);
-            return "product/edit";
+            List<String> errors = ProductNameValidator.validate(name, true);
+            if (!errors.isEmpty()) {
+                populateEditForm(model, product, errors, name, price, imageUrl, categoryId);
+                return "product/edit";
+            }
+
+            productService.update(id, name, price, imageUrl, categoryId);
+            return "redirect:/admin/products";
+        } catch (NoSuchElementException e) {
+            return "redirect:/admin/products";
         }
-
-        productService.update(id, name, price, imageUrl, categoryId);
-        return "redirect:/admin/products";
     }
 
     @PostMapping("/{id}/delete")

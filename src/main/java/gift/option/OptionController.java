@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 
 /*
@@ -30,14 +29,10 @@ public class OptionController {
 
     @GetMapping
     public ResponseEntity<List<OptionResponse>> getOptions(@PathVariable Long productId) {
-        try {
-            List<OptionResponse> options = optionService.findByProductId(productId).stream()
-                .map(OptionResponse::from)
-                .toList();
-            return ResponseEntity.ok(options);
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        }
+        List<OptionResponse> options = optionService.findByProductId(productId).stream()
+            .map(OptionResponse::from)
+            .toList();
+        return ResponseEntity.ok(options);
     }
 
     @PostMapping
@@ -45,14 +40,10 @@ public class OptionController {
         @PathVariable Long productId,
         @Valid @RequestBody OptionRequest request
     ) {
-        try {
-            Option saved = optionService.create(productId, request);
-            URI location = URI.create("/api/products/" + productId + "/options/" + saved.getId());
-            return ResponseEntity.created(location)
-                .body(OptionResponse.from(saved));
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        }
+        Option saved = optionService.create(productId, request);
+        URI location = URI.create("/api/products/" + productId + "/options/" + saved.getId());
+        return ResponseEntity.created(location)
+            .body(OptionResponse.from(saved));
     }
 
     @DeleteMapping(path = "/{optionId}")
@@ -60,12 +51,8 @@ public class OptionController {
         @PathVariable Long productId,
         @PathVariable Long optionId
     ) {
-        try {
-            optionService.delete(productId, optionId);
-            return ResponseEntity.noContent().build();
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        }
+        optionService.delete(productId, optionId);
+        return ResponseEntity.noContent().build();
     }
 
 }

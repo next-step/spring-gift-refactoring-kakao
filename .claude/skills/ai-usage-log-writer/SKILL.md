@@ -1,11 +1,11 @@
 ---
 name: ai-usage-log-writer
 description: >
-  AI 도구 활용 내역을 제출 가능한 증적 형태로 AI_USAGE_LOG.md에 정리한다.
+  AI 도구 활용 내역을 제출 가능한 증적 형태로 log/ 폴더에 주제별 파일로 정리한다.
   프롬프트, 접근법, 결과, 채택/기각 이유를 구조화하여 기록하며
   세션 단위로 관리한다.
-argument-hint: "[세션 주제, e.g. E2E 테스트 작성]"
-allowed-tools: Read, Edit, Write, Grep, Glob
+argument-hint: "[세션 주제, e.g. 플랜-세우기]"
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash
 ---
 
 # ai-usage-log-writer
@@ -13,12 +13,14 @@ allowed-tools: Read, Edit, Write, Grep, Glob
 AI 도구 활용 내역을 제출 가능한 증적 형태로 정리한다.
 
 ## 역할
-- 프롬프트, 접근법, 결과, 채택/기각 이유를 `AI_USAGE_LOG.md`로 문서화한다.
+- 프롬프트, 접근법, 결과, 채택/기각 이유를 `log/{주제}.md`로 문서화한다.
 - 과제 제출 관점에서 재현성과 검증력을 남긴다.
 
 ## 입력 계약
 - 대화 로그, 실행 결과, 커밋 메시지, 메모 중 실제로 확인 가능한 정보만 사용한다.
 - 근거가 없거나 불확실한 항목은 추정하지 않고 `TODO(근거 필요)`로 표기한다.
+- 인자로 주제를 받는다. 주제는 파일명으로 사용되며 한글/영문 모두 가능하다.
+  - 예: `/ai-usage-log-writer 플랜-세우기` → `log/플랜-세우기.md`
 
 ## 보안 규칙
 - 프롬프트 원문을 기록하되 민감정보는 반드시 마스킹한다.
@@ -37,14 +39,15 @@ AI 도구 활용 내역을 제출 가능한 증적 형태로 정리한다.
    - 유지보수성
    - 커버리지/검증력
    - 비용(시간, 복잡도)
-5. `AI_USAGE_LOG.md`에 누적 기록한다.
+5. `log/{주제}.md`에 기록한다.
 
 ## 파일 기록 정책
-- 파일이 없으면 생성한다.
+- 파일 경로: 프로젝트 루트의 `log/{주제}.md`
+- `log/` 폴더가 없으면 생성한다.
 - 세션 헤더 형식: `## SessionID: ${CLAUDE_SESSION_ID}`
 
 ### 세션 판별 및 동작 규칙
-1. `AI_USAGE_LOG.md`를 읽고 `## SessionID:` 헤더들을 확인한다.
+1. `log/{주제}.md`를 읽고 `## SessionID:` 헤더들을 확인한다.
 2. 현재 `${CLAUDE_SESSION_ID}`와 일치하는 세션 블록이 있는지 검사한다.
 
 | 상황 | 동작 |
@@ -63,7 +66,7 @@ AI 도구 활용 내역을 제출 가능한 증적 형태로 정리한다.
 ## 출력 형식
 
 ```markdown
-# AI_USAGE_LOG
+# {주제}
 
 ## SessionID: ${CLAUDE_SESSION_ID}
 
@@ -100,9 +103,9 @@ AI 도구 활용 내역을 제출 가능한 증적 형태로 정리한다.
 ## 사용 예시
 
 ```text
-/ai-usage-log-writer
+/ai-usage-log-writer 플랜-세우기
 ```
 
 ```text
-/ai-usage-log-writer E2E 테스트 작성
+/ai-usage-log-writer E2E-테스트-작성
 ```

@@ -2,7 +2,6 @@ package gift;
 
 import io.restassured.http.ContentType;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -241,7 +240,6 @@ class OrderAcceptanceTest extends AcceptanceTestFixture {
 
 
     @Test
-	@Disabled("트랜잭션 경계가 잘 못 설정되어 실패 - Step2에서 수정 예정")
     void 주문_생성_실패_포인트_부족() {
         // given
         String token = registerAndGetToken("poor@test.com", "pass");
@@ -265,10 +263,64 @@ class OrderAcceptanceTest extends AcceptanceTestFixture {
 
         // then
         response.then()
-            .statusCode(500);
+            .statusCode(400);
 
         assertThat(getOptionQuantity(productId, optionId)).isEqualTo(beforeQuantity);
         assertThat(getMemberPoint("poor@test.com")).isEqualTo(beforePoint);
         assertThat(getOrderCount(token)).isEqualTo(beforeOrderCount);
+    }
+
+    // --- 주문 시 위시 자동 삭제 ---
+
+    @Test
+    void 주문_생성_성공_위시_자동_삭제() {
+        // given
+        String token = registerAndGetToken("wish@test.com", "pass");
+        chargeMemberPoints("wish@test.com", 100000);
+        Long categoryId = createCategory("전자기기");
+        Long productId = createProduct("노트북", 1000, "http://img.test/1.png", categoryId);
+        Long optionId = createOption(productId, "8GB", 50);
+
+        // 위시 추가
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + token)
+            .body(Map.of("productId", productId))
+        .when()
+            .post("/api/wishes")
+        .then()
+            .statusCode(201);
+
+        // 위시 존재 확인
+        long wishCountBefore = given()
+            .header("Authorization", "Bearer " + token)
+            .param("page", 0).param("size", 100)
+        .when()
+            .get("/api/wishes")
+        .then()
+            .statusCode(200)
+            .extract().jsonPath().getLong("totalElements");
+        assertThat(wishCountBefore).isEqualTo(1);
+
+        // when — 주문
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + token)
+            .body(Map.of("optionId", optionId, "quantity", 1, "message", "선물"))
+        .when()
+            .post("/api/orders")
+        .then()
+            .statusCode(201);
+
+        // then — 위시 삭제됨
+        long wishCountAfter = given()
+            .header("Authorization", "Bearer " + token)
+            .param("page", 0).param("size", 100)
+        .when()
+            .get("/api/wishes")
+        .then()
+            .statusCode(200)
+            .extract().jsonPath().getLong("totalElements");
+        assertThat(wishCountAfter).isEqualTo(0);
     }
 }

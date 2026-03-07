@@ -2,8 +2,9 @@ package gift.order;
 
 import gift.member.Member;
 import gift.member.MemberRepository;
-import gift.option.Option;
 import gift.option.OptionRepository;
+import gift.wish.WishRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -17,18 +18,21 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OptionRepository optionRepository;
     private final MemberRepository memberRepository;
-    private final KakaoMessageClient kakaoMessageClient;
+    private final WishRepository wishRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public OrderService(
         OrderRepository orderRepository,
         OptionRepository optionRepository,
         MemberRepository memberRepository,
-        KakaoMessageClient kakaoMessageClient
+        WishRepository wishRepository,
+        ApplicationEventPublisher eventPublisher
     ) {
         this.orderRepository = orderRepository;
         this.optionRepository = optionRepository;
         this.memberRepository = memberRepository;
-        this.kakaoMessageClient = kakaoMessageClient;
+        this.wishRepository = wishRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     public Page<Order> findByMemberId(Long memberId, Pageable pageable) {
@@ -41,6 +45,7 @@ public class OrderService {
     // 3. subtract stock
     // 4. deduct points
     // 5. save order
+    // 6. cleanup wish
     // 7. send kakao notification
     @Transactional
     public Order createOrder(Member member, OrderRequest request) {
@@ -52,27 +57,25 @@ public class OrderService {
         option.subtractQuantity(request.quantity());
         optionRepository.save(option);
 
+        // create order
+        var order = new Order(option, member.getId(), request.quantity(), request.message());
+
         // deduct points
-        var price = option.getProduct().getPrice() * request.quantity();
-        member.deductPoint(price);
+        member.deductPoint(order.calculateTotalPrice());
         memberRepository.save(member);
 
         // save order
-        var saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
+        var saved = orderRepository.save(order);
 
-        // best-effort kakao notification
-        sendKakaoMessageIfPossible(member, saved, option);
+        // cleanup wish
+        var productId = option.getProduct().getId();
+        wishRepository.findByMemberIdAndProductId(member.getId(), productId)
+            .ifPresent(wishRepository::delete);
+
+        // publish event for best-effort kakao notification (runs after commit)
+        eventPublisher.publishEvent(
+            new OrderCreatedEvent(member.getKakaoAccessToken(), saved, option.getProduct())
+        );
         return saved;
-    }
-
-    private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {
-        if (member.getKakaoAccessToken() == null) {
-            return;
-        }
-        try {
-            var product = option.getProduct();
-            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
-        } catch (Exception ignored) {
-        }
     }
 }
