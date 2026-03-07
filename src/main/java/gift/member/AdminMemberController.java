@@ -29,15 +29,12 @@ public class AdminMemberController {
     }
 
     @PostMapping
-    public String create(
-        @RequestParam String email,
-        @RequestParam String password,
-        Model model
-    ) {
+    public String create(MemberRequest request, Model model) {
         try {
-            memberService.create(email, password);
+            memberService.create(request);
         } catch (IllegalArgumentException e) {
-            populateNewFormError(model, email, e.getMessage());
+            model.addAttribute("error", e.getMessage());
+            model.addAttribute("email", request.email());
             return "member/new";
         }
         return "redirect:/admin/members";
@@ -45,18 +42,14 @@ public class AdminMemberController {
 
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
-        var member = memberService.findById(id);
+        Member member = memberService.findById(id);
         model.addAttribute("member", member);
         return "member/edit";
     }
 
     @PostMapping("/{id}/edit")
-    public String update(
-        @PathVariable Long id,
-        @RequestParam String email,
-        @RequestParam String password
-    ) {
-        memberService.update(id, email, password);
+    public String update(@PathVariable Long id, MemberRequest request) {
+        memberService.update(id, request);
         return "redirect:/admin/members";
     }
 
@@ -73,10 +66,5 @@ public class AdminMemberController {
     public String delete(@PathVariable Long id) {
         memberService.delete(id);
         return "redirect:/admin/members";
-    }
-
-    private void populateNewFormError(Model model, String email, String error) {
-        model.addAttribute("error", error);
-        model.addAttribute("email", email);
     }
 }

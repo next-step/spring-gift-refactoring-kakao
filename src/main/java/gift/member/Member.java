@@ -28,9 +28,17 @@ public class Member {
         this.email = email;
     }
 
+    public boolean matchesPassword(String password) {
+        return this.password != null && this.password.equals(password);
+    }
+
     public void update(String email, String password) {
         this.email = email;
         this.password = password;
+    }
+
+    public boolean hasKakaoAccount() {
+        return this.kakaoAccessToken != null;
     }
 
     public void updateKakaoAccessToken(String kakaoAccessToken) {

@@ -1,5 +1,6 @@
 package gift.auth;
 
+import gift.member.Member;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,9 +31,13 @@ public class JwtProvider {
             .getSubject();
     }
 
+    public String createToken(Member member) {
+        return createToken(member.getEmail());
+    }
+
     public String createToken(String email) {
-        var now = new Date();
-        var expiryDate = new Date(now.getTime() + expiration);
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + expiration);
 
         return Jwts.builder()
             .subject(email)

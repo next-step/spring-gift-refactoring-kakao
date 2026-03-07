@@ -3,6 +3,7 @@ package gift.member;
 import gift.auth.JwtProvider;
 import gift.auth.TokenResponse;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -16,25 +17,21 @@ public class MemberService {
         this.jwtProvider = jwtProvider;
     }
 
+    @Transactional
     public TokenResponse register(MemberRequest request) {
-        if (memberRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("이미 등록된 이메일입니다.");
-        }
-        var member = memberRepository.save(new Member(request.email(), request.password()));
-        var token = jwtProvider.createToken(member.getEmail());
-        return new TokenResponse(token);
+        Member member = create(request);
+        return new TokenResponse(jwtProvider.createToken(member));
     }
 
     public TokenResponse login(MemberRequest request) {
-        var member = memberRepository.findByEmail(request.email())
+        Member member = memberRepository.findByEmail(request.email())
             .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다."));
 
-        if (member.getPassword() == null || !member.getPassword().equals(request.password())) {
+        if (!member.matchesPassword(request.password())) {
             throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
-        var token = jwtProvider.createToken(member.getEmail());
-        return new TokenResponse(token);
+        return new TokenResponse(jwtProvider.createToken(member));
     }
 
     public List<Member> findAll() {
@@ -46,23 +43,25 @@ public class MemberService {
             .orElseThrow(() -> new IllegalArgumentException("회원을 찾을 수 없습니다. id=" + id));
     }
 
-    public Member create(String email, String password) {
-        if (memberRepository.existsByEmail(email)) {
+    @Transactional
+    public Member create(MemberRequest request) {
+        if (memberRepository.existsByEmail(request.email())) {
             throw new IllegalArgumentException("이미 등록된 이메일입니다.");
         }
-        return memberRepository.save(new Member(email, password));
+        return memberRepository.save(new Member(request.email(), request.password()));
     }
 
-    public Member update(Long id, String email, String password) {
-        var member = findById(id);
-        member.update(email, password);
-        return memberRepository.save(member);
+    @Transactional
+    public Member update(Long id, MemberRequest request) {
+        Member member = findById(id);
+        member.update(request.email(), request.password());
+        return member;
     }
 
+    @Transactional
     public void chargePoint(Long id, int amount) {
-        var member = findById(id);
+        Member member = findById(id);
         member.chargePoint(amount);
-        memberRepository.save(member);
     }
 
     public void delete(Long id) {

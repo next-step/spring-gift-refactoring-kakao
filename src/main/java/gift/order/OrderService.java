@@ -5,9 +5,11 @@ import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
 import gift.wish.WishRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class OrderService {
@@ -15,20 +17,20 @@ public class OrderService {
     private final OptionRepository optionRepository;
     private final WishRepository wishRepository;
     private final MemberRepository memberRepository;
-    private final KakaoMessageClient kakaoMessageClient;
+    private final ApplicationEventPublisher eventPublisher;
 
     public OrderService(
         OrderRepository orderRepository,
         OptionRepository optionRepository,
         WishRepository wishRepository,
         MemberRepository memberRepository,
-        KakaoMessageClient kakaoMessageClient
+        ApplicationEventPublisher eventPublisher
     ) {
         this.orderRepository = orderRepository;
         this.optionRepository = optionRepository;
         this.wishRepository = wishRepository;
         this.memberRepository = memberRepository;
-        this.kakaoMessageClient = kakaoMessageClient;
+        this.eventPublisher = eventPublisher;
     }
 
     public Page<Order> findByMemberId(Long memberId, Pageable pageable) {
@@ -43,38 +45,32 @@ public class OrderService {
     // 5. save order
     // 6. cleanup wish
     // 7. send kakao notification
+    @Transactional
     public Order create(Member member, OrderRequest request) {
         // validate option
-        var option = optionRepository.findById(request.optionId()).orElse(null);
-        if (option == null) {
-            return null;
-        }
+        Option option = optionRepository.findById(request.optionId())
+            .orElseThrow(() -> new IllegalArgumentException("옵션을 찾을 수 없습니다. id=" + request.optionId()));
 
         // subtract stock
         option.subtractQuantity(request.quantity());
-        optionRepository.save(option);
 
         // deduct points
-        var price = option.getProduct().getPrice() * request.quantity();
-        member.deductPoint(price);
-        memberRepository.save(member);
+        int totalPrice = option.calculateTotalPrice(request.quantity());
+        member.deductPoint(totalPrice);
 
         // save order
-        var saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
+        Order saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
 
-        // best-effort kakao notification
-        sendKakaoMessageIfPossible(member, saved, option);
+        // cleanup wish
+        Long productId = option.getProduct().getId();
+        wishRepository.findByMemberIdAndProductId(member.getId(), productId)
+            .ifPresent(wishRepository::delete);
+
+        // publish event for best-effort kakao notification (sent after commit)
+        if (member.hasKakaoAccount()) {
+            eventPublisher.publishEvent(
+                new OrderCompletedEvent(member.getKakaoAccessToken(), saved, option.getProduct()));
+        }
         return saved;
-    }
-
-    private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {
-        if (member.getKakaoAccessToken() == null) {
-            return;
-        }
-        try {
-            var product = option.getProduct();
-            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
-        } catch (Exception ignored) {
-        }
     }
 }

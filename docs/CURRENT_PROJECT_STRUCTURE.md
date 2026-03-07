@@ -18,10 +18,13 @@ spring-gift-refactoring-kakao/
 │   │   ├── java/gift/
 │   │   │   ├── Application.java
 │   │   │   ├── auth/
-│   │   │   │   ├── KakaoAuthController.java
+│   │   │   │   ├── AuthController.java
+│   │   │   │   ├── AuthService.java
 │   │   │   │   ├── KakaoAuthService.java
-│   │   │   │   ├── KakaoLoginClient.java
+│   │   │   │   ├── KakaoOAuthClient.java
 │   │   │   │   ├── KakaoLoginProperties.java
+│   │   │   │   ├── OAuthClient.java
+│   │   │   │   ├── OAuthResult.java
 │   │   │   │   ├── AuthenticationResolver.java
 │   │   │   │   ├── JwtProvider.java
 │   │   │   │   └── TokenResponse.java
@@ -63,6 +66,9 @@ spring-gift-refactoring-kakao/
 │   │   │   │   ├── OrderRepository.java
 │   │   │   │   ├── OrderRequest.java
 │   │   │   │   ├── OrderResponse.java
+│   │   │   │   ├── OrderCompletedEvent.java
+│   │   │   │   ├── OrderNotificationListener.java
+│   │   │   │   ├── MessageClient.java
 │   │   │   │   └── KakaoMessageClient.java
 │   │   │   └── wish/
 │   │   │       ├── Wish.java
@@ -116,7 +122,8 @@ spring-gift-refactoring-kakao/
 │
 └── docs/
     ├── TEST_PLAN.md
-    └── PROJECT_STRUCTURE.md
+    ├── PROJECT_STRUCTURE.md
+    └── refactoring.md
 ```
 
 ## 기술 스택
@@ -146,9 +153,12 @@ spring-gift-refactoring-kakao/
 |--------|------|
 | JwtProvider | JWT 토큰 생성/검증 |
 | AuthenticationResolver | Authorization 헤더에서 인증된 회원 추출 |
-| KakaoAuthController | 카카오 OAuth2 로그인 엔드포인트 |
-| KakaoAuthService | 카카오 OAuth 인증 흐름 (URL 구성, 콜백 처리, 회원 동기화) |
-| KakaoLoginClient | 카카오 API 호출 (토큰, 사용자 정보) |
+| AuthController | OAuth 로그인 엔드포인트 (프로바이더 무관) |
+| AuthService | OAuth 인증 흐름 인터페이스 (URL 구성, 콜백 처리) |
+| OAuthClient | OAuth 클라이언트 인터페이스 (인증 URL 구성, 인증 처리) |
+| OAuthResult | OAuth 인증 결과 DTO (이메일, 액세스 토큰) |
+| KakaoAuthService | AuthService 카카오 구현체 (OAuthClient를 통한 콜백 처리, 회원 동기화) |
+| KakaoOAuthClient | OAuthClient 카카오 구현체 (카카오 API 호출) |
 | KakaoLoginProperties | 카카오 설정 값 (clientId, clientSecret, redirectUri) |
 | TokenResponse | JWT 토큰 응답 DTO |
 
@@ -191,9 +201,12 @@ spring-gift-refactoring-kakao/
 |--------|------|
 | Order | 엔티티 (옵션, 회원ID, 수량, 메시지, 주문시간) |
 | OrderController | REST API (주문 생성, 내 주문 조회) |
-| OrderService | 주문 비즈니스 로직 (재고 차감, 포인트 차감, 카카오 알림) |
+| OrderService | 주문 비즈니스 로직 (재고 차감, 포인트 차감, 위시 정리, 이벤트 발행) |
 | OrderRepository | JpaRepository (회원별 페이징 조회) |
-| KakaoMessageClient | 카카오톡 나에게 보내기 API 호출 |
+| OrderCompletedEvent | 주문 완료 이벤트 (트랜잭션 커밋 후 알림 발송용) |
+| OrderNotificationListener | 트랜잭션 커밋 후 카카오톡 메시지 발송 리스너 |
+| MessageClient | 메시지 발송 인터페이스 |
+| KakaoMessageClient | MessageClient 카카오 구현체 (카카오톡 나에게 보내기 API) |
 | OrderRequest / OrderResponse | 요청/응답 DTO |
 
 ### wish - 찜 리스트
@@ -235,8 +248,8 @@ Category ──1:N──→ Product ──1:N──→ Option ──1:N──→
 |--------|-----|------|
 | POST | /api/members/register | 회원가입 |
 | POST | /api/members/login | 로그인 |
-| GET | /api/auth/kakao/login | 카카오 로그인 리다이렉트 |
-| GET | /api/auth/kakao/callback | 카카오 콜백 |
+| GET | /api/auth/login | OAuth 로그인 리다이렉트 |
+| GET | /api/auth/callback | OAuth 콜백 |
 
 ### 카테고리
 
@@ -290,7 +303,7 @@ Category ──1:N──→ Product ──1:N──→ Option ──1:N──→
 ## 주문 처리 흐름
 
 ```
-인증 확인 → 옵션 검증 → 재고 차감 → 포인트 차감 → 주문 저장 → 카카오톡 메시지 발송
+인증 확인 → 옵션 검증 → 재고 차감 → 포인트 차감 → 주문 저장 → 위시 정리 → 메시지 발송
 ```
 
 - 카카오톡 메시지 발송은 best-effort (실패해도 주문은 유지)

@@ -3,6 +3,7 @@ package gift.category;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/categories")
@@ -25,7 +27,7 @@ public class CategoryController {
 
     @GetMapping
     public ResponseEntity<List<CategoryResponse>> getCategories() {
-        var categories = categoryService.findAll().stream()
+        List<CategoryResponse> categories = categoryService.findAll().stream()
             .map(CategoryResponse::from)
             .toList();
         return ResponseEntity.ok(categories);
@@ -33,7 +35,7 @@ public class CategoryController {
 
     @PostMapping
     public ResponseEntity<CategoryResponse> createCategory(@Valid @RequestBody CategoryRequest request) {
-        var saved = categoryService.create(request);
+        Category saved = categoryService.create(request);
         return ResponseEntity.created(URI.create("/api/categories/" + saved.getId()))
             .body(CategoryResponse.from(saved));
     }
@@ -43,10 +45,7 @@ public class CategoryController {
         @PathVariable Long id,
         @Valid @RequestBody CategoryRequest request
     ) {
-        var category = categoryService.update(id, request);
-        if (category == null) {
-            return ResponseEntity.notFound().build();
-        }
+        Category category = categoryService.update(id, request);
         return ResponseEntity.ok(CategoryResponse.from(category));
     }
 
@@ -54,5 +53,10 @@ public class CategoryController {
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
         categoryService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity<Void> handleNotFound(NoSuchElementException e) {
+        return ResponseEntity.notFound().build();
     }
 }
