@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -17,7 +18,7 @@ public class Option {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
@@ -31,6 +32,9 @@ public class Option {
     }
 
     public Option(Product product, String name, int quantity) {
+        if (quantity < 1) {
+            throw new IllegalArgumentException("옵션 수량은 1 이상이어야 합니다.");
+        }
         this.product = product;
         this.name = name;
         this.quantity = quantity;

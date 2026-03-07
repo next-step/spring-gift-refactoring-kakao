@@ -58,14 +58,19 @@ public class MemberService {
     public Member update(Long id, String email, String password) {
         Member member = memberRepository.findById(id).orElseThrow();
         member.update(email, password);
-        return memberRepository.save(member);
+        return member;
     }
 
     @Transactional
     public void chargePoint(Long id, int amount) {
         Member member = memberRepository.findById(id).orElseThrow();
         member.chargePoint(amount);
-        memberRepository.save(member);
+    }
+
+    @Transactional
+    public Member findOrCreateByEmail(String email) {
+        return memberRepository.findByEmail(email)
+            .orElseGet(() -> memberRepository.save(new Member(email)));
     }
 
     @Transactional
