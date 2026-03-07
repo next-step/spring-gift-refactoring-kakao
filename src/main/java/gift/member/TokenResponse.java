@@ -1,4 +1,4 @@
-package gift.auth;
+package gift.member;
 
 /**
  * Response containing a JWT access token.

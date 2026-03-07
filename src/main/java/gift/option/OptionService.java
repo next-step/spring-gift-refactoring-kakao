@@ -1,32 +1,50 @@
 package gift.option;
 
 import gift.product.Product;
-import gift.product.ProductRepository;
+import gift.product.ProductService;
 import java.util.List;
 import java.util.NoSuchElementException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class OptionService {
     private final OptionRepository optionRepository;
-    private final ProductRepository productRepository;
+    private final ProductService productService;
 
-    public OptionService(OptionRepository optionRepository, ProductRepository productRepository) {
+    public OptionService(OptionRepository optionRepository, ProductService productService) {
         this.optionRepository = optionRepository;
-        this.productRepository = productRepository;
+        this.productService = productService;
+    }
+
+    @Transactional
+    public Option save(Option option) {
+        return optionRepository.save(option);
+    }
+
+    @Transactional(readOnly = true)
+    public Option findById(Long id) {
+        return optionRepository.findById(id).orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다. id=" + id));
+    }
+
+    @Transactional
+    public Option findByIdForUpdate(Long id) {
+        return optionRepository
+                .findByIdForUpdate(id)
+                .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다. id=" + id));
     }
 
     @Transactional(readOnly = true)
     public List<Option> findByProductId(Long productId) {
-        findProduct(productId);
+        productService.findById(productId);
         return optionRepository.findByProductId(productId);
     }
 
     @Transactional
     public Option create(Long productId, String name, int quantity) {
         validateName(name);
-        Product product = findProduct(productId);
+        Product product = productService.findById(productId);
 
         if (optionRepository.existsByProductIdAndName(productId, name)) {
             throw new IllegalArgumentException("이미 존재하는 옵션명입니다.");
@@ -37,12 +55,7 @@ public class OptionService {
 
     @Transactional
     public void delete(Long productId, Long optionId) {
-        findProduct(productId);
-
-        List<Option> options = optionRepository.findByProductId(productId);
-        if (options.size() <= 1) {
-            throw new IllegalArgumentException("옵션이 1개인 상품은 옵션을 삭제할 수 없습니다.");
-        }
+        productService.findById(productId);
 
         Option option = optionRepository
                 .findById(optionId)
@@ -51,13 +64,17 @@ public class OptionService {
             throw new NoSuchElementException("해당 상품의 옵션이 아닙니다. optionId=" + optionId);
         }
 
-        optionRepository.delete(option);
-    }
+        List<Option> options = optionRepository.findByProductId(productId);
+        if (options.size() <= 1) {
+            throw new IllegalArgumentException("옵션이 1개인 상품은 옵션을 삭제할 수 없습니다.");
+        }
 
-    private Product findProduct(Long productId) {
-        return productRepository
-                .findById(productId)
-                .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
+        try {
+            optionRepository.delete(option);
+            optionRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new IllegalArgumentException("해당 옵션을 참조하는 데이터가 존재하여 삭제할 수 없습니다.");
+        }
     }
 
     private void validateName(String name) {

@@ -176,16 +176,16 @@
 | GET | `/api/auth/kakao/callback` | `callback()` |
 
 **현재 비즈니스 로직:**
-- `login()`: 카카오 인가 URL 구성 (L41-47) — HTTP 리다이렉트 로직이므로 Controller에 유지
+- `login()`: 카카오 인가 URL 구성 (L41-47)
 - `callback()`: 카카오 토큰 교환 + 사용자 정보 조회 + 회원 find-or-create + 토큰 갱신 + JWT 발급 (L56-65)
 
-**Service로 이동할 것:**
-- `loginWithKakao(email, kakaoAccessToken)` → JWT 토큰 문자열 반환 (회원 find-or-create + 토큰 갱신 + JWT 발급)
+**KakaoAuthService로 이동한 것:**
+- `buildAuthorizationUrl()` — 카카오 인가 URL 조립 (`KakaoLoginProperties` 사용)
+- `authenticate(String code)` — 토큰 교환 + 사용자 조회 + 회원 로그인/등록 (`KakaoLoginClient`, `MemberService` 사용)
 
-**Controller에 남길 것:**
-- `login()` 전체 (HTTP 리다이렉트)
-- `callback()` 중 카카오 API 호출 (`KakaoLoginClient` 사용)
-- `TokenResponse` 래핑
+**Controller에 남긴 것:**
+- `login()`: `kakaoAuthService.buildAuthorizationUrl()` 호출 + HTTP 리다이렉트 응답 생성
+- `callback()`: `kakaoAuthService.authenticate(code)` 호출 + `TokenResponse` 래핑
 
 ---
 
@@ -322,7 +322,8 @@
 |---------|--------|---------------------|--------|
 | `CategoryService` | `gift.category` | `CategoryController` | 낮음 |
 | `ProductService` | `gift.product` | `ProductController`, `AdminProductController` | 중간 |
-| `MemberService` | `gift.member` | `MemberController`, `AdminMemberController`, `KakaoAuthController` | 중간 |
+| `MemberService` | `gift.member` | `MemberController`, `AdminMemberController`, `KakaoAuthService` | 중간 |
+| `KakaoAuthService` | `gift.auth` | `KakaoAuthController` | 낮음 |
 | `OptionService` | `gift.option` | `OptionController` | 중간 |
 | `WishService` | `gift.wish` | `WishController` | 중간 |
 | `OrderService` | `gift.order` | `OrderController` | 높음 |

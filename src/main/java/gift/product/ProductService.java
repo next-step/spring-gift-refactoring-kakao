@@ -4,6 +4,7 @@ import gift.category.Category;
 import gift.category.CategoryService;
 import java.util.List;
 import java.util.NoSuchElementException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -52,7 +53,12 @@ public class ProductService {
 
     @Transactional
     public void delete(Long id) {
-        productRepository.deleteById(id);
+        try {
+            productRepository.deleteById(id);
+            productRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new IllegalArgumentException("해당 상품을 참조하는 데이터가 존재하여 삭제할 수 없습니다.");
+        }
     }
 
     private void validateName(String name, boolean allowKakao) {

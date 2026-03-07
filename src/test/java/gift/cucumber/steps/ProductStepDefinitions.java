@@ -85,9 +85,9 @@ public class ProductStepDefinitions {
         assertThat(context.getStatusCode()).isEqualTo(201);
     }
 
-    @그러면("상품 등록이 실패한다")
-    public void 상품_등록이_실패한다() {
-        assertThat(context.getStatusCode()).isGreaterThanOrEqualTo(400);
+    @그러면("카테고리를 찾을 수 없어 상품 등록이 실패한다")
+    public void 카테고리를_찾을_수_없어_상품_등록이_실패한다() {
+        assertThat(context.getStatusCode()).isEqualTo(404);
     }
 
     @조건("{string} {int}원 상품이 해당 카테고리에 등록되어 있다")
@@ -163,6 +163,26 @@ public class ProductStepDefinitions {
     @그러면("상품 삭제가 성공한다")
     public void 상품_삭제가_성공한다() {
         assertThat(context.getStatusCode()).isEqualTo(204);
+    }
+
+    @그러면("상품 삭제가 실패한다")
+    public void 상품_삭제가_실패한다() {
+        assertThat(context.getStatusCode()).isEqualTo(400);
+    }
+
+    @그리고("상품 목록에 {string}이 포함되어 있다")
+    public void 상품_목록에_이름이_포함되어_있다(String name) {
+        var response = RestAssured.given()
+                .log()
+                .all()
+                .when()
+                .get("/api/products")
+                .then()
+                .log()
+                .all()
+                .extract();
+        List<String> names = response.jsonPath().getList("content.name", String.class);
+        assertThat(names).contains(name);
     }
 
     @그리고("상품 목록이 비어있다")

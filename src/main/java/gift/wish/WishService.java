@@ -1,8 +1,9 @@
 package gift.wish;
 
 import gift.product.Product;
-import gift.product.ProductRepository;
+import gift.product.ProductService;
 import java.util.NoSuchElementException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -11,11 +12,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class WishService {
     private final WishRepository wishRepository;
-    private final ProductRepository productRepository;
+    private final ProductService productService;
 
-    public WishService(WishRepository wishRepository, ProductRepository productRepository) {
+    public WishService(WishRepository wishRepository, ProductService productService) {
         this.wishRepository = wishRepository;
-        this.productRepository = productRepository;
+        this.productService = productService;
     }
 
     @Transactional(readOnly = true)
@@ -25,9 +26,7 @@ public class WishService {
 
     @Transactional
     public AddWishResult addWish(Long memberId, Long productId) {
-        Product product = productRepository
-                .findById(productId)
-                .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
+        Product product = productService.findById(productId);
 
         var existing = wishRepository
                 .findByMemberIdAndProductId(memberId, product.getId())
@@ -36,8 +35,12 @@ public class WishService {
             return new AddWishResult(existing, false);
         }
 
-        Wish saved = wishRepository.save(new Wish(memberId, product));
-        return new AddWishResult(saved, true);
+        try {
+            Wish saved = wishRepository.save(new Wish(memberId, product));
+            return new AddWishResult(saved, true);
+        } catch (DataIntegrityViolationException e) {
+            throw new IllegalArgumentException("이미 위시리스트에 추가된 상품입니다.");
+        }
     }
 
     @Transactional
@@ -51,5 +54,10 @@ public class WishService {
         }
 
         wishRepository.delete(wish);
+    }
+
+    @Transactional
+    public void removeWishByMemberIdAndProductId(Long memberId, Long productId) {
+        wishRepository.deleteByMemberIdAndProductId(memberId, productId);
     }
 }

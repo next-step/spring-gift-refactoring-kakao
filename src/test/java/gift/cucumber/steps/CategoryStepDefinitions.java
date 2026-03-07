@@ -131,6 +131,11 @@ public class CategoryStepDefinitions {
         assertThat(ids).isEmpty();
     }
 
+    @그러면("카테고리 삭제가 실패한다")
+    public void 카테고리_삭제가_실패한다() {
+        assertThat(context.getStatusCode()).isEqualTo(400);
+    }
+
     @그리고("카테고리 목록에 {string}이 포함되어 있다")
     public void 카테고리_목록에_이름이_포함되어_있다(String name) {
         var response = RestAssured.given()

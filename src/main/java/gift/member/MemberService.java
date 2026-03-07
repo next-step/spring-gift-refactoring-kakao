@@ -1,39 +1,36 @@
 package gift.member;
 
-import gift.auth.JwtProvider;
 import java.util.List;
 import java.util.NoSuchElementException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class MemberService {
     private final MemberRepository memberRepository;
-    private final JwtProvider jwtProvider;
+    private final TokenProvider tokenProvider;
 
-    public MemberService(MemberRepository memberRepository, JwtProvider jwtProvider) {
+    public MemberService(MemberRepository memberRepository, TokenProvider tokenProvider) {
         this.memberRepository = memberRepository;
-        this.jwtProvider = jwtProvider;
+        this.tokenProvider = tokenProvider;
     }
 
     @Transactional
     public String register(String email, String password) {
-        if (memberRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("Email is already registered.");
-        }
-        Member member = memberRepository.save(new Member(email, password));
-        return jwtProvider.createToken(member.getEmail());
+        Member member = create(email, password);
+        return tokenProvider.createToken(member.getEmail());
     }
 
     @Transactional(readOnly = true)
     public String login(String email, String password) {
         Member member = memberRepository
                 .findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid email or password."));
-        if (member.getPassword() == null || !member.getPassword().equals(password)) {
-            throw new IllegalArgumentException("Invalid email or password.");
+                .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다."));
+        if (!member.matchesPassword(password)) {
+            throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
         }
-        return jwtProvider.createToken(member.getEmail());
+        return tokenProvider.createToken(member.getEmail());
     }
 
     @Transactional
@@ -41,7 +38,7 @@ public class MemberService {
         Member member = memberRepository.findByEmail(email).orElseGet(() -> new Member(email));
         member.updateKakaoAccessToken(kakaoAccessToken);
         memberRepository.save(member);
-        return jwtProvider.createToken(member.getEmail());
+        return tokenProvider.createToken(member.getEmail());
     }
 
     @Transactional(readOnly = true)
@@ -49,17 +46,27 @@ public class MemberService {
         return memberRepository.findAll();
     }
 
+    @Transactional
+    public Member save(Member member) {
+        return memberRepository.save(member);
+    }
+
     @Transactional(readOnly = true)
     public Member findById(Long id) {
+        return memberRepository.findById(id).orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다. id=" + id));
+    }
+
+    @Transactional
+    public Member findByIdForUpdate(Long id) {
         return memberRepository
-                .findById(id)
-                .orElseThrow(() -> new NoSuchElementException("Member not found. id=" + id));
+                .findByIdForUpdate(id)
+                .orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다. id=" + id));
     }
 
     @Transactional
     public Member create(String email, String password) {
         if (memberRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("Email is already registered.");
+            throw new IllegalArgumentException("이미 등록된 이메일입니다.");
         }
         return memberRepository.save(new Member(email, password));
     }
@@ -80,6 +87,11 @@ public class MemberService {
 
     @Transactional
     public void delete(Long id) {
-        memberRepository.deleteById(id);
+        try {
+            memberRepository.deleteById(id);
+            memberRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new IllegalArgumentException("해당 회원을 참조하는 데이터가 존재하여 삭제할 수 없습니다.");
+        }
     }
 }
