@@ -1,6 +1,8 @@
 package gift.auth;
 
+import gift.exception.UnauthorizedException;
 import gift.member.Member;
+import gift.member.MemberService;
 import org.springframework.core.MethodParameter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.support.WebDataBinderFactory;
@@ -10,16 +12,20 @@ import org.springframework.web.method.support.ModelAndViewContainer;
 
 @Component
 public class AuthenticatedMemberArgumentResolver implements HandlerMethodArgumentResolver {
-    private final AuthenticationResolver authenticationResolver;
+    public static final String BEARER_PREFIX = "Bearer ";
 
-    public AuthenticatedMemberArgumentResolver(AuthenticationResolver authenticationResolver) {
-        this.authenticationResolver = authenticationResolver;
+    private final JwtProvider jwtProvider;
+    private final MemberService memberService;
+
+    public AuthenticatedMemberArgumentResolver(JwtProvider jwtProvider, MemberService memberService) {
+        this.jwtProvider = jwtProvider;
+        this.memberService = memberService;
     }
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
         return parameter.hasParameterAnnotation(AuthenticatedMember.class)
-            && Member.class.isAssignableFrom(parameter.getParameterType());
+            && MemberPrincipal.class.isAssignableFrom(parameter.getParameterType());
     }
 
     @Override
@@ -30,6 +36,17 @@ public class AuthenticatedMemberArgumentResolver implements HandlerMethodArgumen
         WebDataBinderFactory binderFactory
     ) {
         String authorization = webRequest.getHeader("Authorization");
-        return authenticationResolver.extractMember(authorization);
+        return extractPrincipal(authorization);
+    }
+
+    private MemberPrincipal extractPrincipal(String authorization) {
+        try {
+            String token = authorization.replace(BEARER_PREFIX, "");
+            String email = jwtProvider.getEmail(token);
+            Member member = memberService.getMemberByEmail(email);
+            return new MemberPrincipal(member.getId());
+        } catch (Exception e) {
+            throw new UnauthorizedException("유효하지 않은 인증 정보입니다.");
+        }
     }
 }

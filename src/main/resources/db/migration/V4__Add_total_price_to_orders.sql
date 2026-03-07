@@ -1,0 +1,1 @@
+ALTER TABLE orders ADD COLUMN total_price INT NOT NULL DEFAULT 0;

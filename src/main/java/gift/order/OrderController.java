@@ -1,7 +1,7 @@
 package gift.order;
 
 import gift.auth.AuthenticatedMember;
-import gift.member.Member;
+import gift.auth.MemberPrincipal;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,19 +25,19 @@ public class OrderController {
 
     @GetMapping
     public ResponseEntity<Page<OrderResponse>> getOrders(
-        @AuthenticatedMember Member member,
+        @AuthenticatedMember MemberPrincipal principal,
         Pageable pageable
     ) {
-        Page<OrderResponse> orders = orderService.getOrders(member.getId(), pageable).map(OrderResponse::from);
+        Page<OrderResponse> orders = orderService.getOrders(principal.id(), pageable).map(OrderResponse::from);
         return ResponseEntity.ok(orders);
     }
 
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(
-        @AuthenticatedMember Member member,
+        @AuthenticatedMember MemberPrincipal principal,
         @Valid @RequestBody OrderRequest request
     ) {
-        Order saved = orderService.createOrder(member.getId(), request.optionId(), request.quantity(), request.message());
+        Order saved = orderService.createOrder(principal.id(), request.optionId(), request.quantity(), request.message());
         return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
             .body(OrderResponse.from(saved));
     }

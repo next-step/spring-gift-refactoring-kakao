@@ -21,18 +21,18 @@ import org.springframework.web.util.UriComponentsBuilder;
 @RequestMapping("/api/auth/kakao")
 public class KakaoAuthController {
     private final KakaoLoginProperties properties;
-    private final SocialLoginHandler socialLoginHandler;
+    private final ExternalLoginHandler externalLoginHandler;
     private final MemberService memberService;
     private final JwtProvider jwtProvider;
 
     public KakaoAuthController(
         KakaoLoginProperties properties,
-        SocialLoginHandler socialLoginHandler,
+        ExternalLoginHandler externalLoginHandler,
         MemberService memberService,
         JwtProvider jwtProvider
     ) {
         this.properties = properties;
-        this.socialLoginHandler = socialLoginHandler;
+        this.externalLoginHandler = externalLoginHandler;
         this.memberService = memberService;
         this.jwtProvider = jwtProvider;
     }
@@ -54,12 +54,9 @@ public class KakaoAuthController {
 
     @GetMapping(path = "/callback")
     public ResponseEntity<TokenResponse> callback(@RequestParam("code") String code) {
-        SocialLoginResult result = socialLoginHandler.login(code);
+        ExternalLoginResult result = externalLoginHandler.login(code);
 
-        Member member = memberService.existsByEmail(result.email())
-            ? memberService.getMemberByEmail(result.email())
-            : memberService.registerSocialMember(result.email());
-        member.updateSocialAccessToken(result.accessToken());
+        Member member = memberService.processSocialLogin(result.email(), result.accessToken());
 
         String token = jwtProvider.createToken(member.getEmail());
         return ResponseEntity.ok(new TokenResponse(token));

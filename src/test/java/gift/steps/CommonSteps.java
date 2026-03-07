@@ -67,7 +67,6 @@ public class CommonSteps {
         context.storeMemberToken(email, token);
     }
 
-    // 200 OK
     @Then("로그인에 성공한다")
     @Then("상품 목록이 조회된다")
     @Then("상품이 조회된다")
@@ -82,7 +81,6 @@ public class CommonSteps {
         assertThat(context.getResponse().statusCode()).isEqualTo(200);
     }
 
-    // 201 Created
     @Then("회원가입에 성공한다")
     @Then("상품이 생성된다")
     @Then("카테고리가 생성된다")
@@ -92,7 +90,6 @@ public class CommonSteps {
         assertThat(context.getResponse().statusCode()).isEqualTo(201);
     }
 
-    // 204 No Content
     @Then("상품이 삭제된다")
     @Then("카테고리가 삭제된다")
     @Then("옵션이 삭제된다")
@@ -101,7 +98,6 @@ public class CommonSteps {
         assertThat(context.getResponse().statusCode()).isEqualTo(204);
     }
 
-    // 400 Bad Request
     @Then("회원가입이 거부된다")
     @Then("로그인이 거부된다")
     @Then("상품 생성이 거부된다")
@@ -112,19 +108,16 @@ public class CommonSteps {
         assertThat(context.getResponse().statusCode()).isEqualTo(400);
     }
 
-    // 401 Unauthorized
     @Then("인증에 실패한다")
     public void 응답_UNAUTHORIZED() {
         assertThat(context.getResponse().statusCode()).isEqualTo(401);
     }
 
-    // 403 Forbidden
     @Then("권한이 없어 거부된다")
     public void 응답_FORBIDDEN() {
         assertThat(context.getResponse().statusCode()).isEqualTo(403);
     }
 
-    // 404 Not Found
     @Then("상품을 찾을 수 없다")
     @Then("카테고리를 찾을 수 없다")
     @Then("옵션을 찾을 수 없다")

@@ -1,7 +1,7 @@
 package gift.wish;
 
 import gift.auth.AuthenticatedMember;
-import gift.member.Member;
+import gift.auth.MemberPrincipal;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,28 +25,28 @@ public class WishController {
 
     @GetMapping
     public ResponseEntity<Page<WishResponse>> getWishes(
-        @AuthenticatedMember Member member,
+        @AuthenticatedMember MemberPrincipal principal,
         Pageable pageable
     ) {
-        Page<WishResponse> wishes = wishService.getWishes(member.getId(), pageable).map(WishResponse::from);
+        Page<WishResponse> wishes = wishService.getWishes(principal.id(), pageable).map(WishResponse::from);
         return ResponseEntity.ok(wishes);
     }
 
     @PostMapping
     public ResponseEntity<WishResponse> addWish(
-        @AuthenticatedMember Member member,
+        @AuthenticatedMember MemberPrincipal principal,
         @Valid @RequestBody WishRequest request
     ) {
-        Wish wish = wishService.addWish(member.getId(), request.productId());
+        Wish wish = wishService.addWish(principal.id(), request.productId());
         return ResponseEntity.ok(WishResponse.from(wish));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> removeWish(
-        @AuthenticatedMember Member member,
+        @AuthenticatedMember MemberPrincipal principal,
         @PathVariable Long id
     ) {
-        wishService.removeWish(member.getId(), id);
+        wishService.removeWish(principal.id(), id);
         return ResponseEntity.noContent().build();
     }
 }

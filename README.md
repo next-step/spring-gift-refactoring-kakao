@@ -389,3 +389,134 @@ src/test/resources/features/
 - **테스트 피라미드 설계**: 도메인 모델 단위 테스트로 핵심 규칙을 빠르게 검증하고, 인수 테스트로 API 전체 흐름을 보장하는 계층 구조가 리팩터링의 안전망으로 효과적임을 확인함
 - **AI 산출물 검증의 필요성**: AI가 생성한 경계값 테스트 문자열이 정확히 50자여서 테스트가 실패하는 사례를 통해, AI 산출물을 반드시 실행·검증해야 한다는 점을 재확인함
 - **커밋 단위 분리**: 구조 변경과 작동 변경을 한 커밋에 섞지 않고, 목적 1개로 커밋을 구성하는 습관이 코드 리뷰와 롤백에 유리함을 실감함
+
+---
+
+## 2단계 - 리팩터링 완성하기
+
+> 원칙: 구조 변경과 작동 변경을 섞지 않는다. 각 단계는 하나의 커밋 단위이다.
+
+---
+
+### 트랜잭션 경계 세우기
+
+#### Step 1. socialAccessToken 저장을 트랜잭션 안으로 이동 (작동 변경)
+
+- **바꾸는 것**: `KakaoAuthController.callback()`의 `updateSocialAccessToken()` 호출이 실제로 DB에 반영되도록 수정
+- **바꾸지 않는 것**: 로그인 흐름, JWT 발급 로직
+- **증명**: 소셜 로그인 후 DB 재조회로 socialAccessToken 저장 확인하는 테스트
+
+| # | 작업 |
+|---|------|
+| 1 | `MemberService`에 `@Transactional` 메서드 추가 — 회원 조회/등록 + socialAccessToken 업데이트를 하나의 트랜잭션으로 |
+| 2 | `KakaoAuthController.callback()`에서 새 메서드 호출하도록 변경 |
+| 3 | 테스트 작성: 소셜 로그인 후 member를 DB에서 재조회하여 socialAccessToken이 저장되었는지 검증 |
+| 4 | `./gradlew test` 통과 확인 |
+
+#### Step 2. 알림 전송을 트랜잭션 밖으로 분리 (구조 변경)
+
+- **바꾸는 것**: `notificationSender.send()`를 `@Transactional` 바깥으로 이동
+- **바꾸지 않는 것**: 알림이 전송되는 것 자체 (발송 여부 동일)
+- **증명**: 기존 테스트 전체 통과
+
+| # | 작업 |
+|---|------|
+| 1 | `OrderService.createOrder()`에서 주문 저장까지의 로직을 별도 `@Transactional` private 메서드로 추출 |
+| 2 | `createOrder()`는 트랜잭션 없이 저장 메서드 호출 후 알림 전송 |
+| 3 | `./gradlew test` 통과 확인 |
+
+#### Step 3. WishService.addWish() Race Condition 방지 (작동 변경)
+
+- **바꾸는 것**: `(member_id, product_id)` 조합에 DB 유니크 제약 추가
+- **바꾸지 않는 것**: 정상적인 위시 추가/삭제 흐름
+- **증명**: 동일한 조합으로 중복 등록 시도 시 중복 저장되지 않는지 확인
+- **ADR**: [ADR-003 위시 중복 방지 전략](docs/adr/ADR-003-위시-중복-방지-전략.md)
+
+| # | 작업 |
+|---|------|
+| 1 | Flyway `V3__Add_unique_constraint_wish.sql` 작성 (`ALTER TABLE wish ADD UNIQUE (member_id, product_id)`) |
+| 2 | `WishService.addWish()`에서 `DataIntegrityViolationException` 발생 시 기존 위시 반환하도록 처리 |
+| 3 | 테스트 작성: 동일 (memberId, productId) 중복 등록 시 위시가 1개만 존재하는지 검증 |
+| 4 | `./gradlew test` 통과 확인 |
+
+#### Step 4. 재고 차감에 비관적 락 적용 (작동 변경)
+
+- **바꾸는 것**: Option 조회 시 `SELECT ... FOR UPDATE`로 행 락 획득
+- **바꾸지 않는 것**: 단일 요청의 주문 흐름
+- **증명**: 동시성 테스트로 재고 정합성 확인
+- **ADR**: [ADR-001 재고 차감 동시성 제어](docs/adr/ADR-001-재고차감-동시성-제어.md)
+
+| # | 작업 |
+|---|------|
+| 1 | `OptionRepository`에 `@Lock(PESSIMISTIC_WRITE)` + `@Query` 조회 메서드 추가 |
+| 2 | `OrderService.findOption()`에서 새 메서드 호출 |
+| 3 | 동시성 테스트 작성: ExecutorService로 N개 스레드 동시 주문 → 재고만큼 성공, 나머지 실패, 최종 재고 0 |
+| 4 | `./gradlew test` 통과 확인 |
+
+---
+
+### 누락된 작동 구현
+
+#### Step 5. 주문 완료 시 위시리스트 자동 삭제 (작동 변경)
+
+- **바꾸는 것**: 주문 완료 시 해당 상품의 위시가 있으면 자동 삭제
+- **바꾸지 않는 것**: 주문 생성 로직 자체 (재고, 포인트, 알림)
+- **증명**: 주문 후 위시 목록 재조회 시 해당 항목 삭제 확인
+
+| # | 작업 |
+|---|------|
+| 1 | `WishRepository`에 `deleteByMemberIdAndProductId(Long memberId, Long productId)` 추가 |
+| 2 | `OrderService`에 `WishRepository` 주입, 주문 저장 후 위시 삭제 호출 |
+| 3 | 테스트 작성: 위시 등록 → 해당 상품 주문 → 위시 목록 재조회 → 삭제 확인 |
+| 4 | `./gradlew test` 통과 확인 |
+
+---
+
+### 도메인 책임 되찾기
+
+#### Step 6. Wish 소유권 검증을 도메인으로 이동 (구조 변경)
+
+- **바꾸는 것**: `WishService.removeWish()`의 소유권 비교 로직을 `Wish` 엔티티로 이동
+- **바꾸지 않는 것**: 작동 (동일한 예외, 동일한 결과)
+- **증명**: 기존 테스트 전체 통과
+
+| # | 작업 |
+|---|------|
+| 1 | `Wish` 엔티티에 `isOwnedBy(Long memberId)` 메서드 추가 |
+| 2 | `WishService.removeWish()`에서 `!wish.getMemberId().equals(memberId)` → `!wish.isOwnedBy(memberId)` 로 변경 |
+| 3 | `./gradlew test` 통과 확인 |
+
+#### Step 7. Order에 totalPrice 필드 추가 + 가격 계산 도메인 이동 (구조 변경)
+
+- **바꾸는 것**: 가격 계산 책임을 `OrderService` → `Order` 생성자로 이동, totalPrice 저장
+- **바꾸지 않는 것**: 주문 생성 흐름 (재고 차감, 포인트 차감, 알림)
+- **증명**: 기존 테스트 전체 통과 + OrderResponse에 totalPrice 포함
+- **ADR**: [ADR-002 주문 가격 저장 방식](docs/adr/ADR-002-주문-가격-저장-방식.md)
+
+| # | 작업 |
+|---|------|
+| 1 | Flyway `V4__Add_total_price_to_orders.sql` 작성 (`ALTER TABLE orders ADD COLUMN total_price INT NOT NULL DEFAULT 0`) |
+| 2 | `Order` 엔티티에 `totalPrice` 필드 추가 |
+| 3 | `Order` 생성자에서 `price * quantity`를 받아 `totalPrice`를 계산하도록 변경 |
+| 4 | `OrderService.createOrder()`에서 `calculatePrice()` 제거, `Order` 생성자에 가격 전달 |
+| 5 | `OrderResponse`에 `totalPrice` 필드 추가 |
+| 6 | 테스트 코드 수정 (Order 생성자 변경에 따른 컴파일 에러 해결) |
+| 7 | `./gradlew test` 통과 확인 |
+
+---
+
+### ADR 목록
+
+| ADR | 제목 | 관련 Step |
+|-----|------|-----------|
+| [ADR-001](docs/adr/ADR-001-재고차감-동시성-제어.md) | 재고 차감 동시성 제어 — 비관적 락 선택 | Step 4 |
+| [ADR-002](docs/adr/ADR-002-주문-가격-저장-방식.md) | 주문 가격 저장 방식 — totalPrice 스냅샷 | Step 7 |
+| [ADR-003](docs/adr/ADR-003-위시-중복-방지-전략.md) | 위시 중복 방지 — DB 유니크 제약 | Step 3 |
+
+### 테스트 체크리스트
+
+- [ ] `./gradlew test` 전체 통과
+- [ ] 동시성 테스트: N개 스레드 동시 주문 → 재고 정합성 확인
+- [ ] 위시 자동 삭제: 주문 후 위시 목록에서 삭제 확인
+- [ ] 주문 응답에 totalPrice 포함 확인
+- [ ] 소셜 로그인 후 socialAccessToken DB 저장 확인
