@@ -9,11 +9,7 @@
 <body>
 <div class="container mt-4">
     <h1>상품 추가</h1>
-    <div th:if="${errors}" class="alert alert-danger">
-        <ul class="mb-0">
-            <li th:each="error : ${errors}" th:text="${error}"></li>
-        </ul>
-    </div>
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
     <form th:action="@{/admin/products}" method="post">
         <div class="mb-3">
             <label for="name" class="form-label">상품명</label>

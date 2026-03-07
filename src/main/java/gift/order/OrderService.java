@@ -7,35 +7,37 @@ import gift.option.OptionRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.NoSuchElementException;
 
 @Service
 public class OrderService {
     private final OrderRepository orderRepository;
     private final OptionRepository optionRepository;
     private final MemberRepository memberRepository;
-    private final KakaoMessageClient kakaoMessageClient;
+    private final MessageClient messageClient;
 
     public OrderService(
         OrderRepository orderRepository,
         OptionRepository optionRepository,
         MemberRepository memberRepository,
-        KakaoMessageClient kakaoMessageClient
+        MessageClient messageClient
     ) {
         this.orderRepository = orderRepository;
         this.optionRepository = optionRepository;
         this.memberRepository = memberRepository;
-        this.kakaoMessageClient = kakaoMessageClient;
+        this.messageClient = messageClient;
     }
 
     public Page<Order> findByMemberId(Long memberId, Pageable pageable) {
         return orderRepository.findByMemberId(memberId, pageable);
     }
 
+    @Transactional
     public Order create(Member member, OrderRequest request) {
-        var option = optionRepository.findById(request.optionId()).orElse(null);
-        if (option == null) {
-            return null;
-        }
+        var option = optionRepository.findById(request.optionId())
+            .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다. id=" + request.optionId()));
 
         option.subtractQuantity(request.quantity());
         optionRepository.save(option);
@@ -57,7 +59,7 @@ public class OrderService {
         }
         try {
             var product = option.getProduct();
-            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
+            messageClient.sendToMe(member.getKakaoAccessToken(), order, product);
         } catch (Exception ignored) {
         }
     }

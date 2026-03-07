@@ -8,9 +8,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.List;
-import java.util.NoSuchElementException;
-
 @Controller
 @RequestMapping("/admin/products")
 public class AdminProductController {
@@ -40,22 +37,18 @@ public class AdminProductController {
         @RequestParam Long categoryId,
         Model model
     ) {
-        var errors = ProductNameValidator.validate(name, true);
-        if (!errors.isEmpty()) {
-            populateNewForm(model, errors, name, price, imageUrl, categoryId);
+        try {
+            productService.createFromAdmin(name, price, imageUrl, categoryId);
+        } catch (IllegalArgumentException e) {
+            populateNewFormError(model, name, price, imageUrl, categoryId, e.getMessage());
             return "product/new";
         }
-
-        productService.createFromAdmin(name, price, imageUrl, categoryId);
         return "redirect:/admin/products";
     }
 
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
         var product = productService.findById(id);
-        if (product == null) {
-            throw new NoSuchElementException("상품이 존재하지 않습니다. id=" + id);
-        }
         model.addAttribute("product", product);
         model.addAttribute("categories", productService.findAllCategories());
         return "product/edit";
@@ -70,18 +63,13 @@ public class AdminProductController {
         @RequestParam Long categoryId,
         Model model
     ) {
-        var product = productService.findById(id);
-        if (product == null) {
-            throw new java.util.NoSuchElementException("상품이 존재하지 않습니다. id=" + id);
-        }
-
-        var errors = ProductNameValidator.validate(name, true);
-        if (!errors.isEmpty()) {
-            populateEditForm(model, product, errors, name, price, imageUrl, categoryId);
+        try {
+            productService.updateFromAdmin(id, name, price, imageUrl, categoryId);
+        } catch (IllegalArgumentException e) {
+            var product = productService.findById(id);
+            populateEditFormError(model, product, name, price, imageUrl, categoryId, e.getMessage());
             return "product/edit";
         }
-
-        productService.updateFromAdmin(id, name, price, imageUrl, categoryId);
         return "redirect:/admin/products";
     }
 
@@ -91,15 +79,15 @@ public class AdminProductController {
         return "redirect:/admin/products";
     }
 
-    private void populateNewForm(
+    private void populateNewFormError(
         Model model,
-        List<String> errors,
         String name,
         int price,
         String imageUrl,
-        Long categoryId
+        Long categoryId,
+        String error
     ) {
-        model.addAttribute("errors", errors);
+        model.addAttribute("error", error);
         model.addAttribute("name", name);
         model.addAttribute("price", price);
         model.addAttribute("imageUrl", imageUrl);
@@ -107,16 +95,16 @@ public class AdminProductController {
         model.addAttribute("categories", productService.findAllCategories());
     }
 
-    private void populateEditForm(
+    private void populateEditFormError(
         Model model,
         Product product,
-        List<String> errors,
         String name,
         int price,
         String imageUrl,
-        Long categoryId
+        Long categoryId,
+        String error
     ) {
-        model.addAttribute("errors", errors);
+        model.addAttribute("error", error);
         model.addAttribute("product", product);
         model.addAttribute("name", name);
         model.addAttribute("price", price);

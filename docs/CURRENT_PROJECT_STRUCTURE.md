@@ -23,8 +23,14 @@ spring-gift-refactoring-kakao/
 │   │   │   │   ├── KakaoLoginClient.java
 │   │   │   │   ├── KakaoLoginProperties.java
 │   │   │   │   ├── AuthenticationResolver.java
+│   │   │   │   ├── LoginMember.java
+│   │   │   │   ├── LoginMemberArgumentResolver.java
 │   │   │   │   ├── JwtProvider.java
 │   │   │   │   └── TokenResponse.java
+│   │   │   ├── config/
+│   │   │   │   ├── WebMvcConfig.java
+│   │   │   │   ├── GlobalExceptionHandler.java
+│   │   │   │   └── NotFoundExceptionHandler.java
 │   │   │   ├── category/
 │   │   │   │   ├── Category.java
 │   │   │   │   ├── CategoryController.java
@@ -63,6 +69,7 @@ spring-gift-refactoring-kakao/
 │   │   │   │   ├── OrderRepository.java
 │   │   │   │   ├── OrderRequest.java
 │   │   │   │   ├── OrderResponse.java
+│   │   │   │   ├── MessageClient.java
 │   │   │   │   └── KakaoMessageClient.java
 │   │   │   └── wish/
 │   │   │       ├── Wish.java
@@ -116,7 +123,26 @@ spring-gift-refactoring-kakao/
 │
 └── docs/
     ├── TEST_PLAN.md
-    └── PROJECT_STRUCTURE.md
+    ├── TEST_STRATEGY.md
+    ├── CODE_STYLE_CONVENTION.md
+    ├── INITIAL_PROJECT_STRUCTURE.md
+    ├── CURRENT_PROJECT_STRUCTURE.md
+    ├── PROMPT.md
+    └── step2/
+        ├── plan/
+        │   ├── PLAN.md
+        │   ├── PHASE1-인증_로직_추출.md
+        │   ├── PHASE2-예외_핸들러_중앙화.md
+        │   ├── PHASE3-null_반환_예외_전환.md
+        │   ├── PHASE4-트랜잭션_경계_추가.md
+        │   ├── PHASE5-Order_예외_처리_개선.md
+        │   ├── PHASE6-메시지_클라이언트_인터페이스_추출.md
+        │   └── PHASE7-Admin_메서드_분리.md
+        └── adr/
+            ├── ADR1-인증_로직_추출_방식.md
+            ├── ADR2-예외_처리_전략.md
+            ├── ADR3-Admin_메서드_분리_방식.md
+            └── ADR4-메시지_클라이언트_인터페이스_설계.md
 ```
 
 ## 기술 스택
@@ -150,7 +176,17 @@ spring-gift-refactoring-kakao/
 | KakaoAuthService | 카카오 OAuth 인증 흐름 (URL 구성, 콜백 처리, 회원 동기화) |
 | KakaoLoginClient | 카카오 API 호출 (토큰, 사용자 정보) |
 | KakaoLoginProperties | 카카오 설정 값 (clientId, clientSecret, redirectUri) |
+| LoginMember | 인증된 회원 주입용 커스텀 어노테이션 |
+| LoginMemberArgumentResolver | @LoginMember 파라미터 해석 — 인증 로직 실행 + Member 반환 |
 | TokenResponse | JWT 토큰 응답 DTO |
+
+### config - 설정
+
+| 클래스 | 역할 |
+|--------|------|
+| WebMvcConfig | WebMvcConfigurer — ArgumentResolver 등록 |
+| GlobalExceptionHandler | @RestControllerAdvice — IllegalArgumentException → 400 핸들러 |
+| NotFoundExceptionHandler | @RestControllerAdvice — NoSuchElementException → 404 핸들러 |
 
 ### category - 상품 카테고리 관리
 
@@ -193,7 +229,8 @@ spring-gift-refactoring-kakao/
 | OrderController | REST API (주문 생성, 내 주문 조회) |
 | OrderService | 주문 비즈니스 로직 (재고 차감, 포인트 차감, 카카오 알림) |
 | OrderRepository | JpaRepository (회원별 페이징 조회) |
-| KakaoMessageClient | 카카오톡 나에게 보내기 API 호출 |
+| MessageClient | 메시지 발송 인터페이스 |
+| KakaoMessageClient | MessageClient 구현체 — 카카오톡 나에게 보내기 API 호출 |
 | OrderRequest / OrderResponse | 요청/응답 DTO |
 
 ### wish - 찜 리스트

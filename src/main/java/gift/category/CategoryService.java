@@ -3,6 +3,7 @@ package gift.category;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 public class CategoryService {
@@ -21,10 +22,8 @@ public class CategoryService {
     }
 
     public Category update(Long id, CategoryRequest request) {
-        var category = categoryRepository.findById(id).orElse(null);
-        if (category == null) {
-            return null;
-        }
+        var category = categoryRepository.findById(id)
+            .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + id));
         category.update(request.name(), request.color(), request.imageUrl(), request.description());
         return categoryRepository.save(category);
     }

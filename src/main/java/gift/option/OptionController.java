@@ -3,7 +3,6 @@ package gift.option;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,9 +26,6 @@ public class OptionController {
     @GetMapping
     public ResponseEntity<List<OptionResponse>> getOptions(@PathVariable Long productId) {
         var options = optionService.findByProductId(productId);
-        if (options == null) {
-            return ResponseEntity.notFound().build();
-        }
         var response = options.stream()
             .map(OptionResponse::from)
             .collect(Collectors.toList());
@@ -42,9 +38,6 @@ public class OptionController {
         @Valid @RequestBody OptionRequest request
     ) {
         var saved = optionService.create(productId, request);
-        if (saved == null) {
-            return ResponseEntity.notFound().build();
-        }
         var location = URI.create("/api/products/" + productId + "/options/" + saved.getId());
         return ResponseEntity.created(location)
             .body(OptionResponse.from(saved));
@@ -55,15 +48,7 @@ public class OptionController {
         @PathVariable Long productId,
         @PathVariable Long optionId
     ) {
-        var deleted = optionService.delete(productId, optionId);
-        if (deleted == null) {
-            return ResponseEntity.notFound().build();
-        }
+        optionService.delete(productId, optionId);
         return ResponseEntity.noContent().build();
-    }
-
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException e) {
-        return ResponseEntity.badRequest().body(e.getMessage());
     }
 }
