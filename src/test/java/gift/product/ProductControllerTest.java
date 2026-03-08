@@ -1,6 +1,7 @@
 package gift.product;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import gift.auth.AuthenticationResolver;
 import gift.category.Category;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -43,6 +44,9 @@ class ProductControllerTest {
 
     @MockitoBean
     private ProductService productService;
+
+    @MockitoBean
+    private AuthenticationResolver authenticationResolver;
 
     private Product product;
 

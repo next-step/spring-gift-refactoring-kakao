@@ -3,6 +3,7 @@ package gift.option;
 import gift.product.Product;
 import gift.product.ProductRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -22,6 +23,7 @@ public class OptionService {
         return optionRepository.findByProductId(productId);
     }
 
+    @Transactional
     public Option createOption(Long productId, OptionRequest request) {
         validateName(request.name());
 
@@ -34,6 +36,7 @@ public class OptionService {
         return optionRepository.save(new Option(product, request.name(), request.quantity()));
     }
 
+    @Transactional
     public void deleteOption(Long productId, Long optionId) {
         getProduct(productId);
 
@@ -42,10 +45,9 @@ public class OptionService {
             throw new IllegalArgumentException("옵션이 1개인 상품은 옵션을 삭제할 수 없습니다.");
         }
 
-        Option option = optionRepository.findById(optionId).orElse(null);
-        if (option == null || !option.getProduct().getId().equals(productId)) {
-            throw new NoSuchElementException("옵션이 존재하지 않습니다. id=" + optionId);
-        }
+        Option option = optionRepository.findById(optionId)
+            .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다. id=" + optionId));
+        option.validateBelongsTo(productId);
 
         optionRepository.delete(option);
     }

@@ -42,7 +42,7 @@ public class AdminProductController {
         @RequestParam Long categoryId,
         Model model
     ) {
-        List<String> errors = productService.validateProductName(name, true);
+        List<String> errors = productService.getProductNameErrors(name, true);
         if (!errors.isEmpty()) {
             populateNewForm(model, errors, name, price, imageUrl, categoryId);
             return "product/new";
@@ -71,7 +71,7 @@ public class AdminProductController {
     ) {
         Product product = productService.getProduct(id);
 
-        List<String> errors = productService.validateProductName(name, true);
+        List<String> errors = productService.getProductNameErrors(name, true);
         if (!errors.isEmpty()) {
             populateEditForm(model, product, errors, name, price, imageUrl, categoryId);
             return "product/edit";

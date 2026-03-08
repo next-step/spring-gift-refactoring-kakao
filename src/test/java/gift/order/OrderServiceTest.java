@@ -11,12 +11,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -29,6 +30,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,7 +48,9 @@ class OrderServiceTest {
     @Mock
     private KakaoMessageClient kakaoMessageClient;
 
-    @InjectMocks
+    @Mock
+    private TransactionTemplate transactionTemplate;
+
     private OrderService orderService;
 
     private Member member;
@@ -56,6 +60,12 @@ class OrderServiceTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        lenient().when(transactionTemplate.execute(any())).thenAnswer(inv -> {
+            TransactionCallback<?> callback = inv.getArgument(0);
+            return callback.doInTransaction(null);
+        });
+        orderService = new OrderService(orderRepository, optionRepository, memberRepository, kakaoMessageClient, transactionTemplate);
+
         category = new Category("교환권", "#ffffff", "img.png", "");
         setId(category, 1L);
 
@@ -147,7 +157,7 @@ class OrderServiceTest {
 
             orderService.createOrder(member, request);
 
-            then(kakaoMessageClient).should().sendToMe(any(), any(), any());
+            then(kakaoMessageClient).should().sendToMe(any(), any());
         }
 
         @Test
@@ -160,7 +170,7 @@ class OrderServiceTest {
 
             orderService.createOrder(member, request);
 
-            then(kakaoMessageClient).should(never()).sendToMe(any(), any(), any());
+            then(kakaoMessageClient).should(never()).sendToMe(any(), any());
         }
 
         @Test
@@ -174,7 +184,7 @@ class OrderServiceTest {
             given(optionRepository.findById(1L)).willReturn(Optional.of(option));
             given(orderRepository.save(any(Order.class))).willReturn(savedOrder);
             org.mockito.BDDMockito.willThrow(new RuntimeException("카카오 API 오류"))
-                .given(kakaoMessageClient).sendToMe(any(), any(), any());
+                .given(kakaoMessageClient).sendToMe(any(), any());
 
             Order result = orderService.createOrder(member, request);
 

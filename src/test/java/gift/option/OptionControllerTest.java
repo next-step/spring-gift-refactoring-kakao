@@ -1,6 +1,7 @@
 package gift.option;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import gift.auth.AuthenticationResolver;
 import gift.category.Category;
 import gift.product.Product;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +39,9 @@ class OptionControllerTest {
 
     @MockitoBean
     private OptionService optionService;
+
+    @MockitoBean
+    private AuthenticationResolver authenticationResolver;
 
     private Product product;
     private Option option;

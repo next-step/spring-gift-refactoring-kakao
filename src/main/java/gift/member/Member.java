@@ -70,6 +70,10 @@ public class Member {
         return password;
     }
 
+    public boolean canReceiveKakaoMessage() {
+        return this.kakaoAccessToken != null;
+    }
+
     public String getKakaoAccessToken() {
         return kakaoAccessToken;
     }

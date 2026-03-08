@@ -4,6 +4,7 @@ import gift.product.ProductRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.NoSuchElementException;
 
@@ -24,6 +25,7 @@ public class WishService {
     public record AddWishResult(Wish wish, boolean created) {
     }
 
+    @Transactional
     public AddWishResult addWish(Long memberId, WishRequest request) {
         var product = productRepository.findById(request.productId())
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + request.productId()));
@@ -41,9 +43,7 @@ public class WishService {
         var wish = wishRepository.findById(wishId)
             .orElseThrow(() -> new NoSuchElementException("위시가 존재하지 않습니다. id=" + wishId));
 
-        if (!wish.getMemberId().equals(memberId)) {
-            throw new IllegalArgumentException("본인의 위시만 삭제할 수 있습니다.");
-        }
+        wish.validateOwnership(memberId);
 
         wishRepository.delete(wish);
     }

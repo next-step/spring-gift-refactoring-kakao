@@ -36,6 +36,12 @@ public class Wish {
         return memberId;
     }
 
+    public void validateOwnership(Long requesterId) {
+        if (!this.memberId.equals(requesterId)) {
+            throw new IllegalArgumentException("본인의 위시만 삭제할 수 있습니다.");
+        }
+    }
+
     public Product getProduct() {
         return product;
     }

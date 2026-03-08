@@ -1,6 +1,7 @@
 package gift.category;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -21,6 +22,7 @@ public class CategoryService {
         return categoryRepository.save(request.toEntity());
     }
 
+    @Transactional
     public Category updateCategory(Long id, CategoryRequest request) {
         Category category = categoryRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + id));

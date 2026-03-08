@@ -1,6 +1,7 @@
 package gift.member;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import gift.auth.AuthenticationResolver;
 import gift.auth.TokenResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -28,6 +29,9 @@ class MemberControllerTest {
 
     @MockitoBean
     private MemberService memberService;
+
+    @MockitoBean
+    private AuthenticationResolver authenticationResolver;
 
     @Nested
     @DisplayName("POST /api/members/register")

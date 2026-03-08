@@ -1,6 +1,7 @@
 package gift.category;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import gift.auth.AuthenticationResolver;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -36,6 +37,9 @@ class CategoryControllerTest {
 
     @MockitoBean
     private CategoryService categoryService;
+
+    @MockitoBean
+    private AuthenticationResolver authenticationResolver;
 
     private Category category;
 
