@@ -7,13 +7,14 @@ import org.springframework.web.client.RestClient;
 import gift.product.Product;
 
 @Component
-public class KakaoMessageClient {
+public class KakaoMessageClient implements MessageClient {
     private final RestClient restClient;
 
     public KakaoMessageClient(RestClient.Builder builder) {
         this.restClient = builder.build();
     }
 
+    @Override
     public void sendToMe(String accessToken, Order order, Product product) {
         String templateObject = buildTemplate(order, product);
 
@@ -31,7 +32,7 @@ public class KakaoMessageClient {
 
     private String buildTemplate(Order order, Product product) {
         String totalPrice = String.format("%,d", product.getPrice() * order.getQuantity());
-        String message = order.getMessage() != null && !order.getMessage().isBlank()
+        String message = order.hasMessage()
             ? "\\n\\n💌 " + order.getMessage()
             : "";
         return """

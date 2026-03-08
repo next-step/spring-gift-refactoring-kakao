@@ -22,7 +22,15 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ProductResponse> findAll(Pageable pageable) {
+    public List<Product> findAllProducts() {
+        return productRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ProductResponse> findAll(Long categoryId, Pageable pageable) {
+        if (categoryId != null) {
+            return productRepository.findByCategoryId(categoryId, pageable).map(ProductResponse::from);
+        }
         return productRepository.findAll(pageable).map(ProductResponse::from);
     }
 
@@ -35,7 +43,12 @@ public class ProductService {
 
     @Transactional
     public ProductResponse create(ProductRequest request) {
-        validateName(request.name());
+        return create(request, NamePolicy.STANDARD);
+    }
+
+    @Transactional
+    public ProductResponse create(ProductRequest request, NamePolicy namePolicy) {
+        validateName(request.name(), namePolicy);
         Category category = findCategory(request.categoryId());
         Product saved = productRepository.save(request.toEntity(category));
         return ProductResponse.from(saved);
@@ -43,7 +56,12 @@ public class ProductService {
 
     @Transactional
     public ProductResponse update(Long id, ProductRequest request) {
-        validateName(request.name());
+        return update(id, request, NamePolicy.STANDARD);
+    }
+
+    @Transactional
+    public ProductResponse update(Long id, ProductRequest request, NamePolicy namePolicy) {
+        validateName(request.name(), namePolicy);
         Category category = findCategory(request.categoryId());
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다."));
@@ -61,8 +79,8 @@ public class ProductService {
             .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다."));
     }
 
-    private void validateName(String name) {
-        List<String> errors = ProductNameValidator.validate(name);
+    private void validateName(String name, NamePolicy namePolicy) {
+        List<String> errors = ProductNameValidator.validate(name, namePolicy);
         if (!errors.isEmpty()) {
             throw new IllegalArgumentException(String.join(", ", errors));
         }

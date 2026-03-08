@@ -11,12 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
-import gift.category.CategoryRepository;
-import gift.member.MemberRepository;
-import gift.option.OptionRepository;
-import gift.order.OrderRepository;
-import gift.product.ProductRepository;
-import gift.wish.WishRepository;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 
@@ -27,33 +21,12 @@ class ProductAcceptanceTest {
     int port;
 
     @Autowired
-    OrderRepository orderRepository;
-
-    @Autowired
-    WishRepository wishRepository;
-
-    @Autowired
-    OptionRepository optionRepository;
-
-    @Autowired
-    ProductRepository productRepository;
-
-    @Autowired
-    CategoryRepository categoryRepository;
-
-    @Autowired
-    MemberRepository memberRepository;
+    DatabaseCleaner databaseCleaner;
 
     @BeforeEach
     void setUp() {
         RestAssured.port = port;
-        // FK 역순으로 삭제 — 테스트 격리 보장
-        orderRepository.deleteAll();
-        wishRepository.deleteAll();
-        optionRepository.deleteAll();
-        productRepository.deleteAll();
-        categoryRepository.deleteAll();
-        memberRepository.deleteAll();
+        databaseCleaner.clear();
     }
 
     Long createCategory(String name) {
@@ -276,6 +249,48 @@ class ProductAcceptanceTest {
             .body("content", hasSize(2))
             .body("totalElements", equalTo(3))
             .body("totalPages", equalTo(2));
+    }
+
+    @Test
+    void 상품_목록_조회_카테고리_필터링() {
+        // given
+        Long categoryA = createCategory("전자기기");
+        Long categoryB = createCategory("가구");
+        createProduct("노트북", 1000000, "https://example.com/laptop.jpg", categoryA);
+        createProduct("키보드", 50000, "https://example.com/keyboard.jpg", categoryA);
+        createProduct("책상", 500000, "https://example.com/desk.jpg", categoryB);
+
+        // when
+        var response = given()
+            .queryParam("categoryId", categoryA)
+            .when()
+            .get("/api/products");
+
+        // then
+        response.then()
+            .statusCode(200)
+            .body("content", hasSize(2))
+            .body("totalElements", equalTo(2));
+    }
+
+    @Test
+    void 상품_목록_조회_카테고리_필터링_결과_없음() {
+        // given
+        Long categoryA = createCategory("전자기기");
+        Long categoryB = createCategory("가구");
+        createProduct("노트북", 1000000, "https://example.com/laptop.jpg", categoryA);
+
+        // when
+        var response = given()
+            .queryParam("categoryId", categoryB)
+            .when()
+            .get("/api/products");
+
+        // then
+        response.then()
+            .statusCode(200)
+            .body("content", hasSize(0))
+            .body("totalElements", equalTo(0));
     }
 
     @Test

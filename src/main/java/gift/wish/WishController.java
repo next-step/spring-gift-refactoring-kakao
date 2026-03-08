@@ -53,14 +53,13 @@ public class WishController {
             return ResponseEntity.status(401).build();
         }
 
-        boolean duplicate = wishService.isDuplicate(member.getId(), request.productId());
-        WishResponse response = wishService.add(member.getId(), request);
+        WishResult result = wishService.add(member.getId(), request);
 
-        if (duplicate) {
-            return ResponseEntity.ok(response);
+        if (!result.created()) {
+            return ResponseEntity.ok(result.response());
         }
-        return ResponseEntity.created(URI.create("/api/wishes/" + response.id()))
-            .body(response);
+        return ResponseEntity.created(URI.create("/api/wishes/" + result.response().id()))
+            .body(result.response());
     }
 
     @DeleteMapping("/{id}")

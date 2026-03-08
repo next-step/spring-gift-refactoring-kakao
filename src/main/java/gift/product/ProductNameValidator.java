@@ -13,10 +13,10 @@ public class ProductNameValidator {
     }
 
     public static List<String> validate(String name) {
-        return validate(name, false);
+        return validate(name, NamePolicy.STANDARD);
     }
 
-    public static List<String> validate(String name, boolean allowKakao) {
+    public static List<String> validate(String name, NamePolicy policy) {
         List<String> errors = new ArrayList<>();
 
         if (name == null || name.isBlank()) {
@@ -32,7 +32,7 @@ public class ProductNameValidator {
             errors.add("상품 이름에 허용되지 않는 특수 문자가 포함되어 있습니다. 사용 가능: ( ), [ ], +, -, &, /, _");
         }
 
-        if (!allowKakao && name.contains("카카오")) {
+        if (!policy.allowsKakao() && name.contains("카카오")) {
             errors.add("\"카카오\"가 포함된 상품명은 담당 MD와 협의한 경우에만 사용할 수 있습니다.");
         }
 

@@ -7,13 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
-import gift.category.CategoryRepository;
-import gift.member.MemberRepository;
-import gift.option.OptionRepository;
-import gift.order.OrderRepository;
-import gift.product.ProductRepository;
-import gift.wish.WishRepository;
-
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
@@ -24,32 +17,12 @@ class KakaoAuthAcceptanceTest {
     int port;
 
     @Autowired
-    OrderRepository orderRepository;
-
-    @Autowired
-    WishRepository wishRepository;
-
-    @Autowired
-    OptionRepository optionRepository;
-
-    @Autowired
-    ProductRepository productRepository;
-
-    @Autowired
-    CategoryRepository categoryRepository;
-
-    @Autowired
-    MemberRepository memberRepository;
+    DatabaseCleaner databaseCleaner;
 
     @BeforeEach
     void setUp() {
         RestAssured.port = port;
-        orderRepository.deleteAll();
-        wishRepository.deleteAll();
-        optionRepository.deleteAll();
-        productRepository.deleteAll();
-        categoryRepository.deleteAll();
-        memberRepository.deleteAll();
+        databaseCleaner.clear();
     }
 
     // ── 카카오 로그인 리다이렉트 ──

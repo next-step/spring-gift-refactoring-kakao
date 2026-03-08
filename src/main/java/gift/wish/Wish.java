@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import java.time.LocalDateTime;
 
 @Entity
 public class Wish {
@@ -20,12 +21,15 @@ public class Wish {
     @JoinColumn(name = "product_id")
     private Product product;
 
+    private LocalDateTime createdDate;
+
     protected Wish() {
     }
 
     public Wish(Long memberId, Product product) {
         this.memberId = memberId;
         this.product = product;
+        this.createdDate = LocalDateTime.now();
     }
 
     public Long getId() {
@@ -34,6 +38,10 @@ public class Wish {
 
     public Product getProduct() {
         return product;
+    }
+
+    public LocalDateTime getCreatedDate() {
+        return createdDate;
     }
 
     public Boolean equalsMemberId(Long memberId) {

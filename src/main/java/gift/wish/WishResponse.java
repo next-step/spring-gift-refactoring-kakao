@@ -1,11 +1,14 @@
 package gift.wish;
 
+import java.time.LocalDateTime;
+
 public record WishResponse(
     Long id,
     Long productId,
     String name,
     int price,
-    String imageUrl
+    String imageUrl,
+    LocalDateTime createdDate
 ) {
     public static WishResponse from(Wish wish) {
         return new WishResponse(
@@ -13,7 +16,8 @@ public record WishResponse(
             wish.getProduct().getId(),
             wish.getProduct().getName(),
             wish.getProduct().getPrice(),
-            wish.getProduct().getImageUrl()
+            wish.getProduct().getImageUrl(),
+            wish.getCreatedDate()
         );
     }
 }

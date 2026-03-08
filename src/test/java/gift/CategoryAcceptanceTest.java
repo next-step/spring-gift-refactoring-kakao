@@ -12,12 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 
-import gift.category.CategoryRepository;
-import gift.member.MemberRepository;
-import gift.option.OptionRepository;
-import gift.order.OrderRepository;
-import gift.product.ProductRepository;
-import gift.wish.WishRepository;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 
@@ -28,33 +22,12 @@ class CategoryAcceptanceTest {
     int port;
 
     @Autowired
-    CategoryRepository categoryRepository;
-
-    @Autowired
-    OrderRepository orderRepository;
-
-    @Autowired
-    WishRepository wishRepository;
-
-    @Autowired
-    OptionRepository optionRepository;
-
-    @Autowired
-    ProductRepository productRepository;
-
-    @Autowired
-    MemberRepository memberRepository;
+    DatabaseCleaner databaseCleaner;
 
     @BeforeEach
     void setUp() {
         RestAssured.port = port;
-        // FK 역순으로 삭제 — 테스트 격리 보장
-        orderRepository.deleteAll();
-        wishRepository.deleteAll();
-        optionRepository.deleteAll();
-        productRepository.deleteAll();
-        categoryRepository.deleteAll();
-        memberRepository.deleteAll();
+        databaseCleaner.clear();
     }
 
     Long createCategory(String name) {

@@ -54,6 +54,10 @@ public class Order {
         return message;
     }
 
+    public boolean hasMessage() {
+        return message != null && !message.isBlank();
+    }
+
     public LocalDateTime getOrderDateTime() {
         return orderDateTime;
     }
