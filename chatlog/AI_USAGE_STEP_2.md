@@ -611,3 +611,169 @@ member.deductPoint(option.calculatePrice(quantity));
 | `OptionController.java` | `Collectors.toList()` → `.toList()` + import 제거 | 코드 정리 |
 
 ---
+
+## 13단계: 트랜잭션 내 외부 API 호출 분리 (구조 변경)
+
+### 프롬프트
+
+> 트랜잭션 안에서 외부 API 호출(kakaoMessageClient.sendToMe)이 존재하는 문제 해결. @TransactionalEventListener로 트랜잭션 커밋 후 메시지 전송하도록 분리.
+
+### 변경 전/후 정의
+
+- **무엇을 바꾸는가**: 카카오 메시지 전송을 `@Transactional` 경계 밖(커밋 후)으로 이동
+- **무엇을 바꾸지 않는가**: 주문 생성 흐름 (재고 차감 + 포인트 차감 + 주문 저장 + 위시 제거) 및 카카오 알림 발송
+- **무엇이 이를 증명하는가**: 기존 `OrderServiceTest` 3개 전체 통과
+
+### 문제 인식
+
+`OrderService.createOrder()`에 `@Transactional`을 적용한 후, 메서드 내부의 `kakaoMessageClient.sendToMe()` 호출이 트랜잭션 경계 안에 포함되는 문제가 발생. try-catch로 예외를 무시하고 있지만 트랜잭션은 API 응답까지 열려 있다.
+
+**트랜잭션 내 외부 API 호출의 문제점:**
+
+1. **DB 커넥션 점유 시간 증가**: 외부 API 응답이 느리면 (타임아웃 3~10초) DB 커넥션을 불필요하게 잡고 있음 → 커넥션 풀 고갈 가능성
+2. **DB Lock 보유 시간 증가**: `option.subtractQuantity()`로 인한 쓰기 락이 API 응답까지 유지 → 동시 주문 성능 저하
+3. **외부 장애 전파**: 카카오 서버 지연 → DB 커넥션 고갈 → 주문 외 다른 기능까지 영향
+
+### 변경 전 (트랜잭션 내 외부 API 호출)
+
+```java
+@Transactional
+public Order createOrder(Member member, Long optionId, int quantity, String message) {
+    // ... DB 작업 ...
+    Order saved = orderRepository.save(...);
+    wishRepository.findByMemberIdAndProductId(...).ifPresent(wishRepository::delete);
+
+    sendKakaoMessageIfPossible(member, saved, option); // 트랜잭션 안에서 외부 API 호출!
+    return saved;
+}
+```
+
+### 변경 후 (@TransactionalEventListener로 커밋 후 전송)
+
+```java
+// OrderService — 트랜잭션 안에서는 이벤트만 발행
+@Transactional
+public Order createOrder(Member member, Long optionId, int quantity, String message) {
+    // ... DB 작업 ...
+    Order saved = orderRepository.save(...);
+    wishRepository.findByMemberIdAndProductId(...).ifPresent(wishRepository::delete);
+
+    if (member.getKakaoAccessToken() != null) {
+        eventPublisher.publishEvent(new OrderCompletedEvent(kakaoAccessToken, saved, product));
+    }
+    return saved;
+}
+
+// OrderEventListener — 트랜잭션 커밋 후 메시지 전송
+@Component
+public class OrderEventListener {
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleOrderCompleted(OrderCompletedEvent event) {
+        try {
+            kakaoMessageClient.sendToMe(event.kakaoAccessToken(), event.order(), event.product());
+        } catch (Exception ignored) {
+        }
+    }
+}
+```
+
+### AI 활용 방식
+
+1. 피드백 분석: 트랜잭션 내 외부 API 호출로 인한 3가지 문제점(커넥션 점유, 락 보유, 장애 전파) 도출
+2. 3가지 개선 방안 비교 검토 후 `@TransactionalEventListener` 방식 채택
+3. 3개 파일 변경/생성:
+   - `OrderCompletedEvent.java` 신규 — record로 이벤트 정의
+   - `OrderEventListener.java` 신규 — `@TransactionalEventListener(AFTER_COMMIT)`으로 메시지 전송
+   - `OrderService.java` — `KakaoMessageClient` 의존성 제거 → `ApplicationEventPublisher`로 교체, `sendKakaoMessageIfPossible()` 제거
+4. **전체 테스트 통과 확인** (`./gradlew clean test` BUILD SUCCESSFUL)
+
+### 산출물
+
+| 파일 | 변경 | 종류 |
+|------|------|------|
+| `OrderCompletedEvent.java` | 신규 — 주문 완료 이벤트 record | 구조 변경 |
+| `OrderEventListener.java` | 신규 — `@TransactionalEventListener(AFTER_COMMIT)` 메시지 전송 | 구조 변경 |
+| `OrderService.java` | `KakaoMessageClient` → `ApplicationEventPublisher`, `sendKakaoMessageIfPossible()` 제거 | 구조 변경 |
+
+### 효과
+
+- **트랜잭션 범위 최소화**: DB 작업만 트랜잭션에 포함, 외부 API 호출은 커밋 후 실행
+- **커넥션 점유 시간 단축**: 카카오 API 응답 대기 중 DB 커넥션을 잡지 않음
+- **장애 격리**: 카카오 서버 장애가 DB 커넥션 풀에 영향을 주지 않음
+- **관심사 분리**: OrderService는 주문 도메인 로직만, OrderEventListener는 알림 부수효과만 담당
+
+---
+
+## 14단계: KakaoAuthService 트랜잭션 내 외부 API 호출 분리 (구조 변경)
+
+### 프롬프트
+
+> KakaoAuthService.processCallback()에서도 @Transactional 안에서 외부 API 호출(requestAccessToken, requestUserInfo) 2건이 존재하는 문제 해결.
+
+### 변경 전/후 정의
+
+- **무엇을 바꾸는가**: 외부 API 호출을 트랜잭션 밖으로 분리, DB 작업만 `@Transactional`로 감쌈
+- **무엇을 바꾸지 않는가**: 카카오 OAuth 콜백 흐름 (토큰 교환 → 사용자 정보 조회 → 회원 처리 → JWT 발급)
+- **무엇이 이를 증명하는가**: 기존 `KakaoAuthServiceTest` 2개 전체 통과
+
+### 문제 인식
+
+`processCallback()`에 `@Transactional`이 메서드 전체에 걸려 있어서, `kakaoLoginClient.requestAccessToken(code)`와 `kakaoLoginClient.requestUserInfo(token)` 두 외부 API 호출 동안 DB 커넥션을 불필요하게 점유하고 있었다.
+
+**Spring에서 `@Transactional` 선언 시 DB 커넥션 획득 시점**: 메서드 진입 시점에 즉시 가져온다. 외부 API 호출이 먼저 있더라도 이미 커넥션을 점유한 상태이다.
+
+### 변경 전 (전체 메서드에 @Transactional)
+
+```java
+@Transactional
+public String processCallback(String code) {
+    // 외부 API 호출 — DB 커넥션 점유 중!
+    KakaoTokenResponse kakaoToken = kakaoLoginClient.requestAccessToken(code);
+    KakaoUserResponse kakaoUser = kakaoLoginClient.requestUserInfo(kakaoToken.accessToken());
+
+    // DB 작업
+    Member member = memberRepository.findByEmail(email)...
+    memberRepository.save(member);
+    return jwtProvider.createToken(member.getEmail());
+}
+```
+
+### 변경 후 (외부 API와 DB 작업 분리)
+
+```java
+// processCallback — 트랜잭션 없음, 외부 API 호출만
+public String processCallback(String code) {
+    KakaoTokenResponse kakaoToken = kakaoLoginClient.requestAccessToken(code);
+    KakaoUserResponse kakaoUser = kakaoLoginClient.requestUserInfo(kakaoToken.accessToken());
+    return saveOrUpdateMember(kakaoUser.email(), kakaoToken.accessToken());
+}
+
+// saveOrUpdateMember — DB 작업만 트랜잭션으로 감쌈
+@Transactional
+protected String saveOrUpdateMember(String email, String kakaoAccessToken) {
+    Member member = memberRepository.findByEmail(email)
+        .orElseGet(() -> new Member(email));
+    member.updateKakaoAccessToken(kakaoAccessToken);
+    memberRepository.save(member);
+    return jwtProvider.createToken(member.getEmail());
+}
+```
+
+### AI 활용 방식
+
+1. 13단계와 동일한 피드백("트랜잭션 내 외부 API 호출")이 `KakaoAuthService`에도 해당됨을 확인
+2. `processCallback()`에서 `@Transactional` 제거, DB 작업만 담당하는 `saveOrUpdateMember()` 메서드 분리
+3. **전체 테스트 통과 확인** (`./gradlew clean test` BUILD SUCCESSFUL)
+
+### 산출물
+
+| 파일 | 변경 | 종류 |
+|------|------|------|
+| `KakaoAuthService.java` | `processCallback()`에서 `@Transactional` 제거, `saveOrUpdateMember()` 메서드 분리 | 구조 변경 |
+
+### 효과
+
+- **커넥션 점유 시간 단축**: 카카오 API 2회 호출 (토큰 교환 + 사용자 정보) 동안 DB 커넥션을 잡지 않음
+- **트랜잭션 범위 최소화**: DB 작업(회원 조회/저장)만 트랜잭션에 포함
+
+---

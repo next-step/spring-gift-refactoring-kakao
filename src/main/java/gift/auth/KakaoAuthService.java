@@ -35,16 +35,19 @@ public class KakaoAuthService {
             .toUriString();
     }
 
-    @Transactional
     public String processCallback(String code) {
         KakaoLoginClient.KakaoTokenResponse kakaoToken = kakaoLoginClient.requestAccessToken(code);
         KakaoLoginClient.KakaoUserResponse kakaoUser = kakaoLoginClient.requestUserInfo(
             kakaoToken.accessToken());
-        String email = kakaoUser.email();
 
+        return saveOrUpdateMember(kakaoUser.email(), kakaoToken.accessToken());
+    }
+
+    @Transactional
+    protected String saveOrUpdateMember(String email, String kakaoAccessToken) {
         Member member = memberRepository.findByEmail(email)
             .orElseGet(() -> new Member(email));
-        member.updateKakaoAccessToken(kakaoToken.accessToken());
+        member.updateKakaoAccessToken(kakaoAccessToken);
         memberRepository.save(member);
 
         return jwtProvider.createToken(member.getEmail());
