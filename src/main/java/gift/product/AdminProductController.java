@@ -1,7 +1,6 @@
 package gift.product;
 
-import gift.category.CategoryRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import gift.category.CategoryService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,23 +15,22 @@ import java.util.List;
 @RequestMapping("/admin/products")
 public class AdminProductController {
     private final ProductService productService;
-    private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
 
-    @Autowired
-    public AdminProductController(ProductService productService, CategoryRepository categoryRepository) {
+    public AdminProductController(ProductService productService, CategoryService categoryService) {
         this.productService = productService;
-        this.categoryRepository = categoryRepository;
+        this.categoryService = categoryService;
     }
 
     @GetMapping
     public String list(Model model) {
-        model.addAttribute("products", productService.findAllEntities());
+        model.addAttribute("products", productService.findAllResponses());
         return "product/list";
     }
 
     @GetMapping("/new")
     public String newForm(Model model) {
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("categories", categoryService.findAll());
         return "product/new";
     }
 
@@ -56,8 +54,8 @@ public class AdminProductController {
 
     @GetMapping("/{id}/edit")
     public String editForm(@PathVariable Long id, Model model) {
-        model.addAttribute("product", productService.findEntityById(id));
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("product", productService.findById(id));
+        model.addAttribute("categories", categoryService.findAll());
         return "product/edit";
     }
 
@@ -72,7 +70,7 @@ public class AdminProductController {
     ) {
         List<String> errors = productService.validateProductName(name, true);
         if (!errors.isEmpty()) {
-            populateEditForm(model, productService.findEntityById(id), errors, name, price, imageUrl, categoryId);
+            populateEditForm(model, productService.findById(id), errors, name, price, imageUrl, categoryId);
             return "product/edit";
         }
 
@@ -99,12 +97,12 @@ public class AdminProductController {
         model.addAttribute("price", price);
         model.addAttribute("imageUrl", imageUrl);
         model.addAttribute("categoryId", categoryId);
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("categories", categoryService.findAll());
     }
 
     private void populateEditForm(
         Model model,
-        Product product,
+        ProductResponse product,
         List<String> errors,
         String name,
         int price,
@@ -117,6 +115,6 @@ public class AdminProductController {
         model.addAttribute("price", price);
         model.addAttribute("imageUrl", imageUrl);
         model.addAttribute("categoryId", categoryId);
-        model.addAttribute("categories", categoryRepository.findAll());
+        model.addAttribute("categories", categoryService.findAll());
     }
 }

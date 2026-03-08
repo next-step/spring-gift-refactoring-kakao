@@ -2,7 +2,6 @@ package gift.product;
 
 import gift.category.Category;
 import gift.category.CategoryRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,7 +15,6 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
 
-    @Autowired
     public ProductService(ProductRepository productRepository, CategoryRepository categoryRepository) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
@@ -28,8 +26,10 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public List<Product> findAllEntities() {
-        return productRepository.findAll();
+    public List<ProductResponse> findAllResponses() {
+        return productRepository.findAll().stream()
+            .map(ProductResponse::from)
+            .toList();
     }
 
     @Transactional(readOnly = true)
@@ -39,25 +39,14 @@ public class ProductService {
         return ProductResponse.from(product);
     }
 
-    @Transactional(readOnly = true)
-    public Product findEntityById(Long id) {
-        return productRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("상품을 찾을 수 없습니다. id=" + id));
-    }
-
     public List<String> validateProductName(String name, boolean allowKakao) {
         return ProductNameValidator.validate(name, allowKakao);
     }
 
     @Transactional
     public ProductResponse create(String name, int price, String imageUrl, Long categoryId, boolean allowKakao) {
-        List<String> errors = ProductNameValidator.validate(name, allowKakao);
-        if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(String.join(", ", errors));
-        }
-
-        Category category = categoryRepository.findById(categoryId)
-            .orElseThrow(() -> new NoSuchElementException("카테고리를 찾을 수 없습니다. id=" + categoryId));
+        validateName(name, allowKakao);
+        Category category = findCategoryById(categoryId);
 
         Product saved = productRepository.save(new Product(name, price, imageUrl, category));
         return ProductResponse.from(saved);
@@ -65,13 +54,8 @@ public class ProductService {
 
     @Transactional
     public ProductResponse update(Long id, String name, int price, String imageUrl, Long categoryId, boolean allowKakao) {
-        List<String> errors = ProductNameValidator.validate(name, allowKakao);
-        if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(String.join(", ", errors));
-        }
-
-        Category category = categoryRepository.findById(categoryId)
-            .orElseThrow(() -> new NoSuchElementException("카테고리를 찾을 수 없습니다. id=" + categoryId));
+        validateName(name, allowKakao);
+        Category category = findCategoryById(categoryId);
 
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("상품을 찾을 수 없습니다. id=" + id));
@@ -79,6 +63,18 @@ public class ProductService {
         product.update(name, price, imageUrl, category);
         Product saved = productRepository.save(product);
         return ProductResponse.from(saved);
+    }
+
+    private void validateName(String name, boolean allowKakao) {
+        List<String> errors = ProductNameValidator.validate(name, allowKakao);
+        if (!errors.isEmpty()) {
+            throw new IllegalArgumentException(String.join(", ", errors));
+        }
+    }
+
+    private Category findCategoryById(Long categoryId) {
+        return categoryRepository.findById(categoryId)
+            .orElseThrow(() -> new NoSuchElementException("카테고리를 찾을 수 없습니다. id=" + categoryId));
     }
 
     @Transactional

@@ -2,7 +2,6 @@ package gift.order;
 
 import gift.auth.AuthenticationResolver;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +20,6 @@ public class OrderController {
     private final OrderService orderService;
     private final AuthenticationResolver authenticationResolver;
 
-    @Autowired
     public OrderController(OrderService orderService, AuthenticationResolver authenticationResolver) {
         this.orderService = orderService;
         this.authenticationResolver = authenticationResolver;
@@ -32,8 +30,8 @@ public class OrderController {
         @RequestHeader("Authorization") String authorization,
         Pageable pageable
     ) {
-        var member = authenticationResolver.extractMember(authorization);
-        return ResponseEntity.ok(orderService.findByMemberId(member.getId(), pageable));
+        var memberId = authenticationResolver.extractMemberId(authorization);
+        return ResponseEntity.ok(orderService.findByMemberId(memberId, pageable));
     }
 
     /*
@@ -47,8 +45,8 @@ public class OrderController {
         @RequestHeader("Authorization") String authorization,
         @Valid @RequestBody OrderRequest request
     ) {
-        var member = authenticationResolver.extractMember(authorization);
-        OrderResponse response = orderService.createOrder(member.getId(), request);
+        var memberId = authenticationResolver.extractMemberId(authorization);
+        OrderResponse response = orderService.createOrder(memberId, request);
         return ResponseEntity.created(URI.create("/api/orders/" + response.id()))
             .body(response);
     }

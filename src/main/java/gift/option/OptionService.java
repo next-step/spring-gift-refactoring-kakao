@@ -2,7 +2,6 @@ package gift.option;
 
 import gift.product.Product;
 import gift.product.ProductRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,7 +13,6 @@ public class OptionService {
     private final OptionRepository optionRepository;
     private final ProductRepository productRepository;
 
-    @Autowired
     public OptionService(OptionRepository optionRepository, ProductRepository productRepository) {
         this.optionRepository = optionRepository;
         this.productRepository = productRepository;
@@ -49,20 +47,18 @@ public class OptionService {
 
     @Transactional
     public void delete(Long productId, Long optionId) {
-        productRepository.findById(productId)
-            .orElseThrow(() -> new NoSuchElementException("상품을 찾을 수 없습니다. id=" + productId));
-
         List<Option> options = optionRepository.findByProductId(productId);
+        if (options.isEmpty()) {
+            throw new NoSuchElementException("상품을 찾을 수 없습니다. id=" + productId);
+        }
         if (options.size() <= 1) {
             throw new IllegalArgumentException("옵션이 1개인 상품은 옵션을 삭제할 수 없습니다.");
         }
 
-        Option option = optionRepository.findById(optionId)
+        Option option = options.stream()
+            .filter(o -> o.getId().equals(optionId))
+            .findFirst()
             .orElseThrow(() -> new NoSuchElementException("옵션을 찾을 수 없습니다. id=" + optionId));
-
-        if (!option.getProduct().getId().equals(productId)) {
-            throw new NoSuchElementException("해당 상품의 옵션이 아닙니다. optionId=" + optionId);
-        }
 
         optionRepository.delete(option);
     }

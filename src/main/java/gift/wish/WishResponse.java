@@ -8,12 +8,13 @@ public record WishResponse(
     String imageUrl
 ) {
     public static WishResponse from(Wish wish) {
+        var product = wish.getProduct();
         return new WishResponse(
             wish.getId(),
-            wish.getProduct().getId(),
-            wish.getProduct().getName(),
-            wish.getProduct().getPrice(),
-            wish.getProduct().getImageUrl()
+            product.getId(),
+            product.getName(),
+            product.getPrice(),
+            product.getImageUrl()
         );
     }
 }

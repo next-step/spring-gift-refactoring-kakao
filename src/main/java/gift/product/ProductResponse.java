@@ -5,15 +5,18 @@ public record ProductResponse(
     String name,
     int price,
     String imageUrl,
-    Long categoryId
+    Long categoryId,
+    String categoryName
 ) {
     public static ProductResponse from(Product product) {
+        var category = product.getCategory();
         return new ProductResponse(
             product.getId(),
             product.getName(),
             product.getPrice(),
             product.getImageUrl(),
-            product.getCategory().getId()
+            category.getId(),
+            category.getName()
         );
     }
 }

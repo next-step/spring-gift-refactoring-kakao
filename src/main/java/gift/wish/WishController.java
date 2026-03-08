@@ -2,7 +2,6 @@ package gift.wish;
 
 import gift.auth.AuthenticationResolver;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +22,6 @@ public class WishController {
     private final WishService wishService;
     private final AuthenticationResolver authenticationResolver;
 
-    @Autowired
     public WishController(WishService wishService, AuthenticationResolver authenticationResolver) {
         this.wishService = wishService;
         this.authenticationResolver = authenticationResolver;
@@ -34,8 +32,8 @@ public class WishController {
         @RequestHeader("Authorization") String authorization,
         Pageable pageable
     ) {
-        var member = authenticationResolver.extractMember(authorization);
-        return ResponseEntity.ok(wishService.findByMemberId(member.getId(), pageable));
+        var memberId = authenticationResolver.extractMemberId(authorization);
+        return ResponseEntity.ok(wishService.findByMemberId(memberId, pageable));
     }
 
     @PostMapping
@@ -43,8 +41,8 @@ public class WishController {
         @RequestHeader("Authorization") String authorization,
         @Valid @RequestBody WishRequest request
     ) {
-        var member = authenticationResolver.extractMember(authorization);
-        var result = wishService.addWish(member.getId(), request);
+        var memberId = authenticationResolver.extractMemberId(authorization);
+        var result = wishService.addWish(memberId, request);
 
         if (result.isNew()) {
             return ResponseEntity.created(URI.create("/api/wishes/" + result.response().id()))
@@ -58,8 +56,8 @@ public class WishController {
         @RequestHeader("Authorization") String authorization,
         @PathVariable Long id
     ) {
-        var member = authenticationResolver.extractMember(authorization);
-        wishService.removeWish(member.getId(), id);
+        var memberId = authenticationResolver.extractMemberId(authorization);
+        wishService.removeWish(memberId, id);
         return ResponseEntity.noContent().build();
     }
 }

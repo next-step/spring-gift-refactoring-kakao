@@ -1,9 +1,10 @@
 package gift.wish;
 
 import gift.error.ForbiddenException;
+import gift.member.Member;
+import gift.member.MemberRepository;
 import gift.product.Product;
 import gift.product.ProductRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -15,11 +16,12 @@ import java.util.NoSuchElementException;
 public class WishService {
     private final WishRepository wishRepository;
     private final ProductRepository productRepository;
+    private final MemberRepository memberRepository;
 
-    @Autowired
-    public WishService(WishRepository wishRepository, ProductRepository productRepository) {
+    public WishService(WishRepository wishRepository, ProductRepository productRepository, MemberRepository memberRepository) {
         this.wishRepository = wishRepository;
         this.productRepository = productRepository;
+        this.memberRepository = memberRepository;
     }
 
     @Transactional(readOnly = true)
@@ -29,6 +31,9 @@ public class WishService {
 
     @Transactional
     public WishResult addWish(Long memberId, WishRequest request) {
+        Member member = memberRepository.findById(memberId)
+            .orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다. id=" + memberId));
+
         Product product = productRepository.findById(request.productId())
             .orElseThrow(() -> new NoSuchElementException("상품을 찾을 수 없습니다. id=" + request.productId()));
 
@@ -37,7 +42,7 @@ public class WishService {
             return new WishResult(WishResponse.from(existing), false);
         }
 
-        var saved = wishRepository.save(request.toEntity(memberId, product));
+        var saved = wishRepository.save(request.toEntity(member, product));
         return new WishResult(WishResponse.from(saved), true);
     }
 
@@ -46,7 +51,7 @@ public class WishService {
         var wish = wishRepository.findById(wishId)
             .orElseThrow(() -> new NoSuchElementException("위시를 찾을 수 없습니다. id=" + wishId));
 
-        if (!wish.getMemberId().equals(memberId)) {
+        if (!wish.belongsToMember(memberId)) {
             throw new ForbiddenException("다른 회원의 위시를 삭제할 수 없습니다.");
         }
 

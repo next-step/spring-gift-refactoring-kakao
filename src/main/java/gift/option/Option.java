@@ -36,6 +36,14 @@ public class Option {
         this.quantity = quantity;
     }
 
+    public int calculateTotalPrice(int quantity) {
+        return this.product.getPrice() * quantity;
+    }
+
+    public boolean belongsToProduct(Long productId) {
+        return this.product.getId().equals(productId);
+    }
+
     public void subtractQuantity(int amount) {
         if (amount > this.quantity) {
             throw new IllegalArgumentException("차감할 수량이 현재 재고보다 많습니다.");

@@ -2,7 +2,6 @@ package gift.member;
 
 import gift.auth.JwtProvider;
 import gift.auth.TokenResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,7 +13,6 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final JwtProvider jwtProvider;
 
-    @Autowired
     public MemberService(MemberRepository memberRepository, JwtProvider jwtProvider) {
         this.memberRepository = memberRepository;
         this.jwtProvider = jwtProvider;
@@ -22,13 +20,8 @@ public class MemberService {
 
     @Transactional
     public TokenResponse register(MemberRequest request) {
-        if (memberRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("이미 등록된 이메일입니다.");
-        }
-
-        Member member = memberRepository.save(request.toEntity());
-        String token = jwtProvider.createToken(member.getEmail());
-        return new TokenResponse(token);
+        create(request.email(), request.password());
+        return new TokenResponse(jwtProvider.createToken(request.email()));
     }
 
     @Transactional(readOnly = true)
@@ -36,7 +29,7 @@ public class MemberService {
         Member member = memberRepository.findByEmail(request.email())
             .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다."));
 
-        if (member.getPassword() == null || !member.getPassword().equals(request.password())) {
+        if (!member.authenticate(request.password())) {
             throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
@@ -45,14 +38,17 @@ public class MemberService {
     }
 
     @Transactional(readOnly = true)
-    public List<Member> findAll() {
-        return memberRepository.findAll();
+    public List<MemberResponse> findAll() {
+        return memberRepository.findAll().stream()
+            .map(MemberResponse::from)
+            .toList();
     }
 
     @Transactional(readOnly = true)
-    public Member findById(Long id) {
-        return memberRepository.findById(id)
+    public MemberResponse findById(Long id) {
+        Member member = memberRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("회원을 찾을 수 없습니다. id=" + id));
+        return MemberResponse.from(member);
     }
 
     public boolean existsByEmail(String email) {
@@ -60,11 +56,11 @@ public class MemberService {
     }
 
     @Transactional
-    public Member create(String email, String password) {
+    public void create(String email, String password) {
         if (memberRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("이미 등록된 이메일입니다.");
         }
-        return memberRepository.save(new Member(email, password));
+        memberRepository.save(new Member(email, password));
     }
 
     @Transactional
