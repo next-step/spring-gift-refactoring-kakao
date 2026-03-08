@@ -12,7 +12,7 @@ import gift.category.Category;
 import gift.category.CategoryRepository;
 
 @Service
-@Transactional
+@Transactional(readOnly = true)
 public class ProductService {
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
@@ -22,65 +22,55 @@ public class ProductService {
         this.categoryRepository = categoryRepository;
     }
 
-    @Transactional(readOnly = true)
-    public List<Product> findAll() {
-        return productRepository.findAll();
+    public List<ProductResponse> findAll() {
+        return productRepository.findAll().stream()
+            .map(ProductResponse::from)
+            .toList();
     }
 
-    @Transactional(readOnly = true)
-    public Product findById(Long id) {
-        return productRepository.findById(id)
+    public ProductResponse getById(Long id) {
+        Product product = productRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
+        return ProductResponse.from(product);
     }
 
-    public Product createProduct(String name, int price, String imageUrl, Long categoryId) {
+    @Transactional
+    public ProductResponse createProduct(String name, int price, String imageUrl, Long categoryId) {
         Category category = categoryRepository.findById(categoryId)
             .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
-        return productRepository.save(new Product(name, price, imageUrl, category));
+        Product product = productRepository.save(new Product(name, price, imageUrl, category));
+        return ProductResponse.from(product);
     }
 
-    public Product updateProduct(Long id, String name, int price, String imageUrl, Long categoryId) {
+    @Transactional
+    public ProductResponse updateProduct(Long id, String name, int price, String imageUrl, Long categoryId) {
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
         Category category = categoryRepository.findById(categoryId)
             .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
         product.update(name, price, imageUrl, category);
-        return productRepository.save(product);
+        return ProductResponse.from(product);
     }
 
+    @Transactional
     public void deleteProduct(Long id) {
         productRepository.deleteById(id);
     }
 
-    @Transactional(readOnly = true)
     public Page<ProductResponse> getProducts(Pageable pageable) {
         return productRepository.findAll(pageable).map(ProductResponse::from);
     }
 
-    @Transactional(readOnly = true)
-    public ProductResponse getProduct(Long id) {
-        Product product = productRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
-        return ProductResponse.from(product);
-    }
-
+    @Transactional
     public ProductResponse createProduct(ProductRequest request) {
         validateName(request.name());
-        Category category = categoryRepository.findById(request.categoryId())
-            .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + request.categoryId()));
-        Product saved = productRepository.save(request.toEntity(category));
-        return ProductResponse.from(saved);
+        return createProduct(request.name(), request.price(), request.imageUrl(), request.categoryId());
     }
 
+    @Transactional
     public ProductResponse updateProduct(Long id, ProductRequest request) {
         validateName(request.name());
-        Product product = productRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
-        Category category = categoryRepository.findById(request.categoryId())
-            .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + request.categoryId()));
-        product.update(request.name(), request.price(), request.imageUrl(), category);
-        productRepository.save(product);
-        return ProductResponse.from(product);
+        return updateProduct(id, request.name(), request.price(), request.imageUrl(), request.categoryId());
     }
 
     private void validateName(String name) {
@@ -88,10 +78,5 @@ public class ProductService {
         if (!errors.isEmpty()) {
             throw new IllegalArgumentException(String.join(", ", errors));
         }
-    }
-
-    @Transactional(readOnly = true)
-    public List<Category> findAllCategories() {
-        return categoryRepository.findAll();
     }
 }

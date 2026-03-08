@@ -14,8 +14,8 @@ public class KakaoMessageClient {
         this.restClient = builder.build();
     }
 
-    public void sendToMe(String accessToken, Order order, Product product) {
-        var templateObject = buildTemplate(order, product);
+    public void sendToMe(String accessToken, Order order) {
+        var templateObject = buildTemplate(order);
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("template_object", templateObject);
@@ -29,8 +29,8 @@ public class KakaoMessageClient {
             .toBodilessEntity();
     }
 
-    private String buildTemplate(Order order, Product product) {
-        var totalPrice = String.format("%,d", product.getPrice() * order.getQuantity());
+    private String buildTemplate(Order order) {
+        var totalPrice = String.format("%,d", order.getOption().calculateTotalPrice(order.getQuantity()));
         var message = order.getMessage() != null && !order.getMessage().isBlank()
             ? "\\n\\n💌 " + order.getMessage()
             : "";
@@ -42,7 +42,7 @@ public class KakaoMessageClient {
                 "button_title": "선물 확인하기"
             }
             """.formatted(
-            product.getName(),
+            order.getOption().getProduct().getName(),
             order.getOption().getName(),
             order.getQuantity(),
             totalPrice,

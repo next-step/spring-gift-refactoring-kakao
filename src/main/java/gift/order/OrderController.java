@@ -1,11 +1,13 @@
 package gift.order;
 
 import java.net.URI;
+import java.util.NoSuchElementException;
 
 import jakarta.validation.Valid;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,6 +29,16 @@ public class OrderController {
     ) {
         this.authenticationResolver = authenticationResolver;
         this.orderService = orderService;
+    }
+
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity<Void> handleNotFound(NoSuchElementException e) {
+        return ResponseEntity.notFound().build();
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Void> handleBadRequest(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().build();
     }
 
     @GetMapping
@@ -52,12 +64,10 @@ public class OrderController {
             return ResponseEntity.status(401).build();
         }
 
-        var saved = orderService.createOrder(member, request);
-        if (saved == null) {
-            return ResponseEntity.notFound().build();
-        }
+        var response = orderService.createOrder(member.getId(), request);
+        orderService.sendKakaoMessageIfPossible(member.getKakaoAccessToken(), response.id());
 
-        return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
-            .body(OrderResponse.from(saved));
+        return ResponseEntity.created(URI.create("/api/orders/" + response.id()))
+            .body(response);
     }
 }

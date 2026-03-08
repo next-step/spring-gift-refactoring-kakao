@@ -1,5 +1,6 @@
 # spring-gift-refactoring
 
+
 ## 리팩터링 전략
 
 ### 1. 미사용 코드 정리
@@ -200,3 +201,101 @@
 | Order (`04-order-plan`) | 29 |
 | Wish (`05-wish-plan`) | 17 |
 | **총계** | **127** |
+
+---
+
+## Step 2 리팩토링 작업
+
+> 원칙: 구조 변경(외부 동작 불변)과 작동 변경(외부 동작 변경)은 같은 커밋에 섞지 않는다.
+
+### 1. 도메인 책임 되찾기
+
+#### 1-1. wish 패키지 — 소유권 검증을 도메인으로 이동 (구조)
+- [x] `Wish.isOwnedBy(Long memberId)` 도메인 메서드 추가
+- [x] `WishService.removeWish()`에서 인라인 비교를 `wish.isOwnedBy(memberId)` 호출로 교체
+- [x] 기존 `WishControllerTest` 전체 통과 확인
+
+#### 1-2. option 패키지 — 주문 총액 계산을 도메인으로 이동 (구조)
+- [x] `Option.calculateTotalPrice(int quantity)` 도메인 메서드 추가
+- [x] `OrderService`에서 `option.calculateTotalPrice(request.quantity())` 호출로 교체
+- [x] ADR 작성: `docs/adr/001-price-calculation-location.md`
+- [x] 기존 `OrderControllerTest` 전체 통과 확인
+
+#### 1-3. product 패키지 — 카테고리 조회를 CategoryService로 이동 (구조)
+- [x] `AdminProductController`에 `CategoryService` 주입 추가
+- [x] `productService.findAllCategories()` 3곳을 `categoryService.findAll()`로 교체
+- [x] `ProductService.findAllCategories()` 메서드 삭제
+- [x] 기존 `AdminProductControllerTest` 전체 통과 확인
+
+#### 1-4. order 패키지 — KakaoMessageClient 가격 계산을 도메인 메서드로 위임 (구조)
+- [x] `KakaoMessageClient.sendToMe()` 시그니처에서 `Product` 파라미터 제거 (`Order`에서 접근 가능)
+- [x] `buildTemplate()`에서 `product.getPrice() * order.getQuantity()` → `order.getOption().calculateTotalPrice(order.getQuantity())` 교체
+- [x] `OrderService.sendKakaoMessageIfPossible()`에서 `product` 변수 제거
+- [x] 기존 `OrderControllerTest` 전체 통과 확인
+
+### 2. 누락된 작동 구현
+
+#### 2-1. order 패키지 — null 반환을 예외로 전환 (구조)
+- [x] `OrderService`에서 `orElse(null)` + null 체크를 `orElseThrow(NoSuchElementException)` 으로 변경
+- [x] `OrderController`에서 `response == null` 체크 제거
+- [x] `OrderController`에 `@ExceptionHandler(NoSuchElementException.class)` 추가
+- [x] 기존 `주문_생성_실패_옵션_미존재` 테스트가 404 반환 확인
+
+#### 2-2. order 패키지 — IllegalArgumentException 핸들러 추가, 500→400 (작동)
+- [x] `OrderController`에 `@ExceptionHandler(IllegalArgumentException.class)` 추가
+- [x] `OrderControllerTest`: `주문_생성_실패_재고_부족` statusCode `500` → `400` 변경
+- [x] `OrderControllerTest`: `주문_생성_실패_포인트_부족` statusCode `500` → `400` 변경
+- [x] 상태 재조회 검증 추가 (재고 부족 시 주문 미생성 + 재고 미변경)
+- [x] 상태 재조회 검증 추가 (포인트 부족 시 주문 미생성 + 재고 미변경)
+
+### 3. 트랜잭션 경계 세우기
+
+#### 3-1. product 패키지 — 읽기 트랜잭션 기본값 정리 (구조)
+- [x] `ProductService` 클래스 레벨 `@Transactional` → `@Transactional(readOnly = true)` 변경
+- [x] 쓰기 메서드 5개에 `@Transactional` 추가
+- [x] 읽기 메서드에서 중복 `@Transactional(readOnly = true)` 제거
+- [x] 기존 `ProductControllerTest` + `AdminProductControllerTest` 전체 통과 확인
+
+#### 3-2. order 패키지 — Member를 트랜잭션 내부에서 조회 (작동)
+- [x] `OrderService.createOrder(Member member, ...)` → `createOrder(Long memberId, ...)` 시그니처 변경
+- [x] 트랜잭션 내에서 `memberRepository.findById(memberId)` 호출 추가
+- [x] managed 엔티티이므로 `optionRepository.save()`, `memberRepository.save()` 명시 호출 제거
+- [x] `OrderController`에서 `member.getId()` 전달로 변경
+- [x] ADR 작성: `docs/adr/002-order-transaction-boundary.md`
+- [x] 상태 재조회 검증 추가 (주문 성공 시 재고 차감 확인)
+- [x] 상태 재조회 검증 추가 (주문 성공 시 포인트 차감 확인: 초기 1,000,000 - 주문 20,000 = 980,000)
+
+### 4. 외부 API 호출을 트랜잭션 밖으로 분리
+
+#### 4-1. auth 패키지 — KakaoAuthService 외부 호출 분리 (구조)
+- [x] `KakaoAuthService`에서 `@Transactional` 제거
+- [x] `MemberRepository` 의존을 `MemberService` 의존으로 변경
+- [x] `MemberService.findOrCreateByKakaoLogin()` 메서드 추가
+- [x] 기존 `KakaoAuthControllerTest` 전체 통과 확인
+
+#### 4-2. order 패키지 — 카카오 메시지 전송을 트랜잭션 밖으로 분리 (구조)
+> 의존: 커밋 3-2 이후 수행
+- [x] `OrderService.createOrder()`에서 `sendKakaoMessageIfPossible()` 호출 제거
+- [x] `sendKakaoMessageIfPossible()`을 public으로 변경, 시그니처를 `(String kakaoAccessToken, Long orderId)`로 변경
+- [x] `OrderController`에서 `createOrder()` 호출 후 `sendKakaoMessageIfPossible()` 별도 호출
+- [x] 기존 `OrderControllerTest` 전체 통과 확인
+
+### 5. 중복 제거 및 코드 일관성
+
+#### 5-1. product 패키지 — ProductService 중복 메서드 통합 (구조)
+- [x] `getProduct()` 삭제, `ProductController`에서 `getById()` 사용으로 변경
+- [x] `createProduct(ProductRequest)`가 `validateName()` 후 `createProduct(String, int, String, Long)` 위임하도록 변경
+- [x] `updateProduct(Long, ProductRequest)`가 `validateName()` 후 `updateProduct(Long, String, int, String, Long)` 위임하도록 변경
+- [x] `updateProduct(Long, String, int, String, Long)`에서 불필요한 `productRepository.save()` 제거 (dirty checking 활용)
+- [x] 기존 `ProductControllerTest` + `AdminProductControllerTest` 전체 통과 확인
+
+#### 5-2. wish 패키지 — WishController 예외 처리를 @ExceptionHandler 방식으로 통일 (구조)
+- [x] `WishService.removeWish()`에서 소유권 실패 시 `IllegalArgumentException` → `IllegalStateException` 변경
+- [x] `WishController`에서 try-catch 제거
+- [x] `WishController`에 `@ExceptionHandler` 추가: `NoSuchElementException`→404, `IllegalArgumentException`→400, `IllegalStateException`→403
+- [x] 기존 `WishControllerTest` 전체 통과 확인 (외부 동작 변화 없음)
+
+### ADR 목록
+- [x] `docs/adr/001-price-calculation-location.md` — 가격 계산 로직 위치 결정 (커밋 1-2)
+- [x] `docs/adr/002-order-transaction-boundary.md` — 주문 생성 시 Member 조회 전략 (커밋 3-2)
+- [x] `docs/adr/003-external-api-outside-transaction.md` — 외부 API 호출을 트랜잭션 밖으로 분리 (커밋 4-1, 4-2)

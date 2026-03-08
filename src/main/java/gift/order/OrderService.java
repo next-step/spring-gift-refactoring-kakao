@@ -1,17 +1,20 @@
 package gift.order;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import gift.member.Member;
 import gift.member.MemberRepository;
 import gift.option.OptionRepository;
 
 @Service
 @Transactional(readOnly = true)
 public class OrderService {
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+
     private final OrderRepository orderRepository;
     private final OptionRepository optionRepository;
     private final MemberRepository memberRepository;
@@ -34,33 +37,32 @@ public class OrderService {
     }
 
     @Transactional
-    public Order createOrder(Member member, OrderRequest request) {
-        var option = optionRepository.findById(request.optionId()).orElse(null);
-        if (option == null) {
-            return null;
-        }
+    public OrderResponse createOrder(Long memberId, OrderRequest request) {
+        var member = memberRepository.findById(memberId)
+            .orElseThrow(() -> new java.util.NoSuchElementException("회원을 찾을 수 없습니다: " + memberId));
+
+        var option = optionRepository.findById(request.optionId())
+            .orElseThrow(() -> new java.util.NoSuchElementException("옵션을 찾을 수 없습니다: " + request.optionId()));
 
         option.subtractQuantity(request.quantity());
-        optionRepository.save(option);
 
-        var price = option.getProduct().getPrice() * request.quantity();
+        var price = option.calculateTotalPrice(request.quantity());
         member.deductPoint(price);
-        memberRepository.save(member);
 
-        var saved = orderRepository.save(new Order(option, member.getId(), request.quantity(), request.message()));
+        var saved = orderRepository.save(new Order(option, memberId, request.quantity(), request.message()));
 
-        sendKakaoMessageIfPossible(member, saved, option);
-        return saved;
+        return OrderResponse.from(saved);
     }
 
-    private void sendKakaoMessageIfPossible(Member member, Order order, gift.option.Option option) {
-        if (member.getKakaoAccessToken() == null) {
+    public void sendKakaoMessageIfPossible(String kakaoAccessToken, Long orderId) {
+        if (kakaoAccessToken == null) {
             return;
         }
         try {
-            var product = option.getProduct();
-            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
-        } catch (Exception ignored) {
+            var order = orderRepository.findById(orderId).orElseThrow();
+            kakaoMessageClient.sendToMe(kakaoAccessToken, order);
+        } catch (Exception e) {
+            log.warn("메시지 전송에 실패했습니다: orderId={}", orderId, e);
         }
     }
 }

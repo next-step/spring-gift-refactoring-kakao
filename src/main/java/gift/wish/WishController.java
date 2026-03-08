@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -54,16 +55,12 @@ public class WishController {
             return ResponseEntity.status(401).build();
         }
 
-        try {
-            var result = wishService.addWish(member.getId(), request.productId());
-            if (result.created()) {
-                return ResponseEntity.created(URI.create("/api/wishes/" + result.wish().id()))
-                    .body(result.wish());
-            }
-            return ResponseEntity.ok(result.wish());
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
+        var result = wishService.addWish(member.getId(), request.productId());
+        if (result.created()) {
+            return ResponseEntity.created(URI.create("/api/wishes/" + result.wish().id()))
+                .body(result.wish());
         }
+        return ResponseEntity.ok(result.wish());
     }
 
     @DeleteMapping("/{id}")
@@ -76,13 +73,22 @@ public class WishController {
             return ResponseEntity.status(401).build();
         }
 
-        try {
-            wishService.removeWish(member.getId(), id);
-            return ResponseEntity.noContent().build();
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(403).build();
-        }
+        wishService.removeWish(member.getId(), id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @ExceptionHandler(NoSuchElementException.class)
+    public ResponseEntity<Void> handleNotFound(NoSuchElementException e) {
+        return ResponseEntity.notFound().build();
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleBadRequest(IllegalArgumentException e) {
+        return ResponseEntity.badRequest().body(e.getMessage());
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<Void> handleForbidden(IllegalStateException e) {
+        return ResponseEntity.status(403).build();
     }
 }
