@@ -33,7 +33,7 @@ public class CategoryService {
     public Category update(Long id, CategoryRequest request) {
         Category category = findById(id);
         category.update(request.name(), request.color(), request.imageUrl(), request.description());
-        return categoryRepository.save(category);
+        return category;
     }
 
     @Transactional

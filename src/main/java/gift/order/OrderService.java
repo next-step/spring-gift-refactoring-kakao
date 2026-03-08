@@ -4,9 +4,10 @@ import gift.member.Member;
 import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
+import gift.product.Product;
+import gift.wish.WishRepository;
 import java.util.NoSuchElementException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -15,22 +16,24 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 public class OrderService {
-    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 
     private final OrderRepository orderRepository;
     private final OptionRepository optionRepository;
     private final MemberRepository memberRepository;
-    private final KakaoMessageClient kakaoMessageClient;
+    private final WishRepository wishRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public OrderService(
             OrderRepository orderRepository,
             OptionRepository optionRepository,
             MemberRepository memberRepository,
-            KakaoMessageClient kakaoMessageClient) {
+            WishRepository wishRepository,
+            ApplicationEventPublisher eventPublisher) {
         this.orderRepository = orderRepository;
         this.optionRepository = optionRepository;
         this.memberRepository = memberRepository;
-        this.kakaoMessageClient = kakaoMessageClient;
+        this.wishRepository = wishRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     public Page<Order> findByMemberId(Long memberId, Pageable pageable) {
@@ -40,13 +43,15 @@ public class OrderService {
     @Transactional
     public Order createOrder(Long memberId, Long optionId, int quantity, String message) {
         Option option = findOption(optionId);
+        Product product = option.getProduct();
         Member member = findMember(memberId);
 
-        subtractStock(option, quantity);
-        deductPayment(member, option, quantity);
+        option.subtractQuantity(quantity);
+        member.deductPoint(product.calculatePrice(quantity));
 
         Order saved = orderRepository.save(new Order(option, memberId, quantity, message));
-        sendKakaoMessageIfPossible(member, saved, option);
+        cleanupWish(memberId, option);
+        publishOrderCompletedEvent(member, saved, product, option, quantity, message);
 
         return saved;
     }
@@ -63,26 +68,20 @@ public class OrderService {
                 .orElseThrow(() -> new NoSuchElementException("회원이 존재하지 않습니다. id=" + memberId));
     }
 
-    private void subtractStock(Option option, int quantity) {
-        option.subtractQuantity(quantity);
-        optionRepository.save(option);
+    private void cleanupWish(Long memberId, Option option) {
+        wishRepository.findByMemberIdAndProductId(memberId, option.productId()).ifPresent(wishRepository::delete);
     }
 
-    private void deductPayment(Member member, Option option, int quantity) {
-        int price = option.getProduct().getPrice() * quantity;
-        member.deductPoint(price);
-        memberRepository.save(member);
-    }
-
-    private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {
-        if (member.getKakaoAccessToken() == null) {
-            return;
-        }
-        try {
-            var product = option.getProduct();
-            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
-        } catch (Exception e) {
-            log.warn("카카오 메시지 전송 실패: memberId={}, orderId={}", member.getId(), order.getId(), e);
-        }
+    private void publishOrderCompletedEvent(
+            Member member, Order saved, Product product, Option option, int quantity, String message) {
+        member.getKakaoAccessTokenIfIntegrated()
+                .ifPresent(token -> eventPublisher.publishEvent(new OrderCompletedEvent(
+                        token,
+                        saved.getId(),
+                        quantity,
+                        message,
+                        option.getName(),
+                        product.getName(),
+                        product.getPrice())));
     }
 }

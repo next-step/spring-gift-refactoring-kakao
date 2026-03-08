@@ -4,6 +4,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import java.util.Optional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
@@ -55,7 +56,7 @@ public class Member {
 
     public void chargePoint(int amount) {
         if (amount <= 0) {
-            throw new IllegalArgumentException("Amount must be greater than zero.");
+            throw new IllegalArgumentException("충전 금액은 1 이상이어야 합니다.");
         }
         this.point += amount;
     }
@@ -71,16 +72,16 @@ public class Member {
         this.point -= amount;
     }
 
+    public Optional<String> getKakaoAccessTokenIfIntegrated() {
+        return Optional.ofNullable(kakaoAccessToken);
+    }
+
     public Long getId() {
         return id;
     }
 
     public String getEmail() {
         return email;
-    }
-
-    public String getKakaoAccessToken() {
-        return kakaoAccessToken;
     }
 
     public int getPoint() {

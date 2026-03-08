@@ -45,7 +45,7 @@ public class ProductService {
         Category category = categoryService.findById(categoryId);
         Product product = findById(id);
         product.update(name, price, imageUrl, category);
-        return productRepository.save(product);
+        return product;
     }
 
     @Transactional

@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import java.util.Objects;
 
 @Entity
 public class Wish {
@@ -25,6 +26,10 @@ public class Wish {
     public Wish(Long memberId, Product product) {
         this.memberId = memberId;
         this.product = product;
+    }
+
+    public boolean isOwnedBy(Long memberId) {
+        return Objects.equals(this.memberId, memberId);
     }
 
     public Long getId() {

@@ -37,9 +37,17 @@ public class Option {
 
     public void subtractQuantity(int amount) {
         if (amount > this.quantity) {
-            throw new IllegalArgumentException("차감할 수량이 현재 재고보다 많습니다.");
+            throw new IllegalArgumentException("차감할 수량이 현재 재고보다 많습니다. 요청=%d, 재고=%d".formatted(amount, this.quantity));
         }
         this.quantity -= amount;
+    }
+
+    public boolean belongsToProduct(Long productId) {
+        return this.product.getId().equals(productId);
+    }
+
+    public Long productId() {
+        return product.getId();
     }
 
     public Long getId() {

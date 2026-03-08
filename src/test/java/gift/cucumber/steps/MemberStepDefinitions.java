@@ -1,5 +1,6 @@
 package gift.cucumber.steps;
 
+import static gift.cucumber.support.ApiClient.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import gift.cucumber.ScenarioContext;
@@ -7,8 +8,8 @@ import io.cucumber.java.ko.그러면;
 import io.cucumber.java.ko.그리고;
 import io.cucumber.java.ko.만일;
 import io.cucumber.java.ko.조건;
-import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
+import io.restassured.response.ExtractableResponse;
+import io.restassured.response.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class MemberStepDefinitions {
@@ -27,17 +28,7 @@ public class MemberStepDefinitions {
                 """
                         .formatted(email);
 
-        RestAssured.given()
-                .log()
-                .all()
-                .contentType(ContentType.JSON)
-                .body(body)
-                .when()
-                .post("/api/members/register")
-                .then()
-                .log()
-                .all()
-                .extract();
+        post("/api/members/register", body);
     }
 
     @조건("{string} 이메일과 {string} 비밀번호로 가입된 회원이 있다")
@@ -51,17 +42,7 @@ public class MemberStepDefinitions {
                 """
                         .formatted(email, password);
 
-        RestAssured.given()
-                .log()
-                .all()
-                .contentType(ContentType.JSON)
-                .body(body)
-                .when()
-                .post("/api/members/register")
-                .then()
-                .log()
-                .all()
-                .extract();
+        post("/api/members/register", body);
     }
 
     @만일("{string} 이메일과 {string} 비밀번호로 회원가입한다")
@@ -75,17 +56,7 @@ public class MemberStepDefinitions {
                 """
                         .formatted(email, password);
 
-        var response = RestAssured.given()
-                .log()
-                .all()
-                .contentType(ContentType.JSON)
-                .body(body)
-                .when()
-                .post("/api/members/register")
-                .then()
-                .log()
-                .all()
-                .extract();
+        ExtractableResponse<Response> response = post("/api/members/register", body);
 
         context.setResponse(response);
     }
@@ -101,17 +72,7 @@ public class MemberStepDefinitions {
                 """
                         .formatted(email, password);
 
-        var response = RestAssured.given()
-                .log()
-                .all()
-                .contentType(ContentType.JSON)
-                .body(body)
-                .when()
-                .post("/api/members/login")
-                .then()
-                .log()
-                .all()
-                .extract();
+        ExtractableResponse<Response> response = post("/api/members/login", body);
 
         context.setResponse(response);
     }

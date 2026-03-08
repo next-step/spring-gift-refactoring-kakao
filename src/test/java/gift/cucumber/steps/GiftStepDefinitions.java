@@ -1,5 +1,6 @@
 package gift.cucumber.steps;
 
+import static gift.cucumber.support.ApiClient.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import gift.cucumber.ScenarioContext;
@@ -10,8 +11,8 @@ import io.cucumber.java.ko.그러면;
 import io.cucumber.java.ko.그리고;
 import io.cucumber.java.ko.만일;
 import io.cucumber.java.ko.조건;
-import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
+import io.restassured.response.ExtractableResponse;
+import io.restassured.response.Response;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -43,17 +44,7 @@ public class GiftStepDefinitions {
                 """
                         .formatted(TEST_EMAIL, MemberFixture.RAW_PASSWORD);
 
-        var response = RestAssured.given()
-                .log()
-                .all()
-                .contentType(ContentType.JSON)
-                .body(body)
-                .when()
-                .post("/api/members/login")
-                .then()
-                .log()
-                .all()
-                .extract();
+        ExtractableResponse<Response> response = post("/api/members/login", body);
 
         String token = response.jsonPath().getString("token");
         context.setToken(token);
@@ -77,18 +68,7 @@ public class GiftStepDefinitions {
                 """
                         .formatted(context.getOptionId(), quantity);
 
-        var response = RestAssured.given()
-                .log()
-                .all()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + context.getToken())
-                .body(body)
-                .when()
-                .post("/api/orders")
-                .then()
-                .log()
-                .all()
-                .extract();
+        ExtractableResponse<Response> response = post("/api/orders", body, context.getToken());
 
         context.setResponse(response);
     }
@@ -104,18 +84,7 @@ public class GiftStepDefinitions {
                 }
                 """;
 
-        var response = RestAssured.given()
-                .log()
-                .all()
-                .contentType(ContentType.JSON)
-                .header("Authorization", "Bearer " + context.getToken())
-                .body(body)
-                .when()
-                .post("/api/orders")
-                .then()
-                .log()
-                .all()
-                .extract();
+        ExtractableResponse<Response> response = post("/api/orders", body, context.getToken());
 
         context.setResponse(response);
     }
@@ -132,17 +101,7 @@ public class GiftStepDefinitions {
                 """
                         .formatted(context.getOptionId());
 
-        var response = RestAssured.given()
-                .log()
-                .all()
-                .contentType(ContentType.JSON)
-                .body(body)
-                .when()
-                .post("/api/orders")
-                .then()
-                .log()
-                .all()
-                .extract();
+        ExtractableResponse<Response> response = post("/api/orders", body);
 
         context.setResponse(response);
     }
@@ -164,16 +123,7 @@ public class GiftStepDefinitions {
 
     @그리고("주문 목록에 해당 주문이 포함되어 있다")
     public void 주문_목록에_해당_주문이_포함되어_있다() {
-        var response = RestAssured.given()
-                .log()
-                .all()
-                .header("Authorization", "Bearer " + context.getToken())
-                .when()
-                .get("/api/orders")
-                .then()
-                .log()
-                .all()
-                .extract();
+        ExtractableResponse<Response> response = get("/api/orders", context.getToken());
 
         List<Long> optionIds = response.jsonPath().getList("content.optionId", Long.class);
         assertThat(optionIds).contains(context.getOptionId());
@@ -191,16 +141,25 @@ public class GiftStepDefinitions {
         assertThat(actualQuantity).isEqualTo(expectedQuantity);
     }
 
+    @그리고("회원의 포인트가 {int}만큼 차감되어 있다")
+    public void 회원의_포인트가_n만큼_차감되어_있다(int expectedDeducted) {
+        int point = getMemberPoint();
+        assertThat(point).isEqualTo(10000000 - expectedDeducted);
+    }
+
+    @그리고("회원의 포인트가 {int}으로 유지되어 있다")
+    public void 회원의_포인트가_n으로_유지되어_있다(int expectedPoint) {
+        int point = getMemberPoint();
+        assertThat(point).isEqualTo(expectedPoint);
+    }
+
+    private int getMemberPoint() {
+        return jdbcTemplate.queryForObject(
+                "SELECT point FROM member WHERE id = ?", Integer.class, context.getMemberId());
+    }
+
     private int getOptionQuantityViaApi() {
-        var response = RestAssured.given()
-                .log()
-                .all()
-                .when()
-                .get("/api/products/" + context.getProductId() + "/options")
-                .then()
-                .log()
-                .all()
-                .extract();
+        ExtractableResponse<Response> response = get("/api/products/" + context.getProductId() + "/options");
 
         List<Long> ids = response.jsonPath().getList("id", Long.class);
         List<Integer> quantities = response.jsonPath().getList("quantity", Integer.class);

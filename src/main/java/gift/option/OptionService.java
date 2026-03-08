@@ -44,12 +44,10 @@ public class OptionService {
             throw new IllegalArgumentException("옵션이 1개인 상품은 옵션을 삭제할 수 없습니다.");
         }
 
-        Option option = optionRepository
-                .findById(optionId)
-                .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다. id=" + optionId));
-        if (!option.getProduct().getId().equals(productId)) {
-            throw new NoSuchElementException("해당 상품의 옵션이 아닙니다. optionId=" + optionId);
-        }
+        Option option = options.stream()
+                .filter(o -> o.getId().equals(optionId))
+                .findFirst()
+                .orElseThrow(() -> new NoSuchElementException("해당 상품의 옵션이 아닙니다. optionId=" + optionId));
 
         optionRepository.delete(option);
     }

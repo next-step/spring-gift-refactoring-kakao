@@ -1,13 +1,14 @@
 package gift.cucumber.steps;
 
+import static gift.cucumber.support.ApiClient.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import gift.cucumber.ScenarioContext;
 import io.cucumber.java.ko.그러면;
 import io.cucumber.java.ko.그리고;
 import io.cucumber.java.ko.만일;
-import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
+import io.restassured.response.ExtractableResponse;
+import io.restassured.response.Response;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -29,17 +30,7 @@ public class OptionStepDefinitions {
                 """
                         .formatted(name, quantity);
 
-        var response = RestAssured.given()
-                .log()
-                .all()
-                .contentType(ContentType.JSON)
-                .body(body)
-                .when()
-                .post("/api/products/" + context.getProductId() + "/options")
-                .then()
-                .log()
-                .all()
-                .extract();
+        ExtractableResponse<Response> response = post("/api/products/" + context.getProductId() + "/options", body);
 
         context.setResponse(response);
         if (response.statusCode() == 201) {
@@ -49,30 +40,16 @@ public class OptionStepDefinitions {
 
     @만일("해당 옵션을 삭제한다")
     public void 해당_옵션을_삭제한다() {
-        var response = RestAssured.given()
-                .log()
-                .all()
-                .when()
-                .delete("/api/products/" + context.getProductId() + "/options/" + context.getOptionId())
-                .then()
-                .log()
-                .all()
-                .extract();
+        ExtractableResponse<Response> response =
+                delete("/api/products/" + context.getProductId() + "/options/" + context.getOptionId());
 
         context.setResponse(response);
     }
 
     @그리고("추가한 옵션을 삭제한다")
     public void 추가한_옵션을_삭제한다() {
-        var response = RestAssured.given()
-                .log()
-                .all()
-                .when()
-                .delete("/api/products/" + context.getProductId() + "/options/" + addedOptionId)
-                .then()
-                .log()
-                .all()
-                .extract();
+        ExtractableResponse<Response> response =
+                delete("/api/products/" + context.getProductId() + "/options/" + addedOptionId);
 
         context.setResponse(response);
     }
@@ -99,15 +76,7 @@ public class OptionStepDefinitions {
 
     @그리고("옵션 목록에 {string} 옵션이 수량 {int}개로 포함되어 있다")
     public void 옵션_목록에_옵션이_수량_개로_포함되어_있다(String name, int quantity) {
-        var response = RestAssured.given()
-                .log()
-                .all()
-                .when()
-                .get("/api/products/" + context.getProductId() + "/options")
-                .then()
-                .log()
-                .all()
-                .extract();
+        ExtractableResponse<Response> response = get("/api/products/" + context.getProductId() + "/options");
 
         List<String> names = response.jsonPath().getList("name", String.class);
         assertThat(names).contains(name);
@@ -119,15 +88,7 @@ public class OptionStepDefinitions {
 
     @그리고("옵션 목록에 {string} 옵션이 포함되어 있지 않다")
     public void 옵션_목록에_옵션이_포함되어_있지_않다(String name) {
-        var response = RestAssured.given()
-                .log()
-                .all()
-                .when()
-                .get("/api/products/" + context.getProductId() + "/options")
-                .then()
-                .log()
-                .all()
-                .extract();
+        ExtractableResponse<Response> response = get("/api/products/" + context.getProductId() + "/options");
 
         List<String> names = response.jsonPath().getList("name", String.class);
         assertThat(names).doesNotContain(name);
@@ -135,15 +96,7 @@ public class OptionStepDefinitions {
 
     @그리고("옵션 목록에 {string} 옵션이 존재한다")
     public void 옵션_목록에_옵션이_존재한다(String name) {
-        var response = RestAssured.given()
-                .log()
-                .all()
-                .when()
-                .get("/api/products/" + context.getProductId() + "/options")
-                .then()
-                .log()
-                .all()
-                .extract();
+        ExtractableResponse<Response> response = get("/api/products/" + context.getProductId() + "/options");
 
         List<String> names = response.jsonPath().getList("name", String.class);
         assertThat(names).contains(name);

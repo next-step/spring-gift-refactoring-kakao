@@ -2,6 +2,7 @@ package gift.wish;
 
 import gift.product.Product;
 import gift.product.ProductRepository;
+import gift.support.PermissionDeniedException;
 import java.util.NoSuchElementException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,15 +30,13 @@ public class WishService {
                 .findById(productId)
                 .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + productId));
 
-        var existing = wishRepository
+        return wishRepository
                 .findByMemberIdAndProductId(memberId, product.getId())
-                .orElse(null);
-        if (existing != null) {
-            return new AddWishResult(existing, false);
-        }
-
-        Wish saved = wishRepository.save(new Wish(memberId, product));
-        return new AddWishResult(saved, true);
+                .map(existing -> new AddWishResult(existing, false))
+                .orElseGet(() -> {
+                    Wish saved = wishRepository.save(new Wish(memberId, product));
+                    return new AddWishResult(saved, true);
+                });
     }
 
     @Transactional
@@ -46,8 +45,8 @@ public class WishService {
                 .findById(wishId)
                 .orElseThrow(() -> new NoSuchElementException("위시가 존재하지 않습니다. id=" + wishId));
 
-        if (!wish.getMemberId().equals(memberId)) {
-            throw new IllegalStateException("다른 회원의 위시를 삭제할 수 없습니다.");
+        if (!wish.isOwnedBy(memberId)) {
+            throw new PermissionDeniedException("다른 회원의 위시를 삭제할 수 없습니다.");
         }
 
         wishRepository.delete(wish);

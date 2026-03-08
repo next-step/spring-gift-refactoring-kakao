@@ -11,6 +11,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Entity
@@ -58,6 +59,10 @@ public class Product {
         return price;
     }
 
+    public int calculatePrice(int quantity) {
+        return price * quantity;
+    }
+
     public String getImageUrl() {
         return imageUrl;
     }
@@ -67,6 +72,6 @@ public class Product {
     }
 
     public List<Option> getOptions() {
-        return options;
+        return Collections.unmodifiableList(options);
     }
 }

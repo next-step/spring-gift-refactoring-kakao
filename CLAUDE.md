@@ -32,7 +32,12 @@ To run containers manually: `./gradlew dockerUp` / `./gradlew dockerDown`.
 
 Gift/product ordering REST API with Kakao integration. Six domains: **Member**, **Category**, **Product**, **Option**, **Order**, **Wish**.
 
-**Current state**: 2-layer architecture — Controllers contain business logic and call Repositories directly. **No Service layer exists yet** (extraction is the refactoring goal).
+**Current state**: 3-layer architecture — Controller → Service → Repository. 6개 Service 클래스 추출 완료.
+
+### Layer Rules
+- **Controller**: HTTP 요청/응답 변환만 담당. Repository 직접 의존 금지.
+- **Service**: 비즈니스 로직, 트랜잭션 관리, 도메인 검증.
+- **Repository**: 데이터 접근. Spring Data JPA 인터페이스.
 
 ### Domain Relationships
 - Category → Product (1:N)
@@ -44,10 +49,15 @@ Gift/product ordering REST API with Kakao integration. Six domains: **Member**, 
 ### Auth Flow
 - `JwtProvider`: creates/validates stateless JWT tokens (HMAC-SHA)
 - `AuthenticationResolver`: extracts Member from `Authorization: Bearer {token}` header
-- `KakaoAuthController` + `KakaoLoginClient`: Kakao OAuth callback flow
+- `KakaoAuthController` + `OAuthLoginClient` (interface): Kakao OAuth callback flow
 
-### Key Pattern: OrderController (primary refactoring target)
-The order creation flow in `OrderController` orchestrates: auth check → option validation → stock subtraction → point deduction → order persistence → wish cleanup → Kakao notification. All of this should move to a service layer.
+### Key Interfaces (외부 API 결합도 분리)
+- `OrderMessageClient` ← `KakaoMessageClient`: 주문 완료 알림 메시지 전송
+- `OAuthLoginClient` ← `KakaoLoginClient`: OAuth 로그인 토큰/사용자 정보 요청
+
+### Order Flow
+`OrderService.createOrder()`: option 검증 → 재고 차감 → 포인트 차감 → 주문 저장 → 위시 삭제 → `OrderCompletedEvent` 발행.
+`OrderCompletedEventListener`: 트랜잭션 커밋 후 `OrderMessageClient`를 통해 알림 전송.
 
 ## Testing Infrastructure
 
@@ -63,10 +73,10 @@ Acceptance tests use **black-box E2E testing**: the app runs in a Docker contain
 
 ## Refactoring Roadmap (from README)
 
-The project follows a 4-step refactoring plan:
-1. **인수 테스트 작성** — Write acceptance tests as a safety net (completed)
-2. **스타일 정리** — Consistent formatting (no logic changes)
-3. **불필요한 코드 제거** — Remove unused code
-4. **서비스 계층 추출** — Extract Service layer from Controllers
+The project follows a 4-step refactoring plan (all completed):
+1. ~~**인수 테스트 작성**~~ — 25개 Cucumber 시나리오 작성 완료
+2. ~~**스타일 정리**~~ — Spotless + palantir-java-format 적용 완료
+3. ~~**불필요한 코드 제거**~~ — 17개 항목 분석 및 제거 완료
+4. ~~**서비스 계층 추출**~~ — 6개 Service 클래스 추출 완료
 
 Critical rule: acceptance tests must pass before and after every refactoring step.

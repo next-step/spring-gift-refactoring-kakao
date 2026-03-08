@@ -1,5 +1,6 @@
 package gift.cucumber.steps;
 
+import static gift.cucumber.support.ApiClient.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import gift.cucumber.ScenarioContext;
@@ -9,8 +10,8 @@ import io.cucumber.java.ko.그러면;
 import io.cucumber.java.ko.그리고;
 import io.cucumber.java.ko.만일;
 import io.cucumber.java.ko.조건;
-import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
+import io.restassured.response.ExtractableResponse;
+import io.restassured.response.Response;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -35,17 +36,7 @@ public class ProductStepDefinitions {
                 """
                         .formatted(name, price, imageUrl, context.getCategoryId());
 
-        var response = RestAssured.given()
-                .log()
-                .all()
-                .contentType(ContentType.JSON)
-                .body(body)
-                .when()
-                .post("/api/products")
-                .then()
-                .log()
-                .all()
-                .extract();
+        ExtractableResponse<Response> response = post("/api/products", body);
 
         context.setResponse(response);
         if (response.statusCode() == 201) {
@@ -65,17 +56,7 @@ public class ProductStepDefinitions {
                 }
                 """;
 
-        var response = RestAssured.given()
-                .log()
-                .all()
-                .contentType(ContentType.JSON)
-                .body(body)
-                .when()
-                .post("/api/products")
-                .then()
-                .log()
-                .all()
-                .extract();
+        ExtractableResponse<Response> response = post("/api/products", body);
 
         context.setResponse(response);
     }
@@ -109,17 +90,7 @@ public class ProductStepDefinitions {
                 """
                         .formatted(name, price, context.getCategoryId());
 
-        var response = RestAssured.given()
-                .log()
-                .all()
-                .contentType(ContentType.JSON)
-                .body(body)
-                .when()
-                .put("/api/products/" + context.getProductId())
-                .then()
-                .log()
-                .all()
-                .extract();
+        ExtractableResponse<Response> response = put("/api/products/" + context.getProductId(), body);
 
         context.setResponse(response);
     }
@@ -131,15 +102,7 @@ public class ProductStepDefinitions {
 
     @그리고("상품 조회 시 이름이 {string}이고 가격이 {int}원이다")
     public void 상품_조회_시_이름이_이고_가격이_원이다(String name, int price) {
-        var response = RestAssured.given()
-                .log()
-                .all()
-                .when()
-                .get("/api/products/" + context.getProductId())
-                .then()
-                .log()
-                .all()
-                .extract();
+        ExtractableResponse<Response> response = get("/api/products/" + context.getProductId());
 
         assertThat(response.jsonPath().getString("name")).isEqualTo(name);
         assertThat(response.jsonPath().getInt("price")).isEqualTo(price);
@@ -147,15 +110,7 @@ public class ProductStepDefinitions {
 
     @만일("해당 상품을 삭제한다")
     public void 해당_상품을_삭제한다() {
-        var response = RestAssured.given()
-                .log()
-                .all()
-                .when()
-                .delete("/api/products/" + context.getProductId())
-                .then()
-                .log()
-                .all()
-                .extract();
+        ExtractableResponse<Response> response = delete("/api/products/" + context.getProductId());
 
         context.setResponse(response);
     }
@@ -167,15 +122,7 @@ public class ProductStepDefinitions {
 
     @그리고("상품 목록이 비어있다")
     public void 상품_목록이_비어있다() {
-        var response = RestAssured.given()
-                .log()
-                .all()
-                .when()
-                .get("/api/products")
-                .then()
-                .log()
-                .all()
-                .extract();
+        ExtractableResponse<Response> response = get("/api/products");
 
         List<Long> ids = response.jsonPath().getList("content.id", Long.class);
         assertThat(ids).isEmpty();
@@ -183,15 +130,7 @@ public class ProductStepDefinitions {
 
     @그리고("상품 목록에 {string}이 {int}원, 이미지 {string}으로 해당 카테고리에 포함되어 있다")
     public void 상품_목록에_포함되어_있다(String name, int price, String imageUrl) {
-        var response = RestAssured.given()
-                .log()
-                .all()
-                .when()
-                .get("/api/products")
-                .then()
-                .log()
-                .all()
-                .extract();
+        ExtractableResponse<Response> response = get("/api/products");
 
         List<Long> ids = response.jsonPath().getList("content.id", Long.class);
         assertThat(ids).containsExactly(context.getProductId());
