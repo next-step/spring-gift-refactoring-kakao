@@ -1,6 +1,8 @@
 package gift.member;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -25,6 +27,9 @@ public class Member {
 
     private int point;
 
+    @Enumerated(EnumType.STRING)
+    private Role role = Role.USER;
+
     protected Member() {
     }
 
@@ -42,13 +47,17 @@ public class Member {
         this.password = password;
     }
 
+    public boolean authenticate(String rawPassword) {
+        return this.password != null && this.password.equals(rawPassword);
+    }
+
     public void updateKakaoAccessToken(String kakaoAccessToken) {
         this.kakaoAccessToken = kakaoAccessToken;
     }
 
     public void chargePoint(int amount) {
         if (amount <= 0) {
-            throw new IllegalArgumentException("Amount must be greater than zero.");
+            throw new IllegalArgumentException("충전 금액은 1 이상이어야 합니다.");
         }
         this.point += amount;
     }
@@ -82,5 +91,13 @@ public class Member {
 
     public int getPoint() {
         return point;
+    }
+
+    public Role getRole() {
+        return role;
+    }
+
+    public boolean isAdmin() {
+        return role == Role.ADMIN;
     }
 }

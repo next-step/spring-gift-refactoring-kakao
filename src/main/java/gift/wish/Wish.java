@@ -28,6 +28,12 @@ public class Wish {
         this.product = product;
     }
 
+    public void validateOwnership(Long memberId) {
+        if (!this.memberId.equals(memberId)) {
+            throw new IllegalAccessException("다른 회원의 위시를 삭제할 수 없습니다.");
+        }
+    }
+
     public Long getId() {
         return id;
     }
