@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 public record ProductRequest(
-    @NotBlank String name,
+    @NotBlank @ValidProductName String name,
     @Positive int price,
     @NotBlank String imageUrl,
     @NotNull Long categoryId

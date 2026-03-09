@@ -3,7 +3,6 @@ package gift.order;
 import gift.auth.AuthenticationResolver;
 import jakarta.validation.Valid;
 import java.net.URI;
-import java.util.NoSuchElementException;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,14 +46,10 @@ public class OrderController {
             return ResponseEntity.status(401).build();
         }
 
-        try {
-            Order saved = orderService.createOrder(
-                member, request.optionId(), request.quantity(), request.message()
-            );
-            return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
-                .body(OrderResponse.from(saved));
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        }
+        Order saved = orderService.createOrder(
+            member, request.optionId(), request.quantity(), request.message()
+        );
+        return ResponseEntity.created(URI.create("/api/orders/" + saved.getId()))
+            .body(OrderResponse.from(saved));
     }
 }
