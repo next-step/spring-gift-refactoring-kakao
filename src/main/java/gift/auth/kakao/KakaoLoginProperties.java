@@ -1,4 +1,4 @@
-package gift.auth;
+package gift.auth.kakao;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

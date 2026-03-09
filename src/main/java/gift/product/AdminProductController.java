@@ -48,7 +48,7 @@ public class AdminProductController {
             return "product/new";
         }
 
-        productService.saveProduct(name, price, imageUrl, categoryId);
+        productService.createProduct(name, price, imageUrl, categoryId);
         return "redirect:/admin/products";
     }
 
@@ -77,7 +77,7 @@ public class AdminProductController {
             return "product/edit";
         }
 
-        productService.saveProduct(id, name, price, imageUrl, categoryId);
+        productService.updateProduct(id, name, price, imageUrl, categoryId);
         return "redirect:/admin/products";
     }
 

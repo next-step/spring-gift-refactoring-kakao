@@ -1,10 +1,10 @@
 package gift.order;
 
 import gift.member.Member;
-import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
 import gift.product.Product;
+import gift.wish.WishRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,10 +36,10 @@ class OrderServiceTest {
     private OptionRepository optionRepository;
 
     @Mock
-    private MemberRepository memberRepository;
+    private WishRepository wishRepository;
 
     @Mock
-    private KakaoMessageClient kakaoMessageClient;
+    private OrderMessageClient messageClient;
 
     @InjectMocks
     private OrderService orderService;
@@ -67,8 +67,6 @@ class OrderServiceTest {
         assertThat(option.getQuantity()).isEqualTo(7);
         assertThat(member.getPoint()).isEqualTo(100000 - 4500 * 3);
         assertThat(order.getQuantity()).isEqualTo(3);
-        then(optionRepository).should().save(option);
-        then(memberRepository).should().save(member);
         then(orderRepository).should().save(any(Order.class));
     }
 
@@ -109,17 +107,17 @@ class OrderServiceTest {
 
         orderService.createOrder(member, 1L, 1, "");
 
-        then(kakaoMessageClient).should(never()).sendToMe(anyString(), any(Order.class), any(Product.class));
+        then(messageClient).should(never()).sendToMe(anyString(), any(Order.class), any(Product.class));
     }
 
     @Test
     @DisplayName("카카오 메시지 전송에 실패해도 주문은 정상 저장된다")
     void createOrderKakaoMessageFails() {
-        member.updateKakaoAccessToken("kakao-token");
+        member.updateOAuthAccessToken("kakao-token");
         given(optionRepository.findById(1L)).willReturn(Optional.of(option));
         given(orderRepository.save(any(Order.class))).willAnswer(invocation -> invocation.getArgument(0));
         doThrow(new RuntimeException("카카오 API 오류"))
-            .when(kakaoMessageClient).sendToMe(eq("kakao-token"), any(Order.class), any(Product.class));
+            .when(messageClient).sendToMe(eq("kakao-token"), any(Order.class), any(Product.class));
 
         Order order = orderService.createOrder(member, 1L, 2, "선물");
 

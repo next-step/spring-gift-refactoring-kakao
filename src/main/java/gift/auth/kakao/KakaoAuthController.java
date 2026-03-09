@@ -1,7 +1,8 @@
-package gift.auth;
+package gift.auth.kakao;
 
-import gift.member.Member;
-import gift.member.MemberService;
+import gift.auth.OAuthLoginService;
+import gift.auth.TokenResponse;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,27 +15,17 @@ import org.springframework.web.util.UriComponentsBuilder;
 /*
  * Handles the Kakao OAuth2 login flow.
  * 1. /login redirects the user to Kakao's authorization page
- * 2. /callback receives the authorization code, exchanges it for an access token,
- *    retrieves user info, auto-registers the member if new, and issues a service JWT
+ * 2. /callback receives the authorization code and delegates to OAuthLoginService
  */
 @RestController
 @RequestMapping("/api/auth/kakao")
 public class KakaoAuthController {
     private final KakaoLoginProperties properties;
-    private final KakaoLoginClient kakaoLoginClient;
-    private final MemberService memberService;
-    private final JwtProvider jwtProvider;
+    private final OAuthLoginService oAuthLoginService;
 
-    public KakaoAuthController(
-        KakaoLoginProperties properties,
-        KakaoLoginClient kakaoLoginClient,
-        MemberService memberService,
-        JwtProvider jwtProvider
-    ) {
+    public KakaoAuthController(KakaoLoginProperties properties, OAuthLoginService oAuthLoginService) {
         this.properties = properties;
-        this.kakaoLoginClient = kakaoLoginClient;
-        this.memberService = memberService;
-        this.jwtProvider = jwtProvider;
+        this.oAuthLoginService = oAuthLoginService;
     }
 
     @GetMapping(path = "/login")
@@ -54,13 +45,6 @@ public class KakaoAuthController {
 
     @GetMapping(path = "/callback")
     public ResponseEntity<TokenResponse> callback(@RequestParam("code") String code) {
-        KakaoLoginClient.KakaoTokenResponse kakaoToken = kakaoLoginClient.requestAccessToken(code);
-        KakaoLoginClient.KakaoUserResponse kakaoUser = kakaoLoginClient.requestUserInfo(kakaoToken.accessToken());
-        String email = kakaoUser.email();
-
-        Member member = memberService.findOrCreateByKakaoLogin(email, kakaoToken.accessToken());
-
-        String token = jwtProvider.createToken(member.getEmail());
-        return ResponseEntity.ok(new TokenResponse(token));
+        return ResponseEntity.ok(oAuthLoginService.login(code));
     }
 }

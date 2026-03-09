@@ -1,5 +1,6 @@
 package gift.member;
 
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -19,31 +20,38 @@ public class Member {
 
     private String email;
 
-    private String password;
+    @Embedded
+    private Password password;
 
-    private String kakaoAccessToken;
+    private String oauthAccessToken;
 
     private int point;
 
     protected Member() {
     }
 
-    public Member(String email, String password) {
+    public Member(String email, String rawPassword) {
         this.email = email;
-        this.password = password;
+        this.password = Password.of(rawPassword);
     }
 
     public Member(String email) {
         this.email = email;
     }
 
-    public void update(String email, String password) {
+    public void update(String email, String rawPassword) {
         this.email = email;
-        this.password = password;
+        this.password = Password.of(rawPassword);
     }
 
-    public void updateKakaoAccessToken(String kakaoAccessToken) {
-        this.kakaoAccessToken = kakaoAccessToken;
+    public void authenticate(String rawPassword) {
+        if (password == null || !password.matches(rawPassword)) {
+            throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
+        }
+    }
+
+    public void updateOAuthAccessToken(String oauthAccessToken) {
+        this.oauthAccessToken = oauthAccessToken;
     }
 
     public void chargePoint(int amount) {
@@ -72,12 +80,8 @@ public class Member {
         return email;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public String getKakaoAccessToken() {
-        return kakaoAccessToken;
+    public String getOAuthAccessToken() {
+        return oauthAccessToken;
     }
 
     public int getPoint() {

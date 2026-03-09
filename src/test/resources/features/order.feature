@@ -26,9 +26,9 @@ Feature: 주문하기
     When "poor@test.com" 회원이 "ICE" 옵션 1개를 주문하면
     Then 응답 상태 코드는 400이다
 
-  Scenario: 인증 없이 주문하면 400 에러가 발생한다
+  Scenario: 인증 없이 주문하면 401 에러가 발생한다
     When 인증 없이 주문하면
-    Then 응답 상태 코드는 400이다
+    Then 응답 상태 코드는 401이다
 
   Scenario: 재고와 동일한 수량을 주문하면 재고가 0이 된다
     When "ICE" 옵션 10개를 주문하면

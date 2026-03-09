@@ -232,7 +232,8 @@ Spring 컨텍스트 없이 순수 Java로 작성한다. 엔티티의 비즈니�
 ```
 src/test/java/gift/
 ├── member/
-│   └── MemberTest.java
+│   ├── MemberTest.java
+│   └── PasswordTest.java
 └── option/
     └── OptionTest.java
 ```
@@ -389,3 +390,141 @@ src/test/resources/features/
 - **테스트 피라미드 설계**: 도메인 모델 단위 테스트로 핵심 규칙을 빠르게 검증하고, 인수 테스트로 API 전체 흐름을 보장하는 계층 구조가 리팩터링의 안전망으로 효과적임을 확인함
 - **AI 산출물 검증의 필요성**: AI가 생성한 경계값 테스트 문자열이 정확히 50자여서 테스트가 실패하는 사례를 통해, AI 산출물을 반드시 실행·검증해야 한다는 점을 재확인함
 - **커밋 단위 분리**: 구조 변경과 작동 변경을 한 커밋에 섞지 않고, 목적 1개로 커밋을 구성하는 습관이 코드 리뷰와 롤백에 유리함을 실감함
+
+### 1단계 페어(paul.an) 코드 리뷰 반영
+
+- [x] **Password 일급객체 도입 및 BCrypt 해싱 적용**
+- [x] **MemberService 중복 메서드 통일**
+- [x] **영속 엔티티의 불필요한 `save()` 호출 제거 — JPA 더티 체킹 활용 (`MemberService`, `OrderService`)**
+- [x] **OAuth 로그인 추상화** — `OAuthLoginClient` 인터페이스 도입, `OAuthLoginService`로 로그인 흐름 캡슐화, `Member` 필드명 일반화 (`kakaoAccessToken` → `oauthAccessToken`)
+- [x] **주문 메시지 전송 전략 패턴 추상화** — `OrderMessageClient` 인터페이스 도입, `OrderService`의 `KakaoMessageClient` 직접 의존 제거
+- [x] **ProductService 중복 메서드 통합 및 `@Transactional` 적용** — `saveProduct` overload 2개 제거 후 `createProduct`/`updateProduct`로 통합, 읽기 메서드에 `readOnly`, `updateProduct`에서 dirty checking 활용
+- [x] **AuthenticationResolver의 MemberRepository 직접 참조를 MemberService로 교체** — 레이어드 아키텍처 원칙에 따라 Resolver가 Repository를 우회하지 않고 서비스 계층을 통해 회원을 조회하도록 변경
+- [x] **`@Login` 애노테이션 + HandlerMethodArgumentResolver 도입** — `AuthenticationResolver`를 `HandlerMethodArgumentResolver`로 변환하고 `@Login Member member` 파라미터로 인증된 회원을 자동 주입하여 컨트롤러의 인증 보일러플레이트 제거
+- [x] **OptionService `@Transactional` 적용** — 읽기 메서드에 `readOnly = true`, CUD 메서드에 `@Transactional`을 적용하여 트랜잭션 경계를 명시하고 DB 최적화 및 데이터 정합성 보장
+- [x] **Option 엔티티에 `calculatePrice` 메서드 추가** — `option.getProduct().getPrice() * quantity` 계산을 `option.calculatePrice(quantity)`로 캡슐화하여 디미터 법칙을 준수하고 `OrderService.createOrder`의 추상화 레벨을 통일
+
+---
+
+
+## 2단계 - 리팩터링 완성하기
+
+### 2단계 기능 요구 사항 분석
+
+> 핵심 목표: 작동 변경을 안전하게 수행하고, 그 결과를 증거로 보여준다.
+
+---
+
+### 트랜잭션 경계 세우기
+
+여러 저장 작업이 하나의 논리 작업이라면, 중간 실패에서 부분 반영이 발생하지 않도록 경계를 설정한다.
+
+- [x] **OrderService** — `createOrder`에 `@Transactional` 적용 (재고 차감 → 포인트 차감 → 주문 저장이 원자적으로 처리)
+- [x] **ProductService** — CUD 메서드에 `@Transactional`, 읽기 메서드에 `readOnly = true` 적용
+- [x] **OptionService** — CUD 메서드에 `@Transactional`, 읽기 메서드에 `readOnly = true` 적용
+- [x] **OAuthLoginService** — `login()`에 `@Transactional` 적용 (회원 조회/생성 + 토큰 업데이트가 원자적으로 처리)
+- [x] **CategoryService** — CUD 메서드에 `@Transactional`, 읽기 메서드에 `readOnly = true` 적용. `updateCategory()`에서 `save()` 호출 제거하여 더티 체킹 활용 (기존 `ProductService.updateProduct` 패턴과 동일)
+- [x] **MemberService** — `register()`, `deleteMember()`에 `@Transactional`, `login()`, `getAllMembers()`, `getMember()`, `getMemberByEmail()`에 `readOnly = true` 적용
+- [x] **WishService** — `addWish()`, `removeWish()`에 `@Transactional`, `getWishes()`에 `readOnly = true` 적용
+
+---
+
+### 누락된 작동 구현
+
+기존 코드에 의도가 남아 있었지만 구현되지 않은 작동을 완료한다.
+
+- [x] **주문 완료 시 위시리스트 자동 제거** — `OrderService.createOrder()`에서 주문 저장 후 해당 상품이 회원의 위시리스트에 있으면 자동 제거. 1단계에서 `OrderController`에 남아 있던 미구현 의도를 서비스 계층에서 구현.
+  - 변경 전: 주문 완료 후 위시리스트에 해당 상품이 그대로 남아 있음
+  - 변경 후: `wishRepository.deleteByMemberIdAndProductId(memberId, productId)` 호출로 자동 정리
+
+---
+
+### 도메인 책임 되찾기
+
+작동을 유지하면서도 책임과 계산, 판단을 올바른 위치로 이동해 누수와 중복을 줄인다. 변경 전후가 분명한 개선을 최소 2개 이상 수행한다.
+
+- [x] **Option.calculatePrice() 도입** — `OrderService`에서 `option.getProduct().getPrice() * quantity`로 직접 계산하던 로직을 `option.calculatePrice(quantity)`로 캡슐화. 디미터 법칙 위반을 해소하고 가격 계산 책임을 도메인 엔티티로 이동.
+  - 변경 전: `int price = option.getProduct().getPrice() * quantity;` (서비스에서 내부 구조 노출)
+  - 변경 후: `int price = option.calculatePrice(quantity);` (도메인 메서드 호출)
+- [x] **Password 일급객체 도입** — `MemberService`에서 비밀번호 값을 꺼내 평문 비교하던 로직을 `Password` 값 객체로 캡슐화. 암호화 전략이 도메인 내부에 숨겨지고, `Member.checkPassword()`로 비밀번호 검증 책임이 엔티티로 이동.
+  - 변경 전: `member.getPassword() == null || !member.getPassword().equals(password)` (서비스에서 직접 처리)
+  - 변경 후: `Password.of(rawPassword)` / `member.checkPassword(rawPassword)` (도메인 캡슐화)
+
+---
+
+## ADR
+
+### 1. 트랜잭션 경계 세우기 — 메서드 단위 `@Transactional` 적용
+
+**맥락**
+
+Spring Data JPA의 `SimpleJpaRepository`는 개별 레포지토리 메서드에 `@Transactional`을 선언한다. 서비스 메서드에 별도 트랜잭션을 선언하지 않으면 레포지토리 호출마다 독립 트랜잭션이 열리므로, 하나의 비즈니스 작업 안에서 여러 레포지토리를 호출할 때 중간 실패 시 부분 반영이 발생할 수 있다.
+
+**선택지**
+
+| | 방식 | 장점 | 단점 |
+|---|---|---|---|
+| A | 클래스 레벨 `@Transactional` | 선언 한 줄로 전체 적용, 누락 위험 없음 | 읽기 메서드까지 쓰기 트랜잭션으로 실행되어 불필요한 더티 체킹 발생, `readOnly` 최적화 불가 |
+| B | 메서드 레벨 `@Transactional` | CUD와 읽기를 구분하여 `readOnly = true` 적용 가능, 메서드별 의도 명시 | 메서드마다 어노테이션을 붙여야 하므로 누락 가능성 존재 |
+
+**결정**: B안 — 메서드 레벨 적용
+
+**근거**
+
+- 읽기 메서드에 `readOnly = true`를 적용하면 Hibernate 플러시 모드가 `MANUAL`로 설정되어 더티 체킹을 건너뛰고, JDBC 드라이버에 읽기 전용 힌트를 전달하여 DB 수준 최적화(리플리카 라우팅 등)가 가능하다.
+- 메서드 시그니처에 트랜잭션 속성이 명시되므로, 해당 메서드가 데이터를 변경하는지 조회만 하는지 코드만으로 판단할 수 있다.
+- 이미 `ProductService`, `OptionService`, `OrderService`가 이 패턴을 사용하고 있으므로 프로젝트 전체의 일관성을 유지한다.
+
+---
+
+### 2. 인터페이스 사용 전략 — 외부 연동 경계에만 인터페이스 도입
+
+**맥락**
+
+Spring 프레임워크에서는 DI를 활용하기 위해 "모든 서비스에 인터페이스를 정의하고 구현체를 분리"하는 관행이 있었다. 그러나 구현체가 하나뿐인 서비스에 인터페이스를 만들면 클래스 수만 늘어나고, 이름 짓기가 어려워지며, 코드 탐색 시 한 단계가 추가되어 가독성이 떨어진다.
+반면 외부 시스템 연동(OAuth 로그인, 메시지 발송 등)은 플랫폼 교체 가능성이 높아 구현을 추상화할 실질적 이유가 존재한다.
+
+**선택지**
+
+| | 방식 | 장점 | 단점 |
+|---|---|---|---|
+| A | 모든 서비스에 인터페이스 도입 | DIP 원칙 완전 준수, 테스트 시 mock 교체 용이 | 구현체가 하나뿐일 때 불필요한 간접 계층 증가, `*ServiceImpl` 네이밍 문제, 파일 수 2배 |
+| B | 인터페이스 전면 생략 | 코드 최소화, 탐색 용이 | 외부 연동 교체 시 서비스 코드 직접 수정 필요, 전략 패턴 적용 불가 |
+| C | 외부 연동 경계에만 인터페이스 도입 | 교체 가능성이 있는 곳만 추상화하여 실용적, 내부 서비스는 간결하게 유지 | 경계 판단 기준이 주관적일 수 있음 |
+
+**결정**: C안 — 외부 연동 경계에만 인터페이스 도입
+
+**근거**
+
+- 현재 프로젝트에서 `ProductService`, `MemberService` 등 내부 서비스는 구현체가 하나뿐이며, 교체 시나리오가 존재하지 않는다. 인터페이스를 도입하면 클래스 수만 늘어나고 탐색 비용이 증가한다.
+- `OAuthLoginClient`는 카카오 외에 네이버·구글 등 다른 OAuth 제공자로 교체될 수 있고, `OrderMessageClient`는 카카오 메시지 외에 SMS·이메일 등 다른 알림 채널로 교체될 수 있다. 이처럼 실질적 교체 가능성이 있는 외부 연동 지점에만 인터페이스를 두어 전략 패턴을 적용한다.
+- Spring의 CGLIB 프록시는 구체 클래스도 프록시할 수 있으므로, `@Transactional` 등 AOP 적용을 위해 인터페이스가 필수적이지 않다.
+- Mockito 등 테스트 프레임워크도 구체 클래스 모킹을 지원하므로, 테스트를 위해 인터페이스를 만들 필요가 없다.
+
+---
+
+### 3. 도메인 책임 되찾기 — 계산·판단 로직을 엔티티와 값 객체로 이동
+
+**맥락**
+
+서비스 계층 추출 후 비즈니스 로직이 서비스에 집중되면서, 도메인 엔티티가 데이터만 들고 있는 빈약한 도메인 모델에 가까워졌다. 구체적으로 두 가지 문제가 있었다:
+
+1. `OrderService.createOrder`에서 `option.getProduct().getPrice() * quantity`로 가격을 직접 계산 — `Option`의 내부 구조(`Product`의 `price`)를 서비스가 알아야 하므로 디미터 법칙(Law of Demeter) 위반
+2. `MemberService`에서 `BCryptPasswordEncoder`로 비밀번호 인코딩·매칭을 직접 수행 — 암호화 전략이 서비스에 노출되어 `Member`가 자신의 비밀번호 검증 책임을 갖지 못함
+
+**선택지**
+
+| | 방식 | 장점 | 단점 |
+|---|---|---|---|
+| A | 서비스에서 계산·판단 로직 유지 | 엔티티가 단순한 데이터 홀더로 유지되어 역할이 명확 | 서비스가 비대해지고, 동일 계산이 여러 서비스에 중복될 위험, 디미터 법칙 위반 |
+| B | 엔티티·값 객체에 계산·판단 로직 이동 | 도메인 객체가 자신의 데이터에 대한 책임을 가짐, 서비스는 흐름 조율에 집중, 중복 제거 | 엔티티에 로직이 추가되어 JPA 매핑과의 경계 관리 필요 |
+
+**결정**: B안 — 엔티티·값 객체에 계산·판단 로직 이동
+
+**근거**
+
+- 가격 계산은 `Option`이 자신의 연관 객체(`Product`)를 통해 수행하는 것이 자연스럽다. `option.calculatePrice(quantity)`로 캡슐화하면 서비스가 `Option`의 내부 구조를 알 필요가 없어지고, 가격 계산 정책이 변경되더라도 `Option` 한 곳만 수정하면 된다.
+- 비밀번호 인코딩·매칭은 `Password` 값 객체(`@Embeddable`)로 캡슐화하면 암호화 전략(`BCryptPasswordEncoder`)이 도메인 내부에 숨겨진다. `Member.checkPassword(rawPassword)`로 비밀번호 검증 책임이 엔티티로 이동하여, 서비스는 인증 흐름만 조율한다.
+- 두 변경 모두 서비스의 추상화 레벨을 통일하는 효과가 있다. `createOrder` 메서드가 "재고 차감 → 포인트 차감 → 주문 저장"이라는 비즈니스 흐름을 균일한 수준으로 표현하게 된다.
+
+---

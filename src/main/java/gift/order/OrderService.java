@@ -1,34 +1,39 @@
 package gift.order;
 
 import gift.member.Member;
-import gift.member.MemberRepository;
 import gift.option.Option;
 import gift.option.OptionRepository;
 import gift.product.Product;
+import gift.wish.WishRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.NoSuchElementException;
 
 @Service
 public class OrderService {
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+
     private final OrderRepository orderRepository;
     private final OptionRepository optionRepository;
-    private final MemberRepository memberRepository;
-    private final KakaoMessageClient kakaoMessageClient;
+    private final WishRepository wishRepository;
+    private final OrderMessageClient messageClient;
 
     public OrderService(
         OrderRepository orderRepository,
         OptionRepository optionRepository,
-        MemberRepository memberRepository,
-        KakaoMessageClient kakaoMessageClient
+        WishRepository wishRepository,
+        OrderMessageClient messageClient
     ) {
         this.orderRepository = orderRepository;
         this.optionRepository = optionRepository;
-        this.memberRepository = memberRepository;
-        this.kakaoMessageClient = kakaoMessageClient;
+        this.wishRepository = wishRepository;
+        this.messageClient = messageClient;
     }
 
     public Page<Order> getOrders(Long memberId, Pageable pageable) {
@@ -41,26 +46,24 @@ public class OrderService {
             .orElseThrow(() -> new NoSuchElementException("옵션이 존재하지 않습니다. id=" + optionId));
 
         option.subtractQuantity(quantity);
-        optionRepository.save(option);
-
-        int price = option.getProduct().getPrice() * quantity;
-        member.deductPoint(price);
-        memberRepository.save(member);
+        member.deductPoint(option.calculatePrice(quantity));
 
         Order saved = orderRepository.save(new Order(option, member.getId(), quantity, message));
+        wishRepository.deleteByMemberIdAndProductId(member.getId(), option.getProduct().getId());
 
-        sendKakaoMessageIfPossible(member, saved, option);
+        sendMessageIfPossible(member, saved, option);
         return saved;
     }
 
-    private void sendKakaoMessageIfPossible(Member member, Order order, Option option) {
-        if (member.getKakaoAccessToken() == null) {
+    private void sendMessageIfPossible(Member member, Order order, Option option) {
+        if (member.getOAuthAccessToken() == null) {
             return;
         }
         try {
             Product product = option.getProduct();
-            kakaoMessageClient.sendToMe(member.getKakaoAccessToken(), order, product);
-        } catch (Exception ignored) {
+            messageClient.sendToMe(member.getOAuthAccessToken(), order, product);
+        } catch (Exception e) {
+            log.warn("주문 메시지 전송 실패: orderId={}, memberId={}", order.getId(), member.getId(), e);
         }
     }
 }

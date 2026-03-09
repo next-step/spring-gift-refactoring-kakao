@@ -6,7 +6,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestClient;
 
 @Component
-public class KakaoMessageClient {
+public class KakaoMessageClient implements OrderMessageClient {
     private final RestClient restClient;
 
     public KakaoMessageClient(RestClient.Builder builder) {
@@ -19,6 +19,7 @@ public class KakaoMessageClient {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("template_object", templateObject);
 
+        // 타임아웃 전략 추가
         restClient.post()
             .uri("https://kapi.kakao.com/v2/api/talk/memo/default/send")
             .header("Authorization", "Bearer " + accessToken)
