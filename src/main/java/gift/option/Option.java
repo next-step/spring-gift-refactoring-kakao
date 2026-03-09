@@ -58,4 +58,12 @@ public class Option {
     public int getQuantity() {
         return quantity;
     }
+
+	public int getPrice() {
+		return product.getPrice();
+	}
+
+    public int calculateAmount(int quantity) {
+        return getPrice() * quantity;
+    }
 }

@@ -68,7 +68,7 @@ class WishAcceptanceTest extends AcceptanceTestFixture {
 
         // then
         response.then()
-            .statusCode(400);
+            .statusCode(401);
     }
 
     @Test
@@ -135,7 +135,7 @@ class WishAcceptanceTest extends AcceptanceTestFixture {
 
         // then
         response.then()
-            .statusCode(400);
+            .statusCode(401);
     }
 
     @Test
@@ -184,6 +184,60 @@ class WishAcceptanceTest extends AcceptanceTestFixture {
         assertThat(wishRepository.count()).isEqualTo(1);
     }
 
+    @Test
+    void 위시리스트_조회_createdDate_내림차순_정렬() {
+        // given
+        String token = registerAndGetToken("sort-desc@test.com", "pass");
+        Long categoryId = createCategory("전자기기");
+        Long productAId = createProduct("상품A", 1000, "http://img.test/a.png", categoryId);
+        Long productBId = createProduct("상품B", 2000, "http://img.test/b.png", categoryId);
+        addWish(token, productAId);
+        addWish(token, productBId);
+
+        // when
+        var response = given()
+            .header("Authorization", "Bearer " + token)
+            .param("page", 0)
+            .param("size", 10)
+            .param("sort", "createdDate,desc")
+            .when()
+            .get("/api/wishes");
+
+        // then
+        response.then()
+            .statusCode(200)
+            .body("content.size()", is(2))
+            .body("content[0].productId", equalTo(productBId.intValue()))
+            .body("content[1].productId", equalTo(productAId.intValue()));
+    }
+
+    @Test
+    void 위시리스트_조회_createdDate_오름차순_정렬() {
+        // given
+        String token = registerAndGetToken("sort-asc@test.com", "pass");
+        Long categoryId = createCategory("전자기기");
+        Long productAId = createProduct("상품A", 1000, "http://img.test/a.png", categoryId);
+        Long productBId = createProduct("상품B", 2000, "http://img.test/b.png", categoryId);
+        addWish(token, productAId);
+        addWish(token, productBId);
+
+        // when
+        var response = given()
+            .header("Authorization", "Bearer " + token)
+            .param("page", 0)
+            .param("size", 10)
+            .param("sort", "createdDate,asc")
+            .when()
+            .get("/api/wishes");
+
+        // then
+        response.then()
+            .statusCode(200)
+            .body("content.size()", is(2))
+            .body("content[0].productId", equalTo(productAId.intValue()))
+            .body("content[1].productId", equalTo(productBId.intValue()));
+    }
+
     // --- DELETE /api/wishes/{id} ---
 
     @Test
@@ -219,7 +273,7 @@ class WishAcceptanceTest extends AcceptanceTestFixture {
 
         // then
         response.then()
-            .statusCode(400);
+            .statusCode(401);
     }
 
     @Test

@@ -36,7 +36,6 @@ public class ProductService {
 
     @Transactional
     public Product create(ProductRequest request) {
-        validateName(request.name());
         Category category = findCategory(request.categoryId());
         return productRepository.save(request.toEntity(category));
     }
@@ -44,12 +43,11 @@ public class ProductService {
     @Transactional
     public Product create(String name, int price, String imageUrl, Long categoryId) {
         Category category = findCategory(categoryId);
-        return productRepository.save(new Product(name, price, imageUrl, category));
+        return productRepository.save(Product.withKakaoAllowed(name, price, imageUrl, category));
     }
 
     @Transactional
     public Product update(Long id, ProductRequest request) {
-        validateName(request.name());
         Category category = findCategory(request.categoryId());
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
@@ -62,7 +60,7 @@ public class ProductService {
         Product product = productRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("상품이 존재하지 않습니다. id=" + id));
         Category category = findCategory(categoryId);
-        product.update(name, price, imageUrl, category);
+        product.updateWithKakaoAllowed(name, price, imageUrl, category);
         return productRepository.save(product);
     }
 
@@ -76,10 +74,4 @@ public class ProductService {
             .orElseThrow(() -> new NoSuchElementException("카테고리가 존재하지 않습니다. id=" + categoryId));
     }
 
-    private void validateName(String name) {
-        List<String> errors = ProductNameValidator.validate(name);
-        if (!errors.isEmpty()) {
-            throw new IllegalArgumentException(String.join(", ", errors));
-        }
-    }
 }

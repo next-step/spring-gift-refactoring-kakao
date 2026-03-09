@@ -93,7 +93,7 @@ class OrderAcceptanceTest extends AcceptanceTestFixture {
 
         // then
         response.then()
-            .statusCode(400);
+            .statusCode(401);
     }
 
     // --- POST /api/orders ---
@@ -152,7 +152,7 @@ class OrderAcceptanceTest extends AcceptanceTestFixture {
 
         // then
         response.then()
-            .statusCode(400);
+            .statusCode(401);
     }
 
     @Test
@@ -236,7 +236,7 @@ class OrderAcceptanceTest extends AcceptanceTestFixture {
 
         // then
         response.then()
-            .statusCode(500);
+            .statusCode(400);
 
         assertThat(getOptionQuantity(productId, optionId)).isEqualTo(beforeQuantity);
         assertThat(getMemberPoint("stock@test.com")).isEqualTo(beforePoint);
@@ -245,7 +245,56 @@ class OrderAcceptanceTest extends AcceptanceTestFixture {
 
 
     @Test
-	@Disabled("트랜잭션 경계가 잘 못 설정되어 실패 - Step2에서 수정 예정")
+    void 주문_생성_성공_위시리스트_자동_삭제() {
+        // given
+        String token = registerAndGetToken("wish@test.com", "pass");
+        chargeMemberPoints("wish@test.com", 100000);
+        Long categoryId = createCategory("전자기기");
+        Long productId = createProduct("노트북", 1000, "http://img.test/1.png", categoryId);
+        Long optionId = createOption(productId, "8GB", 50);
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + token)
+            .body(Map.of("productId", productId))
+            .when()
+            .post("/api/wishes")
+            .then()
+            .statusCode(201);
+
+        long wishCountBefore = given()
+            .header("Authorization", "Bearer " + token)
+            .param("page", 0).param("size", 100)
+            .when()
+            .get("/api/wishes")
+            .then()
+            .statusCode(200)
+            .extract().jsonPath().getLong("totalElements");
+        assertThat(wishCountBefore).isEqualTo(1);
+
+        // when
+        given()
+            .contentType(ContentType.JSON)
+            .header("Authorization", "Bearer " + token)
+            .body(Map.of("optionId", optionId, "quantity", 1, "message", "선물"))
+            .when()
+            .post("/api/orders")
+            .then()
+            .statusCode(201);
+
+        // then
+        long wishCountAfter = given()
+            .header("Authorization", "Bearer " + token)
+            .param("page", 0).param("size", 100)
+            .when()
+            .get("/api/wishes")
+            .then()
+            .statusCode(200)
+            .extract().jsonPath().getLong("totalElements");
+        assertThat(wishCountAfter).isZero();
+    }
+
+    @Test
     void 주문_생성_실패_포인트_부족() {
         // given
         String token = registerAndGetToken("poor@test.com", "pass");
@@ -269,7 +318,7 @@ class OrderAcceptanceTest extends AcceptanceTestFixture {
 
         // then
         response.then()
-            .statusCode(500);
+            .statusCode(400);
 
         assertThat(getOptionQuantity(productId, optionId)).isEqualTo(beforeQuantity);
         assertThat(getMemberPoint("poor@test.com")).isEqualTo(beforePoint);

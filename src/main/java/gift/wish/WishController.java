@@ -4,7 +4,6 @@ import gift.auth.AuthenticationResolver;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
-import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/api/wishes")
@@ -37,11 +35,7 @@ public class WishController {
         @RequestHeader("Authorization") String authorization,
         Pageable pageable
     ) {
-        // 인증 확인
         var member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
         var wishes = wishService.findByMemberId(member.getId(), pageable).map(WishResponse::from);
         return ResponseEntity.ok(wishes);
     }
@@ -51,25 +45,14 @@ public class WishController {
         @RequestHeader("Authorization") String authorization,
         @Valid @RequestBody WishRequest request
     ) {
-        // 인증 확인
         var member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+        var result = wishService.addWish(member.getId(), request.productId());
+        var body = WishResponse.from(result.wish());
 
-        try {
-            // 중복 확인
-            var existing = wishService.findByMemberIdAndProductId(member.getId(), request.productId());
-            if (existing != null) {
-                return ResponseEntity.ok(WishResponse.from(existing));
-            }
-
-            var saved = wishService.addWish(member.getId(), request.productId());
-            return ResponseEntity.created(URI.create("/api/wishes/" + saved.getId()))
-                .body(WishResponse.from(saved));
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
+        if (result.created()) {
+            return ResponseEntity.created(URI.create("/api/wishes/" + result.wish().getId())).body(body);
         }
+        return ResponseEntity.ok(body);
     }
 
     @DeleteMapping("/{id}")
@@ -77,19 +60,8 @@ public class WishController {
         @RequestHeader("Authorization") String authorization,
         @PathVariable Long id
     ) {
-        // 인증 확인
         var member = authenticationResolver.extractMember(authorization);
-        if (member == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        try {
-            wishService.removeWish(member.getId(), id);
-            return ResponseEntity.noContent().build();
-        } catch (NoSuchElementException e) {
-            return ResponseEntity.notFound().build();
-        } catch (IllegalStateException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+        wishService.removeWish(member.getId(), id);
+        return ResponseEntity.noContent().build();
     }
 }
