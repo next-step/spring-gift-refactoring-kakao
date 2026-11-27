@@ -24,35 +24,37 @@ public class KakaoLoginClient {
         params.add("code", code);
         params.add("client_secret", properties.clientSecret());
 
-        return restClient.post()
-            .uri("https://kauth.kakao.com/oauth/token")
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .body(params)
-            .retrieve()
-            .body(KakaoTokenResponse.class);
+        return restClient
+                .post()
+                .uri("https://kauth.kakao.com/oauth/token")
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .body(params)
+                .retrieve()
+                .body(KakaoTokenResponse.class);
     }
 
-    public KakaoUserResponse requestUserInfo(String accessToken) {
-        return restClient.get()
-            .uri("https://kapi.kakao.com/v2/user/me")
-            .header("Authorization", "Bearer " + accessToken)
-            .retrieve()
-            .body(KakaoUserResponse.class);
+    public KakaoUserResponse requestUserInfo(String kakaoAccessToken) {
+        return restClient
+                .get()
+                .uri("https://kapi.kakao.com/v2/user/me")
+                .header("Authorization", "Bearer " + kakaoAccessToken)
+                .retrieve()
+                .body(KakaoUserResponse.class);
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record KakaoTokenResponse(@JsonProperty("access_token") String accessToken) {
-    }
+    public record KakaoTokenResponse(
+            @JsonProperty("access_token") String accessToken) {}
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record KakaoUserResponse(@JsonProperty("kakao_account") KakaoAccount kakaoAccount) {
+    public record KakaoUserResponse(
+            @JsonProperty("kakao_account") KakaoAccount kakaoAccount) {
 
         public String email() {
             return kakaoAccount.email();
         }
 
         @JsonIgnoreProperties(ignoreUnknown = true)
-        public record KakaoAccount(String email) {
-        }
+        public record KakaoAccount(String email) {}
     }
 }

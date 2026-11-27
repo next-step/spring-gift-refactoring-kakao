@@ -25,8 +25,7 @@ public class Member {
 
     private int point;
 
-    protected Member() {
-    }
+    protected Member() {}
 
     public Member(String email, String password) {
         this.email = email;

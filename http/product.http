@@ -1,0 +1,25 @@
+### GET request to example server
+GET https://examples.http-client.intellij.net/get
+    ?generated-in=IntelliJ IDEA
+
+### 상품 등록
+POST http://localhost:8080/api/products
+Content-Type: application/json
+
+{"name": "무지개 우산", "price": 12000, "imageUrl": "https://example.com/a.png", "categoryId": 7}
+
+### 방금 만든 상품 조회 (위 응답의 id로 바꾸기)
+GET http://localhost:8080/api/products/7
+
+
+### 실패 전 상품 개수 보기
+GET http://localhost:8080/api/products
+
+### 일부러 실패시키기 (16자 넘는 이름)
+POST http://localhost:8080/api/products
+Content-Type: application/json
+
+{"name": "열여섯 글자가 넘는 아주 긴 상품 이름", "price": 12000, "imageUrl": "https://example.com/a.png", "categoryId": 1}
+
+### 실패 후 상품 개수 다시 보기
+GET http://localhost:8080/api/products

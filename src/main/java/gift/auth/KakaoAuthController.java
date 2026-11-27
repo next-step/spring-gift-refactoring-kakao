@@ -1,7 +1,6 @@
 package gift.auth;
 
-import gift.member.Member;
-import gift.member.MemberRepository;
+import gift.member.MemberService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,42 +13,36 @@ import org.springframework.web.util.UriComponentsBuilder;
 /*
  * Handles the Kakao OAuth2 login flow.
  * 1. /login redirects the user to Kakao's authorization page
- * 2. /callback receives the authorization code, exchanges it for an access token,
- *    retrieves user info, auto-registers the member if new, and issues a service JWT
+ * 2. /callback receives the authorization code, exchanges it for a Kakao access token,
+ *    retrieves user info, auto-registers the member if new, and issues a login token (JWT)
  */
 @RestController
 @RequestMapping(path = "/api/auth/kakao")
 public class KakaoAuthController {
     private final KakaoLoginProperties properties;
     private final KakaoLoginClient kakaoLoginClient;
-    private final MemberRepository memberRepository;
-    private final JwtProvider jwtProvider;
+    private final MemberService memberService;
 
     public KakaoAuthController(
-        KakaoLoginProperties properties,
-        KakaoLoginClient kakaoLoginClient,
-        MemberRepository memberRepository,
-        JwtProvider jwtProvider
-    ) {
+            KakaoLoginProperties properties, KakaoLoginClient kakaoLoginClient, MemberService memberService) {
         this.properties = properties;
         this.kakaoLoginClient = kakaoLoginClient;
-        this.memberRepository = memberRepository;
-        this.jwtProvider = jwtProvider;
+        this.memberService = memberService;
     }
 
     @GetMapping(path = "/login")
     public ResponseEntity<Void> login() {
         String kakaoAuthUrl = UriComponentsBuilder.fromUriString("https://kauth.kakao.com/oauth/authorize")
-            .queryParam("response_type", "code")
-            .queryParam("client_id", properties.clientId())
-            .queryParam("redirect_uri", properties.redirectUri())
-            .queryParam("scope", "account_email,talk_message")
-            .build()
-            .toUriString();
+                .queryParam("response_type", "code")
+                .queryParam("client_id", properties.clientId())
+                .queryParam("redirect_uri", properties.redirectUri())
+                .queryParam("scope", "account_email,talk_message")
+                .build()
+                .toUriString();
 
         return ResponseEntity.status(HttpStatus.FOUND)
-            .header(HttpHeaders.LOCATION, kakaoAuthUrl)
-            .build();
+                .header(HttpHeaders.LOCATION, kakaoAuthUrl)
+                .build();
     }
 
     @GetMapping(path = "/callback")
@@ -58,12 +51,7 @@ public class KakaoAuthController {
         KakaoLoginClient.KakaoUserResponse kakaoUser = kakaoLoginClient.requestUserInfo(kakaoToken.accessToken());
         String email = kakaoUser.email();
 
-        Member member = memberRepository.findByEmail(email)
-            .orElseGet(() -> new Member(email));
-        member.updateKakaoAccessToken(kakaoToken.accessToken());
-        memberRepository.save(member);
-
-        String token = jwtProvider.createToken(member.getEmail());
-        return ResponseEntity.ok(new TokenResponse(token));
+        String loginToken = memberService.loginWithKakao(email, kakaoToken.accessToken());
+        return ResponseEntity.ok(new TokenResponse(loginToken));
     }
 }
